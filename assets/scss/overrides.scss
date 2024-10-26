@@ -1,0 +1,6 @@
+@use "sass:color";
+
+// override xamu style system parameters
+// @use "@open-xamu-co/ui-styles/src/utils/module" with ();
+
+@forward "@open-xamu-co/ui-styles/src/utils/module";

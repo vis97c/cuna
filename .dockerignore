@@ -1,0 +1,10 @@
+.git
+.env
+.gitignore
+.editorconfig
+README.md
+
+.vscode/
+.github/
+.circleci/
+node_modules/

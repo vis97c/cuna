@@ -1,0 +1,79 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+  	function isAuth() {
+    	return request.auth != null && request.auth.uid != null;
+    }
+    
+    // rol 3: Visitante/comprador/No registrado (Acceso basico)
+    // rol 2: Moderador (30% acceso)
+    // rol 1: Editor/Asistente (70% acceso)
+    // rol 0: Manager (99% acceso)
+    // rol -1: Desarrollador (Acceso total)
+  	function getRole(uid) {
+    	return uid is string ? get(/databases/$(database)/documents/users/$(uid)).data.role : 3;
+    }
+    
+    // moderator.role = 2
+    function canModerate() {
+    	return getRole(request.auth.uid) < 3
+    }
+    
+    // editor.role = 1
+    function canEdit() {
+    	return getRole(request.auth.uid) < 2
+    }
+    
+    // admin.role = 0
+    function canAdmin() {
+    	return getRole(request.auth.uid) < 1
+    }
+    
+    // developer.role = -1
+    function canDevelop() {
+    	return getRole(request.auth.uid) < 0
+    }
+
+    function isUser(uid) {
+    	return request.auth.uid == uid;
+    }
+    
+    function isAuthor() {
+    	return request.auth.uid == resource.data.createdByRef.uid;
+    }
+    
+    match /{document=**} {
+    	// deshabilita el acceso por defecto
+    	allow read, write: if false;
+    }
+    
+    match /counters/{id} {
+    	// lectura explicita, cualquiera
+      allow read: if true;
+      // modificacion granular, editores hacia arriba
+      allow create: if canEdit();
+      allow update: if canEdit();
+      allow delete: if canDevelop();
+    }
+    
+    match /instances/{id} {
+    	// lectura explicita, cualquiera
+      allow read: if true;
+      // modificacion granular, administradores hacia arriba
+      allow create: if canDevelop();
+      allow update: if canAdmin();
+      allow delete: if canDevelop();
+    }
+    
+    match /users/{id} {
+    	// lectura explicita, moderadores hacia arriba
+      allow read: if canModerate() || isUser(id);
+      // modificacion granular, administradores hacia arriba
+      allow create: if canAdmin();
+      // administradores no puede modificar desarrolladores
+      allow update: if canAdmin() && getRole(id) >= 0 || canDevelop() || isUser(id);
+      allow delete: if canAdmin() && getRole(id) >= 0 || canDevelop() || isUser(id);
+    }
+  }
+}

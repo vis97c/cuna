@@ -1,0 +1,23 @@
+@use "./xamu";
+@use "@open-xamu-co/ui-styles/src/utils/module" as utils;
+
+@media only screen {
+	* {
+		transition: all 0.5s ease;
+	}
+	.layout-enter-active,
+	.layout-leave-active,
+	.page-enter-active,
+	.page-leave-active {
+		transition: all 0.4s;
+	}
+	.page-enter-from,
+	.page-leave-to {
+		opacity: 0;
+		filter: blur(1rem);
+	}
+	.layout-enter-from,
+	.layout-leave-to {
+		filter: grayscale(1);
+	}
+}

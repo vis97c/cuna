@@ -1,0 +1,26 @@
+name: "Issues from todo"
+
+on:
+    push:
+        branches: [dev]
+
+    # Allows you to run this workflow manually from the Actions tab
+    workflow_dispatch:
+
+jobs:
+    main:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@master
+            - name: "TODO to Issue"
+              id: "todo"
+              uses: "alstr/todo-to-issue-action@v4"
+              with:
+                  IDENTIFIERS: |
+                      [
+                          { "name": "TODO", "labels": ["todo"] },
+                          { "name": "REFACTOR", "labels": ["todo"] },
+                          { "name": "SUGGESTION", "labels": ["suggestion"] },
+                          { "name": "IMPROVEMENT", "labels": ["enhancement"] },
+                          { "name": "ENHANCEMENT", "labels": ["enhancement"] },
+                      ]

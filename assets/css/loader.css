@@ -1,0 +1,31 @@
+@media only screen {
+	/* Loading animation for xamu
+	 * Requires the ".is--loaded" class to be injected in the body via js to be finished
+	 */
+	body {
+		background-color: #fff;
+	}
+	body:not(.is--loaded) {
+		height: 100%;
+	}
+	body::after {
+		content: "Cuna";
+		display: block;
+		top: 50%;
+		left: 50%;
+		position: fixed;
+		z-index: -1;
+		transition: all 0.3s ease;
+		font-size: 2rem;
+		color: #000;
+		transform: translate(-50%, -50%);
+	}
+	body.is--loaded::after {
+		font-size: 4rem;
+	}
+	body.is--loaded::after,
+	body:not(.is--loaded) > * {
+		opacity: 0;
+		pointer-events: none;
+	}
+}
