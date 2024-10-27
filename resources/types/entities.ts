@@ -65,11 +65,37 @@ export interface Instance extends SharedDocument, FromData<InstanceData> {}
 export interface Teacher extends SharedDocument, FromData<TeacherData> {}
 
 /**
+ * This one goes to the database
+ *
+ * Omit automation
+ */
+export interface TeacherRef extends GetRef<Teacher> {}
+
+/**
  * SIA Group
  */
 export interface Group extends SharedDocument, FromData<GroupData> {}
 
 /**
+ * This one goes to the database
+ *
+ * Omit automation
+ */
+export interface GroupRef extends GetRef<Omit<Group, "course" | "teacher">> {
+	courseRef: DocumentReference;
+	teacherRef: DocumentReference;
+}
+
+/**
  * SIA Course
  */
 export interface Course extends SharedDocument, FromData<CourseData> {}
+
+/**
+ * This one goes to the database
+ *
+ * Omit automation
+ */
+export interface CourseRef extends GetRef<Omit<Course, "groups">> {
+	groupsRefs: DocumentReference[];
+}

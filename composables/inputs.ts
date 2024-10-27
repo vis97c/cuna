@@ -11,11 +11,21 @@ export function useCourseInputs(
 ): FormInput[] {
 	return [
 		new FormInput({
+			values: [course?.program || eSIAScienceProgram.CC],
+			name: "program",
+			required: true,
+			title: "Programa del curso (Ciencias, Sede Bogotá)",
+			placeholder: "Ej: Ciencias de la computación",
+			options: options?.programs,
+			type: eFormType.SELECT_FILTER,
+			icon: "chess-rook",
+		}),
+		new FormInput({
 			values: [course?.name || ""],
 			name: "name",
 			title: "Nombre del curso",
 			placeholder: "Ej: Sistemas numéricos",
-			icon: "chess-pawn",
+			icon: "chess-knight",
 		}),
 		new FormInput({
 			values: [course?.code || ""],
@@ -23,15 +33,6 @@ export function useCourseInputs(
 			title: "Codigo del curso",
 			placeholder: "Ej: 2015181",
 			icon: "hashtag",
-		}),
-		new FormInput({
-			values: [course?.program || eSIAScienceProgram.CC],
-			name: "program",
-			required: true,
-			title: "Programa del curso",
-			placeholder: "Ej: Ciencias de la computación",
-			options: options?.programs,
-			type: eFormType.SELECT_FILTER,
 		}),
 	];
 }

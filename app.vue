@@ -8,9 +8,6 @@
 </template>
 
 <script setup lang="ts">
-	import type { tThemeTuple } from "@open-xamu-co/ui-common-types";
-	import { eColors } from "@open-xamu-co/ui-common-enums";
-
 	const APP = useAppStore();
 	const route = useRoute();
 	const { indexable } = useRuntimeConfig().public;
