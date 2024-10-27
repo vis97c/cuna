@@ -1,5 +1,5 @@
 import type { FirebaseOptions } from "firebase/app";
-import { defineInt, defineString, defineBoolean } from "firebase-functions/params";
+import { defineString, defineBoolean } from "firebase-functions/params";
 import { cert } from "firebase-admin/app";
 
 const environment = defineString("NODE_ENV", { default: "development" });

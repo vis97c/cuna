@@ -2,9 +2,9 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  	function isAuth() {
-    	return request.auth != null && request.auth.uid != null;
-    }
+  	// function isAuth() {
+    // 	return request.auth != null && request.auth.uid != null;
+    // }
     
     // rol 3: Visitante/comprador/No registrado (Acceso basico)
     // rol 2: Moderador (30% acceso)
@@ -39,9 +39,9 @@ service cloud.firestore {
     	return request.auth.uid == uid;
     }
     
-    function isAuthor() {
-    	return request.auth.uid == resource.data.createdByRef.uid;
-    }
+    // function isAuthor() {
+    // 	return request.auth.uid == resource.data.createdByRef.uid;
+    // }
     
     match /{document=**} {
     	// deshabilita el acceso por defecto

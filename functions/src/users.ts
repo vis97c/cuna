@@ -30,8 +30,9 @@ export const onUpdatedUser = onUpdated("users");
  * @event created
  */
 export const onCreatedAuth = beforeUserCreated({ region: "us-east1" }, ({ data }) => {
-	const { uid, email, displayName, photoURL } = data;
+	if (!data) return;
 
+	const { uid, email, displayName, photoURL } = data;
 	const userRef = functionsFirestore.collection("users").doc(uid);
 
 	userRef.set({ uid, email, name: displayName, role: 3, photoURL }, { merge: true });
