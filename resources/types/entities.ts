@@ -1,6 +1,13 @@
 import { DocumentReference, Timestamp } from "firebase/firestore";
 
-import type { FirebaseData, InstanceData, UserData } from "~/functions/src/types/entities";
+import type {
+	CourseData,
+	FirebaseData,
+	GroupData,
+	InstanceData,
+	TeacherData,
+	UserData,
+} from "~/functions/src/types/entities";
 
 export interface FirebaseDocument {
 	/** @automated Document path */
@@ -51,3 +58,18 @@ export interface User extends FirebaseDocument, FromData<UserData> {}
  * App instance
  */
 export interface Instance extends SharedDocument, FromData<InstanceData> {}
+
+/**
+ * SIA Teacher
+ */
+export interface Teacher extends SharedDocument, FromData<TeacherData> {}
+
+/**
+ * SIA Group
+ */
+export interface Group extends SharedDocument, FromData<GroupData> {}
+
+/**
+ * SIA Course
+ */
+export interface Course extends SharedDocument, FromData<CourseData> {}
