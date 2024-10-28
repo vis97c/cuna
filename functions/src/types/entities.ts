@@ -40,38 +40,43 @@ export interface InstanceData extends FirebaseData {
 	twitterId?: string;
 	instagramId?: string;
 	facebookId?: string;
+	// api, flexible if endpoints do change
+	siaUrl?: string;
+	coursesPath?: string;
 }
 
 export interface TeacherData extends FirebaseData {
 	name?: string;
+	coursesRefs?: DocumentReference<CourseData>[];
+	/** @search */
+	indexes?: string[];
 }
 
 /**
  * Interface representing a SIA Group data.
  */
-export interface GroupData extends FirebaseData {
+export interface GroupData {
 	/** Unique SIA id */
-	SIA: number;
-	courseRef: DocumentReference<CourseData>;
-	name: string;
+	SIA?: number;
+	name?: string;
 	/** Total number of available spots. */
-	spots: number;
+	spots?: number;
 	/** Schedule for each day of the week */
-	schedule: [string?, string?, string?, string?, string?, string?, string?];
-	teacherRef: DocumentReference<TeacherData>;
+	schedule?: [string?, string?, string?, string?, string?, string?, string?];
+	teacher?: string;
 	/**
 	 * Activity name.
 	 * @example "CLASE TEORICA 2015162 (2015162)"
 	 */
-	activity: string;
-	programs: uSIAProgram[];
-	availableSpots: number;
-	classroom: string;
+	activity?: string;
+	programs?: uSIAProgram[];
+	availableSpots?: number;
+	classroom?: string;
 	/**
 	 * Period.
 	 * @example "07/10/24-03/02/25"
 	 */
-	period: string;
+	period?: string;
 }
 
 /**
@@ -81,6 +86,9 @@ export interface CourseData extends FirebaseData {
 	/** Unique SIA id */
 	SIA?: number;
 	name?: string;
+	/**
+	 * Used as firebase id
+	 */
 	code?: string;
 	credits?: number;
 	typology?: eSIATypology;
@@ -88,5 +96,7 @@ export interface CourseData extends FirebaseData {
 	place?: eSIAPlace;
 	faculty?: uSIAFaculty;
 	program?: uSIAProgram;
-	groupsRefs?: DocumentReference<GroupData>[];
+	groups?: GroupData[];
+	/** @search */
+	indexes?: string[];
 }

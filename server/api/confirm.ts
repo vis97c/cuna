@@ -1,4 +1,4 @@
-import { defineConditionallyCachedEventHandler } from "../utils/nuxt";
+import { defineConditionallyCachedEventHandler } from "~/server/utils/nuxt";
 
 /**
  * Get purchase confirmation

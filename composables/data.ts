@@ -1,11 +1,5 @@
-import { ePossibleVariantType } from "~/functions/src/types/entities";
-import type {
-	ProductVariant,
-	Product,
-	User,
-	Category,
-	PossibleVariant,
-} from "~/resources/types/entities";
+import type { SIACourse, SIAGroup, uSIAProgram } from "~/functions/src/types/SIA";
+import type { Course, Group, User } from "~/resources/types/entities";
 
 export function useImagePath(
 	path?: string,
@@ -27,4 +21,46 @@ export function useMapUser({ role = 3, ...user }: User) {
 	else if (role < 3) roleName = "Moderador";
 
 	return { ...user, role: roleName };
+}
+
+export function useMapGroupFromSia(source: SIAGroup): Group {
+	const programs = <uSIAProgram[]>(
+		source.PLANES_ASOCIADOS.split("*** Plan:").map(String.prototype.trim)
+	);
+
+	return {
+		SIA: source.ID,
+		name: source.GRUPO,
+		spots: source.CUPOS,
+		schedule: [
+			source.HORARIO_LUNES,
+			source.HORARIO_LUNES,
+			source.HORARIO_LUNES,
+			source.HORARIO_LUNES,
+			source.HORARIO_LUNES,
+			source.HORARIO_LUNES,
+			source.HORARIO_LUNES,
+		],
+		teacher: source.DOCENTE,
+		activity: source.ACTIVIDAD,
+		programs,
+		availableSpots: source.CUPOS_DISPONIBLES,
+		classroom: source.AULA,
+		period: source.PERIODO,
+	};
+}
+
+export function useMapCourseFromSia(source: SIACourse): Course {
+	return {
+		SIA: source.IDBUSCADORCURSO,
+		name: source.NOMBREASIGNATURA,
+		code: source.CODIGO_ASIGNATURA,
+		credits: source.NUM_CREDITOS,
+		typology: source.TIPOLOGIA,
+		level: source.NIVELDEESTUDIO,
+		place: source.SEDE,
+		faculty: source.FACULTAD,
+		program: source.PLANDEESTUDIO,
+		groups: source.DETALLECURSOASIGNATURA.map(useMapGroupFromSia),
+	};
 }

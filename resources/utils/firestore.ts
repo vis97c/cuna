@@ -1,5 +1,8 @@
+import { deburr } from "lodash-es";
+
 import type { FirebaseDocument } from "../types/entities";
 import type { PseudoNode } from "../types/firestore";
+import { isNotUndefString } from "./guards";
 
 /** Timestamp breaks nuxt */
 export function resolveSnapshotDefaults<T extends PseudoNode>(
@@ -21,4 +24,33 @@ export function getDocumentId(path?: string): string {
 	if (index >= 0) return path?.substring(index + 1);
 
 	return path;
+}
+
+/**
+ * Custom firebase indexing
+ *
+ * Implementation details
+ * @see https://levelup.gitconnected.com/firestore-full-text-search-at-no-extra-cost-ee148856685
+ *
+ * Firebase compound queries limitations
+ * @see https://firebase.google.com/docs/firestore/query-data/queries?hl=es-419#limitations_2
+ */
+export function triGram(strings: (string | undefined)[]) {
+	const string = strings
+		.filter(isNotUndefString)
+		.map(deburr)
+		.join(" ")
+		.slice(0, 500)
+		.toLowerCase();
+	const indexes = [];
+	const n = 3; // 3 letters words
+
+	for (let k = 0; k <= string.length - n; k++) {
+		// Firebase limitations
+		if (indexes.length >= 30) break;
+
+		indexes.push(string.substring(k, k + n));
+	}
+
+	return indexes;
 }

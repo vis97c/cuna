@@ -1,4 +1,4 @@
-import { eSIALevel, eSIAPlace, eSIATypology, uSIAFaculty, uSIAProgram } from "./enums";
+import type { eSIALevel, eSIAPlace, eSIATypology, uSIAFaculty, uSIAProgram } from "./enums";
 
 /**
  * Interface representing a SIA Faculty data.

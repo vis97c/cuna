@@ -36,10 +36,6 @@ export default defineNuxtPlugin(() => {
 		APP.setInstance(resolveSnapshotDefaults(snapshot.id, snapshot.data()));
 	});
 	onAuthStateChanged(auth, async (user) => {
-		const router = useRouter();
-		const { restricted } = router.currentRoute.value.query;
-		const rdr = restricted && typeof restricted === "string" ? decodeURI(restricted) : "/";
-
 		if (!user) return SESSION.unsetSession();
 
 		const { uid, displayName, email, photoURL, emailVerified, isAnonymous } = user;
@@ -59,6 +55,11 @@ export default defineNuxtPlugin(() => {
 				token
 			);
 
+			const router = useRouter();
+			const { restricted } = router.currentRoute.value.query;
+			const rdr = restricted && typeof restricted === "string" ? decodeURI(restricted) : "/";
+
+			// redirect fir
 			if (restricted) router.push(rdr);
 		}
 	});

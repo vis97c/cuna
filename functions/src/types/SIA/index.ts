@@ -1,5 +1,5 @@
-import { SIACourse } from "./courses";
-import { eSIALevel, eSIAPlace, eSIATypology, uSIAFaculty, uSIAProgram } from "./enums";
+import type { SIACourse } from "./courses";
+import type { eSIALevel, eSIAPlace, eSIATypology, uSIAFaculty, uSIAProgram } from "./enums";
 
 export * from "./enums";
 export * from "./courses";

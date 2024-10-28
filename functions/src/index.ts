@@ -6,3 +6,11 @@ export * from "./users";
 // instances timestamp
 export const onCreatedInstance = onCreated("instances");
 export const onUpdatedInstance = onUpdated("instances");
+
+// courses timestamp
+export const onCreatedCourse = onCreated("courses");
+export const onUpdatedCourse = onUpdated("courses");
+
+// teachers timestamp
+export const onCreatedTeacher = onCreated("teachers");
+export const onUpdatedTeacher = onUpdated("teachers");

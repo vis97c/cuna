@@ -1,3 +1,7 @@
+export function isNotUndefString(v?: string): v is string {
+	return !!v;
+}
+
 export function isNumberOrString(v: unknown): v is number | string {
 	return ["number", "string"].includes(typeof v);
 }

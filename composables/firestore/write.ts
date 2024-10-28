@@ -18,13 +18,14 @@ export async function useDocumentCreate<
 	Vgr extends GetRef<V> = GetRef<V>,
 >(
 	collectionId: string,
-	partialRef: Vgr,
+	partialRefWithId: Vgr & { id?: string },
 	createdCallback?: (ref: DocumentReference<Vgr>) => Promise<void> | void
 ): Promise<DocumentReference<Vgr>> {
 	const SESSION = useSessionStore();
 	const { $clientFirestore } = useNuxtApp();
 	// get collection ref
 	const collectionRef = ConvertCollection<Vgr>(collection($clientFirestore, collectionId));
+	const { id, partialRef } = partialRefWithId;
 
 	if (SESSION.id) {
 		const createdByRef = doc($clientFirestore, SESSION.id);
@@ -32,7 +33,13 @@ export async function useDocumentCreate<
 		partialRef.createdByRef = partialRef.updatedByRef = createdByRef;
 	}
 
-	const createdRef = await addDoc<Vgr>(collectionRef, partialRef);
+	let createdRef: DocumentReference<Vgr>;
+
+	if (id) {
+		createdRef = doc(collectionRef, id);
+
+		await setDoc(createdRef, partialRef, { merge: true });
+	} else createdRef = await addDoc<Vgr>(collectionRef, partialRef);
 
 	try {
 		// Perform additional actions with the new document

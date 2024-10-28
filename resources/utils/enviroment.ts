@@ -9,6 +9,7 @@ export const production = environment.equals("production").value();
 export const indexable = defineBoolean("INDEXABLE").value();
 export const instance = defineString("INSTANCE").value();
 export const countriesUrl = defineString("COUNTRIES_API").value();
+export const siaUrl = defineString("SIA_API").value();
 
 // debug
 export const debugNuxt = !production && defineBoolean("DEBUG_NUXT", { default: false }).value();

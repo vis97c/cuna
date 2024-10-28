@@ -20,4 +20,8 @@
 	.layout-leave-to {
 		filter: grayscale(1);
 	}
+	p {
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
 }

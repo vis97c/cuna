@@ -53,6 +53,8 @@ export function debugFirebaseServer<T extends EventHandlerRequest>(
 /**
  * Get object from firebase node
  *
+ * Consider using it as a converter
+ *
  * @param path node firebase path
  * @param node firebase node
  * @param level get nested refs
