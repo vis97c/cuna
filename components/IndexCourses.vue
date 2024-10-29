@@ -2,6 +2,7 @@
 	<XamuLoaderContent
 		:content="!!untrackedCourses?.length || !untrackedCurrentPage"
 		:loading="loading"
+		:errors="errors"
 	>
 		<div class="flx --flxColumn --flx-start-stretch --width-100 --gap-30">
 			<form
@@ -21,7 +22,7 @@
 					/>
 				</div>
 			</form>
-			<div v-else class="flx --flxRow-wrap --flx-start --width-100 --gap-5">
+			<div v-else class="flx --flxRow-wrap --flx-start --gap-5 --width-100 --maxWidth-480">
 				<XamuBaseBox
 					v-for="course in untrackedCourses"
 					:key="course.code"
@@ -33,7 +34,7 @@
 					button
 					@click="() => (untrackedSelected = course.code)"
 				>
-					<p class="--maxWidth-220">{{ course.name }}</p>
+					<p class="--maxWidth-220 ellipsis">{{ course.name }}</p>
 					<p class="--txtSize-xs --txtWeight-regular">
 						<b title="Creditos">{{ course.credits }}</b>
 						⋅
@@ -47,17 +48,18 @@
 				<div class="flx --flxRow --flx-start-center">
 					<XamuActionButton
 						v-if="!untrackedCourses?.length"
+						ref="searchUntrackedRef"
 						@click.prevent="searchUntrackedCourse"
 					>
 						<XamuIconFa name="magnifying-glass" />
 						<span>Buscar curso</span>
 					</XamuActionButton>
 					<template v-else>
-						<XamuActionLink @click="() => (untrackedCurrentPage = undefined)">
+						<XamuActionLink @click="reset">
 							<XamuIconFa name="arrow-left" />
 							<span>Busqueda</span>
 						</XamuActionLink>
-						<XamuActionButton :disabled="!untrackedSelected">
+						<XamuActionButton :disabled="!untrackedSelected" @click="trackCourse">
 							Rastrear curso seleccionado
 						</XamuActionButton>
 					</template>
@@ -71,7 +73,6 @@
 <script setup lang="ts">
 	import { eColors } from "@open-xamu-co/ui-common-enums";
 	import type { iInvalidInput, iPageEdge, iSelectOption } from "@open-xamu-co/ui-common-types";
-	import { collection, doc, setDoc } from "firebase/firestore";
 	import { debounce } from "lodash-es";
 	import type { GroupData } from "~/functions/src/types/entities";
 
@@ -80,6 +81,7 @@
 	import { eSIAScienceProgram, type SIACoursesResponse } from "~/functions/src/types/SIA";
 	import { triGram } from "~/resources/utils/firestore";
 	import { isNotUndefString } from "~/resources/utils/guards";
+	import { arrayUnion } from "firebase/firestore";
 
 	/**
 	 * Registing unindexed courses
@@ -87,15 +89,16 @@
 	 * @component
 	 */
 
-	defineProps<{ close?: () => void }>();
+	const props = defineProps<{ close?: () => void }>();
 
 	const APP = useAppStore();
-	// const Swal = useSwal();
+	const SESSION = useSessionStore();
+	const Swal = useSwal();
 	const { utils } = useFormInput();
-	// const router = useRouter();
-	const { $clientFirestore } = useNuxtApp();
 
+	const searchUntrackedRef = ref<HTMLElement>();
 	const loading = ref(false);
+	const errors = ref();
 	const programs: iSelectOption[] = Object.values(eSIAScienceProgram).map((value) => ({ value }));
 	const untrackedInvalid = ref<iInvalidInput[]>([]);
 	/**
@@ -104,17 +107,52 @@
 	 */
 	const untrackedCourseInputs = ref(markRaw(useCourseInputs({ programs })));
 	const untrackedSelected = ref<number>();
-	const untrackedCurrentPage = ref<number>();
+	const untrackedCurrentPage = ref<SIACoursesResponse>();
 	const untrackedCourses = ref<Course[]>();
+
+	const reset = debounce((partial = true) => {
+		untrackedSelected.value = undefined;
+		untrackedCurrentPage.value = undefined;
+		untrackedInvalid.value = [];
+		untrackedCourses.value = undefined;
+
+		if (partial) return;
+
+		untrackedCourseInputs.value = useCourseInputs({ programs });
+	});
+
+	const trackCourse = debounce(async (course: Course) => {
+		SESSION.trackCourse(course);
+
+		// Notify user of the success
+		await Swal.fire({
+			title: "Curso rastreado",
+			text: `Obtendrás actualizaciones del curso ${course.name} periódicamente`,
+			icon: "success",
+			target: searchUntrackedRef.value,
+		});
+
+		// reset
+		props.close?.();
+		reset(false);
+	});
 
 	const searchUntrackedCourse = debounce(async () => {
 		loading.value = true;
+		errors.value = undefined;
 
-		const { values, invalidInputs } = utils.getFormValues<CourseValues>(
-			untrackedCourseInputs.value
-		);
+		try {
+			const { values, invalidInputs } = utils.getFormValues<CourseValues>(
+				untrackedCourseInputs.value
+			);
 
-		if (!invalidInputs.length) {
+			if (invalidInputs.length) {
+				untrackedInvalid.value = invalidInputs;
+				loading.value = false;
+
+				return;
+			}
+
 			const coursesEndpoint = `${APP.instance?.siaUrl}${APP.instance?.coursesPath}`;
 			const coursesPage = await $fetch<SIACoursesResponse>(coursesEndpoint, {
 				query: {
@@ -138,67 +176,108 @@
 
 					return true;
 				});
-			const courses = await $fetch<iPageEdge<Course, string>[]>("/api/all/users", {
-				query: { include: codes },
-			});
-			const indexedCodes = courses.map(({ node }) => node.code).filter(isNotUndefString);
-			const mappedCourses: (Course & { indexed: boolean })[] = dedupedCourses.map(
-				(course) => {
-					const indexed = !!course.code && indexedCodes.includes(course.code);
-
-					return { ...course, indexed };
-				}
-			);
 
 			// Refresh UI
-			untrackedCourses.value = mappedCourses;
+			untrackedCourses.value = dedupedCourses;
+			untrackedCurrentPage.value = coursesPage;
 
-			// a map indexing the courses
-			const resolveCoursesRefs = mappedCourses.map(
-				async ({ indexed, groups: ogGroups = [], createdAt, updatedAt, ...course }) => {
-					// index teachers conditionally
-					const groups = await Promise.all(ogGroups.map(indexTeacher));
+			// Index course, do not await
+			indexCourses(dedupedCourses, coursesPage);
+		} catch (err) {
+			console.error(err);
+			errors.value = err;
 
-					// update groups if already indexed
-					if (indexed) {
-						const coursesCollection = collection($clientFirestore, "courses");
-						const existingCourseRef = doc(coursesCollection, course?.code);
-
-						return setDoc(existingCourseRef, { groups }, { merge: true });
-					}
-
-					return useDocumentCreate<CourseRef>("courses", {
-						...course,
-						groups,
-						id: course.code,
-						indexes: triGram([course.name]),
-					});
-				}
-			);
-
-			// Index courses, do not await
-			Promise.all(resolveCoursesRefs);
-		} else {
-			untrackedInvalid.value = invalidInputs;
+			Swal.fire({
+				title: "Error de busqueda",
+				text: "Ha ocurrido un error al buscar el curso",
+				icon: "error",
+				target: searchUntrackedRef.value,
+			});
 		}
 
 		loading.value = false;
 	});
 
-	async function indexTeacher({ teacher, ...group }: GroupData = {}): Promise<GroupData> {
-		// search for existing teacher
-		const [teacherEdge] = await $fetch<[iPageEdge<Teacher, string>?]>("/api/teachers/search", {
-			query: { name: teacher },
-		});
+	async function indexCourses(courses: Course[], page: SIACoursesResponse) {
+		try {
+			const codes = courses.map(({ code }) => code).filter(isNotUndefString);
 
-		if (!teacherEdge?.node.id) {
-			// create a new teacher
-			await useDocumentCreate<TeacherRef>("teachers", {
-				name: teacher,
-				indexes: triGram([teacher]),
+			// Get firebase data, do not await
+			const [indexedCourses, teacherEdges] = await Promise.all([
+				$fetch<iPageEdge<Course, string>[]>("/api/all/courses", {
+					query: { include: codes },
+				}),
+				$fetch<iPageEdge<Teacher, string>[]>("/api/teachers/search", {
+					query: { courses: codes },
+				}),
+			]);
+
+			const teachers = teacherEdges.map(({ node }) => node);
+			const indexedCodes = indexedCourses
+				.map(({ node }) => node.code)
+				.filter(isNotUndefString);
+			const mappedCourses: (Course & { indexed: boolean })[] = courses.map((course) => {
+				const indexed = !!course.code && indexedCodes.includes(course.code);
+
+				return { ...course, id: `courses/${course?.code}`, indexed };
+			});
+
+			// Conditionally Refresh UI again, 2nd time
+			if (untrackedCurrentPage.value?.currentPage === page.currentPage) {
+				untrackedCourses.value = mappedCourses;
+			}
+
+			// a map indexing the courses
+			const resolveCoursesRefs = mappedCourses.map(
+				async ({ indexed, groups = [], createdAt, updatedAt, ...course }) => {
+					// index teachers conditionally
+					groups.forEach(({ teacher }: GroupData = {}) => {
+						const path = `teachers/${useCyrb53(teacher)}`;
+						// search for existing teacher
+						const existingTeacher = teachers.find(({ id }) => id === path);
+						const teacherCourses = existingTeacher?.courses || [];
+
+						// omit if already included
+						if (!course.code || teacherCourses.includes(course.code)) return;
+
+						// creates or updates teacher
+						return useDocumentCreate<TeacherRef>("teachers", {
+							id: path,
+							name: teacher,
+							indexes: triGram([teacher]),
+							courses: arrayUnion(course.code),
+						});
+					});
+
+					// update groups if already indexed
+					if (indexed) return useDocumentUpdate(course, { groups });
+
+					return useDocumentCreate<CourseRef>("courses", {
+						...course,
+						groups,
+						indexes: triGram([course.name]),
+					});
+				}
+			);
+
+			await Promise.all(resolveCoursesRefs); // Index courses
+
+			// Conditionally Refresh UI again, 3rd time
+			if (untrackedCurrentPage.value?.currentPage === page.currentPage) {
+				untrackedCourses.value = mappedCourses.map((course) => {
+					return { ...course, indexed: true };
+				});
+			}
+		} catch (err) {
+			console.error(err);
+			errors.value = err;
+
+			Swal.fire({
+				title: "Error de indexado",
+				text: "Ha ocurrido un error al indexar los cursos",
+				icon: "error",
+				target: searchUntrackedRef.value,
 			});
 		}
-
-		return { ...group, teacher };
 	}
 </script>

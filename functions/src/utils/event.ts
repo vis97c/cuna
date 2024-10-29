@@ -14,7 +14,9 @@ import type { FirebaseData } from "../types/entities";
  */
 export function onCreated<T extends FirebaseData>(
 	collectionId: string,
-	callback?: (newDoc: QueryDocumentSnapshot<T>) => Promise<Partial<T> | undefined | void>,
+	callback?: (
+		newDoc: QueryDocumentSnapshot<T>
+	) => Partial<T> | undefined | void | Promise<Partial<T> | undefined | void>,
 	overrides: Partial<T> = {}
 ) {
 	return onDocumentCreated(
@@ -51,7 +53,7 @@ export function onUpdated<T extends FirebaseData>(
 	callback?: (
 		newDoc: QueryDocumentSnapshot<T>,
 		oldDoc: QueryDocumentSnapshot<T>
-	) => Promise<Partial<T> | undefined | void>,
+	) => Partial<T> | undefined | void | Promise<Partial<T> | undefined | void>,
 	overrides: Partial<T> = {}
 ) {
 	return onDocumentUpdated(

@@ -24,9 +24,7 @@ export function useMapUser({ role = 3, ...user }: User) {
 }
 
 export function useMapGroupFromSia(source: SIAGroup): Group {
-	const programs = <uSIAProgram[]>(
-		source.PLANES_ASOCIADOS.split("*** Plan:").map(String.prototype.trim)
-	);
+	const programs = <uSIAProgram[]>source.PLANES_ASOCIADOS.split("*** Plan:").map((p) => p.trim());
 
 	return {
 		SIA: source.ID,

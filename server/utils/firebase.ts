@@ -223,8 +223,8 @@ export async function getEdgesPage<T extends EventHandlerRequest>(
 	 * The number zero could be a cursor, validate against undefined
 	 */
 	const at = isNumberOrString(params.at) ? params.at : undefined;
-	const aggregatorRef = query.count(); // Count all items in collection
-	const aggregatorSnapshot = await aggregatorRef.get();
+	// Count all items in collection
+	const aggregatorSnapshot = await query.count().get();
 	const count = aggregatorSnapshot.data().count;
 	const first = isNumberOrString(params.first) ? Number(params.first) : Math.min(10, count); // Page limit
 	const page: iPage<DocumentData, string> = {

@@ -10,6 +10,7 @@ import {
 } from "firebase/firestore";
 
 import type { SharedDocument, GetRef } from "~/resources/types/entities";
+import { getDocumentId } from "~/resources/utils/firestore";
 import { ConvertCollection, ConvertDocument, TimedPromise } from "./utils";
 
 /** Creates document with the given values */
@@ -18,14 +19,14 @@ export async function useDocumentCreate<
 	Vgr extends GetRef<V> = GetRef<V>,
 >(
 	collectionId: string,
-	partialRefWithId: Vgr & { id?: string },
+	{ id, ...middleRef }: Vgr & { id?: string },
 	createdCallback?: (ref: DocumentReference<Vgr>) => Promise<void> | void
 ): Promise<DocumentReference<Vgr>> {
 	const SESSION = useSessionStore();
 	const { $clientFirestore } = useNuxtApp();
 	// get collection ref
 	const collectionRef = ConvertCollection<Vgr>(collection($clientFirestore, collectionId));
-	const { id, partialRef } = partialRefWithId;
+	const partialRef = <Vgr>middleRef;
 
 	if (SESSION.id) {
 		const createdByRef = doc($clientFirestore, SESSION.id);
@@ -36,7 +37,7 @@ export async function useDocumentCreate<
 	let createdRef: DocumentReference<Vgr>;
 
 	if (id) {
-		createdRef = doc(collectionRef, id);
+		createdRef = doc(collectionRef, getDocumentId(id));
 
 		await setDoc(createdRef, partialRef, { merge: true });
 	} else createdRef = await addDoc<Vgr>(collectionRef, partialRef);

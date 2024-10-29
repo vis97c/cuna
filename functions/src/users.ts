@@ -1,6 +1,6 @@
 import { region } from "firebase-functions/v1";
 
-import { beforeUserCreated } from "firebase-functions/v2/identity";
+import { beforeUserCreated, HttpsError } from "firebase-functions/v2/identity";
 
 import { functionsFirestore } from "./utils/initialize";
 import { onCreated, onUpdated } from "./utils/event";
@@ -30,7 +30,9 @@ export const onUpdatedUser = onUpdated("users");
  * @event created
  */
 export const onCreatedAuth = beforeUserCreated({ region: "us-east1" }, ({ data }) => {
-	if (!data) return;
+	if (!data || !data.email?.includes("@unal.edu.co")) {
+		throw new HttpsError("invalid-argument", "Unauthorized email");
+	}
 
 	const { uid, email, displayName, photoURL } = data;
 	const userRef = functionsFirestore.collection("users").doc(uid);

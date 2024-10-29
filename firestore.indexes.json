@@ -1,11 +1,15 @@
 {
   "indexes": [
     {
-      "collectionGroup": "categories",
+      "collectionGroup": "courses",
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "visibleProducts",
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "indexes",
           "order": "ASCENDING"
         },
         {
@@ -15,90 +19,12 @@
       ]
     },
     {
-      "collectionGroup": "products",
+      "collectionGroup": "teachers",
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "visible",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "products",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "visible",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "variants",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "variants",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "amount",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "variants",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "productRef",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "amount",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "variants",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "productRef",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "variants",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "uid",
-          "order": "ASCENDING"
+          "fieldPath": "courses",
+          "arrayConfig": "CONTAINS"
         },
         {
           "fieldPath": "createdAt",

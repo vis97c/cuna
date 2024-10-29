@@ -1,4 +1,4 @@
-import type { DocumentReference, Timestamp } from "firebase-admin/firestore";
+import type { Timestamp } from "firebase-admin/firestore";
 
 import { eSIATypology, eSIALevel, eSIAPlace, uSIAFaculty, uSIAProgram } from "./SIA";
 
@@ -47,7 +47,7 @@ export interface InstanceData extends FirebaseData {
 
 export interface TeacherData extends FirebaseData {
 	name?: string;
-	coursesRefs?: DocumentReference<CourseData>[];
+	courses?: string[];
 	/** @search */
 	indexes?: string[];
 }
@@ -99,4 +99,6 @@ export interface CourseData extends FirebaseData {
 	groups?: GroupData[];
 	/** @search */
 	indexes?: string[];
+	/** @automation */
+	groupCount?: number;
 }

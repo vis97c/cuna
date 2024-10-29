@@ -1,20 +1,10 @@
 <template>
-	<div id="courses" class="view">
-		<section class="view-item --minHeightVh-100">
-			<div class="holder flx --flxColumn --flx-center">
-				<div class="--txtAlign-center">
-					<h1 class="--txtSize-mx:md">
-						<b>Curso</b>
-					</h1>
-				</div>
-			</div>
-		</section>
-	</div>
+	<div id="courses" key="courses" class="x-course">Aqui va tu curso</div>
 </template>
 
 <script setup lang="ts">
 	/**
-	 * Landing page
+	 * Course page
 	 *
 	 * @page
 	 */

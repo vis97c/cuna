@@ -14,6 +14,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 	try {
 		const params = getQuery(event);
 		const name: string = Array.isArray(params.name) ? params.name[0] : params.name;
+		const courses = Array.isArray(params.courses) ? params.courses : [params.courses];
 		const page = getBoolean(params.page);
 		let query: CollectionReference | Query = apiFirestore.collection("teachers");
 
@@ -23,7 +24,9 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			// search by name
 			const indexes = triGram([name]);
 
-			query = query.orderBy("name").where("name", "array-contains-any", indexes);
+			query = query.orderBy("indexes").where("indexes", "array-contains-any", indexes);
+		} else if (courses.length) {
+			query = query.where("courses", "array-contains-any", courses);
 		} else return null;
 
 		// order at last

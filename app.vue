@@ -19,7 +19,9 @@
 					<section class="view-item --minHeightVh-100 --pY-30">
 						<div class="holder flx --flxColumn --flx-center --gap-30">
 							<div class="txt --txtAlign-center --gap-0">
-								<h1 class="--txtSize-mx:md --txtLineHeight-sm">Cuna</h1>
+								<NuxtLink to="/">
+									<h1 class="--txtSize-mx:md --txtLineHeight-sm">Cuna</h1>
+								</NuxtLink>
 								<div class="flx --flxRow --flx-center --gap-5">
 									<p class="--txtSize-sm --txtColor-dark5">
 										Visor de cursos UNAL

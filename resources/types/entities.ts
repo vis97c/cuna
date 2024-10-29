@@ -68,9 +68,7 @@ export interface Teacher extends SharedDocument, FromData<TeacherData> {}
  *
  * Omit automation
  */
-export interface TeacherRef extends Omit<GetRef<Teacher>, "courses"> {
-	coursesRefs: DocumentReference[];
-}
+export interface TeacherRef extends GetRef<Teacher> {}
 
 /**
  * SIA Group

@@ -199,7 +199,7 @@ export interface SIACourse {
 	 * Study plan.
 	 * @example "2933 CIENCIAS DE LA COMPUTACIÓN"
 	 */
-	PLANDEESTUDIO: uSIAProgram;
+	PLANDEESTUDIO?: uSIAProgram;
 	/**
 	 * Course type.
 	 * @example "B FUND. OBLIGATORIA"

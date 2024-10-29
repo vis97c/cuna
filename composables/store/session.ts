@@ -1,13 +1,16 @@
 import { defineStore } from "pinia";
 import { getAuth } from "firebase/auth";
 
-import type { BagProductVariant, ProductVariant, User } from "~/resources/types/entities";
-import type { iPageEdge } from "@open-xamu-co/ui-common-types";
+import type { Course, User } from "~/resources/types/entities";
 
 export interface iStateSession {
 	user?: User;
 	token?: string;
 	expiredToken: boolean;
+	/**
+	 * Courses to track (code)
+	 */
+	track: string[];
 }
 
 /**
@@ -24,6 +27,7 @@ export const useSessionStore = defineStore("session", {
 			user: undefined,
 			token: undefined,
 			expiredToken: false,
+			track: [],
 		};
 	},
 	getters: {
@@ -77,6 +81,16 @@ export const useSessionStore = defineStore("session", {
 				await getAuth($clientFirebaseApp).signOut();
 				window.location.href = "/"; // rdr & reload page
 			}
+		},
+		trackCourse(course: Course) {
+			if (!course.code || this.track.includes(course.code)) return;
+
+			this.track.push(course.code);
+		},
+		untrackCourse(course: Course) {
+			if (!course.code || !this.track.includes(course.code)) return;
+
+			this.track = this.track.filter((code) => code !== course.code);
 		},
 	},
 });
