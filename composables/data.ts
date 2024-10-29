@@ -24,7 +24,9 @@ export function useMapUser({ role = 3, ...user }: User) {
 }
 
 export function useMapGroupFromSia(source: SIAGroup): Group {
-	const programs = <uSIAProgram[]>source.PLANES_ASOCIADOS.split("*** Plan:").map((p) => p.trim());
+	const programs = <uSIAProgram[]>source.PLANES_ASOCIADOS.split("*** Plan:")
+		.map((p) => p.trim())
+		.filter((p) => !!p);
 
 	return {
 		SIA: source.ID,
@@ -39,11 +41,11 @@ export function useMapGroupFromSia(source: SIAGroup): Group {
 			source.HORARIO_LUNES,
 			source.HORARIO_LUNES,
 		],
-		teacher: source.DOCENTE,
+		teachers: [source.DOCENTE],
 		activity: source.ACTIVIDAD,
 		programs,
 		availableSpots: source.CUPOS_DISPONIBLES,
-		classroom: source.AULA,
+		classrooms: [source.AULA],
 		period: source.PERIODO,
 	};
 }

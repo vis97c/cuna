@@ -1,4 +1,5 @@
 import { isEqual } from "lodash-es";
+import { isNotUndefString } from "~/resources/utils/guards";
 
 export function valuesAreEqual<V extends Record<string, any>>(
 	values: V,
@@ -14,7 +15,8 @@ export function valuesAreEqual<V extends Record<string, any>>(
  *
  * @see https://stackoverflow.com/a/52171480
  */
-export const useCyrb53 = (str = "", seed = 0) => {
+export const useCyrb53 = (strs: (string | undefined)[] = [""], seed = 0) => {
+	const str = strs.filter(isNotUndefString).join("");
 	let h1 = 0xdeadbeef ^ seed,
 		h2 = 0x41c6ce57 ^ seed;
 

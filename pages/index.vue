@@ -9,14 +9,64 @@
 		invert-theme
 	>
 		<template #toggle="{ toggleModal }">
-			<XamuBaseBox transparent class="x-box flx --flxColumn --flx-start-stretch --p-20">
-				<XamuInputText
-					v-model="search"
-					placeholder="Nombre o codigo del curso..."
-					icon="magnifying-glass"
-					:size="eSizes.LG"
-					class="--minWidth-100"
-				/>
+			<XamuBaseBox class="x-box flx --flxColumn --flx-start-stretch --p-20" transparent>
+				<div class="--width">
+					<XamuInputText
+						v-model="search"
+						placeholder="Nombre o codigo del curso..."
+						icon="magnifying-glass"
+						:size="eSizes.LG"
+						class="--minWidth-100"
+					/>
+					<XamuActionLink
+						v-if="search"
+						class="x-search-reset"
+						@click="() => (search = '')"
+					>
+						<XamuIconFa name="xmark" :size="20" />
+					</XamuActionLink>
+				</div>
+				<div
+					v-if="search && search.length >= 3"
+					class="flx --flxColumn --flx-start-center --gap-5 --txtSize-xs"
+				>
+					<div
+						v-if="!isCodeSearch"
+						class="flx --flxRow --flx-start-center --gap-5 --width-100"
+					>
+						<div class="flx --flxColumn --flx-start --gap-5 --width-100">
+							<p class="">Facultad</p>
+							<XamuSelectFilter
+								id="faculty"
+								v-model="selectedFaculty"
+								class="--width-180 --minWidth-100"
+								:options="faculties"
+								:size="eSizes.XS"
+							/>
+						</div>
+						<div class="flx --flxColumn --flx-start --gap-5 --width-100">
+							<p class="">Programa</p>
+							<XamuSelectFilter
+								id="program"
+								v-model="selectedProgram"
+								class="--width-180 --minWidth-100"
+								:options="programs"
+								:size="eSizes.XS"
+								:disabled="!selectedFaculty || !programs.length"
+							/>
+						</div>
+					</div>
+					<div class="flx --flxColumn --flx-start --gap-5 --width-100">
+						<p class="">Tipología</p>
+						<XamuSelectFilter
+							id="typology"
+							v-model="selectedTypology"
+							class="--width-180 --minWidth-100"
+							:options="typologies"
+							:size="eSizes.XS"
+						/>
+					</div>
+				</div>
 				<XamuLoaderContent
 					v-if="search"
 					class="flx --flxColumn --flx-start-center --width-100"
@@ -68,7 +118,7 @@
 						v-else-if="search.length >= 3 && !loading"
 						class="--txtSize-xs --txtColor-dark5"
 					>
-						La busqueda no coincide con ningun curso registrado
+						<b>La busqueda no coincide con ningun curso registrado</b>
 					</p>
 					<div class="txt --txtAlign-center --gap-0 --width-100">
 						<p class="--txtSize-xs --txtColor-dark5">¿No encuentras tu curso?</p>
@@ -85,9 +135,18 @@
 
 <script setup lang="ts">
 	import { eSizes } from "@open-xamu-co/ui-common-enums";
-	import type { iPageEdge } from "@open-xamu-co/ui-common-types";
+	import type { iPage } from "@open-xamu-co/ui-common-types";
 
+	import { eSIALevel, eSIAPlace } from "~/functions/src/types/SIA";
 	import type { Course } from "~/resources/types/entities";
+
+	interface SearchCoursesPayload {
+		code?: string;
+		name?: string;
+		faculty?: string;
+		program?: string;
+		typology?: string;
+	}
 
 	/**
 	 * Landing page
@@ -102,14 +161,23 @@
 	});
 
 	const router = useRouter();
+	const { selectedFaculty, selectedProgram, faculties, programs } = useCourseProgramOptions([
+		eSIALevel.PREGRADO,
+		eSIAPlace.BOGOTÁ,
+	]);
+	const { selectedTypology, typologies } = useCourseTypeOptions();
 
 	const search = ref<string>();
 	const matches = ref<Course[]>([]);
 	const loading = ref(false);
 	const errors = ref();
 
-	async function fetchCourses(query: { code?: string; name?: string }) {
-		const edges = await $fetch<iPageEdge<Course, string>[]>("/api/courses/search", { query });
+	const isCodeSearch = computed<boolean>(() => !!search.value && /^\d/.test(search.value));
+
+	async function fetchCourses(query: SearchCoursesPayload) {
+		const { edges } = await $fetch<iPage<Course, string>>("/api/courses/search", {
+			query: { ...query, first: 30, page: true },
+		});
 
 		return edges.map(({ node }) => {
 			return {
@@ -124,15 +192,15 @@
 	}
 
 	watch(
-		search,
-		async (newSearch) => {
+		[search, selectedFaculty, selectedProgram, selectedTypology],
+		async ([newSearch, faculty, program, typology]) => {
 			try {
 				if (!newSearch || newSearch.length < 3) return;
 
 				loading.value = true;
 				errors.value = undefined;
 
-				const payload: { code?: string; name?: string } = {};
+				const payload: SearchCoursesPayload = { faculty, program, typology };
 
 				// Search by course name or code
 				if (/^\d/.test(newSearch)) payload.code = newSearch;
@@ -157,6 +225,13 @@
 	@media only screen {
 		.x-box {
 			border-radius: 2rem;
+		}
+		.x-search-reset {
+			position: absolute;
+			top: 50%;
+			right: 1rem;
+			transform: translateY(-50%);
+			z-index: 1;
 		}
 	}
 </style>

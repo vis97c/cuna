@@ -12,23 +12,32 @@ import { triGram } from "~/resources/utils/firestore";
  */
 export default defineConditionallyCachedEventHandler(async (event) => {
 	try {
-		const params = getQuery(event);
-		const name: string = Array.isArray(params.name) ? params.name[0] : params.name;
-		const code: string = Array.isArray(params.code) ? params.code[0] : params.code;
-		const page = getBoolean(params.page);
+		let { name, code, faculty, program, typology, page } = getQuery(event);
+
+		name = Array.isArray(name) ? name[0] : name;
+		code = Array.isArray(code) ? code[0] : code;
+		faculty = Array.isArray(faculty) ? faculty[0] : faculty;
+		program = Array.isArray(program) ? program[0] : program;
+		typology = Array.isArray(typology) ? typology[0] : typology;
+		page = getBoolean(page);
+
 		let query: CollectionReference | Query = apiFirestore.collection("courses");
 
-		debugFirebaseServer(event, "api:courses", params);
+		debugFirebaseServer(event, "api:courses", { name, code, faculty, typology, page });
 
-		if (name) {
-			// search by name
+		// where code equals
+		if (code) query = query.where("code", "==", code);
+		else if (name && typeof name === "string") {
+			if (faculty) query = query.where("faculty", "==", faculty); // where faculty equals
+			if (program) query = query.where("program", "==", program); // where program equals
+
+			// search by name instead
 			const indexes = triGram([name]);
 
 			query = query.orderBy("indexes").where("indexes", "array-contains-any", indexes);
-		} else if (code) {
-			// search by code
-			query = query.where("code", "==", code);
 		} else return null;
+
+		if (typology) query = query.where("typology", "==", typology); // where typology equals
 
 		// order at last
 		query = getOrderedQuery(event, query);

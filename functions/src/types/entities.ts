@@ -63,7 +63,7 @@ export interface GroupData {
 	spots?: number;
 	/** Schedule for each day of the week */
 	schedule?: [string?, string?, string?, string?, string?, string?, string?];
-	teacher?: string;
+	teachers?: string[];
 	/**
 	 * Activity name.
 	 * @example "CLASE TEORICA 2015162 (2015162)"
@@ -71,7 +71,7 @@ export interface GroupData {
 	activity?: string;
 	programs?: uSIAProgram[];
 	availableSpots?: number;
-	classroom?: string;
+	classrooms?: string[];
 	/**
 	 * Period.
 	 * @example "07/10/24-03/02/25"
@@ -101,4 +101,6 @@ export interface CourseData extends FirebaseData {
 	indexes?: string[];
 	/** @automation */
 	groupCount?: number;
+	/** @automation */
+	spotsCount?: number;
 }

@@ -32,11 +32,11 @@
 					:title="course.name"
 					:theme="course.indexed ? eColors.SUCCESS : eColors.SECONDARY"
 					button
-					@click="() => (untrackedSelected = course.code)"
+					@click="() => (untrackedSelected = course)"
 				>
 					<p class="--maxWidth-220 ellipsis">{{ course.name }}</p>
 					<p class="--txtSize-xs --txtWeight-regular">
-						<b title="Creditos">{{ course.credits }}</b>
+						<b title="Creditos">{{ course.credits || 0 }}</b>
 						⋅
 						<span title="Codigo">{{ course.code }}</span>
 						⋅
@@ -45,10 +45,9 @@
 				</XamuBaseBox>
 			</div>
 			<div class="flx --flxRow --flx-between-center">
-				<div class="flx --flxRow --flx-start-center">
+				<div ref="searchUntrackedRef" class="flx --flxRow --flx-start-center">
 					<XamuActionButton
 						v-if="!untrackedCourses?.length"
-						ref="searchUntrackedRef"
 						@click.prevent="searchUntrackedCourse"
 					>
 						<XamuIconFa name="magnifying-glass" />
@@ -72,19 +71,19 @@
 
 <script setup lang="ts">
 	import { eColors } from "@open-xamu-co/ui-common-enums";
-	import type { iInvalidInput, iPageEdge, iSelectOption } from "@open-xamu-co/ui-common-types";
+	import type { iInvalidInput, iPageEdge } from "@open-xamu-co/ui-common-types";
 	import { debounce } from "lodash-es";
-	import type { GroupData } from "~/functions/src/types/entities";
 
+	import type { GroupData } from "~/functions/src/types/entities";
 	import type { Course, CourseRef, Teacher, TeacherRef } from "~/resources/types/entities";
 	import type { CourseValues } from "~/resources/types/values";
-	import { eSIAScienceProgram, type SIACoursesResponse } from "~/functions/src/types/SIA";
+	import { type SIACoursesResponse } from "~/functions/src/types/SIA";
 	import { triGram } from "~/resources/utils/firestore";
 	import { isNotUndefString } from "~/resources/utils/guards";
 	import { arrayUnion } from "firebase/firestore";
 
 	/**
-	 * Registing unindexed courses
+	 * Registering unindexed courses
 	 *
 	 * @component
 	 */
@@ -99,14 +98,13 @@
 	const searchUntrackedRef = ref<HTMLElement>();
 	const loading = ref(false);
 	const errors = ref();
-	const programs: iSelectOption[] = Object.values(eSIAScienceProgram).map((value) => ({ value }));
 	const untrackedInvalid = ref<iInvalidInput[]>([]);
 	/**
 	 * markRaw required here due to unwrap issue with ts limitations
 	 * @see https://github.com/vuejs/core/issues/2981
 	 */
-	const untrackedCourseInputs = ref(markRaw(useCourseInputs({ programs })));
-	const untrackedSelected = ref<number>();
+	const untrackedCourseInputs = ref(markRaw(useCourseInputs()));
+	const untrackedSelected = ref<Course>();
 	const untrackedCurrentPage = ref<SIACoursesResponse>();
 	const untrackedCourses = ref<Course[]>();
 
@@ -118,16 +116,18 @@
 
 		if (partial) return;
 
-		untrackedCourseInputs.value = useCourseInputs({ programs });
+		untrackedCourseInputs.value = useCourseInputs();
 	});
 
-	const trackCourse = debounce(async (course: Course) => {
-		SESSION.trackCourse(course);
+	const trackCourse = debounce(async () => {
+		if (!untrackedSelected.value) return;
+
+		SESSION.trackCourse(untrackedSelected.value);
 
 		// Notify user of the success
 		await Swal.fire({
 			title: "Curso rastreado",
-			text: `Obtendrás actualizaciones del curso ${course.name} periódicamente`,
+			text: `Obtendrás actualizaciones del curso ${untrackedSelected.value.name} periódicamente`,
 			icon: "success",
 			target: searchUntrackedRef.value,
 		});
@@ -146,6 +146,8 @@
 				untrackedCourseInputs.value
 			);
 
+			console.log(values);
+
 			if (invalidInputs.length) {
 				untrackedInvalid.value = invalidInputs;
 				loading.value = false;
@@ -161,6 +163,7 @@
 					nombre_asignatura: values.name,
 					limit: 30, // firebase compound limit
 				},
+				cache: "no-cache",
 			});
 			const codes: string[] = [];
 			/**
@@ -203,7 +206,7 @@
 			const codes = courses.map(({ code }) => code).filter(isNotUndefString);
 
 			// Get firebase data, do not await
-			const [indexedCourses, teacherEdges] = await Promise.all([
+			const [indexedCoursesEdges, indexedTeacherEdges] = await Promise.all([
 				$fetch<iPageEdge<Course, string>[]>("/api/all/courses", {
 					query: { include: codes },
 				}),
@@ -212,14 +215,19 @@
 				}),
 			]);
 
-			const teachers = teacherEdges.map(({ node }) => node);
-			const indexedCodes = indexedCourses
+			const indexedTeachers = indexedTeacherEdges.map(({ node }) => node);
+			const indexedCodes = indexedCoursesEdges
 				.map(({ node }) => node.code)
 				.filter(isNotUndefString);
 			const mappedCourses: (Course & { indexed: boolean })[] = courses.map((course) => {
 				const indexed = !!course.code && indexedCodes.includes(course.code);
 
-				return { ...course, id: `courses/${course?.code}`, indexed };
+				return {
+					...course,
+					// With typology to prevent false matches
+					id: `courses/${useCyrb53([course?.code, course?.typology])}`,
+					indexed,
+				};
 			});
 
 			// Conditionally Refresh UI again, 2nd time
@@ -229,38 +237,69 @@
 
 			// a map indexing the courses
 			const resolveCoursesRefs = mappedCourses.map(
-				async ({ indexed, groups = [], createdAt, updatedAt, ...course }) => {
+				async ({ indexed, groups: groupsOg = [], createdAt, updatedAt, ...course }) => {
+					const groups: GroupData[] = [];
+
 					// index teachers conditionally
-					groups.forEach(({ teacher }: GroupData = {}) => {
-						const path = `teachers/${useCyrb53(teacher)}`;
-						// search for existing teacher
-						const existingTeacher = teachers.find(({ id }) => id === path);
-						const teacherCourses = existingTeacher?.courses || [];
+					groupsOg.forEach((group: GroupData = {}) => {
+						(group.teachers || []).forEach((teacher) => {
+							const id = `teachers/${useCyrb53([teacher])}`;
+							// search for existing teacher
+							const existingTeacher = indexedTeachers.find((t) => t.id === id);
+							const teacherCourses = existingTeacher?.courses || [];
 
-						// omit if already included
-						if (!course.code || teacherCourses.includes(course.code)) return;
+							// omit if already included
+							if (!course.code || teacherCourses.includes(course.code)) return;
 
-						// creates or updates teacher
-						return useDocumentCreate<TeacherRef>("teachers", {
-							id: path,
-							name: teacher,
-							indexes: triGram([teacher]),
-							courses: arrayUnion(course.code),
+							// creates or updates teacher
+							return useDocumentCreate<TeacherRef>("teachers", {
+								id,
+								name: teacher,
+								indexes: triGram([teacher]),
+								courses: arrayUnion(course.code),
+							});
 						});
+
+						// Dedupe groups
+						// Groups can be duplicated diff(teacher, schedule, classroom)
+						const groupIndex = groups.findIndex(({ name }) => name === group.name);
+
+						if (groupIndex < 0) return groups.push(group); // Index group
+
+						const currentSchedule = groups[groupIndex].schedule || [];
+						const newSchedule = group.schedule || [];
+						const uniqueClassrooms = [
+							...new Set([groups[groupIndex].classrooms, group.classrooms].flat()),
+						].filter(isNotUndefString);
+						const uniqueTeachers = [
+							...new Set([groups[groupIndex].teachers, group.teachers].flat()),
+						].filter(isNotUndefString);
+
+						// Complement existing group data
+						groups[groupIndex].classrooms = uniqueClassrooms;
+						groups[groupIndex].teachers = uniqueTeachers;
+						groups[groupIndex].schedule = [
+							currentSchedule[0] || newSchedule[0], // monday
+							currentSchedule[1] || newSchedule[1], // tuesday
+							currentSchedule[2] || newSchedule[2], // wednesday
+							currentSchedule[3] || newSchedule[3], // thursday
+							currentSchedule[4] || newSchedule[4], // friday
+							currentSchedule[5] || newSchedule[5], // saturday
+							currentSchedule[6] || newSchedule[6], // sunday
+						];
 					});
 
-					// update groups if already indexed
-					if (indexed) return useDocumentUpdate(course, { groups });
-
+					// creates or updates course
 					return useDocumentCreate<CourseRef>("courses", {
 						...course,
-						groups,
 						indexes: triGram([course.name]),
+						groups,
 					});
 				}
 			);
 
-			await Promise.all(resolveCoursesRefs); // Index courses
+			// Index courses
+			await Promise.all(resolveCoursesRefs);
 
 			// Conditionally Refresh UI again, 3rd time
 			if (untrackedCurrentPage.value?.currentPage === page.currentPage) {

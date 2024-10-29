@@ -3,17 +3,21 @@ import { onCreated, onUpdated } from "./utils/event";
 
 // courses timestamp
 export const onCreatedCourse = onCreated<CourseData>("courses", (snapshot) => {
-	const created = snapshot.data();
+	const { groups = [] } = snapshot.data();
 
-	return { groupCount: created.groups?.length || 0 };
+	const spotsCount = groups.map(({ spots = 0 }) => spots).reduce((sum, spots) => sum + spots, 0);
+
+	return { groupCount: groups.length, spotsCount };
 });
-export const onUpdatedCourse = onUpdated("courses", (newSnapshot, oldSnapshot) => {
-	const updated = newSnapshot.data();
-	const old = oldSnapshot.data();
-	const oldGroupCount = old.groups?.length || 0;
-	const updatedGroupCount = updated.groups?.length || 0;
+export const onUpdatedCourse = onUpdated<CourseData>("courses", (newSnapshot, existingSnapshot) => {
+	const { groups = [], groupCount: updatedGroupCount } = newSnapshot.data();
+	const existing = existingSnapshot.data();
+	const existingGroupCount = existing.groups?.length || 0;
+	const groupCount = groups.length || 0;
 
-	if (updated.groupCount !== undefined && oldGroupCount === updatedGroupCount) return;
+	if (updatedGroupCount !== undefined && existingGroupCount === groupCount) return;
 
-	return { groupCount: updatedGroupCount };
+	const spotsCount = groups.map(({ spots = 0 }) => spots).reduce((sum, spots) => sum + spots, 0);
+
+	return { groupCount, spotsCount };
 });
