@@ -1,5 +1,6 @@
 import type { SIACourse, SIAGroup, uSIAProgram } from "~/functions/src/types/SIA";
 import type { Course, Group, User } from "~/resources/types/entities";
+import { isNotUndefString } from "~/resources/utils/guards";
 
 export function useImagePath(
 	path?: string,
@@ -51,6 +52,40 @@ export function useMapGroupFromSia(source: SIAGroup): Group {
 }
 
 export function useMapCourseFromSia(source: SIACourse): Course {
+	const groups: Group[] = [];
+
+	// Dedupe groups
+	source.DETALLECURSOASIGNATURA.map(useMapGroupFromSia).forEach((group) => {
+		// Groups can be duplicated diff(teacher, schedule, classroom)
+		const groupIndex = groups.findIndex(({ name }) => name === group.name);
+
+		if (groupIndex < 0) return groups.push(group); // Index group
+
+		const currentSchedule = groups[groupIndex].schedule || [];
+		const newSchedule = group.schedule || [];
+		const uniqueClassrooms = [
+			...new Set([groups[groupIndex].classrooms, group.classrooms].flat()),
+		].filter(isNotUndefString);
+		const uniqueTeachers = [
+			...new Set([groups[groupIndex].teachers, group.teachers].flat()),
+		].filter(isNotUndefString);
+
+		// Complement existing group data
+		groups[groupIndex].classrooms = uniqueClassrooms;
+		groups[groupIndex].teachers = uniqueTeachers;
+		groups[groupIndex].schedule = [
+			currentSchedule[0] || newSchedule[0], // monday
+			currentSchedule[1] || newSchedule[1], // tuesday
+			currentSchedule[2] || newSchedule[2], // wednesday
+			currentSchedule[3] || newSchedule[3], // thursday
+			currentSchedule[4] || newSchedule[4], // friday
+			currentSchedule[5] || newSchedule[5], // saturday
+			currentSchedule[6] || newSchedule[6], // sunday
+		];
+	});
+
+	const spotsCount = groups.reduce((sum, { availableSpots = 0 }) => sum + availableSpots, 0);
+
 	return {
 		SIA: source.IDBUSCADORCURSO,
 		name: source.NOMBREASIGNATURA,
@@ -61,6 +96,7 @@ export function useMapCourseFromSia(source: SIACourse): Course {
 		place: source.SEDE,
 		faculty: source.FACULTAD,
 		program: source.PLANDEESTUDIO,
-		groups: source.DETALLECURSOASIGNATURA.map(useMapGroupFromSia),
+		groups,
+		spotsCount,
 	};
 }

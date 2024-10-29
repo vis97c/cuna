@@ -9,6 +9,102 @@
           "arrayConfig": "CONTAINS"
         },
         {
+          "fieldPath": "faculty",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "indexes",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "faculty",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "program",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "indexes",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "faculty",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "typology",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "indexes",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "indexes",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "typology",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "indexes",
           "order": "ASCENDING"
         },

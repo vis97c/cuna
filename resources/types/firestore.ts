@@ -19,12 +19,6 @@ export interface iSnapshotConfig {
 	 * @example { omit: [ "product"]}
 	 */
 	omit?: string[];
-	/**
-	 * Include user data
-	 *
-	 * Firebase token
-	 */
-	canModerate?: string;
 }
 export interface iUseEdges extends iPagination, iSnapshotConfig {
 	/**

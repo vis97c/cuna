@@ -2,8 +2,12 @@ import { FormInput } from "@open-xamu-co/ui-common-helpers";
 import { eFormType } from "@open-xamu-co/ui-common-enums";
 
 import type { Course } from "~/resources/types/entities";
-import { eSIAScienceBogotaProgram } from "~/functions/src/types/SIA";
-import { eSIABogotaFaculty, eSIALevel, eSIAPlace } from "~/functions/src/types/SIA/enums";
+import {
+	eSIABogotaFaculty,
+	eSIALevel,
+	eSIAPlace,
+	eSIAScienceBogotaProgram,
+} from "~/functions/src/types/SIA";
 
 export function useCourseInputs(course: Course = {}): FormInput[] {
 	const { selectedFaculty, faculties, programs } = useCourseProgramOptions([
@@ -12,11 +16,11 @@ export function useCourseInputs(course: Course = {}): FormInput[] {
 		eSIABogotaFaculty.CIENCIAS,
 		eSIAScienceBogotaProgram.CC,
 	]);
-
+	const { typologies } = useCourseTypeOptions();
 	const facultyInput = new FormInput(
 		{
 			values: [course?.faculty || eSIABogotaFaculty.CIENCIAS],
-			name: "program",
+			name: "faculty",
 			required: true,
 			title: "Facultad del curso (Sede Bogotá)",
 			placeholder: "Ej: Ciencias",
@@ -28,10 +32,11 @@ export function useCourseInputs(course: Course = {}): FormInput[] {
 			const unwatch = watch(
 				programs,
 				(newPrograms) => {
-					unwatch();
 					// set first program as value
-					programInput.options = [newPrograms[0]];
-					setTimeout(() => (programInput.options = newPrograms));
+					programInput.options = newPrograms;
+					programInput.values = [newPrograms[0].value as any];
+
+					unwatch();
 				},
 				{ immediate: false }
 			);
@@ -42,11 +47,10 @@ export function useCourseInputs(course: Course = {}): FormInput[] {
 	const programInput = new FormInput({
 		values: [course?.program || eSIAScienceBogotaProgram.CC],
 		name: "program",
-		required: true,
 		title: "Programa del curso (Sede Bogotá)",
 		placeholder: "Ej: Ciencias de la computación",
 		options: programs.value,
-		type: eFormType.SELECT_FILTER,
+		type: eFormType.SELECT,
 		icon: "chess-rook",
 	});
 
@@ -54,11 +58,21 @@ export function useCourseInputs(course: Course = {}): FormInput[] {
 		facultyInput,
 		programInput,
 		new FormInput({
+			values: [course?.typology || ""],
+			name: "typology",
+			title: "Tipología del curso ",
+			placeholder: "Ej: Libre elección",
+			options: typologies,
+			type: eFormType.SELECT_FILTER,
+			icon: "chess-bishop",
+		}),
+		new FormInput({
 			values: [course?.name || ""],
 			name: "name",
 			title: "Nombre del curso",
 			placeholder: "Ej: Sistemas numéricos",
 			icon: "chess-knight",
+			autocomplete: "off",
 		}),
 		new FormInput({
 			values: [course?.code || ""],

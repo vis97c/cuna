@@ -5,7 +5,6 @@
 		class="--txtColor --pY"
 		title="Registrar curso"
 		subtitle="Curso nuevo, no rastreado"
-		hide-footer
 		invert-theme
 	>
 		<template #toggle="{ toggleModal }">
@@ -27,7 +26,7 @@
 					</XamuActionLink>
 				</div>
 				<div
-					v-if="search && search.length >= 3"
+					v-if="search && search.length >= 5"
 					class="flx --flxColumn --flx-start-center --gap-5 --txtSize-xs"
 				>
 					<div
@@ -101,21 +100,25 @@
 									class="flx --flxRow --flx-between-center --width-100 --txtSize-xs"
 								>
 									<p>
-										<b title="Creditos">{{ match.credits }}</b>
+										<b title="Creditos">{{ match.credits || 0 }}</b>
 										⋅
 										<span title="Codigo">{{ match.code }}</span>
 										⋅
 										<span title="Tipologia">{{ match.typology }}</span>
 									</p>
-									<p :title="`Ultima actualizacion ${match.updatedAt}`">
-										{{ match.updatedAt }}
+									<p>
+										<b>{{ match.spotsCount || 0 }} cupos disponibles</b>
+										⋅
+										<span :title="`Ultima actualizacion ${match.updatedAt}`">
+											{{ match.updatedAt }}
+										</span>
 									</p>
 								</div>
 							</div>
 						</li>
 					</ul>
 					<p
-						v-else-if="search.length >= 3 && !loading"
+						v-else-if="search.length >= 5 && !loading"
 						class="--txtSize-xs --txtColor-dark5"
 					>
 						<b>La busqueda no coincide con ningun curso registrado</b>
@@ -127,7 +130,7 @@
 				</XamuLoaderContent>
 			</XamuBaseBox>
 		</template>
-		<template #default="{ toggleModal }">
+		<template #content="{ toggleModal }">
 			<IndexCourses :close="() => toggleModal(false)" />
 		</template>
 	</XamuModal>
@@ -139,6 +142,7 @@
 
 	import { eSIALevel, eSIAPlace } from "~/functions/src/types/SIA";
 	import type { Course } from "~/resources/types/entities";
+	import { getDocumentId } from "~/resources/utils/firestore";
 
 	interface SearchCoursesPayload {
 		code?: string;
@@ -160,6 +164,7 @@
 		middleware: ["auth-only"],
 	});
 
+	const SESSION = useSessionStore();
 	const router = useRouter();
 	const { selectedFaculty, selectedProgram, faculties, programs } = useCourseProgramOptions([
 		eSIALevel.PREGRADO,
@@ -177,6 +182,8 @@
 	async function fetchCourses(query: SearchCoursesPayload) {
 		const { edges } = await $fetch<iPage<Course, string>>("/api/courses/search", {
 			query: { ...query, first: 30, page: true },
+			cache: "no-cache",
+			headers: { canModerate: SESSION.token || "" },
 		});
 
 		return edges.map(({ node }) => {
@@ -188,14 +195,14 @@
 	}
 
 	function goToCourse(course: Course) {
-		router.push(`/curso/${course.code}`);
+		router.push(`/curso/${getDocumentId(course.id)}`);
 	}
 
 	watch(
 		[search, selectedFaculty, selectedProgram, selectedTypology],
 		async ([newSearch, faculty, program, typology]) => {
 			try {
-				if (!newSearch || newSearch.length < 3) return;
+				if (!newSearch || newSearch.length < 5) return;
 
 				loading.value = true;
 				errors.value = undefined;

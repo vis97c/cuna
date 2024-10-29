@@ -5,7 +5,7 @@ import { onCreated, onUpdated } from "./utils/event";
 export const onCreatedCourse = onCreated<CourseData>("courses", (snapshot) => {
 	const { groups = [] } = snapshot.data();
 
-	const spotsCount = groups.map(({ spots = 0 }) => spots).reduce((sum, spots) => sum + spots, 0);
+	const spotsCount = groups.reduce((sum, { availableSpots = 0 }) => sum + availableSpots, 0);
 
 	return { groupCount: groups.length, spotsCount };
 });
@@ -17,7 +17,7 @@ export const onUpdatedCourse = onUpdated<CourseData>("courses", (newSnapshot, ex
 
 	if (updatedGroupCount !== undefined && existingGroupCount === groupCount) return;
 
-	const spotsCount = groups.map(({ spots = 0 }) => spots).reduce((sum, spots) => sum + spots, 0);
+	const spotsCount = groups.reduce((sum, { availableSpots = 0 }) => sum + availableSpots, 0);
 
 	return { groupCount, spotsCount };
 });

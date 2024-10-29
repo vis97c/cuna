@@ -43,13 +43,13 @@ export function triGram(strings: (string | undefined)[]) {
 		.slice(0, 500)
 		.toLowerCase();
 	const indexes = [];
-	const n = 3; // 3 letters words
+	const n = 5; // 5 letters words
+	let k = 0;
 
-	for (let k = 0; k <= string.length - n; k++) {
-		// Firebase limitations
-		if (indexes.length >= 30) break;
-
+	while (indexes.length <= 30 && k <= string.length - n) {
 		indexes.push(string.substring(k, k + n));
+
+		k += 3;
 	}
 
 	return indexes;

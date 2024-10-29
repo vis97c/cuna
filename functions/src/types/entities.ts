@@ -41,8 +41,20 @@ export interface InstanceData extends FirebaseData {
 	instagramId?: string;
 	facebookId?: string;
 	// api, flexible if endpoints do change
-	siaUrl?: string;
-	coursesPath?: string;
+	config?: {
+		/**
+		 * @example https://bobt42d1b3.execute-api.us-east-1.amazonaws.com/api/v1
+		 */
+		siaCoursesURL?: string;
+		/**
+		 * @example /buscadorcursos/busqueda/primernivel2
+		 */
+		siaCoursesPath?: string;
+		/**
+		 * Number of minutes before refreshing a course
+		 */
+		coursesRefreshRate?: number;
+	};
 }
 
 export interface TeacherData extends FirebaseData {
@@ -101,6 +113,9 @@ export interface CourseData extends FirebaseData {
 	indexes?: string[];
 	/** @automation */
 	groupCount?: number;
-	/** @automation */
+	/**
+	 * Available spots within all groups
+	 * @automation
+	 */
 	spotsCount?: number;
 }

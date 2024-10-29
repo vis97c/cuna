@@ -10,18 +10,17 @@ import {
 } from "firebase-admin/firestore";
 import { getStorage } from "firebase-admin/storage";
 import { QuerySnapshot } from "@google-cloud/firestore";
-import { getAuth } from "firebase-admin/auth";
 
 import type { iPage, iPageEdge, tOrderBy } from "@open-xamu-co/ui-common-types";
 
 import type { iSnapshotConfig, PseudoNode } from "~/resources/types/firestore";
-import type { FirebaseDocument, User } from "~/resources/types/entities";
+import type { FirebaseDocument } from "~/resources/types/entities";
 import { isNumberOrString } from "~/resources/utils/guards";
 import { credential } from "~/resources/utils/enviroment";
 import { resolveSnapshotDefaults } from "~/resources/utils/firestore";
+import { getBoolean } from "~/resources/utils/node";
 
-const apiFirebaseApp = getApps().length ? getApp() : initializeApp({ credential });
-
+export const apiFirebaseApp = getApps().length ? getApp() : initializeApp({ credential });
 export const apiFirestore = getFirestore(apiFirebaseApp);
 export const apiStorage = getStorage();
 
@@ -62,22 +61,10 @@ export function debugFirebaseServer<T extends EventHandlerRequest>(
  */
 export async function resolveSnapshotRefs<T extends PseudoNode>(
 	snapshot: DocumentSnapshot<T>,
-	{ level = 0, omit = [], canModerate }: iSnapshotConfig,
-	withAuth = false
+	{ level = 0, omit = [] }: iSnapshotConfig
 ): Promise<FirebaseDocument> {
 	const node = snapshot.data();
 	const path = snapshot.ref.path;
-
-	// validate authorization
-	if (canModerate && !withAuth) {
-		const auth = getAuth(apiFirebaseApp);
-		const { uid } = await auth.verifyIdToken(canModerate);
-		const userRef = apiFirestore.collection("users").doc(uid);
-		const userSnapshot = await userRef.get();
-		const user: Partial<User> | undefined = userSnapshot.data();
-
-		withAuth = (user?.role ?? 3) < 3;
-	}
 
 	for (const key in node) {
 		if (!Object.hasOwn(node, key)) continue;
@@ -91,8 +78,9 @@ export async function resolveSnapshotRefs<T extends PseudoNode>(
 		if (key.endsWith("Ref")) {
 			const ref: DocumentReference = node[key];
 
-			// omit user if non authorized
-			if (!(!withAuth && newKey.endsWith("By"))) {
+			// omit author metadata
+			// TODO: allow if authorized (role<3)
+			if (!newKey.endsWith("By")) {
 				// Prevent infinite fetching loop
 
 				if (
@@ -105,15 +93,10 @@ export async function resolveSnapshotRefs<T extends PseudoNode>(
 					const snapshot = await ref.get(); // node
 
 					if (snapshot) {
-						const resolved = await resolveSnapshotRefs(
-							snapshot,
-							{
-								level: level - 1,
-								canModerate,
-								omit: innerOmit,
-							},
-							withAuth
-						);
+						const resolved = await resolveSnapshotRefs(snapshot, {
+							level: level - 1,
+							omit: innerOmit,
+						});
 
 						node[newKey] = <T[keyof T]>resolved;
 					}
@@ -137,15 +120,10 @@ export async function resolveSnapshotRefs<T extends PseudoNode>(
 
 						if (!snapshot || !data) return;
 
-						return resolveSnapshotRefs(
-							snapshot,
-							{
-								level: max([0, level - 1]),
-								canModerate,
-								omit: innerOmit,
-							},
-							withAuth
-						);
+						return resolveSnapshotRefs(snapshot, {
+							level: max([0, level - 1]),
+							omit: innerOmit,
+						});
 					})
 				);
 
@@ -198,18 +176,21 @@ export async function getQueryAsEdges<T extends EventHandlerRequest>(
 	callback?: (v: QuerySnapshot<DocumentData>) => void | Promise<void>
 ): Promise<iPageEdge<DocumentData, string>[]> {
 	const params = getQuery(event);
-	const canModerate = getRequestHeader(event, "canModerate");
+	const page = getBoolean(params.page);
 	const level = Array.isArray(params.level) || !params.level ? 0 : Number(params.level);
 	const omit = Array.isArray(params.omit) ? params.omit : [params.omit];
 
-	debugFirebaseServer(event, "getQueryAsEdges", params, !!canModerate);
+	debugFirebaseServer(event, "getQueryAsEdges", params);
+
+	// Prevent abusive callings (>100)
+	if (!page) query = query.limit(100);
 
 	const snapshot = await query.get();
 
 	// do something with the snapshot
 	await callback?.(snapshot);
 
-	return mapEdges(snapshot, encodeCursor, { level, omit, canModerate });
+	return mapEdges(snapshot, encodeCursor, { level, omit });
 }
 
 export async function getEdgesPage<T extends EventHandlerRequest>(
@@ -226,7 +207,8 @@ export async function getEdgesPage<T extends EventHandlerRequest>(
 	// Count all items in collection
 	const aggregatorSnapshot = await query.count().get();
 	const count = aggregatorSnapshot.data().count;
-	const first = isNumberOrString(params.first) ? Number(params.first) : Math.min(10, count); // Page limit
+	// Prevent abusive callings (>100)
+	const first = Math.min(Number(params.first) || Math.min(10, count), 100); // Page limit
 	const page: iPage<DocumentData, string> = {
 		edges: [],
 		pageInfo: {

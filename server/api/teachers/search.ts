@@ -24,8 +24,15 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			// search by name
 			const indexes = triGram([name]);
 
-			query = query.orderBy("indexes").where("indexes", "array-contains-any", indexes);
-		} else if (courses.length) {
+			query = query.orderBy("name").where("indexes", "array-contains-any", indexes);
+		} else if (params.courses && courses.length) {
+			/**
+			 * limited subset of documents
+			 *
+			 * According to firebase docs, queries are limited to 30 disjuntion operations
+			 * @see https://firebase.google.com/docs/firestore/query-data/queries#limits_on_or_queries
+			 */
+			courses.length = Math.min(30, courses.length);
 			query = query.where("courses", "array-contains-any", courses);
 		} else return null;
 

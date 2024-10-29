@@ -28,13 +28,14 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		// where code equals
 		if (code) query = query.where("code", "==", code);
 		else if (name && typeof name === "string") {
-			if (faculty) query = query.where("faculty", "==", faculty); // where faculty equals
-			if (program) query = query.where("program", "==", program); // where program equals
-
 			// search by name instead
 			const indexes = triGram([name]);
 
-			query = query.orderBy("indexes").where("indexes", "array-contains-any", indexes);
+			if (!indexes.length) return null;
+			if (faculty) query = query.where("faculty", "==", faculty); // where faculty equals
+			if (program) query = query.where("program", "==", program); // where program equals
+
+			query = query.orderBy("name").where("indexes", "array-contains-any", indexes);
 		} else return null;
 
 		if (typology) query = query.where("typology", "==", typology); // where typology equals

@@ -35,7 +35,7 @@
 							rel="noopener"
 							@click="clearError({ redirect: '/' })"
 						>
-							Volver a la tienda
+							Volver al inicio
 						</XamuActionLink>
 					</div>
 				</div>

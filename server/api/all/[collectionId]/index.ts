@@ -43,6 +43,7 @@ export default defineConditionallyCachedEventHandler((event) => {
 				 * According to firebase docs, queries are limited to 30 disjuntion operations
 				 * @see https://firebase.google.com/docs/firestore/query-data/queries#limits_on_or_queries
 				 */
+				include.length = Math.min(30, include.length);
 				query = query.orderBy(documentId).where(documentId, "in", include);
 			} else return []; // empty query
 		} else query = getOrderedQuery(event, collectionId);
