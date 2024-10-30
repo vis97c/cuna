@@ -36,8 +36,8 @@
 									</XamuActionLink>
 								</div>
 							</div>
-							<div class="flx --flxColumn --flx-center">
-								<AppBoundary />
+							<div id="renderer" class="flx --flxColumn --flx-center --width-100">
+								<NuxtPage />
 							</div>
 						</div>
 					</section>

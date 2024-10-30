@@ -81,5 +81,10 @@ export function useCourseInputs(course: Course = {}): FormInput[] {
 			placeholder: "Ej: 2015181",
 			icon: "hashtag",
 		}),
+		new FormInput({
+			values: [eSIAPlace.BOGOTÁ],
+			name: "place",
+			type: eFormType.HIDDEN,
+		}),
 	];
 }

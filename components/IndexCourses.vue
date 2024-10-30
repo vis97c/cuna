@@ -61,9 +61,7 @@
 									<span title="Tipologia">{{ course.typology }}</span>
 								</p>
 								<p>
-									<b title="Cupos disponibles">
-										{{ course.spotsCount || 0 }} cupos disponibles
-									</b>
+									<b title="Cupos disponibles">{{ course.spotsCount || 0 }}</b>
 								</p>
 							</div>
 						</XamuBaseBox>
@@ -124,13 +122,10 @@
 	import type { iInvalidInput, iPageEdge } from "@open-xamu-co/ui-common-types";
 	import { debounce } from "lodash-es";
 
-	import type { GroupData } from "~/functions/src/types/entities";
-	import type { Course, CourseRef, Teacher, TeacherRef } from "~/resources/types/entities";
+	import type { Course, Teacher } from "~/resources/types/entities";
 	import type { CourseValues } from "~/resources/types/values";
 	import { type SIACoursesResponse } from "~/functions/src/types/SIA";
-	import { triGram } from "~/resources/utils/firestore";
 	import { isNotUndefString } from "~/resources/utils/guards";
-	import { arrayUnion } from "firebase/firestore";
 
 	/**
 	 * Registering unindexed courses
@@ -140,7 +135,6 @@
 
 	const props = defineProps<{ close?: () => void }>();
 
-	const APP = useAppStore();
 	const SESSION = useSessionStore();
 	const Swal = useSwal();
 	const { utils } = useFormInput();
@@ -209,19 +203,10 @@
 				return;
 			}
 
-			const { siaCoursesURL = "", siaCoursesPath = "" } = APP.instance?.config || {};
-			const coursesEndpoint = `${siaCoursesURL}${siaCoursesPath}`;
-			const coursesPage = await $fetch<SIACoursesResponse>(coursesEndpoint, {
-				query: {
-					planEstudio: values.program,
-					codigo_asignatura: values.code,
-					nombre_asignatura: values.name,
-					tipologia: values.typology,
-					limit: 30, // firebase compound limit
-					page: untrackedCurrentPage.value?.currentPage || 1,
-				},
-				cache: "no-cache",
-			});
+			const coursesPage = await useSIACourses(
+				values,
+				untrackedCurrentPage.value?.currentPage
+			);
 			const codes: string[] = [];
 			/**
 			 * Remove duplicates
@@ -281,13 +266,12 @@
 			const indexedCourses = indexedCoursesEdges.map(({ node }) => node);
 			const mappedCourses: (Course & { indexed: boolean })[] = courses.map((course) => {
 				// With typology to prevent false matches
-				const id = `courses/${useCyrb53([course?.code, course?.typology])}`;
-				const indexedCourse = indexedCourses.find((c) => c.id === id);
+				const indexedCourse = indexedCourses.find(({ id }) => id === course.id);
 
 				return {
 					...course,
-					id,
 					indexed: !!indexedCourse,
+					indexedTeachers,
 					updatedAt: indexedCourse?.updatedAt,
 				};
 			});
@@ -300,45 +284,7 @@
 			savedUntrackedCourses.value[page.currentPage] = mappedCourses;
 
 			// a map indexing the courses
-			const resolveCoursesRefs = mappedCourses.map(
-				async ({ indexed, groups = [], createdAt, updatedAt, ...course }) => {
-					// index teachers conditionally
-					groups.forEach((group: GroupData = {}) => {
-						(group.teachers || []).forEach((teacher) => {
-							const id = `teachers/${useCyrb53([teacher])}`;
-							// search for existing teacher
-							const existingTeacher = indexedTeachers.find((t) => t.id === id);
-							const teacherCourses = existingTeacher?.courses || [];
-
-							// omit if already included
-							if (!course.code || teacherCourses.includes(course.code)) return;
-
-							// creates or updates teacher
-							return useDocumentCreate<TeacherRef>("teachers", {
-								id,
-								name: teacher,
-								indexes: triGram([teacher]),
-								courses: arrayUnion(course.code),
-							});
-						});
-					});
-
-					const updatedAtMilis = new Date(updatedAt || "").getTime();
-					const nowMilis = new Date().getTime();
-					const millisDiff = nowMilis - updatedAtMilis;
-					const minutes = APP.instance?.config?.coursesRefreshRate || 5;
-
-					// Do not update if updated less than threshold
-					if (indexed && millisDiff <= minutes * 60 * 1000) return;
-
-					// creates or updates course
-					return useDocumentCreate<CourseRef>("courses", {
-						...course,
-						indexes: triGram([course.name]),
-						groups,
-					});
-				}
-			);
+			const resolveCoursesRefs = mappedCourses.map(useIndexCourse);
 
 			// Index courses
 			await Promise.all(resolveCoursesRefs);

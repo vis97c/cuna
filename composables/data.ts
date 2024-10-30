@@ -35,12 +35,12 @@ export function useMapGroupFromSia(source: SIAGroup): Group {
 		spots: source.CUPOS,
 		schedule: [
 			source.HORARIO_LUNES,
-			source.HORARIO_LUNES,
-			source.HORARIO_LUNES,
-			source.HORARIO_LUNES,
-			source.HORARIO_LUNES,
-			source.HORARIO_LUNES,
-			source.HORARIO_LUNES,
+			source.HORARIO_MARTES,
+			source.HORARIO_MIERCOLES,
+			source.HORARIO_JUEVES,
+			source.HORARIO_VIERNES,
+			source.HORARIO_SABADO,
+			source.HORARIO_DOMINGO,
 		],
 		teachers: [source.DOCENTE],
 		activity: source.ACTIVIDAD,
@@ -52,6 +52,7 @@ export function useMapGroupFromSia(source: SIAGroup): Group {
 }
 
 export function useMapCourseFromSia(source: SIACourse): Course {
+	const id = `courses/${useCyrb53([source.CODIGO_ASIGNATURA, source.TIPOLOGIA])}`;
 	const groups: Group[] = [];
 
 	// Dedupe groups
@@ -59,7 +60,7 @@ export function useMapCourseFromSia(source: SIACourse): Course {
 		// Groups can be duplicated diff(teacher, schedule, classroom)
 		const groupIndex = groups.findIndex(({ name }) => name === group.name);
 
-		if (groupIndex < 0) return groups.push(group); // Index group
+		if (groupIndex === -1) return groups.push(group); // Index group
 
 		const currentSchedule = groups[groupIndex].schedule || [];
 		const newSchedule = group.schedule || [];
@@ -87,6 +88,7 @@ export function useMapCourseFromSia(source: SIACourse): Course {
 	const spotsCount = groups.reduce((sum, { availableSpots = 0 }) => sum + availableSpots, 0);
 
 	return {
+		id,
 		SIA: source.IDBUSCADORCURSO,
 		name: source.NOMBREASIGNATURA,
 		code: source.CODIGO_ASIGNATURA,

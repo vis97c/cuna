@@ -21,7 +21,9 @@ export async function useDocumentCreate<
 	collectionId: string,
 	{ id, ...middleRef }: Vgr & { id?: string },
 	createdCallback?: (ref: DocumentReference<Vgr>) => Promise<void> | void
-): Promise<DocumentReference<Vgr>> {
+): Promise<DocumentReference<Vgr> | undefined> {
+	if (process.server) return;
+
 	const SESSION = useSessionStore();
 	const { $clientFirestore } = useNuxtApp();
 	// get collection ref
@@ -78,6 +80,8 @@ export async function useDocumentUpdate<
 	V extends Record<string, any>,
 	Vgr extends GetRef<V> = GetRef<V>,
 >(node: SharedDocument, partialRef: Partial<Vgr> = {}): Promise<boolean> {
+	if (process.server) return false;
+
 	const SESSION = useSessionStore();
 	const { $clientFirestore } = useNuxtApp();
 	const docRef = ConvertDocument<Vgr>(doc($clientFirestore, node.id || "")); // get node ref
@@ -109,6 +113,8 @@ export async function useDocumentClone<
 	V extends Record<string, any>,
 	Vgr extends GetRef<V> = GetRef<V>,
 >(node: SharedDocument, partialRef: Partial<Vgr> = {}): Promise<boolean> {
+	if (process.server) return false;
+
 	const { $clientFirestore } = useNuxtApp();
 	const SESSION = useSessionStore();
 	const path = node.id || "";
@@ -147,6 +153,8 @@ export async function useDocumentClone<
 
 /** Deletes given document */
 export async function useDocumentDelete(node: SharedDocument): Promise<boolean> {
+	if (process.server) return false;
+
 	const { $clientFirestore } = useNuxtApp();
 	const path = node.id || "";
 	const docRef = doc($clientFirestore, path);

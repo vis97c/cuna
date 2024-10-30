@@ -2428,20 +2428,20 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@open-xamu-co/ui-common-types@npm:^3.0.0-next.18":
-  version: 3.0.0-next.18
-  resolution: "@open-xamu-co/ui-common-types@npm:3.0.0-next.18"
+"@open-xamu-co/ui-common-types@npm:^3.0.0-next.19":
+  version: 3.0.0-next.19
+  resolution: "@open-xamu-co/ui-common-types@npm:3.0.0-next.19"
   dependencies:
     "@fortawesome/fontawesome-common-types": "npm:^6.4.0"
     "@open-xamu-co/ui-common-enums": "npm:^3.0.0-next.6"
     sweetalert2: "npm:^11.11.1"
-  checksum: 10c0/5f2ea753e9a33a1cb88176745c1c3ed00b09eb8fb5af4c74b95bbaaae8b88fa6bd8d272ffe46c9cc2caaeac356fc3d5f87d67b528e791a6e89f83416f6b62ce6
+  checksum: 10c0/aaab71f8e04e2df81afac21c067b2f3bf9bddc91b1aebc0288295825c777b8dbda5f231fbe80751c7b65531ba5645884520b33f254b5c5f48ced474ee0ac92c0
   languageName: node
   linkType: hard
 
-"@open-xamu-co/ui-components-vue@npm:^3.0.0-next.40, @open-xamu-co/ui-components-vue@npm:^3.0.0-next.42":
-  version: 3.0.0-next.42
-  resolution: "@open-xamu-co/ui-components-vue@npm:3.0.0-next.42"
+"@open-xamu-co/ui-components-vue@npm:^3.0.0-next.43":
+  version: 3.0.0-next.43
+  resolution: "@open-xamu-co/ui-components-vue@npm:3.0.0-next.43"
   dependencies:
     "@fortawesome/fontawesome-common-types": "npm:^6.4.0"
     "@open-xamu-co/ui-common-enums": "npm:^3.0.0-next.6"
@@ -2454,33 +2454,33 @@ __metadata:
   peerDependenciesMeta:
     vue-router:
       optional: true
-  checksum: 10c0/1158711eba8de4468fd60c8a7270b5827cc353033b25667747a16f558a7d0d1775caac7a29f1f92278d25de54808625cd7b058c05d9d9d53f82771fdde75c248
+  checksum: 10c0/2812d34392e521fae2a7a3b66d56c75e48318034fbf14120f789cc8999efdfa9d751b23b5a9fd30bb9c7af7d67fe4e087445e34a4dd257d4da9ddc5398753830
   languageName: node
   linkType: hard
 
-"@open-xamu-co/ui-nuxt@npm:^3.0.0-next.8":
-  version: 3.0.0-next.8
-  resolution: "@open-xamu-co/ui-nuxt@npm:3.0.0-next.8"
+"@open-xamu-co/ui-nuxt@npm:^3.0.0-next.9":
+  version: 3.0.0-next.9
+  resolution: "@open-xamu-co/ui-nuxt@npm:3.0.0-next.9"
   dependencies:
     "@nuxt/image": "npm:^1.1.0"
     "@nuxt/kit": "npm:^3.10.1"
     "@open-xamu-co/ui-common-enums": "npm:^3.0.0-next.4"
     "@open-xamu-co/ui-common-helpers": "npm:^3.0.0-next.8"
-    "@open-xamu-co/ui-components-vue": "npm:^3.0.0-next.40"
+    "@open-xamu-co/ui-components-vue": "npm:^3.0.0-next.43"
     nuxt-countries-api: "npm:^1.0.3"
     sweetalert2: "npm:^11.11.1"
-  checksum: 10c0/1ee5cab44c6336ad28dfc98458d21340356f9684d80830a650b0eee31f432512eadd5397561fc16134ba822085f1fcc804e477e883d68b920e4f3639dafebd32
+  checksum: 10c0/8839797ef000466f8a53ec13b51954a138b6f0e6c6295409b566d0d6bea41824b3b97434ebc8d8e81bdda94a313836189670cf484117cea10357a2e5b48e482d
   languageName: node
   linkType: hard
 
-"@open-xamu-co/ui-styles@npm:^3.0.0-next.23":
-  version: 3.0.0-next.23
-  resolution: "@open-xamu-co/ui-styles@npm:3.0.0-next.23"
+"@open-xamu-co/ui-styles@npm:^3.0.0-next.24":
+  version: 3.0.0-next.24
+  resolution: "@open-xamu-co/ui-styles@npm:3.0.0-next.24"
   dependencies:
     sassdoc: "npm:^2.7.3"
     sassdoc-theme-herman: "npm:^5.0.1"
     serve: "npm:^11.3.2"
-  checksum: 10c0/3c7e1d7b7e1e638ce3c3ad70dcbc7e138db525234eb3e381f8a56e697ab310bbfcefc34c2ef2141a27c1f6b606e898d0a2458e29a071d60823d4ac9225a1cd63
+  checksum: 10c0/fbd57e0db4950f4257d48d3a26161da3dd66f7ad6d088a25d45d9c4ccffe25aa4f0271b3c0c0617f34295fa8caafb87c41ae6cf58c6d9b0d628cb3a947b6dcaf
   languageName: node
   linkType: hard
 
@@ -14101,10 +14101,10 @@ postcss-precision@vis97c/postcss-precision:
     "@open-xamu-co/eslint-config": "npm:^3.0.1"
     "@open-xamu-co/ui-common-enums": "npm:^3.0.0-next.6"
     "@open-xamu-co/ui-common-helpers": "npm:^3.0.0-next.14"
-    "@open-xamu-co/ui-common-types": "npm:^3.0.0-next.18"
-    "@open-xamu-co/ui-components-vue": "npm:^3.0.0-next.42"
-    "@open-xamu-co/ui-nuxt": "npm:^3.0.0-next.8"
-    "@open-xamu-co/ui-styles": "npm:^3.0.0-next.23"
+    "@open-xamu-co/ui-common-types": "npm:^3.0.0-next.19"
+    "@open-xamu-co/ui-components-vue": "npm:^3.0.0-next.43"
+    "@open-xamu-co/ui-nuxt": "npm:^3.0.0-next.9"
+    "@open-xamu-co/ui-styles": "npm:^3.0.0-next.24"
     "@pinia-plugin-persistedstate/nuxt": "npm:^1.1.0"
     "@pinia/nuxt": "npm:^0.5.1"
     "@types/lodash": "npm:^4.14.191"

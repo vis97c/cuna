@@ -73,6 +73,11 @@ export default defineNuxtConfig({
 		},
 		compressPublicAssets: true,
 	},
+	routeRules: {
+		"/curso/**": {
+			ssr: false,
+		},
+	},
 	vite: {
 		resolve: { preserveSymlinks: true },
 		css: {

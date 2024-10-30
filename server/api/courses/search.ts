@@ -12,10 +12,11 @@ import { triGram } from "~/resources/utils/firestore";
  */
 export default defineConditionallyCachedEventHandler(async (event) => {
 	try {
-		let { name, code, faculty, program, typology, page } = getQuery(event);
+		let { name, code, place, faculty, program, typology, page } = getQuery(event);
 
 		name = Array.isArray(name) ? name[0] : name;
 		code = Array.isArray(code) ? code[0] : code;
+		place = Array.isArray(place) ? place[0] : place;
 		faculty = Array.isArray(faculty) ? faculty[0] : faculty;
 		program = Array.isArray(program) ? program[0] : program;
 		typology = Array.isArray(typology) ? typology[0] : typology;
@@ -32,6 +33,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			const indexes = triGram([name]);
 
 			if (!indexes.length) return null;
+			if (place) query = query.where("place", "==", place); // where place equals
 			if (faculty) query = query.where("faculty", "==", faculty); // where faculty equals
 			if (program) query = query.where("program", "==", program); // where program equals
 
