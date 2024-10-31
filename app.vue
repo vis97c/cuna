@@ -7,7 +7,9 @@
 				class="x-banner flx --flxColumn --flx-center --gap-0 --width-100 --maxWidth --mX"
 			>
 				<hr />
-				<div class="flx --flx-center --flx --txtSize-sm --txtColor-dark5">
+				<div
+					class="flx --flx-center --flx --txtSize-sm --txtColor-dark5 --txtAlign-center --pX"
+				>
 					<XamuActionLink v-if="APP.instance?.banner?.url" :to="APP.instance.banner.url">
 						{{ APP.instance.banner.message }}
 					</XamuActionLink>

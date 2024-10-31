@@ -12,8 +12,11 @@
 				<h2 :key="content.id">{{ content.name }}</h2>
 				<p class="">Actualizado {{ useTimeAgo(new Date(content.updatedAt || "")) }}</p>
 			</div>
-			<div v-if="SESSION.canModerate && !fromSIA" class="txt">
-				<p class="">El curso contiene datos erroneos y no se pudo reindexar</p>
+			<div v-if="SESSION.canModerate" class="txt">
+				<h4 class="">Moderacion:</h4>
+				<p v-if="!fromSIA" class="">
+					Parece que este curso contiene datos erroneos, considera eliminarlo
+				</p>
 				<XamuActionButton :theme="eColors.DANGER" @click="() => removeCourse(content)">
 					Eliminar
 				</XamuActionButton>
