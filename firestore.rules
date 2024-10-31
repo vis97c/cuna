@@ -76,10 +76,10 @@ service cloud.firestore {
     	// lectura explicita, moderadores hacia arriba
       allow read: if canModerate() || isOwnUser(id);
       // modificacion granular, administradores hacia arriba
-      allow create: if canAdmin() && getRole(id) >= 0 || canDevelop() || isOwnUser(id);
+      allow create: if canAdmin() || isOwnUser(id);
       // administradores no puede modificar desarrolladores
-      allow update: if canAdmin() && getRole(id) >= 0 || canDevelop() || isOwnUser(id);
-      allow delete: if canAdmin() && getRole(id) >= 0 || canDevelop() || isOwnUser(id);
+      allow update: if canAdmin() || isOwnUser(id);
+      allow delete: if canAdmin() || isOwnUser(id);
     }
     
     match /teachers/{id} {
@@ -88,7 +88,7 @@ service cloud.firestore {
       // modificacion granular, usuarios hacia arriba
       allow create: if canUse();
       allow update: if canUse();
-      allow delete: if canDevelop();
+      allow delete: if canModerate();
     }
     
     match /courses/{id} {
@@ -97,7 +97,7 @@ service cloud.firestore {
       // modificacion granular, usuarios hacia arriba
       allow create: if canUse();
       allow update: if canUse();
-      allow delete: if canDevelop();
+      allow delete: if canModerate();
     }
   }
 }

@@ -12,10 +12,10 @@ export function useSIACourses(values: CourseValues, page = 1) {
 
 	return $fetch<SIACoursesResponse>(coursesEndpoint, {
 		query: {
-			planEstudio: values.program,
-			codigo_asignatura: values.code,
-			nombre_asignatura: values.name,
-			tipologia: values.typology,
+			planEstudio: values.program || undefined,
+			codigo_asignatura: values.code || undefined,
+			nombre_asignatura: values.name || undefined,
+			tipologia: values.typology || undefined,
 			limit: 30, // firebase compound limit
 			page,
 		},
@@ -70,4 +70,10 @@ export async function useIndexCourse({
 		indexes: triGram([course.name]),
 		groups,
 	});
+}
+
+export function useCountSpots({ groups, spotsCount }: Partial<Course> = {}): number {
+	const withReduce = groups?.reduce((sum, { availableSpots = 0 }) => sum + availableSpots, 0);
+
+	return (withReduce || spotsCount) ?? 0;
 }

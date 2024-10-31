@@ -31,7 +31,7 @@
 					>
 						<div
 							v-if="!isCodeSearch"
-							class="flx --flxRow --flx-start-center --gap-5 --width-100"
+							class="flx --flxRow-wrap --flx-start-center --gap-5 --width-100"
 						>
 							<div class="flx --flxColumn --flx-start --gap-5 --width-100">
 								<p class="">Facultad</p>
@@ -83,12 +83,13 @@
 								class="txt --gap-0 --txtColor-dark5 --width-100"
 							>
 								<XamuActionLink
+									class="--maxWidth-100"
 									:tooltip="`Ver: ${match.name}`"
 									tooltip-as-text
 									@click="() => goToCourse(match)"
 								>
 									<XamuIconFa name="chess-knight" />
-									<span class="--maxWidth-440 ellipsis">
+									<span class="--width-440 ellipsis">
 										{{ match.name }}
 									</span>
 								</XamuActionLink>
@@ -97,7 +98,7 @@
 										<span title="Programa">{{ match.program }}</span>
 									</p>
 									<div
-										class="flx --flxRow --flx-between-center --width-100 --txtSize-xs"
+										class="flx --flxRow-wrap --flx-between-center --gap-5 --width-100 --txtSize-xs"
 									>
 										<p>
 											<b title="Creditos">{{ match.credits || 0 }}</b>
@@ -107,11 +108,11 @@
 											<span title="Tipologia">{{ match.typology }}</span>
 										</p>
 										<p>
-											<template v-if="match.groups.length">
-												<span>{{ tGroup(match.groups.length || 0) }}</span>
+											<template v-if="match.groups?.length">
+												<span>{{ tGroup(match.groups?.length || 0) }}</span>
 												⋅
 											</template>
-											<b>{{ tSpot(match.spotsCount || 0) }}</b>
+											<b>{{ tSpot(useCountSpots(match)) }}</b>
 											⋅
 											<span
 												:title="`Ultima actualizacion ${match.updatedAt}`"

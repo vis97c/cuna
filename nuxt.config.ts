@@ -3,7 +3,13 @@ import path from "node:path";
 
 import locale from "@open-xamu-co/ui-common-helpers/es";
 
-import { debugNuxt, production, runtimeConfig, countriesUrl } from "./resources/utils/enviroment";
+import {
+	debugCSS,
+	debugNuxt,
+	production,
+	runtimeConfig,
+	countriesUrl,
+} from "./resources/utils/enviroment";
 
 /**
  * Preload stylesheet and once loaded call them
@@ -27,8 +33,10 @@ const stylesheets: string[] = [
 	"https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500;1,600&display=swap",
 	"https://unpkg.com/@fortawesome/fontawesome-free@^6/css/all.min.css",
 	"https://unpkg.com/sweetalert2@^11/dist/sweetalert2.min.css",
-	"https://unpkg.com/@open-xamu-co/ui-styles@^3.0.0-next.23/dist/index.min.css",
 ];
+
+// compile on runtime when debuggin CSS
+debugCSS ? css.push("@/assets/scss/vendor.scss") : stylesheets.push("/dist/vendor.min.css");
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({

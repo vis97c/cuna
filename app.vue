@@ -19,11 +19,11 @@
 					<section class="view-item --minHeightVh-100 --pY-30">
 						<div class="holder flx --flxColumn --flx-center --gap-30">
 							<div
-								class="flx --flxColumn --flx-center --pTop-30 --width-100 --minHeight-100"
+								class="flx --flxColumn --flx-center --pY-50 --width-100 --minHeight-100"
 							>
 								<div
 									v-if="SESSION.user"
-									class="x-navigation flx --flxRow --flx-between-center --width-100"
+									class="x-navigation flx --flxRow-wrap --flx-between-center --width-100"
 								>
 									<div class="">
 										<XamuActionLink
@@ -31,7 +31,7 @@
 											@click="$router.push('/')"
 										>
 											<XamuIconFa name="chevron-left" />
-											<span>Volver a la búsqueda</span>
+											<span>Volver</span>
 										</XamuActionLink>
 									</div>
 									<XamuDropdown :position="['bottom', 'right']" invert-theme>
@@ -43,7 +43,7 @@
 												tooltip-position="bottom"
 												@click="setModel()"
 											>
-												<span>{{ SESSION.user.name || "Sin nombre" }}</span>
+												<span>{{ userName || "Sin nombre" }}</span>
 												<XamuIconFa indicator name="chevron-down" />
 											</XamuActionLink>
 										</template>
@@ -51,9 +51,12 @@
 											<nav
 												class="list flx --flxColumn --gap-20 --minWidth-max --txtColor"
 											>
-												<ul class="list-group">
+												<ul class="list-group --gap-5">
 													<li>
 														<p class="--txtSize-xs">Cuenta</p>
+													</li>
+													<li>
+														<p>{{ SESSION.user.email }}</p>
 													</li>
 													<hr />
 													<li>
@@ -109,6 +112,12 @@
 	const { indexable } = useRuntimeConfig().public;
 
 	const routeCourseId = computed(() => <string>route.params.courseId);
+	const userName = computed(() => {
+		const fullName = (SESSION.user?.name || "").split(" ");
+		const [firstName = "Sin Nombre", secondName = "", firstLastName = ""] = fullName;
+
+		return `${firstName} ${firstLastName || secondName}`.trim();
+	});
 
 	// lifecycle
 	useHead(() => {

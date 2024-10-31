@@ -10,15 +10,22 @@
 		>
 			<div class="txt">
 				<h2 :key="content.id">{{ content.name }}</h2>
+				<p class="">Actualizado {{ useTimeAgo(new Date(content.updatedAt || "")) }}</p>
 			</div>
-			<div class="grd --grdColumns-auto2">
+			<div v-if="SESSION.canModerate && !fromSIA" class="txt">
+				<p class="">El curso contiene datos erroneos y no se pudo reindexar</p>
+				<XamuActionButton :theme="eColors.DANGER" @click="() => removeCourse(content)">
+					Eliminar
+				</XamuActionButton>
+			</div>
+			<div class="grd --grdColumns-auto2 --gap">
 				<div class="grd-item">
 					<XamuValueList
 						:value="{
 							sede: content.place,
 							facultad: content.faculty,
 							programa: content.program || 'No reportado',
-							cuposDisponibles: content.groupCount || content.groups?.length || 0,
+							cuposDisponibles: useCountSpots(content),
 						}"
 					/>
 				</div>
@@ -48,8 +55,11 @@
 
 <script setup lang="ts">
 	import type { iPageEdge } from "@open-xamu-co/ui-common-types";
+	import { eColors } from "@open-xamu-co/ui-common-enums";
+
 	import { eSIATypology } from "~/functions/src/types/SIA";
 	import type { Course, Teacher } from "~/resources/types/entities";
+	import { debounce } from "lodash-es";
 
 	/**
 	 * Course page
@@ -64,9 +74,35 @@
 	});
 
 	const SESSION = useSessionStore();
+	const router = useRouter();
 	const route = useRoute();
+	const Swal = useSwal();
 
+	const fromSIA = ref(true);
 	const routeCourseId = computed(() => <string>route.params.courseId);
+
+	const removeCourse = debounce(async (course: Course) => {
+		if (!SESSION.canModerate) return;
+
+		const removed = await useDocumentDelete(course);
+
+		if (removed) {
+			// Notify user of the success
+			await Swal.fire({
+				title: "Curso eliminado",
+				text: "Este podra ser reindexado mas tarde",
+				icon: "success",
+			});
+
+			return router.push("/");
+		}
+
+		Swal.fire({
+			title: "Curso eliminado",
+			text: "Algo paso, el curso pudo no ser eliminado",
+			icon: "error",
+		});
+	});
 
 	/**
 	 * Get course from firebase, then SIA & reindex
@@ -78,11 +114,18 @@
 				headers: { canModerate: SESSION.token || "" },
 			});
 
-			const { id, code = "", typology = eSIATypology.LIBRE_ELECCIÓN } = firebaseCourse;
+			if (!firebaseCourse) throw new Error("El curso que buscas no existe");
+
+			const {
+				id,
+				program,
+				code = "",
+				typology = eSIATypology.LIBRE_ELECCIÓN,
+			} = firebaseCourse;
 
 			// Get data from sia & reindex, do not await
 			Promise.all([
-				useSIACourses({ code, typology }),
+				useSIACourses({ program, code, typology }),
 				$fetch<iPageEdge<Teacher, string>[]>("/api/teachers/search", {
 					query: { courses: [code] },
 					cache: "no-cache",
@@ -92,7 +135,11 @@
 				const courses = data.map(useMapCourseFromSia);
 				const SIACourse = courses.find((c) => c.id === id);
 
-				if (!SIACourse) return;
+				if (!SIACourse) {
+					fromSIA.value = false;
+
+					return;
+				}
 
 				// refresh if same course
 				if (SIACourse.code === toHydrate.value?.code) toHydrate.value = SIACourse;
@@ -110,5 +157,18 @@
 	@use "@/assets/scss/overrides" as utils;
 
 	@media only screen {
+		tbody [data-column-name="name"] span {
+			color: transparent;
+		}
+		tbody [data-column-name="name"] span:before {
+			content: attr(title);
+			position: absolute;
+			top: 0;
+			left: 0;
+			color: utils.color(dark, 0.7);
+		}
+		tbody [data-column-name="programs"] {
+			max-width: none;
+		}
 	}
 </style>
