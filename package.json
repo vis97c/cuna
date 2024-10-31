@@ -2,7 +2,7 @@
   "private": true,
   "scripts": {
     "dev": "nuxt dev",
-    "build": "nuxt build --preset=firebase",
+    "build": "nuxt build --preset=firebase && cp .env .output/server/.env",
     "start": "node .output/server/index.mjs",
     "lint:eslint": "eslint --ext .ts,.js,.vue --ignore-path .prettierignore .",
     "lint:stylelint": "stylelint **/{*,**/*,**/**/*}.{vue,css} --ignore-path .prettierignore",
@@ -34,7 +34,7 @@
     "lodash-es": "^4.17.21",
     "nuxt": "^3.10.1",
     "pinia": "^2.1.7",
-    "vue": "^3.4.19",
+    "vue": "^3.5.12",
     "vue-router": "^4.2.5"
   },
   "devDependencies": {

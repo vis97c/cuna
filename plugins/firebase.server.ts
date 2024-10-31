@@ -7,7 +7,7 @@ import type { User } from "~/resources/types/entities";
 import { credential, instance } from "~/resources/utils/enviroment";
 
 /**
- * Setup firebase client intance
+ * Setup firebase server instance
  */
 export default defineNuxtPlugin(async () => {
 	const SESSION = useSessionStore();

@@ -76,7 +76,7 @@ service cloud.firestore {
     	// lectura explicita, moderadores hacia arriba
       allow read: if canModerate() || isOwnUser(id);
       // modificacion granular, administradores hacia arriba
-      allow create: if canAdmin();
+      allow create: if canAdmin() && getRole(id) >= 0 || canDevelop() || isOwnUser(id);
       // administradores no puede modificar desarrolladores
       allow update: if canAdmin() && getRole(id) >= 0 || canDevelop() || isOwnUser(id);
       allow delete: if canAdmin() && getRole(id) >= 0 || canDevelop() || isOwnUser(id);

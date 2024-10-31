@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-check";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
-import { doc, getDoc, getFirestore, onSnapshot } from "firebase/firestore";
+import { doc, getDoc, getFirestore, onSnapshot, setDoc } from "firebase/firestore";
 
 import type { User } from "~/resources/types/entities";
 import { resolveSnapshotDefaults } from "~/resources/utils/firestore";
@@ -40,27 +40,33 @@ export default defineNuxtPlugin(() => {
 
 		const { uid, displayName, email, photoURL, emailVerified, isAnonymous } = user;
 
-		// do not allow unverified users to login
-		if (!emailVerified && !isAnonymous) {
+		// Do not allow unverified users to login
+		if (!emailVerified) {
 			SESSION.unsetSession();
 
 			auth.signOut();
-		} else {
+		} else if (!isAnonymous) {
 			const token = await user.getIdToken(true);
 			const userRef = doc(clientFirestore, "users", uid);
-			const data: Partial<User> | undefined = (await getDoc(userRef)).data();
+			const userData = { uid, name: displayName, email, photoURL, role: 3 };
+			let data: Partial<User> | undefined = (await getDoc(userRef)).data();
 
-			SESSION.setUser(
-				{ uid, name: displayName, email, photoURL, isAnonymous, ...data },
-				token
-			);
+			// Create user on firestore. (Manually created user)
+			if (!data) {
+				setDoc(userRef, userData, { merge: true });
+
+				data = userData;
+			}
+
+			SESSION.setUser({ ...userData, ...data }, token);
 
 			const router = useRouter();
-			const { restricted } = router.currentRoute.value.query;
+			const route = useRoute();
+			const { restricted } = route.query;
 			const rdr = restricted && typeof restricted === "string" ? decodeURI(restricted) : "/";
 
-			// redirect fir
-			if (restricted) router.push(rdr);
+			// redirect
+			if (restricted && route.path !== rdr) router.replace(rdr);
 		}
 	});
 

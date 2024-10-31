@@ -14,22 +14,27 @@ import { useSwal } from "@open-xamu-co/ui-common-helpers";
 export function useGoogleAuth(loading: Ref<boolean>) {
 	const { $clientFirebaseApp } = useNuxtApp();
 	const Swal = useSwal();
-	const router = useRouter();
-
-	const { restricted } = router.currentRoute.value.query;
 
 	const loginWithGoogle = debounce(async () => {
+		const router = useRouter();
+		const route = useRoute();
+		const { restricted } = route.query;
+
 		try {
 			loading.value = true;
 
 			const auth = getAuth($clientFirebaseApp);
 			const provider = new GoogleAuthProvider();
 
+			// Do not assume account
+			// see: https://developers.google.com/identity/openid-connect/openid-connect?hl=es-419#authenticationuriparameters
+			provider.setCustomParameters({ prompt: "select_account" });
+
 			await setPersistence(auth, browserLocalPersistence);
 			await signInWithPopup(auth, provider);
 
 			// rdr, Restricted rdr handled by plugin
-			if (!restricted) router.push("/");
+			if (!restricted && route.path !== "/") router.push("/");
 		} catch (err: FirebaseError | unknown) {
 			console.error(err);
 

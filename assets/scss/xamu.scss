@@ -3,4 +3,7 @@
 @use "@open-xamu-co/ui-styles/src/utils/module" as utils;
 
 @media only screen {
+	.swal2-actions {
+		gap: 1rem;
+	}
 }

@@ -21,18 +21,18 @@ jobs:
               uses: SpicyPizza/create-envfile@v2.0.3
               with:
                   file_name: .env
-                  envkey_F_API_KEY: "${{ vars.F_API_KEY }}"
-                  envkey_F_AUTH_DOMAIN: "${{ vars.F_AUTH_DOMAIN }}"
-                  envkey_F_PROJECT_ID: "${{ vars.F_PROJECT_ID }}"
-                  envkey_F_STORAGE_BUCKET: "${{ vars.F_STORAGE_BUCKET }}"
-                  envkey_F_MESSAGING_SENDER_ID: "${{ vars.F_MESSAGING_SENDER_ID }}"
-                  envkey_F_APP_ID: "${{ vars.F_APP_ID }}"
-                  envkey_F_MEASUREMENT_ID: "${{ vars.F_MEASUREMENT_ID }}"
+                  envkey_F_API_KEY: ${{ vars.F_API_KEY }}
+                  envkey_F_AUTH_DOMAIN: ${{ vars.F_AUTH_DOMAIN }}
+                  envkey_F_PROJECT_ID: ${{ vars.F_PROJECT_ID }}
+                  envkey_F_STORAGE_BUCKET: ${{ vars.F_STORAGE_BUCKET }}
+                  envkey_F_MESSAGING_SENDER_ID: ${{ vars.F_MESSAGING_SENDER_ID }}
+                  envkey_F_APP_ID: ${{ vars.F_APP_ID }}
+                  envkey_F_MEASUREMENT_ID: ${{ vars.F_MEASUREMENT_ID }}
                   envkey_F_PRIVATE_KEY: ${{ secrets.F_PRIVATE_KEY }}
-                  envkey_F_CLIENT_EMAIL: "${{ secrets.F_CLIENT_EMAIL }}"
-                  envkey_RECAPTCHA_ENTERPRISE_SITE_KEY: "${{ vars.RECAPTCHA_ENTERPRISE_SITE_KEY }}"
+                  envkey_F_CLIENT_EMAIL: ${{ secrets.F_CLIENT_EMAIL }}
+                  envkey_RECAPTCHA_ENTERPRISE_SITE_KEY: ${{ vars.RECAPTCHA_ENTERPRISE_SITE_KEY }}
                   envkey_INSTANCE: "localhost"
-                  envkey_COUNTRIES_API: "${{ vars.COUNTRIES_API }}"
+                  envkey_COUNTRIES_API: ${{ vars.COUNTRIES_API }}
                   envkey_INDEXABLE: false
                   envkey_DEBUG_APP_CHECK: true
             - name: Install dependencies

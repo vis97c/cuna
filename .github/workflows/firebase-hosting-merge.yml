@@ -16,27 +16,27 @@ jobs:
               uses: SpicyPizza/create-envfile@v2.0.3
               with:
                   file_name: .env
-                  envkey_F_API_KEY: "${{ vars.F_API_KEY }}"
-                  envkey_F_AUTH_DOMAIN: "${{ vars.F_AUTH_DOMAIN }}"
-                  envkey_F_PROJECT_ID: "${{ vars.F_PROJECT_ID }}"
-                  envkey_F_STORAGE_BUCKET: "${{ vars.F_STORAGE_BUCKET }}"
-                  envkey_F_MESSAGING_SENDER_ID: "${{ vars.F_MESSAGING_SENDER_ID }}"
-                  envkey_F_APP_ID: "${{ vars.F_APP_ID }}"
-                  envkey_F_MEASUREMENT_ID: "${{ vars.F_MEASUREMENT_ID }}"
+                  envkey_F_API_KEY: ${{ vars.F_API_KEY }}
+                  envkey_F_AUTH_DOMAIN: ${{ vars.F_AUTH_DOMAIN }}
+                  envkey_F_PROJECT_ID: ${{ vars.F_PROJECT_ID }}
+                  envkey_F_STORAGE_BUCKET: ${{ vars.F_STORAGE_BUCKET }}
+                  envkey_F_MESSAGING_SENDER_ID: ${{ vars.F_MESSAGING_SENDER_ID }}
+                  envkey_F_APP_ID: ${{ vars.F_APP_ID }}
+                  envkey_F_MEASUREMENT_ID: ${{ vars.F_MEASUREMENT_ID }}
                   envkey_F_PRIVATE_KEY: ${{ secrets.F_PRIVATE_KEY }}
-                  envkey_F_CLIENT_EMAIL: "${{ secrets.F_CLIENT_EMAIL }}"
-                  envkey_RECAPTCHA_ENTERPRISE_SITE_KEY: "${{ vars.RECAPTCHA_ENTERPRISE_SITE_KEY }}"
-                  envkey_INSTANCE: "${{ vars.INSTANCE }}"
-                  envkey_COUNTRIES_API: "${{ vars.COUNTRIES_API }}"
-                  envkey_INDEXABLE: "${{ vars.INDEXABLE }}"
-                  envkey_EPAYCO_KEY: "${{ vars.EPAYCO_KEY }}"
-                  envkey_EPAYCO_TAX: "${{ vars.EPAYCO_TAX }}"
-                  envkey_EPAYCO_CURRENCY: "${{ vars.EPAYCO_CURRENCY }}"
-                  envkey_EPAYCO_COUNTRY: "${{ vars.EPAYCO_COUNTRY }}"
-                  envkey_EPAYCO_EXTERNAL: "${{ vars.EPAYCO_EXTERNAL }}"
-                  envkey_EPAYCO_TEST: "${{ vars.EPAYCO_TEST }}"
-                  envkey_EPAYCO_RESPONSE_URL: "${{ vars.EPAYCO_RESPONSE_URL }}"
-                  envkey_EPAYCO_CONFIRMATION_URL: "${{ vars.EPAYCO_CONFIRMATION_URL }}"
+                  envkey_F_CLIENT_EMAIL: ${{ secrets.F_CLIENT_EMAIL }}
+                  envkey_RECAPTCHA_ENTERPRISE_SITE_KEY: ${{ vars.RECAPTCHA_ENTERPRISE_SITE_KEY }}
+                  envkey_INSTANCE: ${{ vars.INSTANCE }}
+                  envkey_COUNTRIES_API: ${{ vars.COUNTRIES_API }}
+                  envkey_INDEXABLE: ${{ vars.INDEXABLE }}
+                  envkey_EPAYCO_KEY: ${{ vars.EPAYCO_KEY }}
+                  envkey_EPAYCO_TAX: ${{ vars.EPAYCO_TAX }}
+                  envkey_EPAYCO_CURRENCY: ${{ vars.EPAYCO_CURRENCY }}
+                  envkey_EPAYCO_COUNTRY: ${{ vars.EPAYCO_COUNTRY }}
+                  envkey_EPAYCO_EXTERNAL: ${{ vars.EPAYCO_EXTERNAL }}
+                  envkey_EPAYCO_TEST: ${{ vars.EPAYCO_TEST }}
+                  envkey_EPAYCO_RESPONSE_URL: ${{ vars.EPAYCO_RESPONSE_URL }}
+                  envkey_EPAYCO_CONFIRMATION_URL: ${{ vars.EPAYCO_CONFIRMATION_URL }}
             - name: Install dependencies
               run: corepack enable && yarn
             - name: Build nuxt

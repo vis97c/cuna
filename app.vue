@@ -18,26 +18,79 @@
 				<div id="landing" class="view">
 					<section class="view-item --minHeightVh-100 --pY-30">
 						<div class="holder flx --flxColumn --flx-center --gap-30">
-							<div class="txt --txtAlign-center --gap-0">
-								<NuxtLink to="/">
-									<h1 class="--txtSize-mx:md --txtLineHeight-sm">Cuna</h1>
-								</NuxtLink>
-								<div class="flx --flxRow --flx-center --gap-5">
-									<p class="--txtSize-sm --txtColor-dark5">
-										Visor de cursos UNAL
-									</p>
-									<XamuActionLink
-										class="x-info"
-										:theme="eColors.DARK"
-										tooltip="Cuna no esta afiliada a la UNAL"
-										tooltip-as-text
-									>
-										<XamuIconFa name="circle-info" />
-									</XamuActionLink>
+							<div
+								class="flx --flxColumn --flx-center --pTop-30 --width-100 --minHeight-100"
+							>
+								<div
+									v-if="SESSION.user"
+									class="x-navigation flx --flxRow --flx-between-center --width-100"
+								>
+									<div class="">
+										<XamuActionLink
+											v-if="routeCourseId"
+											@click="$router.push('/')"
+										>
+											<XamuIconFa name="chevron-left" />
+											<span>Volver a la búsqueda</span>
+										</XamuActionLink>
+									</div>
+									<XamuDropdown :position="['bottom', 'right']" invert-theme>
+										<template #toggle="{ setModel }">
+											<XamuActionLink
+												aria-label="Ver opciones de usuario"
+												tooltip="Ver opciones de usuario"
+												tooltip-as-text
+												tooltip-position="bottom"
+												@click="setModel()"
+											>
+												<span>{{ SESSION.user.name || "Sin nombre" }}</span>
+												<XamuIconFa indicator name="chevron-down" />
+											</XamuActionLink>
+										</template>
+										<template #default>
+											<nav
+												class="list flx --flxColumn --gap-20 --minWidth-max --txtColor"
+											>
+												<ul class="list-group">
+													<li>
+														<p class="--txtSize-xs">Cuenta</p>
+													</li>
+													<hr />
+													<li>
+														<XamuActionLink
+															:theme="eColors.DANGER"
+															@click="SESSION.logout"
+														>
+															<XamuIconFa name="power-off" />
+															<span>Cerrar sesion</span>
+														</XamuActionLink>
+													</li>
+												</ul>
+											</nav>
+										</template>
+									</XamuDropdown>
 								</div>
-							</div>
-							<div id="renderer" class="flx --flxColumn --flx-center --width-100">
-								<NuxtPage />
+								<div class="txt --txtAlign-center --gap-0">
+									<NuxtLink to="/">
+										<h1 class="--txtSize-mx:md --txtLineHeight-sm">Cuna</h1>
+									</NuxtLink>
+									<div class="flx --flxRow --flx-center --gap-5">
+										<p class="--txtSize-sm --txtColor-dark5">
+											Visor de cursos UNAL
+										</p>
+										<XamuActionLink
+											class="x-info"
+											:theme="eColors.DARK"
+											tooltip="Cuna no esta afiliada a la UNAL"
+											tooltip-as-text
+										>
+											<XamuIconFa name="circle-info" />
+										</XamuActionLink>
+									</div>
+								</div>
+								<div id="renderer" class="flx --flxColumn --flx-center --width-100">
+									<NuxtPage />
+								</div>
 							</div>
 						</div>
 					</section>
@@ -54,6 +107,8 @@
 	const SESSION = useSessionStore();
 	const route = useRoute();
 	const { indexable } = useRuntimeConfig().public;
+
+	const routeCourseId = computed(() => <string>route.params.courseId);
 
 	// lifecycle
 	useHead(() => {
@@ -103,6 +158,11 @@
 		}
 		.x-info {
 			opacity: 0.7;
+		}
+		.x-navigation {
+			position: absolute;
+			top: 0;
+			left: 0;
 		}
 	}
 </style>
