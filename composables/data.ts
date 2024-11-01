@@ -1,4 +1,6 @@
-import type { SIACourse, SIAGroup, uSIAProgram } from "~/functions/src/types/SIA";
+import { startCase } from "lodash-es";
+
+import type { SIACourse, SIAGroup } from "~/functions/src/types/SIA";
 import type { Course, Group, User } from "~/resources/types/entities";
 import { isNotUndefString } from "~/resources/utils/guards";
 
@@ -25,10 +27,6 @@ export function useMapUser({ role = 3, ...user }: User) {
 }
 
 export function useMapGroupFromSia(source: SIAGroup): Group {
-	const programs = <uSIAProgram[]>source.PLANES_ASOCIADOS.split("*** Plan:")
-		.map((p) => p.trim())
-		.filter((p) => !!p);
-
 	return {
 		SIA: source.ID,
 		name: source.GRUPO,
@@ -44,7 +42,6 @@ export function useMapGroupFromSia(source: SIAGroup): Group {
 		],
 		teachers: [source.DOCENTE],
 		activity: source.ACTIVIDAD,
-		programs,
 		availableSpots: source.CUPOS_DISPONIBLES,
 		classrooms: [source.AULA],
 		period: source.PERIODO,
@@ -52,7 +49,7 @@ export function useMapGroupFromSia(source: SIAGroup): Group {
 }
 
 export function useMapCourseFromSia(source: SIACourse): Course {
-	const id = `courses/${useCyrb53([source.CODIGO_ASIGNATURA, source.TIPOLOGIA])}`;
+	const id = `courses/${useCyrb53([source.CODIGO_ASIGNATURA])}`;
 	const groups: Group[] = [];
 
 	// Dedupe groups
@@ -90,14 +87,15 @@ export function useMapCourseFromSia(source: SIACourse): Course {
 	return {
 		id,
 		SIA: source.IDBUSCADORCURSO,
-		name: source.NOMBREASIGNATURA,
+		name: startCase(source.NOMBREASIGNATURA),
+		alternativeNames: [source.NOMBREASIGNATURA],
 		code: source.CODIGO_ASIGNATURA,
 		credits: source.NUM_CREDITOS,
-		typology: source.TIPOLOGIA,
+		typologies: [source.TIPOLOGIA],
 		level: source.NIVELDEESTUDIO,
 		place: source.SEDE,
 		faculty: source.FACULTAD,
-		program: source.PLANDEESTUDIO,
+		programs: source.PLANDEESTUDIO ? [source.PLANDEESTUDIO] : [],
 		groups,
 		spotsCount,
 	};

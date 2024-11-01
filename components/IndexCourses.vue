@@ -24,8 +24,8 @@
 							:disabled="untrackedCurrentPage.currentPage <= 1"
 							@click="untrackedCurrentPage.currentPage--"
 						>
-							<XamuIconFa name="arrow-left" />
-							<XamuIconFa name="arrow-left" />
+							<XamuIconFa name="chevron-left" />
+							<XamuIconFa name="chevron-left" />
 							<span>Anterior</span>
 						</XamuActionButtonToggle>
 						<XamuActionButtonToggle
@@ -35,8 +35,8 @@
 							@click="untrackedCurrentPage.currentPage++"
 						>
 							<span>Siguiente página</span>
-							<XamuIconFa name="arrow-right" />
-							<XamuIconFa name="arrow-right" />
+							<XamuIconFa name="chevron-right" />
+							<XamuIconFa name="chevron-right" />
 						</XamuActionButtonToggle>
 					</div>
 					<div class="flx --flxRow-wrap --flx-start --gap-5 --width-100">
@@ -58,10 +58,18 @@
 									⋅
 									<span title="Codigo">{{ course.code }}</span>
 									⋅
-									<span title="Tipologia">{{ course.typology }}</span>
+									<b title="Cupos disponibles">
+										{{ useTSpot(useCountSpots(course)) }}
+									</b>
 								</p>
 								<p>
-									<b title="Cupos disponibles">{{ course.spotsCount || 0 }}</b>
+									<XamuValueComplex
+										:theme="
+											course.indexed ? eColors.SUCCESS : eColors.SECONDARY
+										"
+										title="Tipologias"
+										:value="course.typologies"
+									/>
 								</p>
 							</div>
 						</XamuBaseBox>
@@ -70,7 +78,7 @@
 				<div v-else class="">
 					<XamuBoxMessage
 						v-if="untrackedCurrentPage"
-						text="Definitivamente no hay cursos de la UNAL que coincidan con tu busqueda."
+						text="Definitivamente no hay cursos de la UNAL que coincidan con tu búsqueda."
 					/>
 					<form
 						v-else
@@ -104,15 +112,15 @@
 				</XamuActionButton>
 				<template v-else>
 					<XamuActionLink @click="reset">
-						<XamuIconFa name="arrow-left" />
+						<XamuIconFa name="chevron-left" />
 						<span>Buscar otro</span>
 					</XamuActionLink>
 					<XamuActionButton :disabled="!untrackedSelected" @click="trackCourse">
-						Rastrear curso seleccionado
+						Rastrear curso
 					</XamuActionButton>
 				</template>
 			</div>
-			<XamuActionButtonToggle @click="close">Cerrar</XamuActionButtonToggle>
+			<XamuActionButtonToggle @click="props.close">Cerrar</XamuActionButtonToggle>
 		</div>
 	</XamuLoaderContent>
 </template>
@@ -179,6 +187,7 @@
 		await Swal.fire({
 			title: "Curso rastreado",
 			text: `Obtendrás actualizaciones del curso ${untrackedSelected.value.name} periódicamente`,
+			footer: "Función aun no disponible",
 			icon: "success",
 			target: searchUntrackedRef.value,
 		});

@@ -93,24 +93,40 @@ export interface GroupData {
 
 /**
  * Interface representing a SIA Course data.
+ *
+ * Why number records?
+ * @see https://stackoverflow.com/a/52969138
  */
 export interface CourseData extends FirebaseData {
 	/** Unique SIA id */
 	SIA?: number;
 	name?: string;
-	/**
-	 * Used as firebase id
-	 */
+	alternativeNames?: string[];
+	/** Used as firebase id */
 	code?: string;
 	credits?: number;
-	typology?: eSIATypology;
+	/** Multiple typologies for the same course */
+	typologies?: eSIATypology[];
 	level?: eSIALevel;
 	place?: eSIAPlace;
 	faculty?: uSIAFaculty;
-	program?: uSIAProgram;
+	/** Multiple programs for the same course */
+	programs?: uSIAProgram[];
 	groups?: GroupData[];
 	/** @search */
 	indexes?: string[];
+	/**
+	 * Array as object to be searcheable
+	 * @search
+	 * @automation
+	 */
+	programsIndexes?: Record<number, uSIAProgram>;
+	/**
+	 * Array as object to be searcheable
+	 * @search
+	 * @automation
+	 */
+	typologiesIndexes?: Record<number, eSIATypology>;
 	/** @automation */
 	groupCount?: number;
 	/**

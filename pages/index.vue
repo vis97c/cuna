@@ -33,7 +33,7 @@
 							v-if="!isCodeSearch"
 							class="flx --flxRow-wrap --flx-start-center --gap-5 --width-100"
 						>
-							<div class="flx --flxColumn --flx-start --gap-5 --width-100">
+							<div class="flx --flxColumn --flx-start --flx --gap-5">
 								<p class="">Facultad</p>
 								<XamuSelectFilter
 									id="faculty"
@@ -43,7 +43,7 @@
 									:size="eSizes.XS"
 								/>
 							</div>
-							<div class="flx --flxColumn --flx-start --gap-5 --width-100">
+							<div class="flx --flxColumn --flx-start --flx --gap-5">
 								<p class="">Programa</p>
 								<XamuSelectFilter
 									id="program"
@@ -93,26 +93,23 @@
 										{{ match.name }}
 									</span>
 								</XamuActionLink>
-								<div class="txt --gap-0 --width-100 --pLeft-20">
-									<p v-if="match.program" class="--txtSize-sm">
-										<span title="Programa">{{ match.program }}</span>
-									</p>
+								<div class="txt --txtSize-sm --gap-0 --width-100 --pLeft-20">
 									<div
-										class="flx --flxRow-wrap --flx-between-center --gap-5 --width-100 --txtSize-xs"
+										class="flx --flxRow-wrap --flx-between-center --gap-5 --width-100"
 									>
 										<p>
 											<b title="Creditos">{{ match.credits || 0 }}</b>
 											⋅
 											<span title="Codigo">{{ match.code }}</span>
-											⋅
-											<span title="Tipologia">{{ match.typology }}</span>
+											<template v-if="match.groups?.length">
+												⋅
+												<span>
+													{{ useTGroup(match.groups?.length) }}
+												</span>
+											</template>
 										</p>
 										<p>
-											<template v-if="match.groups?.length">
-												<span>{{ tGroup(match.groups?.length || 0) }}</span>
-												⋅
-											</template>
-											<b>{{ tSpot(useCountSpots(match)) }}</b>
+											<b>{{ useTSpot(useCountSpots(match)) }}</b>
 											⋅
 											<span
 												:title="`Ultima actualizacion ${match.updatedAt}`"
@@ -121,6 +118,18 @@
 											</span>
 										</p>
 									</div>
+									<p v-if="match.programs?.length">
+										<XamuValueComplex
+											title="Programas"
+											:value="match.programs"
+										/>
+									</p>
+									<p>
+										<XamuValueComplex
+											title="Tipologias"
+											:value="match.typologies"
+										/>
+									</p>
 								</div>
 							</li>
 						</ul>
@@ -178,7 +187,7 @@
 
 	const isCodeSearch = computed<boolean>(() => !!search.value && /^\d/.test(search.value));
 
-	async function fetchCourses(query: Partial<CourseValues>) {
+	async function fetchCourses(query: Partial<CourseValues>): Promise<Course[]> {
 		const { edges } = await $fetch<iPage<Course, string>>("/api/courses/search", {
 			query: { ...query, first: 30, page: true },
 			cache: "no-cache",
@@ -193,19 +202,7 @@
 		});
 	}
 
-	function tGroup(count: number) {
-		const t = count === 1 ? "grupo" : "grupos";
-
-		return `${count} ${t}`;
-	}
-
-	function tSpot(count: number) {
-		const t = count === 1 ? "cupo" : "cupos";
-
-		return `${count} ${t}`;
-	}
-
-	function goToCourse(course: Course) {
+	function goToCourse(course: Pick<Course, "id">) {
 		router.push(`/curso/${getDocumentId(course.id)}`);
 	}
 

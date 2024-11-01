@@ -1,4 +1,4 @@
-import type { CollectionReference, Query } from "firebase-admin/firestore";
+import { Filter, type CollectionReference, type Query } from "firebase-admin/firestore";
 
 import { getBoolean } from "~/resources/utils/node";
 import { debugFirebaseServer, getOrderedQuery, getEdgesPage } from "~/server/utils/firebase";
@@ -35,12 +35,33 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			if (!indexes.length) return null;
 			if (place) query = query.where("place", "==", place); // where place equals
 			if (faculty) query = query.where("faculty", "==", faculty); // where faculty equals
-			if (program) query = query.where("program", "==", program); // where program equals
+			if (program) {
+				// where program equals
+				query = query.where(
+					Filter.or(
+						Filter.where("programsIndexes.0", "==", program),
+						Filter.where("programsIndexes.1", "==", program),
+						Filter.where("programsIndexes.2", "==", program),
+						Filter.where("programsIndexes.3", "==", program),
+						Filter.where("programsIndexes.4", "==", program),
+						Filter.where("programsIndexes.5", "==", program)
+					)
+				);
+			}
 
 			query = query.orderBy("name").where("indexes", "array-contains-any", indexes);
 		} else return null;
 
-		if (typology) query = query.where("typology", "==", typology); // where typology equals
+		if (typology) {
+			// where typology equals
+			query = query.where(
+				Filter.or(
+					Filter.where("typologiesIndexes.0", "==", typology),
+					Filter.where("typologiesIndexes.1", "==", typology),
+					Filter.where("typologiesIndexes.2", "==", typology)
+				)
+			);
+		}
 
 		// order at last
 		query = getOrderedQuery(event, query);

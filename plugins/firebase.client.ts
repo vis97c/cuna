@@ -27,10 +27,10 @@ export default defineNuxtPlugin(() => {
 		isTokenAutoRefreshEnabled: true,
 	});
 
-	// set app instance
-	const instanceRef = doc(clientFirestore, "instances", instance);
 	// set session
 	const auth = getAuth(clientFirebaseApp);
+	// set app instance
+	const instanceRef = doc(clientFirestore, "instances", instance);
 
 	onSnapshot(instanceRef, (snapshot) => {
 		APP.setInstance(resolveSnapshotDefaults(snapshot.id, snapshot.data()));

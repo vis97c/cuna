@@ -12,6 +12,7 @@ export function useSIACourses(values: CourseValues, page = 1) {
 
 	return $fetch<SIACoursesResponse>(coursesEndpoint, {
 		query: {
+			sede: values.place || undefined,
 			planEstudio: values.program || undefined,
 			codigo_asignatura: values.code || undefined,
 			nombre_asignatura: values.name || undefined,
@@ -27,6 +28,9 @@ export async function useIndexCourse({
 	indexed,
 	indexedTeachers = [],
 	groups = [],
+	programs = [],
+	typologies = [],
+	alternativeNames = [],
 	createdAt,
 	updatedAt,
 	...course
@@ -67,13 +71,10 @@ export async function useIndexCourse({
 	// TODO: index course on server side
 	return useDocumentCreate<CourseRef>("courses", {
 		...course,
-		indexes: triGram([course.name]),
 		groups,
+		programs: arrayUnion(...programs),
+		typologies: arrayUnion(...typologies),
+		alternativeNames: arrayUnion(...alternativeNames),
+		indexes: triGram([course.name]),
 	});
-}
-
-export function useCountSpots({ groups, spotsCount }: Partial<Course> = {}): number {
-	const withReduce = groups?.reduce((sum, { availableSpots = 0 }) => sum + availableSpots, 0);
-
-	return (withReduce || spotsCount) ?? 0;
 }

@@ -1,4 +1,6 @@
 import { isEqual } from "lodash-es";
+
+import type { Course } from "~/resources/types/entities";
 import { isNotUndefString } from "~/resources/utils/guards";
 
 export function valuesAreEqual<V extends Record<string, any>>(
@@ -33,3 +35,24 @@ export const useCyrb53 = (strs: (string | undefined)[] = [""], seed = 0) => {
 
 	return 4294967296 * (2097151 & h2) + (h1 >>> 0);
 };
+
+export function useCountSpots({
+	groups,
+	spotsCount,
+}: Pick<Course, "groups" | "spotsCount"> = {}): number {
+	const withReduce = groups?.reduce((sum, { availableSpots = 0 }) => sum + availableSpots, 0);
+
+	return (withReduce || spotsCount) ?? 0;
+}
+
+export function useTGroup(count = 0) {
+	const t = count === 1 ? "grupo" : "grupos";
+
+	return `${count} ${t}`;
+}
+
+export function useTSpot(count = 0) {
+	const t = count === 1 ? "cupo" : "cupos";
+
+	return `${count} ${t}`;
+}
