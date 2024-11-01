@@ -26,10 +26,7 @@
 									class="x-navigation flx --flxRow-wrap --flx-between-center --width-100"
 								>
 									<div class="">
-										<XamuActionLink
-											v-if="routeCourseId"
-											@click="$router.push('/')"
-										>
+										<XamuActionLink v-if="routeCourseId" to="/">
 											<XamuIconFa name="chevron-left" />
 											<span>Volver</span>
 										</XamuActionLink>

@@ -8,19 +8,31 @@
 			<template v-if="course">
 				<div class="txt">
 					<h2 :key="course.id">{{ course.name }}</h2>
-					<p v-if="course.alternativeNames?.length">
-						<XamuValueComplex title="Otros nombres" :value="course.alternativeNames" />
+					<p v-if="course.alternativeNames?.length" title="Otros nombres">
+						{{ course.alternativeNames.join(", ") }}.
 					</p>
 					<p class="--txtSize-sm">Actualizado {{ updatedAt }}</p>
 				</div>
-				<div v-if="SESSION.canModerate" class="txt">
-					<h4 class="">Moderacion:</h4>
-					<p v-if="fromSIA === false" class="">
+				<div class="txt">
+					<h4 class="">Herramientas:</h4>
+					<p v-if="SESSION.canModerate && fromSIA === false" class="">
 						Parece que este curso contiene datos erroneos, considera eliminarlo
 					</p>
-					<XamuActionButton :theme="eColors.DANGER" @click="removeCourse">
-						Eliminar
-					</XamuActionButton>
+					<div class="flx --flxRow --flx-start-center">
+						<XamuActionButton
+							v-if="SESSION.canModerate"
+							:theme="eColors.DANGER"
+							@click="removeCourse"
+						>
+							Eliminar
+						</XamuActionButton>
+						<XamuActionButton
+							:disabled="!APP.instance?.flags?.trackCourses"
+							@click="trackCourse"
+						>
+							Rastrear curso
+						</XamuActionButton>
+					</div>
 				</div>
 				<div class="grd --grdColumns-auto3 --gap">
 					<div class="grd-item">
@@ -28,7 +40,7 @@
 							:value="{
 								sede: course.place,
 								facultad: course.faculty,
-								programas: course.programs || 'No reportado',
+								programas: course.programs?.join(', '),
 								cuposDisponibles: useCountSpots(course),
 							}"
 						/>
@@ -38,7 +50,7 @@
 							:value="{
 								código: course.code,
 								créditos: course.credits,
-								tipologías: course.typologies,
+								tipologías: course.typologies?.join(', '),
 							}"
 						/>
 					</div>
@@ -80,6 +92,7 @@
 		middleware: ["auth-only"],
 	});
 
+	const APP = useAppStore();
 	const SESSION = useSessionStore();
 	const router = useRouter();
 	const route = useRoute();
@@ -142,11 +155,11 @@
 
 		// Do once
 		if (fromSIA.value === undefined) {
-			const { id, code = "", place = eSIAPlace.BOGOTÁ } = firebaseCourse;
+			const { id, code = "", programs = [], place = eSIAPlace.BOGOTÁ } = firebaseCourse;
 
 			// Get data from sia & reindex, do not await
 			Promise.all([
-				useSIACourses({ code, place }),
+				useSIACourses({ code, program: programs[0], place }),
 				$fetch<iPageEdge<Teacher, string>[]>("/api/teachers/search", {
 					query: { courses: [code] },
 					cache: "no-cache",
@@ -172,6 +185,20 @@
 
 		course.value = firebaseCourse;
 		loading.value = false;
+	});
+
+	const trackCourse = debounce(async () => {
+		if (!course.value) return;
+
+		SESSION.trackCourse(course.value);
+
+		// Notify user of the success
+		await Swal.fire({
+			title: "Curso rastreado",
+			text: `Obtendrás actualizaciones del curso ${course.value?.name} periódicamente`,
+			footer: "Función aun no disponible",
+			icon: "success",
+		});
 	});
 
 	const removeCourse = debounce(async () => {

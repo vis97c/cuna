@@ -42,9 +42,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 						Filter.where("programsIndexes.0", "==", program),
 						Filter.where("programsIndexes.1", "==", program),
 						Filter.where("programsIndexes.2", "==", program),
-						Filter.where("programsIndexes.3", "==", program),
-						Filter.where("programsIndexes.4", "==", program),
-						Filter.where("programsIndexes.5", "==", program)
+						Filter.where("programsIndexes.3", "==", program)
 					)
 				);
 			}
@@ -57,8 +55,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			query = query.where(
 				Filter.or(
 					Filter.where("typologiesIndexes.0", "==", typology),
-					Filter.where("typologiesIndexes.1", "==", typology),
-					Filter.where("typologiesIndexes.2", "==", typology)
+					Filter.where("typologiesIndexes.1", "==", typology)
 				)
 			);
 		}

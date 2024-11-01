@@ -45,11 +45,8 @@
 							:key="course.code"
 							class="txt --txtAlign-left --txtSize-sm --gap-5"
 							el="button"
-							:active="course.code === untrackedSelected?.code"
 							:title="course.name"
-							:theme="course.indexed ? eColors.SUCCESS : eColors.SECONDARY"
 							button
-							@click="() => (untrackedSelected = course)"
 						>
 							<p class="--maxWidth-220 ellipsis">{{ course.name }}</p>
 							<div class="txt --txtSize-xs --txtWeight-regular --gap-0">
@@ -62,16 +59,18 @@
 										{{ useTSpot(useCountSpots(course)) }}
 									</b>
 								</p>
-								<p>
-									<XamuValueComplex
-										:theme="
-											course.indexed ? eColors.SUCCESS : eColors.SECONDARY
-										"
-										title="Tipologias"
-										:value="course.typologies"
-									/>
+								<p v-if="course.typologies?.length" title="Tipologias">
+									{{ course.typologies.join(", ") }}.
 								</p>
 							</div>
+							<XamuActionButton
+								:size="eSizes.SM"
+								:disabled="!course.indexed"
+								:to="`/curso/${getDocumentId(course.id)}`"
+							>
+								<span>Ver detalles</span>
+								<XamuIconFa name="chevron-right" :size="15" />
+							</XamuActionButton>
 						</XamuBaseBox>
 					</div>
 				</template>
@@ -115,9 +114,6 @@
 						<XamuIconFa name="chevron-left" />
 						<span>Buscar otro</span>
 					</XamuActionLink>
-					<XamuActionButton :disabled="!untrackedSelected" @click="trackCourse">
-						Rastrear curso
-					</XamuActionButton>
 				</template>
 			</div>
 			<XamuActionButtonToggle @click="props.close">Cerrar</XamuActionButtonToggle>
@@ -126,14 +122,14 @@
 </template>
 
 <script setup lang="ts">
-	import { eColors } from "@open-xamu-co/ui-common-enums";
-	import type { iInvalidInput, iPageEdge } from "@open-xamu-co/ui-common-types";
 	import { debounce } from "lodash-es";
+	import type { iInvalidInput, iPageEdge } from "@open-xamu-co/ui-common-types";
+	import { eSizes } from "@open-xamu-co/ui-common-enums";
 
 	import type { Course, Teacher } from "~/resources/types/entities";
 	import type { CourseValues } from "~/resources/types/values";
 	import { type SIACoursesResponse } from "~/functions/src/types/SIA";
-	import { isNotUndefString } from "~/resources/utils/guards";
+	import { getDocumentId } from "~/resources/utils/firestore";
 
 	/**
 	 * Registering unindexed courses
@@ -156,13 +152,11 @@
 	 * @see https://github.com/vuejs/core/issues/2981
 	 */
 	const untrackedCourseInputs = ref(markRaw(useCourseInputs()));
-	const untrackedSelected = ref<Course>();
 	const untrackedCurrentPage = ref<SIACoursesResponse>();
 	const untrackedCourses = ref<Course[]>();
 	const savedUntrackedCourses = ref<Record<number, Course[]>>({});
 
 	const reset = debounce((partial = true) => {
-		untrackedSelected.value = undefined;
 		untrackedCurrentPage.value = undefined;
 		untrackedInvalid.value = [];
 		untrackedCourses.value = undefined;
@@ -171,29 +165,6 @@
 		if (partial) return;
 
 		untrackedCourseInputs.value = useCourseInputs();
-	});
-
-	function closeAndReset() {
-		props.close?.();
-		reset(false);
-	}
-
-	const trackCourse = debounce(async () => {
-		if (!untrackedSelected.value) return;
-
-		SESSION.trackCourse(untrackedSelected.value);
-
-		// Notify user of the success
-		await Swal.fire({
-			title: "Curso rastreado",
-			text: `Obtendrás actualizaciones del curso ${untrackedSelected.value.name} periódicamente`,
-			footer: "Función aun no disponible",
-			icon: "success",
-			target: searchUntrackedRef.value,
-		});
-
-		// reset
-		closeAndReset();
 	});
 
 	const searchUntrackedCourse = debounce(async () => {
@@ -255,33 +226,23 @@
 
 	async function indexCourses(courses: Course[], page: SIACoursesResponse) {
 		try {
-			const codes = courses.map(({ code }) => code).filter(isNotUndefString);
-
-			// Get firebase data, do not await
-			const [indexedCoursesEdges, indexedTeacherEdges = []] = await Promise.all([
-				$fetch<iPageEdge<Course, string>[]>("/api/all/courses", {
-					query: { include: codes },
+			const include = courses.map(({ id }) => id);
+			const indexedCoursesEdges = await $fetch<iPageEdge<Course, string>[]>(
+				"/api/all/courses",
+				{
+					query: { include },
 					cache: "no-cache",
 					headers: { canModerate: SESSION.token || "" },
-				}),
-				$fetch<iPageEdge<Teacher, string>[]>("/api/teachers/search", {
-					query: { courses: codes },
-					cache: "no-cache",
-					headers: { canModerate: SESSION.token || "" },
-				}),
-			]);
-
-			const indexedTeachers = indexedTeacherEdges.map(({ node }) => node);
-			const indexedCourses = indexedCoursesEdges.map(({ node }) => node);
+				}
+			);
 			const mappedCourses: (Course & { indexed: boolean })[] = courses.map((course) => {
 				// With typology to prevent false matches
-				const indexedCourse = indexedCourses.find(({ id }) => id === course.id);
+				const indexedCourse = indexedCoursesEdges.find(({ node }) => node.id === course.id);
 
 				return {
 					...course,
 					indexed: !!indexedCourse,
-					indexedTeachers,
-					updatedAt: indexedCourse?.updatedAt,
+					updatedAt: indexedCourse?.node?.updatedAt,
 				};
 			});
 
@@ -292,11 +253,21 @@
 
 			savedUntrackedCourses.value[page.currentPage] = mappedCourses;
 
-			// a map indexing the courses
-			const resolveCoursesRefs = mappedCourses.map(useIndexCourse);
+			const coursesCodes = courses.map(({ code }) => code);
+			const indexedTeacherEdges = await $fetch<iPageEdge<Teacher, string>[]>(
+				"/api/teachers/search",
+				{
+					query: { courses: coursesCodes },
+					cache: "no-cache",
+					headers: { canModerate: SESSION.token || "" },
+				}
+			);
+			const indexedTeachers = indexedTeacherEdges.map(({ node }) => node);
 
 			// Index courses
-			await Promise.all(resolveCoursesRefs);
+			await Promise.all(
+				mappedCourses.map((course) => useIndexCourse({ ...course, indexedTeachers }))
+			);
 
 			const allIndexed = mappedCourses.map((course) => ({ ...course, indexed: true }));
 

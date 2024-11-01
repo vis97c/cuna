@@ -40,7 +40,9 @@ export interface InstanceData extends FirebaseData {
 	twitterId?: string;
 	instagramId?: string;
 	facebookId?: string;
-	// api, flexible if endpoints do change
+	/**
+	 * Api, flexible if endpoints do change
+	 */
 	config?: {
 		/**
 		 * @example https://bobt42d1b3.execute-api.us-east-1.amazonaws.com/api/v1
@@ -54,6 +56,15 @@ export interface InstanceData extends FirebaseData {
 		 * Number of minutes before refreshing a course
 		 */
 		coursesRefreshRate?: number;
+	};
+	/**
+	 * Feature flags
+	 */
+	flags?: {
+		/**
+		 * User can track courses in realtime
+		 */
+		trackCourses?: boolean;
 	};
 }
 

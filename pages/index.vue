@@ -118,17 +118,11 @@
 											</span>
 										</p>
 									</div>
-									<p v-if="match.programs?.length">
-										<XamuValueComplex
-											title="Programas"
-											:value="match.programs"
-										/>
+									<p v-if="match.programs?.length" title="Programas">
+										{{ match.programs.join(", ") }}.
 									</p>
-									<p>
-										<XamuValueComplex
-											title="Tipologias"
-											:value="match.typologies"
-										/>
+									<p v-if="match.typologies?.length" title="Tipologias">
+										{{ match.typologies.join(", ") }}.
 									</p>
 								</div>
 							</li>
