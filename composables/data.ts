@@ -8,7 +8,7 @@ export function useImagePath(
 	path?: string,
 	preset: "avatar" | "small" | "medium" | "large" = "avatar"
 ) {
-	if (!path) return "/sample.png";
+	if (!path) return "/images/sample.png";
 
 	return `/api/media/images/${path}/${preset}.webp`;
 }

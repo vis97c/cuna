@@ -50,7 +50,7 @@ const cachedBuffer = defineCachedEventHandler(
 export default defineEventHandler(async (event) => {
 	const buffer = await cachedBuffer(event);
 
-	if (!buffer) return sendRedirect(event, "/sample.png", 302);
+	if (!buffer) return sendRedirect(event, "/images/sample.png", 302);
 
 	setHeaders(event, { "Content-Type": "image/webp" });
 
