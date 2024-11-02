@@ -55,12 +55,12 @@
 						/>
 					</div>
 				</div>
-				<div class="flx --flxColumn --flx-start --width-100">
+				<div v-if="course.groups?.length" class="flx --flxColumn --flx-start --width-100">
 					<div class="txt">
 						<h4>Grupos ({{ course.groupCount || course.groups?.length || 0 }}):</h4>
 					</div>
 					<XamuTable
-						:nodes="(course.groups || []).map(mapTableGroup)"
+						:nodes="course.groups.map(mapTableGroup)"
 						:modal-props="{ class: '--txtColor', invertTheme: true }"
 						class=""
 					/>
@@ -130,6 +130,8 @@
 
 		const [lunes, martes, miercoles, jueves, viernes, sabado, domingo] = reschedule;
 
+		classrooms = classrooms?.filter((c) => !!c);
+
 		return {
 			nombre: `${name}ㅤ`, // hotfix to prevent it to parse as date
 			cupos: `${availableSpots} de ${spots}`,
@@ -152,11 +154,20 @@
 		}
 
 		const firebaseCourse: Course = resolveSnapshotDefaults(snapshot.ref.path, snapshot.data());
+		const {
+			id,
+			code = "",
+			programs = [],
+			place = eSIAPlace.BOGOTÁ,
+			updatedAt,
+		} = firebaseCourse;
+		const updatedAtMilis = new Date(updatedAt || "").getTime();
+		const nowMilis = new Date().getTime();
+		const millisDiff = nowMilis - updatedAtMilis;
+		const minutes = APP.instance?.config?.coursesRefreshRate || 5;
 
-		// Do once
-		if (fromSIA.value === undefined) {
-			const { id, code = "", programs = [], place = eSIAPlace.BOGOTÁ } = firebaseCourse;
-
+		// Do once & update if updated more than threshold
+		if (fromSIA.value === undefined && millisDiff > minutes * 60 * 1000) {
 			// Get data from sia & reindex, do not await
 			Promise.all([
 				useSIACourses({ code, program: programs[0], place }),
@@ -166,7 +177,10 @@
 					headers: { canModerate: SESSION.token || "" },
 				}),
 			]).then(([{ data }, indexedTeachers]) => {
-				const courses = data.map(useMapCourseFromSia);
+				// Omit courses without groups
+				const courses = data
+					.map(useMapCourseFromSia)
+					.filter(({ groups }) => !!groups?.length);
 				const SIACourse = courses.find((c) => c.id === id);
 
 				if (!SIACourse) {
@@ -179,7 +193,7 @@
 				if (SIACourse.code === course.value?.code) course.value = SIACourse;
 
 				// Reindex, do not await
-				return useIndexCourse({ ...SIACourse, indexed: true, indexedTeachers });
+				return useIndexCourse({ ...SIACourse, updatedAt, indexed: true, indexedTeachers });
 			});
 		}
 

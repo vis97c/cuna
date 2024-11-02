@@ -56,3 +56,9 @@ export function useTSpot(count = 0) {
 
 	return `${count} ${t}`;
 }
+
+export function useTCredits(count = 0) {
+	const t = count === 1 ? "crédito" : "créditos";
+
+	return `${count} ${t}`;
+}

@@ -4,7 +4,9 @@
 
 @use "@open-xamu-co/ui-styles/src/utils/module" with (
 	// allowances
-	$allow-responsive-upscaling: false
+	$allow-responsive-upscaling: false,
+	// sizes
+	$size-px: (1080, 980, 480, 440, 330, 220, 180, 90)
 );
 
 @forward "@open-xamu-co/ui-styles/src/utils/module";

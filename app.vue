@@ -19,14 +19,14 @@
 					<section class="view-item --minHeightVh-100 --pY-30">
 						<div class="holder flx --flxColumn --flx-center --gap-30">
 							<div
-								class="flx --flxColumn --flx-center --pY-50 --width-100 --minHeight-100"
+								class="flx --flxColumn --flx-center --gap-30 --pY-50 --width-100 --minHeight-100"
 							>
 								<div
 									v-if="SESSION.user"
 									class="x-navigation flx --flxRow-wrap --flx-between-center --width-100"
 								>
 									<div class="">
-										<XamuActionLink v-if="routeCourseId" to="/">
+										<XamuActionLink v-if="route.path != '/'" to="/">
 											<XamuIconFa name="chevron-left" />
 											<span>Volver</span>
 										</XamuActionLink>
@@ -71,12 +71,15 @@
 									</XamuDropdown>
 								</div>
 								<div class="txt --txtAlign-center --gap-0">
-									<NuxtLink to="/">
-										<h1 class="--txtSize-mx:md --txtLineHeight-sm">Cuna</h1>
-									</NuxtLink>
+									<h1 class="--txtSize-mx:md --txtLineHeight-sm">
+										<XamuActionLink to="/" class="no--override no--route --gap">
+											<XamuIconFa name="chess-knight" :size="10" />
+											<span>Cuna</span>
+										</XamuActionLink>
+									</h1>
 									<div class="flx --flxRow --flx-center --gap-5">
 										<p class="--txtSize-sm --txtColor-dark5">
-											Visor de cursos UNAL
+											Visor de cursos UNAL (Sede Bogotá)
 										</p>
 										<XamuActionLink
 											class="x-info"
@@ -108,7 +111,6 @@
 	const route = useRoute();
 	const { indexable } = useRuntimeConfig().public;
 
-	const routeCourseId = computed(() => <string>route.params.courseId);
 	const userName = computed(() => {
 		const fullName = (SESSION.user?.name || "").split(" ");
 		const [firstName = "Sin Nombre", secondName = "", firstLastName = ""] = fullName;

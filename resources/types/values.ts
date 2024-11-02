@@ -5,7 +5,7 @@ import type { eSIAPlace, eSIATypology, uSIAFaculty, uSIAProgram } from "~/functi
 
 export type Resolve<T extends SharedDocument> = [T, (v?: boolean | iNodeFnResponse) => void];
 
-interface PartialCourseValues {
+export interface PartialCourseValues {
 	name?: string;
 	code?: string;
 	place?: eSIAPlace;
@@ -14,9 +14,10 @@ interface PartialCourseValues {
 	typology?: eSIATypology;
 }
 
+export type CourseValuesWithCode = PartialCourseValues & { code: string };
+export type CourseValuesWithProgram = PartialCourseValues & { program: uSIAProgram };
+
 /**
  * Code or Program
  */
-export type CourseValues =
-	| (PartialCourseValues & { code: string })
-	| (PartialCourseValues & { program: uSIAProgram });
+export type CourseValues = CourseValuesWithCode | CourseValuesWithProgram;

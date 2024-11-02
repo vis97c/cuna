@@ -1,0 +1,301 @@
+<template>
+	<XamuLoaderContent
+		class="flx --flxColumn --flx-start-center --gap-30 --width-100"
+		:loading="searching"
+		:errors="errors"
+		content
+	>
+		<slot v-bind="{ searchCourse, searching }"></slot>
+		<div
+			v-if="untrackedCurrentPage"
+			class="flx --flxColumn --flx-start-stretch --gap-30 --width-100"
+		>
+			<div
+				v-if="untrackedCourses?.length"
+				class="flx --flxColumn --flx-start-stretch --gap-30 --width-100"
+			>
+				<div class="txt --gap-0">
+					<h3>
+						Resultados de la busqueda
+						<template v-if="lastSearch.name || lastSearch?.code">
+							de "{{ lastSearch?.name || lastSearch?.code }}"
+						</template>
+						:
+					</h3>
+					<p class="--txtSize-xs">
+						{{ untrackedCurrentPage.totalRecords }} resultados. Pagina
+						{{ untrackedCurrentPage.currentPage }} de
+						{{ untrackedCurrentPage.totalPages }}.
+					</p>
+				</div>
+				<div class="grd --grdColumns-auto3 --gap --width-100">
+					<XamuBaseBox
+						v-for="course in untrackedCourses"
+						:key="course.code"
+						:el="XamuBaseAction"
+						class="grd-item txt --txtAlign-left --txtSize-sm --gap-5"
+						title="Ver detalles del curso"
+						:disabled="!course.indexed"
+						:to="`/curso/${getDocumentId(course.id)}`"
+						button
+					>
+						<p class="--maxWidth-220 ellipsis">{{ course.name }}</p>
+						<div class="txt --txtSize-xs --txtWeight-regular --gap-0 --flx">
+							<p>
+								<b title="Codigo">{{ course.code }}</b>
+								⋅
+								<span title="Creditos">{{ useTCredits(course.credits) }}</span>
+								⋅
+								<span title="Cupos disponibles">
+									{{ useTSpot(useCountSpots(course)) }}
+								</span>
+							</p>
+							<p v-if="course.programs?.length" title="Programas">
+								{{ course.programs.join(", ") }}.
+							</p>
+							<p v-if="course.typologies?.length" title="Tipologías">
+								{{ course.typologies.join(", ") }}.
+							</p>
+						</div>
+						<div
+							v-if="course.indexed"
+							class="flx --flxRow --flx-end-center --width-100"
+						>
+							<XamuIconFa name="arrow-right" />
+						</div>
+					</XamuBaseBox>
+				</div>
+			</div>
+			<XamuBoxMessage
+				v-else-if="canPaginate"
+				text="Se omitieron resultados por no tener grupos reportados (Sin disponibilidad)."
+			/>
+			<XamuBoxMessage
+				v-else
+				text="Definitivamente no hay cursos disponibles de la UNAL que coincidan con tu búsqueda."
+			/>
+			<div v-if="canPaginate" class="flx --flxRow --flx-between-center">
+				<XamuActionButtonToggle
+					:disabled="untrackedCurrentPage.currentPage <= 1"
+					@click="untrackedCurrentPage.currentPage--"
+				>
+					<XamuIconFa name="chevron-left" />
+					<XamuIconFa name="chevron-left" />
+					<span>Anterior</span>
+				</XamuActionButtonToggle>
+				<XamuActionButtonToggle
+					:disabled="untrackedCurrentPage.currentPage >= untrackedCurrentPage.totalPages"
+					@click="untrackedCurrentPage.currentPage++"
+				>
+					<span>Siguiente página</span>
+					<XamuIconFa name="chevron-right" />
+					<XamuIconFa name="chevron-right" />
+				</XamuActionButtonToggle>
+			</div>
+		</div>
+	</XamuLoaderContent>
+</template>
+
+<script setup lang="ts">
+	import { isEqual, omit } from "lodash-es";
+	import type { iPageEdge } from "@open-xamu-co/ui-common-types";
+
+	import { XamuBaseAction } from "#components";
+	import type { Course, Teacher } from "~/resources/types/entities";
+	import type { CourseValues } from "~/resources/types/values";
+	import {
+		eSIATypology,
+		type SIACoursesResponse,
+		type uSIAProgram,
+	} from "~/functions/src/types/SIA";
+	import { getDocumentId } from "~/resources/utils/firestore";
+
+	/**
+	 * Registering unindexed courses
+	 *
+	 * @component
+	 */
+
+	const props = defineProps<{ values: CourseValues }>();
+
+	const SESSION = useSessionStore();
+	const Swal = useSwal();
+
+	const searchUntrackedRef = ref<HTMLElement>();
+	const searching = ref(false);
+	const errors = ref();
+	const untrackedCurrentPage = ref<SIACoursesResponse>();
+	const untrackedCourses = ref<Course[]>();
+	const savedUntrackedCourses = ref<Record<number, Course[]>>({});
+	const lastSearch = ref<CourseValues & { page?: number }>();
+
+	/**
+	 * Omit pagination if user makes a different search
+	 */
+	const canPaginate = computed(() => {
+		if (!untrackedCurrentPage.value || !isEqual(omit(lastSearch.value, "page"), props.values)) {
+			return false;
+		}
+
+		return untrackedCurrentPage.value.totalPages > 1;
+	});
+
+	async function searchCourse() {
+		// prevent same search
+		if (isEqual(lastSearch.value, props.values)) return;
+
+		searching.value = true;
+		errors.value = undefined;
+
+		try {
+			const coursesPage = await useSIACourses(
+				props.values,
+				untrackedCurrentPage.value?.currentPage
+			);
+			const codes: string[] = [];
+			const dedupedCourses: Course[] = [];
+
+			/**
+			 * Remove duplicates & omit courses without groups
+			 * The system return entities with the same data but differing in the internal id
+			 */
+			coursesPage.data.forEach((SIAcourse) => {
+				const course = useMapCourseFromSia(SIAcourse);
+
+				if (!course.code || !course.groups?.length) return;
+
+				const dedupedCourseIndex = dedupedCourses.findIndex(({ id }) => id === course.id);
+
+				if (dedupedCourseIndex >= 0) {
+					// merge details
+					const dedupedCourse = dedupedCourses[dedupedCourseIndex];
+					const uniquePrograms = [
+						...new Set([dedupedCourse.programs, course.programs].flat()),
+					].filter((p: uSIAProgram | undefined): p is uSIAProgram => !!p);
+					const uniqueTypologies = [
+						...new Set([dedupedCourse.typologies, course.typologies].flat()),
+					].filter((p: eSIATypology | undefined): p is eSIATypology => !!p);
+
+					dedupedCourses[dedupedCourseIndex].programs = uniquePrograms;
+					dedupedCourses[dedupedCourseIndex].typologies = uniqueTypologies;
+
+					return;
+				}
+
+				codes.push(course.code);
+				dedupedCourses.push(course);
+			});
+
+			// Refresh UI
+			lastSearch.value = { ...props.values, page: coursesPage.currentPage };
+			untrackedCourses.value = dedupedCourses;
+			untrackedCurrentPage.value = coursesPage;
+			savedUntrackedCourses.value[coursesPage.currentPage] = dedupedCourses;
+
+			// Index course, do not await
+			indexCourses(dedupedCourses, coursesPage);
+		} catch (err) {
+			console.error(err);
+			errors.value = err;
+
+			Swal.fire({
+				title: "Error de busqueda",
+				text: "Ha ocurrido un error al buscar el curso",
+				icon: "error",
+				target: searchUntrackedRef.value,
+			});
+		}
+
+		searching.value = false;
+	}
+
+	async function indexCourses(courses: Course[], page: SIACoursesResponse) {
+		try {
+			const include = courses.map(({ id }) => id);
+			const indexedCoursesEdges = await $fetch<iPageEdge<Course, string>[]>(
+				"/api/all/courses",
+				{
+					query: { include },
+					cache: "no-cache",
+					headers: { canModerate: SESSION.token || "" },
+				}
+			);
+			const mappedCourses: (Course & { indexed: boolean })[] = courses.map((course) => {
+				// With typology to prevent false matches
+				const indexedCourse = indexedCoursesEdges.find(({ node }) => node.id === course.id);
+
+				return {
+					...course,
+					indexed: !!indexedCourse,
+					updatedAt: indexedCourse?.node?.updatedAt,
+				};
+			});
+
+			// Conditionally Refresh UI again, 2nd time
+			if (untrackedCurrentPage.value?.currentPage === page.currentPage) {
+				untrackedCourses.value = mappedCourses;
+			}
+
+			savedUntrackedCourses.value[page.currentPage] = mappedCourses;
+
+			const coursesCodes = courses.map(({ code }) => code);
+			const indexedTeacherEdges = await $fetch<iPageEdge<Teacher, string>[]>(
+				"/api/teachers/search",
+				{
+					query: { courses: coursesCodes },
+					cache: "no-cache",
+					headers: { canModerate: SESSION.token || "" },
+				}
+			);
+			const indexedTeachers = (indexedTeacherEdges || []).map(({ node }) => node);
+
+			// Index courses
+			await Promise.all(
+				mappedCourses.map((course) => useIndexCourse({ ...course, indexedTeachers }))
+			);
+
+			const allIndexed = mappedCourses.map((course) => ({ ...course, indexed: true }));
+
+			// Conditionally Refresh UI again, 3rd time
+			if (untrackedCurrentPage.value?.currentPage === page.currentPage) {
+				untrackedCourses.value = allIndexed;
+			}
+
+			savedUntrackedCourses.value[page.currentPage] = allIndexed;
+		} catch (err) {
+			console.error(err);
+			errors.value = err;
+
+			Swal.fire({
+				title: "Error de indexado",
+				text: "Ha ocurrido un error al indexar los cursos",
+				icon: "error",
+				target: searchUntrackedRef.value,
+			});
+		}
+	}
+
+	// lifecycle
+	watch(
+		[untrackedCourses, () => untrackedCurrentPage?.value?.currentPage],
+		([newCourses, newPageNumber], [oldCourses, oldPageNumber]) => {
+			// omit if first load or reset
+			if (!oldCourses || !oldPageNumber || !newCourses || !newPageNumber) return;
+
+			// page change
+			if (newPageNumber > oldPageNumber) {
+				const saved = savedUntrackedCourses.value[newPageNumber];
+
+				// fetch new page
+				if (!saved) return searchCourse();
+
+				// replace with saved page
+				untrackedCourses.value = saved;
+			} else if (newPageNumber < oldPageNumber) {
+				// replace with old page
+				untrackedCourses.value = savedUntrackedCourses.value[newPageNumber] || [];
+			}
+		},
+		{ immediate: false }
+	);
+</script>

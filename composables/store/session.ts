@@ -2,6 +2,12 @@ import { defineStore } from "pinia";
 import { getAuth } from "firebase/auth";
 
 import type { Course, User } from "~/resources/types/entities";
+import {
+	eSIABogotaFaculty,
+	eSIAScienceBogotaProgram,
+	type uSIAFaculty,
+	type uSIAProgram,
+} from "~/functions/src/types/SIA";
 
 export interface iStateSession {
 	user?: User;
@@ -11,6 +17,8 @@ export interface iStateSession {
 	 * Courses to track (code)
 	 */
 	track: string[];
+	lastFacultySearch: uSIAFaculty;
+	lastProgramSearch: uSIAProgram;
 }
 
 /**
@@ -28,6 +36,8 @@ export const useSessionStore = defineStore("session", {
 			token: undefined,
 			expiredToken: false,
 			track: [],
+			lastFacultySearch: eSIABogotaFaculty.CIENCIAS,
+			lastProgramSearch: eSIAScienceBogotaProgram.CC,
 		};
 	},
 	getters: {
@@ -91,6 +101,10 @@ export const useSessionStore = defineStore("session", {
 			if (!course.code || !this.track.includes(course.code)) return;
 
 			this.track = this.track.filter((code) => code !== course.code);
+		},
+		setLastSearch(faculty: uSIAFaculty, program: uSIAProgram) {
+			this.lastFacultySearch = faculty;
+			this.lastProgramSearch = program;
 		},
 	},
 });

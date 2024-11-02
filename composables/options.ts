@@ -37,6 +37,7 @@ export function useCourseProgramOptions([level, place, faculty, program]: [
 	uSIAFaculty?,
 	uSIAProgram?,
 ] = []) {
+	const SESSION = useSessionStore();
 	const selectedLevel = ref<eSIALevel | undefined>(level);
 	const selectedPlace = ref<eSIAPlace | undefined>(place);
 	const selectedFaculty = ref<uSIAFaculty | undefined>(faculty);
@@ -117,12 +118,13 @@ export function useCourseProgramOptions([level, place, faculty, program]: [
 		{ immediate: false }
 	);
 	watch(
-		selectedFaculty,
-		(newFaculty, oldFaculty) => {
-			if (newFaculty === oldFaculty) return;
-
+		[selectedFaculty, selectedProgram],
+		([newFaculty, newProgram], [oldFaculty]) => {
 			// reset
-			selectedProgram.value = undefined;
+			if (newFaculty !== oldFaculty) selectedProgram.value = undefined;
+			if (!newFaculty || !newProgram) return;
+
+			SESSION.setLastSearch(newFaculty, newProgram);
 		},
 		{ immediate: false }
 	);
