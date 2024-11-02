@@ -222,18 +222,22 @@
 	});
 
 	async function fetchCourses(query: Partial<CourseValues> = values.value): Promise<Course[]> {
-		const { edges } = await $fetch<iPage<Course, string>>("/api/courses/search", {
+		const page = await $fetch<iPage<Course, string>>("/api/courses/search", {
 			query: { ...query, first: 6, page: true },
 			cache: "no-cache",
 			headers: { canModerate: SESSION.token || "" },
 		});
+		const courses: Course[] = [];
 
-		return edges.map(({ node }) => {
-			return {
-				...node,
-				updatedAt: useTimeAgo(new Date(node.updatedAt || "")),
-			};
-		});
+		for (let index = 0; index < page.edges.length; index++) {
+			const { node } = page.edges[index];
+
+			// Remove courses with no groups, do not await
+			if (!node.groups?.length) useDocumentDelete(node);
+			else courses.push({ ...node, updatedAt: useTimeAgo(new Date(node.updatedAt || "")) });
+		}
+
+		return courses;
 	}
 
 	function goToCourse(course: Pick<Course, "id">) {
