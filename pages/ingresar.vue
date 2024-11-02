@@ -13,8 +13,11 @@
 				<XamuIconFa name="google" brand :size="20" />
 				<span>Inicia sesión con Google</span>
 			</XamuActionButton>
-			<div class="txt --txtAlign-center --gap-0">
-				<p class="--txtSize-sm --txtColor-dark5">Usa tu cuenta UNAL para acceder</p>
+			<div class="txt --txtAlign-center --gap">
+				<p class="">Usa tu cuenta UNAL para acceder</p>
+				<p class="--txtSize-sm --txtColor-dark5">
+					Pueden haber errores al recargar esta pagina
+				</p>
 			</div>
 		</form>
 	</XamuLoaderContent>
