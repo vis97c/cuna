@@ -24,6 +24,7 @@
     "functions"
   ],
   "dependencies": {
+    "@nuxt/scripts": "^0.9.5",
     "@open-xamu-co/ui-common-enums": "^3.0.0-next.6",
     "@open-xamu-co/ui-common-helpers": "^3.0.0-next.14",
     "@open-xamu-co/ui-components-vue": "^3.0.0-next.43",

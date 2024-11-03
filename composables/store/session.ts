@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { getAuth } from "firebase/auth";
+import { deleteUser, getAuth } from "firebase/auth";
 
 import type { Course, User } from "~/resources/types/entities";
 import {
@@ -48,6 +48,12 @@ export const useSessionStore = defineStore("session", {
 		id({ user }) {
 			return user ? `users/${user?.uid}` : "";
 		},
+		userName({ user }) {
+			const fullName = (user?.name || "").split(" ");
+			const [firstName = "Sin Nombre", secondName = "", firstLastName = ""] = fullName;
+
+			return `${firstName} ${firstLastName || secondName}`.trim();
+		},
 		canModerate({ user }) {
 			const role = user?.role ?? 3;
 
@@ -93,7 +99,27 @@ export const useSessionStore = defineStore("session", {
 
 			if (value) {
 				await getAuth($clientFirebaseApp).signOut();
-				window.location.href = "/"; // rdr & reload page
+				window.location.href = "/ingresar"; // rdr & reload page
+			}
+		},
+		async remove() {
+			if (!process.client) return;
+
+			const { $clientFirebaseApp } = useNuxtApp();
+			const Swal = useSwal();
+
+			const { value } = await Swal.firePrevent({
+				title: "Eliminar cuenta",
+				text: "¿Esta seguro de querer eliminar tu cuenta?",
+				footer: "Borraremos toda tu información, esta acción no es reversible, aunque puedes volver a registrarte mas tarde",
+			});
+
+			const user = getAuth($clientFirebaseApp).currentUser;
+
+			if (user && value) {
+				await deleteUser(user);
+
+				window.location.href = "/ingresar"; // rdr & reload page
 			}
 		},
 		trackCourse(course: Course) {

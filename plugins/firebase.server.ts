@@ -35,9 +35,9 @@ export default defineNuxtPlugin(async () => {
 			const userSnapshot = await userRef.get();
 			const user: Partial<User> | undefined = userSnapshot.data();
 
-			if (user && user?.name !== displayName) {
+			if (user && (user?.email !== email || user?.photoURL !== photoURL)) {
 				// repopulate user data
-				await userRef.update({ email, name: displayName, photoURL });
+				await userRef.update({ email, photoURL });
 			}
 
 			SESSION.setUser(

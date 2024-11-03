@@ -5,15 +5,12 @@
 		:errors="errors"
 		content
 	>
-		<slot v-bind="{ searchCourse, searching }"></slot>
+		<slot v-bind="{ searchCourse: resetSearchCourse, searching }"></slot>
 		<div
 			v-if="untrackedCurrentPage"
 			class="flx --flxColumn --flx-start-stretch --gap-30 --width-100"
 		>
-			<div
-				v-if="untrackedCourses?.length"
-				class="flx --flxColumn --flx-start-stretch --gap-30 --width-100"
-			>
+			<div class="flx --flxColumn --flx-start-stretch --gap-30 --width-100">
 				<div class="txt --gap-0">
 					<h3>
 						Resultados de la busqueda
@@ -28,7 +25,10 @@
 						{{ untrackedCurrentPage.totalPages }}.
 					</p>
 				</div>
-				<div class="grd --grdColumns-auto3 --gap --width-100">
+				<div
+					v-if="untrackedCourses?.length"
+					class="grd --grdColumns-auto3 --gap --width-100"
+				>
 					<XamuBaseBox
 						v-for="course in untrackedCourses"
 						:key="course.code"
@@ -65,15 +65,15 @@
 						</div>
 					</XamuBaseBox>
 				</div>
+				<XamuBoxMessage
+					v-else-if="canPaginate"
+					text="Se omitieron los resultados por no tener grupos reportados (Sin disponibilidad)."
+				/>
+				<XamuBoxMessage
+					v-else
+					text="Definitivamente no hay cursos disponibles de la UNAL que coincidan con tu búsqueda."
+				/>
 			</div>
-			<XamuBoxMessage
-				v-else-if="canPaginate"
-				text="Se omitieron resultados por no tener grupos reportados (Sin disponibilidad)."
-			/>
-			<XamuBoxMessage
-				v-else
-				text="Definitivamente no hay cursos disponibles de la UNAL que coincidan con tu búsqueda."
-			/>
 			<div v-if="canPaginate" class="flx --flxRow --flx-between-center">
 				<XamuActionButtonToggle
 					:disabled="untrackedCurrentPage.currentPage <= 1"
@@ -139,6 +139,12 @@
 
 		return untrackedCurrentPage.value.totalPages > 1;
 	});
+
+	function resetSearchCourse() {
+		if (untrackedCurrentPage.value) untrackedCurrentPage.value.currentPage = 1;
+
+		return searchCourse();
+	}
 
 	async function searchCourse() {
 		// prevent same search

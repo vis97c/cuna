@@ -79,8 +79,8 @@ export default defineNuxtConfig({
 				{ rel: "dns-prefetch", href: "https://unpkg.com/" },
 				...stylesheets.map(getStyleSheetPreload),
 			],
-			style: [{ children: loaderCss }],
-			noscript: [{ children: "This app requires javascript to work" }],
+			style: [{ textContent: loaderCss }],
+			noscript: [{ textContent: "This app requires javascript to work" }],
 		},
 	},
 	runtimeConfig,
@@ -118,7 +118,12 @@ export default defineNuxtConfig({
 	},
 	/** Global CSS */
 	css,
-	modules: ["@open-xamu-co/ui-nuxt", "@pinia/nuxt", "@pinia-plugin-persistedstate/nuxt"],
+	modules: [
+		"@nuxt/scripts",
+		"@pinia/nuxt",
+		"@pinia-plugin-persistedstate/nuxt",
+		"@open-xamu-co/ui-nuxt",
+	],
 	piniaPersistedstate: {
 		cookieOptions: {
 			sameSite: "strict",
@@ -156,5 +161,10 @@ export default defineNuxtConfig({
 			providers: { bypass: { provider: "~/providers/bypass.ts" } },
 		},
 		imageHosts: ["lh3.googleusercontent.com"],
+	},
+	scripts: {
+		registry: {
+			googleAnalytics: { id: "G-X7H48BMMRK" },
+		},
 	},
 });
