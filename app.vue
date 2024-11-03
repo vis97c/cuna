@@ -57,6 +57,16 @@
 													</li>
 													<hr />
 													<li>
+														<p class="--txtSize-xs">Buscador</p>
+													</li>
+													<li>
+														<XamuInputToggle
+															v-model="withNonRegular"
+															label="Incluir cupos PAES y PEAMA"
+														/>
+													</li>
+													<hr />
+													<li>
 														<XamuActionLink
 															:theme="eColors.DANGER"
 															@click="SESSION.logout"
@@ -116,6 +126,12 @@
 		const [firstName = "Sin Nombre", secondName = "", firstLastName = ""] = fullName;
 
 		return `${firstName} ${firstLastName || secondName}`.trim();
+	});
+	const withNonRegular = computed({
+		get: () => SESSION.withNonRegular,
+		set: (value) => {
+			SESSION.toggleNonRegular(value);
+		},
 	});
 
 	// lifecycle

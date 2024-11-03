@@ -1,4 +1,4 @@
-import { startCase } from "lodash-es";
+import { capitalize } from "lodash-es";
 
 import type { SIACourse, SIAGroup } from "~/functions/src/types/SIA";
 import type { Course, Group, User } from "~/resources/types/entities";
@@ -87,7 +87,7 @@ export function useMapCourseFromSia(source: SIACourse): Course {
 	return {
 		id,
 		SIA: source.IDBUSCADORCURSO,
-		name: startCase(source.NOMBREASIGNATURA),
+		name: capitalize(source.NOMBREASIGNATURA),
 		alternativeNames: [source.NOMBREASIGNATURA],
 		code: source.CODIGO_ASIGNATURA,
 		credits: source.NUM_CREDITOS,

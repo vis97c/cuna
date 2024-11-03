@@ -53,7 +53,6 @@
 	});
 
 	const route = useRoute();
-	const APP = useAppStore();
 	const SESSION = useSessionStore();
 
 	const errorMessage = computed<string>(() => {
@@ -68,9 +67,7 @@
 	});
 
 	// lifecycle
-	useHead(() => ({
-		title: `${props.error.statusCode} ⋅ ${APP.instance?.name || "NO DB"}`,
-	}));
+	route.meta.title = props.error.statusCode;
 </script>
 
 <style lang="scss" scoped>

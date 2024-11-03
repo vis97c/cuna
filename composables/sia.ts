@@ -24,17 +24,20 @@ export function useSIACourses(values: CourseValues, page = 1) {
 	});
 }
 
-export async function useIndexCourse({
-	indexed,
-	indexedTeachers = [],
-	groups = [],
-	programs = [],
-	typologies = [],
-	alternativeNames = [],
-	createdAt,
-	updatedAt,
-	...course
-}: Course & { indexed?: boolean; indexedTeachers?: Teacher[] }) {
+export async function useIndexCourse(
+	{
+		indexed,
+		indexedTeachers = [],
+		groups = [],
+		programs = [],
+		typologies = [],
+		alternativeNames = [],
+		createdAt,
+		updatedAt,
+		...course
+	}: Course & { indexed?: boolean; indexedTeachers?: Teacher[] },
+	indexedCourse?: Course
+) {
 	const APP = useAppStore();
 
 	// index teachers conditionally
@@ -64,8 +67,15 @@ export async function useIndexCourse({
 	const millisDiff = nowMilis - updatedAtMilis;
 	const minutes = APP.instance?.config?.coursesRefreshRate || 5;
 
-	// Do not update if updated less than threshold
-	if (indexed && millisDiff <= minutes * 60 * 1000) return;
+	// Same programs & typologies
+	if (
+		indexedCourse?.programs?.every((p) => programs.includes(p)) &&
+		indexedCourse?.typologies?.every((t) => typologies.includes(t)) &&
+		indexedCourse?.alternativeNames?.every((p) => alternativeNames.includes(p))
+	) {
+		// Do not update if updated less than threshold
+		if (indexed && millisDiff <= minutes * 60 * 1000) return;
+	}
 
 	// creates or updates course
 	// TODO: index course on server side

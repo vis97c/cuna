@@ -14,11 +14,16 @@ export interface iStateSession {
 	token?: string;
 	expiredToken: boolean;
 	/**
-	 * Courses to track (code)
+	 * Courses to track (ids)
 	 */
 	track: string[];
 	lastFacultySearch: uSIAFaculty;
 	lastProgramSearch: uSIAProgram;
+	/**
+	 * Include non-regular enrollment slots
+	 * PAES, PEAMA
+	 */
+	withNonRegular: boolean;
 }
 
 /**
@@ -27,9 +32,7 @@ export interface iStateSession {
  * @state
  */
 export const useSessionStore = defineStore("session", {
-	persist: {
-		paths: ["user", "token", "expiredToken", "bag"],
-	},
+	persist: true,
 	state: (): iStateSession => {
 		return {
 			user: undefined,
@@ -38,6 +41,7 @@ export const useSessionStore = defineStore("session", {
 			track: [],
 			lastFacultySearch: eSIABogotaFaculty.CIENCIAS,
 			lastProgramSearch: eSIAScienceBogotaProgram.CC,
+			withNonRegular: false,
 		};
 	},
 	getters: {
@@ -105,6 +109,9 @@ export const useSessionStore = defineStore("session", {
 		setLastSearch(faculty: uSIAFaculty, program: uSIAProgram) {
 			this.lastFacultySearch = faculty;
 			this.lastProgramSearch = program;
+		},
+		toggleNonRegular(this, newValue = !this.withNonRegular) {
+			this.withNonRegular = newValue;
 		},
 	},
 });

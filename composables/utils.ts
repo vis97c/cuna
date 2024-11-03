@@ -36,13 +36,26 @@ export const useCyrb53 = (strs: (string | undefined)[] = [""], seed = 0) => {
 	return 4294967296 * (2097151 & h2) + (h1 >>> 0);
 };
 
-export function useCountSpots({
-	groups,
-	spotsCount,
-}: Pick<Course, "groups" | "spotsCount"> = {}): number {
-	const withReduce = groups?.reduce((sum, { availableSpots = 0 }) => sum + availableSpots, 0);
+/**
+ * Count spots
+ * Conditionally omit non-regular enrollment spots
+ */
+export function useCountSpots({ groups = [] }: Pick<Course, "groups"> = {}): number {
+	const SESSION = useSessionStore();
+	const withReduce = groups.reduce((sum, { name = "", availableSpots = 0 }) => {
+		const lowerName = name.toLowerCase();
 
-	return (withReduce || spotsCount) ?? 0;
+		if (
+			!SESSION.withNonRegular &&
+			(lowerName.includes("peama") || lowerName.includes("paes"))
+		) {
+			return sum;
+		}
+
+		return sum + availableSpots;
+	}, 0);
+
+	return withReduce;
 }
 
 export function useTGroup(count = 0) {

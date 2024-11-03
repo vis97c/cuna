@@ -1,4 +1,5 @@
 import type { iSelectOption } from "@open-xamu-co/ui-common-types";
+import { isEqual } from "lodash-es";
 
 import {
 	eSIABogotaFaculty,
@@ -31,12 +32,10 @@ function toOptions(enumLike: object): iSelectOption[] {
 /**
  * Program related options
  */
-export function useCourseProgramOptions([level, place, faculty, program]: [
-	eSIALevel?,
-	eSIAPlace?,
-	uSIAFaculty?,
-	uSIAProgram?,
-] = []) {
+export function useCourseProgramOptions(
+	[level, place, faculty, program]: [eSIALevel?, eSIAPlace?, uSIAFaculty?, uSIAProgram?] = [],
+	noUndef?: boolean
+) {
 	const SESSION = useSessionStore();
 	const selectedLevel = ref<eSIALevel | undefined>(level);
 	const selectedPlace = ref<eSIAPlace | undefined>(place);
@@ -107,24 +106,38 @@ export function useCourseProgramOptions([level, place, faculty, program]: [
 
 	// lifecycle
 	watch(
-		selectedPlace,
-		(newPlace, oldPlace) => {
-			if (newPlace === oldPlace) return;
+		faculties,
+		(newFaculties = []) => {
+			const [newDefault] = newFaculties;
 
 			// reset
+			if (noUndef) {
+				if (newDefault) selectedFaculty.value = <uSIAFaculty>newDefault.value;
+
+				return;
+			}
+
 			selectedFaculty.value = undefined;
-			selectedProgram.value = undefined;
 		},
 		{ immediate: false }
 	);
 	watch(
-		[selectedFaculty, selectedProgram],
-		([newFaculty, newProgram], [oldFaculty]) => {
-			// reset
-			if (newFaculty !== oldFaculty) selectedProgram.value = undefined;
-			if (!newFaculty || !newProgram) return;
+		[programs, selectedProgram],
+		([newPrograms = [], newProgram], [oldPrograms, oldProgram]) => {
+			const [newDefault] = newPrograms;
 
-			SESSION.setLastSearch(newFaculty, newProgram);
+			if (!newProgram) {
+				if (noUndef && newDefault) selectedProgram.value = <uSIAProgram>newDefault.value;
+			} else {
+				if (!isEqual(newPrograms, oldPrograms)) {
+					selectedProgram.value = undefined;
+
+					return;
+				}
+				if (!selectedFaculty.value || newProgram === oldProgram) return;
+
+				SESSION.setLastSearch(selectedFaculty.value, newProgram);
+			}
 		},
 		{ immediate: false }
 	);

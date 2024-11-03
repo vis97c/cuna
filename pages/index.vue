@@ -183,12 +183,15 @@
 	const SESSION = useSessionStore();
 	const router = useRouter();
 	const { selectedPlace, selectedFaculty, selectedProgram, faculties, programs } =
-		useCourseProgramOptions([
-			eSIALevel.PREGRADO,
-			eSIAPlace.BOGOTÁ,
-			SESSION.lastFacultySearch,
-			SESSION.lastProgramSearch,
-		]);
+		useCourseProgramOptions(
+			[
+				eSIALevel.PREGRADO,
+				eSIAPlace.BOGOTÁ,
+				SESSION.lastFacultySearch,
+				SESSION.lastProgramSearch,
+			],
+			true
+		);
 	const { selectedTypology, typologies } = useCourseTypeOptions();
 
 	const search = ref<string>();
@@ -198,8 +201,6 @@
 
 	const isCodeSearch = computed<boolean>(() => !!search.value && /^\d/.test(search.value));
 	const values = computed<CourseValues>(() => {
-		if (!selectedProgram.value) throw Error("Program is required");
-
 		const payload: PartialCourseValues = {
 			place: selectedPlace.value,
 			typology: selectedTypology.value,

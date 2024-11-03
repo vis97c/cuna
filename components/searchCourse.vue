@@ -221,7 +221,6 @@
 				}
 			);
 			const mappedCourses: (Course & { indexed: boolean })[] = courses.map((course) => {
-				// With typology to prevent false matches
 				const indexedCourse = indexedCoursesEdges.find(({ node }) => node.id === course.id);
 
 				return {
@@ -251,7 +250,13 @@
 
 			// Index courses
 			await Promise.all(
-				mappedCourses.map((course) => useIndexCourse({ ...course, indexedTeachers }))
+				mappedCourses.map((course) => {
+					const indexedCourse = indexedCoursesEdges.find(({ node }) => {
+						return node.id === course.id;
+					});
+
+					return useIndexCourse({ ...course, indexedTeachers }, indexedCourse);
+				})
 			);
 
 			const allIndexed = mappedCourses.map((course) => ({ ...course, indexed: true }));
