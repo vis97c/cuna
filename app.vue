@@ -30,7 +30,7 @@
 											@click="$router.back()"
 										>
 											<XamuIconFa name="chevron-left" />
-											<span>Volver</span>
+											<span class="--hidden:xs-inv">Volver</span>
 										</XamuActionLink>
 									</div>
 									<div class="flx --flxRow --flx-end-center --gap-30">

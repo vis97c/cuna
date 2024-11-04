@@ -44,7 +44,7 @@
 					class="flx --flxColumn --flx-start-center --width-100"
 					:loading="loading"
 					:errors="errors"
-					:refresh="() => fetchCourses()"
+					:refresh="refresh"
 					content
 				>
 					<div
@@ -226,7 +226,16 @@
 		return fn();
 	});
 
-	async function fetchCourses(query: Partial<CourseValues> = values.value): Promise<Course[]> {
+	function refresh() {
+		const saveSearch = search.value;
+
+		search.value = "";
+		search.value = saveSearch;
+	}
+
+	async function fetchCourses(
+		{ faculty, ...query }: Partial<CourseValues> = values.value
+	): Promise<Course[]> {
 		const page = await $fetch<iPage<Course, string>>("/api/courses/search", {
 			query: { ...query, first: 6, page: true },
 			cache: "no-cache",

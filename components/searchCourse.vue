@@ -70,11 +70,17 @@
 					text="Se omitieron los resultados por no tener grupos reportados (Sin disponibilidad)."
 				/>
 				<XamuBoxMessage v-else>
-					<p>
-						Definitivamente no hay cursos disponibles de la UNAL
-						<b>"{{ SESSION.place }}"</b>
-						que coincidan con tu búsqueda.
-					</p>
+					<div class="txt --txtAlign-center --gap-10 --width-100">
+						<p v-if="untrackedCurrentPage.totalRecords" class="--txtSize-xs">
+							*Se omitieron los resultados por no tener grupos reportados (Sin
+							disponibilidad).
+						</p>
+						<p>
+							Definitivamente no hay cursos disponibles de la UNAL
+							<b>"{{ lastSearch?.place }}"</b>
+							que coincidan con tu búsqueda.
+						</p>
+					</div>
 				</XamuBoxMessage>
 			</div>
 			<div v-if="canPaginate" class="flx --flxRow --flx-between-center">
