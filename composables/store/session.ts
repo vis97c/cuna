@@ -90,6 +90,7 @@ export const useSessionStore = defineStore("session", {
 			if (!process.client) return;
 
 			const { $clientFirebaseApp } = useNuxtApp();
+			const router = useRouter();
 			const Swal = useSwal();
 
 			const { value } = await Swal.firePrevent({
@@ -99,13 +100,14 @@ export const useSessionStore = defineStore("session", {
 
 			if (value) {
 				await getAuth($clientFirebaseApp).signOut();
-				window.location.href = "/ingresar"; // rdr & reload page
+				router.push("/"); // rdr & reload page
 			}
 		},
 		async remove() {
 			if (!process.client) return;
 
 			const { $clientFirebaseApp } = useNuxtApp();
+			const router = useRouter();
 			const Swal = useSwal();
 
 			const { value } = await Swal.firePrevent({
@@ -118,8 +120,7 @@ export const useSessionStore = defineStore("session", {
 
 			if (user && value) {
 				await deleteUser(user);
-
-				window.location.href = "/ingresar"; // rdr & reload page
+				router.push("/"); // rdr & reload page
 			}
 		},
 		trackCourse(course: Course) {

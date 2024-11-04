@@ -61,6 +61,7 @@ export default defineNuxtConfig({
 				{ property: "og:description", content: description },
 				{ property: "og:image", content: "/images/seo.jpg" },
 				{ property: "og:type", content: "website" },
+				{ property: "og:url", content: "https://cuna.com.co/" },
 				{ property: "og:site_name", content: "Cuna" },
 				{ name: "twitter:card", content: "summary_large_image" },
 				{ name: "twitter:title", content: "Cuna ⋅ Visor de cupos UNAL." },
@@ -69,6 +70,7 @@ export default defineNuxtConfig({
 			],
 			link: [
 				{ rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+				{ rel: "canonical", href: "https://cuna.com.co/" },
 				{
 					rel: "preconnect",
 					href: "https://fonts.googleapis.com/",
@@ -97,7 +99,7 @@ export default defineNuxtConfig({
 		compressPublicAssets: true,
 	},
 	routeRules: {
-		"/curso/**": {
+		"/cursos/**": {
 			ssr: false,
 		},
 	},

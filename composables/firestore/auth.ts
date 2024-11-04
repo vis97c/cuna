@@ -1,4 +1,3 @@
-import type { Ref } from "vue";
 import { debounce } from "lodash-es";
 import {
 	browserLocalPersistence,
@@ -11,9 +10,11 @@ import { FirebaseError } from "firebase/app";
 
 import { useSwal } from "@open-xamu-co/ui-common-helpers";
 
-export function useGoogleAuth(loading: Ref<boolean>) {
+export function useGoogleAuth() {
 	const { $clientFirebaseApp } = useNuxtApp();
 	const Swal = useSwal();
+
+	const loading = ref(false);
 
 	const loginWithGoogle = debounce(async () => {
 		const router = useRouter();
@@ -34,7 +35,7 @@ export function useGoogleAuth(loading: Ref<boolean>) {
 			await signInWithPopup(auth, provider);
 
 			// rdr, Restricted rdr handled by plugin
-			if (!restricted && route.path !== "/") router.push("/");
+			if (!restricted && route.path !== "/cursos") router.push("/");
 		} catch (err: FirebaseError | unknown) {
 			console.error(err);
 
@@ -50,5 +51,5 @@ export function useGoogleAuth(loading: Ref<boolean>) {
 		loading.value = false;
 	});
 
-	return loginWithGoogle;
+	return { loading, loginWithGoogle };
 }

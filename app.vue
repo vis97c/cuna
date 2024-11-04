@@ -26,7 +26,7 @@
 								>
 									<div class="">
 										<XamuActionLink
-											v-if="SESSION.user && route.path != '/'"
+											v-if="SESSION.user && route.path != '/cursos'"
 											@click="$router.back()"
 										>
 											<XamuIconFa name="chevron-left" />
@@ -38,9 +38,7 @@
 											tooltip="Síguenos para estar al tanto de las novedades"
 											href="https://www.instagram.com/cuna_proyecto/"
 										>
-											<span class="x-uncapitalize --hidden:xs-inv">
-												cuna_proyecto
-											</span>
+											<span class="x-uncapitalize">cuna_proyecto</span>
 											<XamuIconFa name="instagram" :size="20" brand />
 										</XamuActionLink>
 										<XamuDropdown
@@ -58,7 +56,7 @@
 													:size="eSizes.LG"
 													@click="setModel()"
 												>
-													<span>
+													<span class="--hidden:xs-inv">
 														{{ SESSION.userName || "Sin nombre" }}
 													</span>
 													<figure
@@ -73,7 +71,7 @@
 													<XamuIconFa indicator name="chevron-down" />
 												</XamuActionLink>
 											</template>
-											<template #default>
+											<template #default="{ setModel }">
 												<nav
 													class="list flx --flxColumn --gap-20 --minWidth-max --txtColor"
 												>
@@ -104,7 +102,10 @@
 															<XamuActionButton
 																class="--width-100"
 																:theme="eColors.DANGER"
-																@click="SESSION.logout"
+																@click="
+																	setModel(false);
+																	SESSION.logout();
+																"
 															>
 																<XamuIconFa name="power-off" />
 																<span>Cerrar sesion</span>

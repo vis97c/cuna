@@ -63,10 +63,10 @@ export default defineNuxtPlugin(() => {
 			const router = useRouter();
 			const route = useRoute();
 			const { restricted } = route.query;
-			const rdr = restricted && typeof restricted === "string" ? decodeURI(restricted) : "/";
+			const rdr = restricted && typeof restricted === "string" && decodeURI(restricted);
 
 			// redirect
-			if (restricted && route.path !== rdr) router.replace(rdr);
+			if (rdr && route.path !== rdr) router.replace(rdr);
 		}
 	});
 

@@ -90,7 +90,6 @@
 
 	definePageMeta({
 		path_label: "Curso",
-		title: "Curso",
 		middleware: ["auth-only"],
 	});
 

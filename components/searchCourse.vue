@@ -36,7 +36,7 @@
 						class="grd-item txt --txtAlign-left --txtSize-sm --gap-5"
 						title="Ver detalles del curso"
 						:disabled="!course.indexed"
-						:to="`/curso/${getDocumentId(course.id)}`"
+						:to="`/cursos/${getDocumentId(course.id)}`"
 						button
 					>
 						<p class="--maxWidth-220 ellipsis">{{ course.name }}</p>

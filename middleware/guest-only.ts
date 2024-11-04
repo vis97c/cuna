@@ -3,17 +3,11 @@
  *
  * @middleware
  */
-export default defineNuxtRouteMiddleware(async ({ path, query }, from) => {
+export default defineNuxtRouteMiddleware(async () => {
 	const SESSION = useSessionStore();
 
-	if (import.meta.server || !SESSION.user) return;
-
-	const { restricted } = query;
-	const { restricted: restrictedFrom } = from.query;
-
-	// Prevent infinite redirects
-	if (restricted || restrictedFrom || path === "/") return;
+	if (!SESSION.user) return;
 
 	// User is authenticated
-	return navigateTo("/", { redirectCode: 302 });
+	return navigateTo("/cursos", { redirectCode: 302 });
 });
