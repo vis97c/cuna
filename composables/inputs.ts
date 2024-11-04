@@ -2,24 +2,20 @@ import { FormInput } from "@open-xamu-co/ui-common-helpers";
 import { eFormType } from "@open-xamu-co/ui-common-enums";
 
 import type { Course } from "~/resources/types/entities";
-import {
-	eSIABogotaFaculty,
-	eSIALevel,
-	eSIAPlace,
-	eSIAScienceBogotaProgram,
-} from "~/functions/src/types/SIA";
+import { eSIALevel } from "~/functions/src/types/SIA";
 
 export function useCourseInputs(course: Course = {}): FormInput[] {
+	const SESSION = useSessionStore();
 	const { selectedFaculty, faculties, programs } = useCourseProgramOptions([
 		eSIALevel.PREGRADO,
-		eSIAPlace.BOGOTÁ,
-		eSIABogotaFaculty.CIENCIAS,
-		eSIAScienceBogotaProgram.CC,
+		SESSION.place,
+		SESSION.lastFacultySearch,
+		SESSION.lastProgramSearch,
 	]);
 	const { typologies } = useCourseTypeOptions();
 	const facultyInput = new FormInput(
 		{
-			values: [course?.faculty || eSIABogotaFaculty.CIENCIAS],
+			values: [course?.faculty || SESSION.lastFacultySearch],
 			name: "faculty",
 			required: true,
 			title: "Facultad del curso (Sede Bogotá)",
@@ -45,7 +41,7 @@ export function useCourseInputs(course: Course = {}): FormInput[] {
 		}
 	);
 	const programInput = new FormInput({
-		values: [course?.program || eSIAScienceBogotaProgram.CC],
+		values: [course?.program || SESSION.lastProgramSearch],
 		name: "program",
 		title: "Programa del curso (Sede Bogotá)",
 		placeholder: "Ej: Ciencias de la computación",
@@ -82,7 +78,7 @@ export function useCourseInputs(course: Course = {}): FormInput[] {
 			icon: "hashtag",
 		}),
 		new FormInput({
-			values: [eSIAPlace.BOGOTÁ],
+			values: [SESSION.place],
 			name: "place",
 			type: eFormType.HIDDEN,
 		}),

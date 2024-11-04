@@ -25,7 +25,7 @@
 				</p>
 			</div>
 			<XamuActionButton :theme="eColors.DANGER" @click="SESSION.remove">
-				<XamuIconFa name="power-off" />
+				<XamuIconFa name="trash-can" />
 				<span>Eliminar cuenta</span>
 			</XamuActionButton>
 		</div>

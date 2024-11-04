@@ -165,7 +165,7 @@
 		PartialCourseValues,
 	} from "~/resources/types/values";
 	import { getDocumentId } from "~/resources/utils/firestore";
-	import { eSIALevel, eSIAPlace } from "~/functions/src/types/SIA";
+	import { eSIALevel } from "~/functions/src/types/SIA";
 	import { debounce } from "lodash-es";
 
 	/**
@@ -182,16 +182,18 @@
 
 	const SESSION = useSessionStore();
 	const router = useRouter();
-	const { selectedPlace, selectedFaculty, selectedProgram, faculties, programs } =
-		useCourseProgramOptions(
-			[
-				eSIALevel.PREGRADO,
-				eSIAPlace.BOGOTÁ,
-				SESSION.lastFacultySearch,
-				SESSION.lastProgramSearch,
-			],
-			true
-		);
+
+	const selectedPlace = computed({
+		get: () => SESSION.place,
+		set: (value) => {
+			SESSION.setPlace(value);
+		},
+	});
+
+	const { selectedFaculty, selectedProgram, faculties, programs } = useCourseProgramOptions(
+		[eSIALevel.PREGRADO, selectedPlace, SESSION.lastFacultySearch, SESSION.lastProgramSearch],
+		true
+	);
 	const { selectedTypology, typologies } = useCourseTypeOptions();
 
 	const search = ref<string>();

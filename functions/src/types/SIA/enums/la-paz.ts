@@ -4,8 +4,8 @@
  * La Paz is its own faculty for global courses.
  */
 export enum eSIALaPazFaculty {
-	ESCUELA_DE_PREGRADO = "1004 ESCUELA DE PREGRADO DE LA PAZ",
 	SEDE_LA_PAZ = "9933 SEDE DE LA PAZ",
+	ESCUELA_DE_PREGRADO = "1004 ESCUELA DE PREGRADO DE LA PAZ",
 }
 
 /**

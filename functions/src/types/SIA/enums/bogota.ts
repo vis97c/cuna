@@ -152,9 +152,9 @@ export enum eSIAHumanScienceBogotaProgram {
 }
 
 /**
- * Agronomical Science faculty (2728) programs
+ * Agrarian Science faculty (2728) programs
  */
-export enum eSIAAgronomicalScienceBogotaProgram {
+export enum eSIAAgrarianScienceBogotaProgram {
 	INGENIERÍA_AGRONÓMICA = "2505 INGENIERÍA AGRONÓMICA",
 }
 
@@ -170,4 +170,4 @@ export type uSIABogotaProgram =
 	| eSIAScienceBogotaProgram
 	| eSIAEconomicalScienceBogotaProgram
 	| eSIAHumanScienceBogotaProgram
-	| eSIAAgronomicalScienceBogotaProgram;
+	| eSIAAgrarianScienceBogotaProgram;

@@ -1,8 +1,12 @@
 import { eSIABogotaFaculty, uSIABogotaProgram } from "./bogota";
 import { eSIALaPazFaculty, uSIALaPazProgram } from "./la-paz";
+import { eSIAManizalesFaculty, uSIAManizalesProgram } from "./manizales";
+import { eSIAMedellinFaculty, uSIAMedellinProgram } from "./medellin";
 
 export * from "./bogota";
 export * from "./la-paz";
+export * from "./medellin";
+export * from "./manizales";
 
 export enum eSIALevel {
 	PREGRADO = "PREGRADO",
@@ -25,8 +29,8 @@ export enum eSIATypology {
 export enum eSIAPlace {
 	BOGOTÁ = "SEDE BOGOTÁ",
 	LA_PAZ = "SEDE DE LA PAZ",
-	// MEDELLÍN = "SEDE MEDELLÍN",
-	// MANIZALES = "SEDE MANIZALES",
+	MEDELLÍN = "SEDE MEDELLÍN",
+	MANIZALES = "SEDE MANIZALES",
 	// PALMIRA = "SEDE PALMIRA",
 	// TUMACO = "SEDE TUMACO",
 	// AMAZONÍA = "SEDE AMAZONÍA",
@@ -34,6 +38,14 @@ export enum eSIAPlace {
 	// ORINOQUÍA = "SEDE ORINOQUÍA",
 }
 
-export type uSIAFaculty = eSIABogotaFaculty | eSIALaPazFaculty;
+export type uSIAFaculty =
+	| eSIABogotaFaculty
+	| eSIALaPazFaculty
+	| eSIAMedellinFaculty
+	| eSIAManizalesFaculty;
 
-export type uSIAProgram = uSIABogotaProgram | uSIALaPazProgram;
+export type uSIAProgram =
+	| uSIABogotaProgram
+	| uSIALaPazProgram
+	| uSIAMedellinProgram
+	| uSIAManizalesProgram;

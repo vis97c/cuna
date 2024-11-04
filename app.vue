@@ -92,6 +92,13 @@
 															<p class="--txtSize-xs">Buscador</p>
 														</li>
 														<li>
+															<XamuSelect
+																v-model="selectedPlace"
+																:options="places"
+																class="--txtAlign-center"
+															/>
+														</li>
+														<li>
 															<XamuInputToggle
 																v-model="withNonRegular"
 																label="Incluir cupos PAES y PEAMA"
@@ -126,7 +133,7 @@
 									</h1>
 									<div class="flx --flxRow --flx-center --gap-5">
 										<p class="--txtSize-sm --txtColor-dark5">
-											Visor de cursos UNAL (Sede Bogotá)
+											Visor de cursos UNAL
 										</p>
 										<XamuActionLink
 											class="x-info"
@@ -153,15 +160,25 @@
 <script setup lang="ts">
 	import { eColors, eSizes } from "@open-xamu-co/ui-common-enums";
 
+	import { eSIALevel } from "./functions/src/types/SIA";
+
 	const APP = useAppStore();
 	const SESSION = useSessionStore();
 	const route = useRoute();
 	const { indexable } = useRuntimeConfig().public;
 
+	const { places } = useCourseProgramOptions([eSIALevel.PREGRADO, SESSION.place], true);
+
 	const withNonRegular = computed({
 		get: () => SESSION.withNonRegular,
 		set: (value) => {
 			SESSION.toggleNonRegular(value);
+		},
+	});
+	const selectedPlace = computed({
+		get: () => SESSION.place,
+		set: (value) => {
+			SESSION.setPlace(value);
 		},
 	});
 

@@ -45,29 +45,29 @@ export default defineNuxtPlugin(() => {
 			SESSION.unsetSession();
 
 			auth.signOut();
-		} else if (!isAnonymous) {
-			const token = await user.getIdToken(true);
-			const userRef = doc(clientFirestore, "users", uid);
-			const userData = { uid, name: displayName, email, photoURL, role: 3 };
-			let data: Partial<User> | undefined = (await getDoc(userRef)).data();
+		} else if (isAnonymous) return;
 
-			// Create user on firestore. (Manually created user)
-			if (!data) {
-				setDoc(userRef, userData, { merge: true });
+		const token = await user.getIdToken(true);
+		const userRef = doc(clientFirestore, "users", uid);
+		const userData = { uid, name: displayName, email, photoURL, role: 3 };
+		let data: Partial<User> | undefined = (await getDoc(userRef)).data();
 
-				data = userData;
-			}
+		// Create user on firestore. (Manually created user)
+		if (!data) {
+			setDoc(userRef, userData, { merge: true });
 
-			SESSION.setUser({ ...userData, ...data }, token);
-
-			const router = useRouter();
-			const route = useRoute();
-			const { restricted } = route.query;
-			const rdr = restricted && typeof restricted === "string" && decodeURI(restricted);
-
-			// redirect
-			if (rdr && route.path !== rdr) router.replace(rdr);
+			data = userData;
 		}
+
+		SESSION.setUser({ ...userData, ...data }, token);
+
+		const router = useRouter();
+		const route = useRoute();
+		const { restricted = "/cursos" } = route.query;
+		const rdr = typeof restricted === "string" && decodeURI(restricted);
+
+		// redirect
+		if (rdr && route.path !== rdr) router.replace(rdr);
 	});
 
 	return { provide: { clientFirebaseApp, clientFirestore } };

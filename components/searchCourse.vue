@@ -69,10 +69,13 @@
 					v-else-if="canPaginate"
 					text="Se omitieron los resultados por no tener grupos reportados (Sin disponibilidad)."
 				/>
-				<XamuBoxMessage
-					v-else
-					text="Definitivamente no hay cursos disponibles de la UNAL que coincidan con tu búsqueda."
-				/>
+				<XamuBoxMessage v-else>
+					<p>
+						Definitivamente no hay cursos disponibles de la UNAL
+						<b>"{{ SESSION.place }}"</b>
+						que coincidan con tu búsqueda.
+					</p>
+				</XamuBoxMessage>
 			</div>
 			<div v-if="canPaginate" class="flx --flxRow --flx-between-center">
 				<XamuActionButtonToggle
@@ -141,7 +144,10 @@
 	});
 
 	function resetSearchCourse() {
-		if (untrackedCurrentPage.value) untrackedCurrentPage.value.currentPage = 1;
+		if (untrackedCurrentPage.value) {
+			savedUntrackedCourses.value = {};
+			untrackedCurrentPage.value = undefined;
+		}
 
 		return searchCourse();
 	}

@@ -4,6 +4,7 @@ import { deleteUser, getAuth } from "firebase/auth";
 import type { Course, User } from "~/resources/types/entities";
 import {
 	eSIABogotaFaculty,
+	eSIAPlace,
 	eSIAScienceBogotaProgram,
 	type uSIAFaculty,
 	type uSIAProgram,
@@ -17,6 +18,7 @@ export interface iStateSession {
 	 * Courses to track (ids)
 	 */
 	track: string[];
+	place: eSIAPlace;
 	lastFacultySearch: uSIAFaculty;
 	lastProgramSearch: uSIAProgram;
 	/**
@@ -39,6 +41,7 @@ export const useSessionStore = defineStore("session", {
 			token: undefined,
 			expiredToken: false,
 			track: [],
+			place: eSIAPlace.BOGOTÁ,
 			lastFacultySearch: eSIABogotaFaculty.CIENCIAS,
 			lastProgramSearch: eSIAScienceBogotaProgram.CC,
 			withNonRegular: false,
@@ -136,6 +139,9 @@ export const useSessionStore = defineStore("session", {
 		setLastSearch(faculty: uSIAFaculty, program: uSIAProgram) {
 			this.lastFacultySearch = faculty;
 			this.lastProgramSearch = program;
+		},
+		setPlace(place: eSIAPlace) {
+			this.place = place;
 		},
 		toggleNonRegular(this, newValue = !this.withNonRegular) {
 			this.withNonRegular = newValue;

@@ -21,8 +21,20 @@ import {
 	eSIALawBogotaProgram,
 	eSIAHumanScienceBogotaProgram,
 	eSIAEconomicalScienceBogotaProgram,
-	eSIAAgronomicalScienceBogotaProgram,
+	eSIAAgrarianScienceBogotaProgram,
 	eSIATypology,
+	eSIAMedellinFaculty,
+	eSIAMedellinProgram,
+	eSIAMinesMedellinProgram,
+	eSIAArchitectureMedellinProgram,
+	eSIAScienceMedellinProgram,
+	eSIAAgrarianSciencesMedellinProgram,
+	eSIAHumanSciencesAMedellinProgram,
+	eSIAManizalesFaculty,
+	eSIAManizalesProgram,
+	eSIAEngineeringAndArchitectureManizalesProgram,
+	eSIAExactSciencesManizalesProgram,
+	eSIAManagementManizalesProgram,
 } from "~/functions/src/types/SIA";
 
 function toOptions(enumLike: object): iSelectOption[] {
@@ -33,14 +45,19 @@ function toOptions(enumLike: object): iSelectOption[] {
  * Program related options
  */
 export function useCourseProgramOptions(
-	[level, place, faculty, program]: [eSIALevel?, eSIAPlace?, uSIAFaculty?, uSIAProgram?] = [],
+	[level, place, faculty, program]: [
+		(eSIALevel | Ref<eSIALevel | undefined>)?,
+		(eSIAPlace | Ref<eSIAPlace | undefined>)?,
+		(uSIAFaculty | Ref<uSIAFaculty | undefined>)?,
+		(uSIAProgram | Ref<uSIAProgram | undefined>)?,
+	] = [],
 	noUndef?: boolean
 ) {
 	const SESSION = useSessionStore();
-	const selectedLevel = ref<eSIALevel | undefined>(level);
-	const selectedPlace = ref<eSIAPlace | undefined>(place);
-	const selectedFaculty = ref<uSIAFaculty | undefined>(faculty);
-	const selectedProgram = ref<uSIAProgram | undefined>(program);
+	const selectedLevel = level && isRef(level) ? level : ref(level);
+	const selectedPlace = place && isRef(place) ? place : ref(place);
+	const selectedFaculty = faculty && isRef(faculty) ? faculty : ref(faculty);
+	const selectedProgram = program && isRef(program) ? program : ref(program);
 
 	// static
 	const levels = toOptions(eSIALevel);
@@ -53,6 +70,10 @@ export function useCourseProgramOptions(
 				return toOptions(eSIABogotaFaculty);
 			case eSIAPlace.LA_PAZ:
 				return toOptions(eSIALaPazFaculty);
+			case eSIAPlace.MEDELLÍN:
+				return toOptions(eSIAMedellinFaculty);
+			case eSIAPlace.MANIZALES:
+				return toOptions(eSIAManizalesFaculty);
 		}
 
 		return [];
@@ -85,7 +106,7 @@ export function useCourseProgramOptions(
 					case eSIABogotaFaculty.CIENCIAS_ECONÓMICAS:
 						return toOptions(eSIAEconomicalScienceBogotaProgram);
 					case eSIABogotaFaculty.CIENCIAS_AGRARIAS:
-						return toOptions(eSIAAgronomicalScienceBogotaProgram);
+						return toOptions(eSIAAgrarianScienceBogotaProgram);
 				}
 
 				break;
@@ -96,6 +117,38 @@ export function useCourseProgramOptions(
 						return toOptions(eSIALaPazProgram);
 					case eSIALaPazFaculty.ESCUELA_DE_PREGRADO:
 						return toOptions(eSIAPregradoLaPazProgram);
+				}
+
+				break;
+			case eSIAPlace.MEDELLÍN:
+				switch (selectedFaculty.value) {
+					// programas sede Medellín
+					case eSIAMedellinFaculty.SEDE_MEDELLÍN:
+						return toOptions(eSIAMedellinProgram);
+					case eSIAMedellinFaculty.FACULTAD_DE_MINAS:
+						return toOptions(eSIAMinesMedellinProgram);
+					case eSIAMedellinFaculty.FACULTAD_DE_ARQUITECTURA:
+						return toOptions(eSIAArchitectureMedellinProgram);
+					case eSIAMedellinFaculty.FACULTAD_DE_CIENCIAS:
+						return toOptions(eSIAScienceMedellinProgram);
+					case eSIAMedellinFaculty.FACULTAD_DE_CIENCIAS_AGRARIAS:
+						return toOptions(eSIAAgrarianSciencesMedellinProgram);
+					case eSIAMedellinFaculty.FACULTAD_DE_CIENCIAS_HUMANAS_Y_ECONÓMICAS_A:
+						return toOptions(eSIAHumanSciencesAMedellinProgram);
+				}
+
+				break;
+			case eSIAPlace.MANIZALES:
+				switch (selectedFaculty.value) {
+					// programas sede Manizales
+					case eSIAManizalesFaculty.SEDE_MANIZALES:
+						return toOptions(eSIAManizalesProgram);
+					case eSIAManizalesFaculty.FACULTAD_DE_INGENIERIA_Y_ARQUITECTURA:
+						return toOptions(eSIAEngineeringAndArchitectureManizalesProgram);
+					case eSIAManizalesFaculty.FACULTAD_DE_CIENCIAS_EXACTAS_Y_NATURALES:
+						return toOptions(eSIAExactSciencesManizalesProgram);
+					case eSIAManizalesFaculty.FACULTAD_DE_ADMINISTRACIÓN:
+						return toOptions(eSIAManagementManizalesProgram);
 				}
 
 				break;
