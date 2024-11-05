@@ -40,7 +40,6 @@
 					</XamuActionButton>
 				</form>
 				<XamuLoaderContent
-					v-if="search"
 					class="flx --flxColumn --flx-start-center --width-100"
 					:loading="loading"
 					:errors="errors"
@@ -86,67 +85,69 @@
 							/>
 						</div>
 					</div>
-					<div
-						v-if="matches.length"
-						class="flx --flxColumn --flx-start-stretch --gap-10 --width-100"
-					>
-						<h4 class="--txtSize-xs">Sugerencias:</h4>
-						<ul class="grd --grdColumns-auto3 --gap">
-							<li
-								v-for="match in matches"
-								:key="match.code"
-								class="txt --gap-0 --txtColor-dark5 --width-100"
-							>
-								<XamuActionLink
-									class="--maxWidth-100"
-									:tooltip="`Ver: ${match.name}`"
-									tooltip-as-text
-									@click="() => goToCourse(match)"
+					<template v-if="search">
+						<div
+							v-if="matches.length"
+							class="flx --flxColumn --flx-start-stretch --gap-10 --width-100"
+						>
+							<h4 class="--txtSize-xs">Sugerencias:</h4>
+							<ul class="grd --grdColumns-auto3 --gap">
+								<li
+									v-for="match in matches"
+									:key="match.code"
+									class="txt --gap-0 --txtColor-dark5 --width-100"
 								>
-									<XamuIconFa name="chess-knight" />
-									<span class="--width-440 ellipsis">
-										{{ match.name }}
-									</span>
-								</XamuActionLink>
-								<div class="txt --txtSize-sm --gap-0 --width-100 --pLeft-20">
-									<div
-										class="flx --flxRow-wrap --flx-between-center --gap-5 --width-100"
+									<XamuActionLink
+										class="--maxWidth-100"
+										:tooltip="`Ver: ${match.name}`"
+										tooltip-as-text
+										@click="() => goToCourse(match)"
 									>
-										<p>
-											<b title="Código">{{ match.code }}</b>
-											⋅
-											<span title="Créditos">
-												{{ useTCredits(match.credits) }}
-											</span>
-											<template v-if="match.groups?.length">
+										<XamuIconFa name="chess-knight" />
+										<span class="--width-440 ellipsis">
+											{{ match.name }}
+										</span>
+									</XamuActionLink>
+									<div class="txt --txtSize-sm --gap-0 --width-100 --pLeft-20">
+										<div
+											class="flx --flxRow-wrap --flx-between-center --gap-5 --width-100"
+										>
+											<p>
+												<b title="Código">{{ match.code }}</b>
 												⋅
-												<span title="Grupos">
-													{{ useTGroup(match.groups?.length) }}
+												<span title="Créditos">
+													{{ useTCredits(match.credits) }}
 												</span>
-											</template>
-										</p>
-										<p>
-											<b>{{ useTSpot(useCountSpots(match)) }}</b>
-											⋅
-											<span
-												:title="`Ultima actualizacion ${match.updatedAt}`"
-											>
-												{{ match.updatedAt }}
-											</span>
-										</p>
+												<template v-if="match.groups?.length">
+													⋅
+													<span title="Grupos">
+														{{ useTGroup(match.groups?.length) }}
+													</span>
+												</template>
+											</p>
+											<p>
+												<b>{{ useTSpot(useCountSpots(match)) }}</b>
+												⋅
+												<span
+													:title="`Ultima actualizacion ${match.updatedAt}`"
+												>
+													{{ match.updatedAt }}
+												</span>
+											</p>
+										</div>
 									</div>
-								</div>
-							</li>
-						</ul>
-					</div>
-					<p
-						v-else-if="search.length >= 5 && !loading"
-						class="--txtSize-xs --txtColor-dark5"
-					>
-						Sin sugerencias para
-						<b>"{{ search }}"</b>
-						.
-					</p>
+								</li>
+							</ul>
+						</div>
+						<p
+							v-else-if="search.length >= 5 && !loading"
+							class="--txtSize-xs --txtColor-dark5"
+						>
+							Sin sugerencias para
+							<b>"{{ search }}"</b>
+							.
+						</p>
+					</template>
 				</XamuLoaderContent>
 			</XamuBaseBox>
 		</SearchCourse>

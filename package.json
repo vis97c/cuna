@@ -27,7 +27,7 @@
     "@nuxt/scripts": "^0.9.5",
     "@open-xamu-co/ui-common-enums": "^3.0.0-next.6",
     "@open-xamu-co/ui-common-helpers": "^3.0.0-next.14",
-    "@open-xamu-co/ui-components-vue": "^3.0.0-next.43",
+    "@open-xamu-co/ui-components-vue": "^3.0.0-next.44",
     "@open-xamu-co/ui-nuxt": "^3.0.0-next.9",
     "@pinia-plugin-persistedstate/nuxt": "^1.1.0",
     "@pinia/nuxt": "^0.5.1",
