@@ -11,6 +11,8 @@ dist
 service_account.json
 public/dist
 .firebase/*.cache
+server.crt
+server.key
 
 
 # Local .terraform directories

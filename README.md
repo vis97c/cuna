@@ -36,6 +36,8 @@ Firebase requires 2 keys, the private one from recaptcha, and the site key from 
 
 The debug token allows bypassing the validation on dev environments
 
+To use the HTTPS dev server refer to: https://stackoverflow.com/a/57895543
+
 ### Enviroment variables
 
 ```
@@ -66,6 +68,8 @@ DEBUG_FIREBASE=false
 DEBUG_CSS=false
 # enable nuxt devtools
 DEBUG_NUXT=false
+# prefer https dev server
+DEBUG_HTTPS=false
 ```
 
 ### Terraform

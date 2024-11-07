@@ -1,4 +1,4 @@
-public/
+public/dist
 static/
 node_modules/
 .idea/

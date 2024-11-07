@@ -1,4 +1,4 @@
-import { capitalize } from "lodash-es";
+import { capitalize, deburr } from "lodash-es";
 
 import type { SIACourse, SIAGroup } from "~/functions/src/types/SIA";
 import type { Course, Group, User } from "~/resources/types/entities";
@@ -99,4 +99,31 @@ export function useMapCourseFromSia(source: SIACourse): Course {
 		groups,
 		spotsCount,
 	};
+}
+
+export function useMapCourse({ groups = [], ...course }: Course): Course {
+	const SESSION = useSessionStore();
+	const lowerPlace = deburr(course.place).toLowerCase();
+	const otherPlaces = groups.some(({ name = "" }) => {
+		const lowerName = deburr(name).toLowerCase();
+
+		return lowerName.includes("otras sedes");
+	});
+
+	const filteredGroups = groups.filter(({ name }) => {
+		const lowerName = deburr(name).toLowerCase();
+
+		if (
+			!SESSION.withNonRegular &&
+			(lowerName.includes("peama") || lowerName.includes("paes"))
+		) {
+			return false;
+		} else if (otherPlaces) {
+			return lowerName.includes(lowerPlace);
+		}
+
+		return true;
+	});
+
+	return { ...course, groups: filteredGroups, spotsCount: useCountSpots(filteredGroups) };
 }

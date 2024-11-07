@@ -6,6 +6,7 @@ import locale from "@open-xamu-co/ui-common-helpers/es";
 import {
 	debugCSS,
 	debugNuxt,
+	debugHTTPS,
 	production,
 	runtimeConfig,
 	countriesUrl,
@@ -83,6 +84,12 @@ export default defineNuxtConfig({
 			],
 			style: [{ textContent: loaderCss }],
 			noscript: [{ textContent: "This app requires javascript to work" }],
+		},
+	},
+	devServer: {
+		https: debugHTTPS && {
+			key: "server.key",
+			cert: "server.crt",
 		},
 	},
 	runtimeConfig,

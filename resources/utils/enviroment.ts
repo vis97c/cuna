@@ -12,6 +12,7 @@ export const countriesUrl = defineString("COUNTRIES_API").value();
 export const siaUrl = defineString("SIA_API").value();
 
 // debug
+export const debugHTTPS = !production && defineBoolean("DEBUG_HTTPS", { default: false }).value();
 export const debugNuxt = !production && defineBoolean("DEBUG_NUXT", { default: false }).value();
 export const debugCSS = !production && defineBoolean("DEBUG_CSS", { default: false }).value();
 export const debugAppCheck =

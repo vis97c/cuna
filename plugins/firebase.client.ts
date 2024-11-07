@@ -63,11 +63,12 @@ export default defineNuxtPlugin(() => {
 
 		const router = useRouter();
 		const route = useRoute();
-		const { restricted = "/cursos" } = route.query;
+		const { restricted } = route.query;
 		const rdr = typeof restricted === "string" && decodeURI(restricted);
 
 		// redirect
 		if (rdr && route.path !== rdr) router.replace(rdr);
+		else if (route.path === "/") router.replace("/cursos");
 	});
 
 	return { provide: { clientFirebaseApp, clientFirestore } };

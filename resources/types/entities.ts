@@ -84,7 +84,9 @@ export interface GroupRef extends GetRef<Group> {}
 /**
  * SIA Course
  */
-export interface Course extends SharedDocument, FromData<CourseData> {}
+export interface Course extends SharedDocument, FromData<CourseData> {
+	groups?: Group[];
+}
 /**
  * This one goes to the database
  *

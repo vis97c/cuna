@@ -1,6 +1,6 @@
 import { isEqual } from "lodash-es";
 
-import type { Course } from "~/resources/types/entities";
+import type { Group } from "~/resources/types/entities";
 import { isNotUndefString } from "~/resources/utils/guards";
 
 export function valuesAreEqual<V extends Record<string, any>>(
@@ -39,23 +39,11 @@ export const useCyrb53 = (strs: (string | undefined)[] = [""], seed = 0) => {
 /**
  * Count spots
  * Conditionally omit non-regular enrollment spots
+ *
+ * Asummes groups are filtered out
  */
-export function useCountSpots({ groups = [] }: Pick<Course, "groups"> = {}): number {
-	const SESSION = useSessionStore();
-	const withReduce = groups.reduce((sum, { name = "", availableSpots = 0 }) => {
-		const lowerName = name.toLowerCase();
-
-		if (
-			!SESSION.withNonRegular &&
-			(lowerName.includes("peama") || lowerName.includes("paes"))
-		) {
-			return sum;
-		}
-
-		return sum + availableSpots;
-	}, 0);
-
-	return withReduce;
+export function useCountSpots(groups: Group[] = []): number {
+	return groups.reduce((sum, { availableSpots = 0 }) => sum + availableSpots, 0);
 }
 
 export function useTGroup(count = 0) {

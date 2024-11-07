@@ -41,7 +41,7 @@
 								sede: course.place,
 								facultad: course.faculty,
 								programas: course.programs,
-								cuposDisponibles: useCountSpots(course),
+								cuposDisponibles: course.spotsCount,
 							}"
 							:modal-props="{ class: '--txtColor', invertTheme: true }"
 						/>
@@ -57,12 +57,12 @@
 						/>
 					</div>
 				</div>
-				<div v-if="filteredGroups.length" class="flx --flxColumn --flx-start --width-100">
+				<div v-if="mapGroups.length" class="flx --flxColumn --flx-start --width-100">
 					<div class="txt">
 						<h4>Grupos ({{ course.groupCount || course.groups?.length || 0 }}):</h4>
 					</div>
 					<XamuTable
-						:nodes="filteredGroups"
+						:nodes="mapGroups"
 						:modal-props="{ class: '--txtColor', invertTheme: true }"
 						class=""
 					/>
@@ -110,21 +110,9 @@
 
 		return useTimeAgo(date);
 	});
-	const filteredGroups = computed(() => {
-		return (course.value?.groups || [])
-			.filter(({ name = "" }) => {
-				const lowerName = name.toLowerCase();
-
-				if (
-					!SESSION.withNonRegular &&
-					(lowerName.includes("peama") || lowerName.includes("paes"))
-				) {
-					return false;
-				}
-
-				return true;
-			})
-			.map(({ name, activity, classrooms, teachers, schedule, spots, availableSpots }) => {
+	const mapGroups = computed(() => {
+		return (course.value?.groups || []).map(
+			({ name, activity, classrooms, teachers, schedule, spots, availableSpots }) => {
 				const reschedule = (schedule || []).map((interval) => {
 					if (!interval) return;
 
@@ -143,7 +131,8 @@
 					profesores: teachers,
 					horarios: { lunes, martes, miercoles, jueves, viernes, sabado, domingo },
 				};
-			});
+			}
+		);
 	});
 
 	const trackCourse = debounce(async () => {
@@ -155,7 +144,6 @@
 		await Swal.fire({
 			title: "Curso rastreado",
 			text: `Obtendrás actualizaciones del curso ${course.value?.name} periódicamente`,
-			footer: "Función aun no disponible",
 			icon: "success",
 		});
 	});
@@ -233,7 +221,7 @@
 				}
 
 				// refresh if same course
-				if (SIACourse.code === course.value?.code) course.value = SIACourse;
+				if (SIACourse.code === course.value?.code) course.value = useMapCourse(SIACourse);
 
 				// Reindex, do not await
 				return useIndexCourse({ ...SIACourse, updatedAt, indexed: true, indexedTeachers });
@@ -241,7 +229,7 @@
 		}
 
 		route.meta.title = firebaseCourse.name;
-		course.value = firebaseCourse;
+		course.value = useMapCourse(firebaseCourse);
 		loading.value = false;
 	});
 

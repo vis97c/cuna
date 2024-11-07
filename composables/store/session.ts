@@ -86,6 +86,7 @@ export const useSessionStore = defineStore("session", {
 			this.expiredToken = false;
 		},
 		unsetSession(expiredToken = false) {
+			this.track = [];
 			this.user = this.token = undefined;
 			this.expiredToken = expiredToken;
 		},

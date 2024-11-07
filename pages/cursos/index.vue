@@ -101,7 +101,7 @@
 										class="--maxWidth-100"
 										:tooltip="`Ver: ${match.name}`"
 										tooltip-as-text
-										@click="() => goToCourse(match)"
+										:to="`/cursos/${getDocumentId(match.id)}`"
 									>
 										<XamuIconFa name="chess-knight" />
 										<span class="--width-440 ellipsis">
@@ -126,7 +126,7 @@
 												</template>
 											</p>
 											<p>
-												<b>{{ useTSpot(useCountSpots(match)) }}</b>
+												<b>{{ useTSpot(match.spotsCount) }}</b>
 												⋅
 												<span
 													:title="`Ultima actualizacion ${match.updatedAt}`"
@@ -182,7 +182,6 @@
 	});
 
 	const SESSION = useSessionStore();
-	const router = useRouter();
 
 	const selectedPlace = computed({
 		get: () => SESSION.place,
@@ -249,14 +248,17 @@
 
 			// Remove courses with no groups, do not await
 			if (!node.groups?.length) useDocumentDelete(node);
-			else courses.push({ ...node, updatedAt: useTimeAgo(new Date(node.updatedAt || "")) });
+			else {
+				const course = useMapCourse({
+					...node,
+					updatedAt: useTimeAgo(new Date(node.updatedAt || "")),
+				});
+
+				courses.push(course);
+			}
 		}
 
 		return courses;
-	}
-
-	function goToCourse(course: Pick<Course, "id">) {
-		router.push(`/cursos/${getDocumentId(course.id)}`);
 	}
 
 	watch(

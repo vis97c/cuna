@@ -35,10 +35,13 @@
 									</div>
 									<div class="flx --flxRow --flx-end-center --gap-30">
 										<XamuActionLink
+											v-if="APP.instance?.instagramId"
 											tooltip="Síguenos para estar al tanto de las novedades"
-											href="https://www.instagram.com/cuna_proyecto/"
+											:href="`https://www.instagram.com/${APP.instance.instagramId}/`"
 										>
-											<span class="x-uncapitalize">cuna_proyecto</span>
+											<span class="x-uncapitalize">
+												{{ APP.instance.instagramId }}
+											</span>
 											<XamuIconFa name="instagram" :size="20" brand />
 										</XamuActionLink>
 										<XamuDropdown
@@ -56,7 +59,7 @@
 													:size="eSizes.LG"
 													@click="setModel()"
 												>
-													<span class="--hidden:xs-inv">
+													<span class="--hidden:sm-inv">
 														{{ SESSION.userName || "Sin nombre" }}
 													</span>
 													<figure
@@ -201,6 +204,10 @@
 
 	@media only screen {
 		.x-banner {
+			a {
+				max-width: 100%;
+				white-space: normal;
+			}
 			+ .x-main .--minHeightVh-100 {
 				min-height: calc(100vh - 4rem);
 				min-height: calc(100dvh - 4rem);

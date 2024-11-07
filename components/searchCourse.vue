@@ -47,7 +47,7 @@
 								<span title="Creditos">{{ useTCredits(course.credits) }}</span>
 								⋅
 								<span title="Cupos disponibles">
-									{{ useTSpot(useCountSpots(course)) }}
+									{{ useTSpot(course.spotsCount) }}
 								</span>
 							</p>
 							<p v-if="course.programs?.length" title="Programas">
@@ -248,12 +248,13 @@
 				};
 			});
 
-			// Conditionally Refresh UI again, 2nd time
+			// Conditionally Refresh UI again
 			if (untrackedCurrentPage.value?.currentPage === page.currentPage) {
-				untrackedCourses.value = mappedCourses;
-			}
+				const reMappedCourses = mappedCourses.map(useMapCourse);
 
-			savedUntrackedCourses.value[page.currentPage] = mappedCourses;
+				untrackedCourses.value = reMappedCourses;
+				savedUntrackedCourses.value[page.currentPage] = reMappedCourses;
+			}
 
 			const coursesCodes = courses.map(({ code }) => code);
 			const indexedTeacherEdges = await $fetch<iPageEdge<Teacher, string>[]>(
@@ -277,14 +278,15 @@
 				})
 			);
 
-			const allIndexed = mappedCourses.map((course) => ({ ...course, indexed: true }));
-
-			// Conditionally Refresh UI again, 3rd time
+			// Conditionally Refresh UI again, 2nd time
 			if (untrackedCurrentPage.value?.currentPage === page.currentPage) {
-				untrackedCourses.value = allIndexed;
-			}
+				const allIndexed = mappedCourses.map((course) => {
+					return useMapCourse({ ...course, indexed: true });
+				});
 
-			savedUntrackedCourses.value[page.currentPage] = allIndexed;
+				untrackedCourses.value = allIndexed;
+				savedUntrackedCourses.value[page.currentPage] = allIndexed;
+			}
 		} catch (err) {
 			console.error(err);
 			errors.value = err;

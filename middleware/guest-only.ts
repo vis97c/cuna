@@ -6,7 +6,7 @@
 export default defineNuxtRouteMiddleware(async () => {
 	const SESSION = useSessionStore();
 
-	if (import.meta.server || !SESSION.user) return;
+	if (!SESSION.user) return;
 
 	// User is authenticated
 	return navigateTo("/cursos", { redirectCode: 302 });
