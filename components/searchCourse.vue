@@ -76,7 +76,7 @@
 							disponibilidad).
 						</p>
 						<p>
-							Definitivamente no hay cursos disponibles de la UNAL
+							Aparentemente no hay cursos disponibles de la UNAL
 							<b>"{{ lastSearch?.place }}"</b>
 							que coincidan con tu búsqueda.
 						</p>

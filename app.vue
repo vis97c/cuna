@@ -149,7 +149,14 @@
 									</div>
 								</div>
 								<div id="renderer" class="flx --flxColumn --flx-center --width-100">
-									<NuxtPage />
+									<div
+										v-if="APP.instance?.config?.maintenanceMessage"
+										class="txt --txtAlign-center"
+									>
+										<h2>Disculpa las molestias :(</h2>
+										<p>{{ APP.instance.config.maintenanceMessage }}</p>
+									</div>
+									<NuxtPage v-else />
 								</div>
 							</div>
 						</div>

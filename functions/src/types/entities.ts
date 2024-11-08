@@ -45,6 +45,10 @@ export interface InstanceData extends FirebaseData {
 	 */
 	config?: {
 		/**
+		 * Bloquear la navegacion con un mensaje
+		 */
+		maintenanceMessage?: string;
+		/**
 		 * @example https://bobt42d1b3.execute-api.us-east-1.amazonaws.com/api/v1
 		 */
 		siaCoursesURL?: string;

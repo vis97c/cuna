@@ -84,7 +84,6 @@
 					<XamuTable
 						:nodes="mapGroups"
 						:modal-props="{ class: '--txtColor', invertTheme: true }"
-						class=""
 					/>
 				</div>
 				<div v-if="mapUnreported.length" class="flx --flxColumn --flx-start --width-100">
@@ -99,7 +98,6 @@
 						:nodes="mapUnreported"
 						:theme="eColors.PRIMARY"
 						:modal-props="{ class: '--txtColor', invertTheme: true }"
-						class=""
 					/>
 				</div>
 			</template>
