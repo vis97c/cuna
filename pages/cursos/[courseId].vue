@@ -23,7 +23,7 @@
 							:disabled="!APP.instance?.flags?.trackCourses"
 							@click="trackCourse"
 						>
-							Rastrear curso
+							Notificarme
 						</XamuActionButton>
 						<template v-if="SESSION.canModerate">
 							<XamuModal
@@ -196,6 +196,14 @@
 
 	const removeCourse = debounce(async () => {
 		if (!SESSION.canModerate || !course.value) return;
+
+		const { value } = await Swal.firePrevent({
+			title: "Eliminar curso",
+			text: "¿Esta seguro de querer eliminar este curso?",
+			footer: "Borraremos toda su información, esta acción no es reversible, pero podra ser reindexado mas tarde",
+		});
+
+		if (!value) return;
 
 		const removed = await useDocumentDelete(course.value);
 
