@@ -86,6 +86,7 @@ export interface GroupRef extends GetRef<Group> {}
  */
 export interface Course extends SharedDocument, FromData<CourseData> {
 	groups?: Group[];
+	unreported?: Group[];
 }
 /**
  * This one goes to the database

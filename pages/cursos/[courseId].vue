@@ -18,20 +18,40 @@
 					<p v-if="SESSION.canModerate && fromSIA === false" class="">
 						Parece que este curso contiene datos erroneos, considera eliminarlo
 					</p>
-					<div class="flx --flxRow --flx-start-center">
-						<XamuActionButton
-							v-if="SESSION.canModerate"
-							:theme="eColors.DANGER"
-							@click="removeCourse"
-						>
-							Eliminar
-						</XamuActionButton>
+					<div class="flx --flxRow-wrap --flx-start-center">
 						<XamuActionButton
 							:disabled="!APP.instance?.flags?.trackCourses"
 							@click="trackCourse"
 						>
 							Rastrear curso
 						</XamuActionButton>
+						<template v-if="SESSION.canModerate">
+							<XamuModal
+								class="--txtColor"
+								title="Nuevo grupo"
+								:save-button="{ title: 'Añadir grupo' }"
+								invert-theme
+								@close="closeAddGroup"
+								@save="addGroup"
+							>
+								<template #toggle="{ toggleModal }">
+									<XamuActionButton @click="toggleModal">
+										Añadir grupo
+									</XamuActionButton>
+								</template>
+								<template #default>
+									<div class="--maxWidth-440">
+										<XamuForm
+											v-model="addGroupInputs"
+											v-model:invalid="invalidAddGroup"
+										/>
+									</div>
+								</template>
+							</XamuModal>
+							<XamuActionButton :theme="eColors.DANGER" @click="removeCourse">
+								Eliminar
+							</XamuActionButton>
+						</template>
 					</div>
 				</div>
 				<div class="grd --grdColumns-auto3 --gap">
@@ -67,6 +87,21 @@
 						class=""
 					/>
 				</div>
+				<div v-if="mapUnreported.length" class="flx --flxColumn --flx-start --width-100">
+					<div class="txt --gap-5">
+						<h4>Grupos no reportados ({{ course.unreported?.length || 0 }}):</h4>
+						<p class="--txtSize-xs">
+							*Estos grupos estan activos en el SIA, pero aun no podemos actualizar
+							sus cupos.
+						</p>
+					</div>
+					<XamuTable
+						:nodes="mapUnreported"
+						:theme="eColors.PRIMARY"
+						:modal-props="{ class: '--txtColor', invertTheme: true }"
+						class=""
+					/>
+				</div>
 			</template>
 		</XamuLoaderContent>
 	</section>
@@ -74,11 +109,12 @@
 
 <script setup lang="ts">
 	import { debounce } from "lodash-es";
-	import { doc, onSnapshot } from "firebase/firestore";
-	import type { iPageEdge } from "@open-xamu-co/ui-common-types";
+	import { arrayUnion, doc, onSnapshot } from "firebase/firestore";
+	import { FirebaseError } from "firebase/app";
+	import type { iInvalidInput, iPageEdge } from "@open-xamu-co/ui-common-types";
 	import { eColors } from "@open-xamu-co/ui-common-enums";
 
-	import type { Course, Teacher } from "~/resources/types/entities";
+	import type { Course, Group, Teacher } from "~/resources/types/entities";
 	import { resolveSnapshotDefaults } from "~/resources/utils/firestore";
 	import { eSIAPlace } from "~/functions/src/types/SIA";
 
@@ -99,41 +135,51 @@
 	const route = useRoute();
 	const Swal = useSwal();
 	const { $clientFirestore } = useNuxtApp();
+	const { getResponse } = useFormInput();
 
 	const loading = ref(true);
 	const course = ref<Course>();
 	const fromSIA = ref<boolean>();
 	const routeCourseId = computed(() => <string>route.params.courseId);
+	const addGroupInputs = ref(markRaw(useGroupInputs()));
+	const invalidAddGroup = ref<iInvalidInput[]>([]);
 
 	const updatedAt = computed(() => {
 		const date = new Date(course.value?.updatedAt || new Date());
 
 		return useTimeAgo(date);
 	});
-	const mapGroups = computed(() => {
-		return (course.value?.groups || []).map(
-			({ name, activity, classrooms, teachers, schedule, spots, availableSpots }) => {
-				const reschedule = (schedule || []).map((interval) => {
-					if (!interval) return;
+	const mapGroups = computed(() => (course.value?.groups || []).map(mapGroupLike));
+	const mapUnreported = computed(() => (course.value?.unreported || []).map(mapGroupLike));
 
-					return interval.split("|").join(" a ");
-				});
+	function mapGroupLike({
+		name,
+		activity,
+		classrooms,
+		teachers,
+		schedule,
+		spots,
+		availableSpots,
+	}: Group) {
+		const reschedule = (schedule || []).map((interval) => {
+			if (!interval) return;
 
-				const [lunes, martes, miercoles, jueves, viernes, sabado, domingo] = reschedule;
+			return interval.split("|").join(" a ");
+		});
 
-				classrooms = classrooms?.filter((c) => !!c);
+		const [lunes, martes, miercoles, jueves, viernes, sabado, domingo] = reschedule;
 
-				return {
-					nombre: `${name}ㅤ`, // hotfix to prevent it to parse as date
-					cupos: `${availableSpots} de ${spots}`,
-					actividad: activity,
-					espacios: classrooms,
-					profesores: teachers,
-					horarios: { lunes, martes, miercoles, jueves, viernes, sabado, domingo },
-				};
-			}
-		);
-	});
+		classrooms = classrooms?.filter((c) => !!c);
+
+		return {
+			nombre: `${name}ㅤ`, // hotfix to prevent it to parse as date
+			cupos: `${availableSpots} de ${spots}`,
+			actividad: activity,
+			espacios: classrooms,
+			profesores: teachers,
+			horarios: { lunes, martes, miercoles, jueves, viernes, sabado, domingo },
+		};
+	}
 
 	const trackCourse = debounce(async () => {
 		if (!course.value) return;
@@ -170,6 +216,61 @@
 			icon: "error",
 		});
 	});
+
+	function closeAddGroup() {
+		addGroupInputs.value = useGroupInputs();
+		invalidAddGroup.value = [];
+	}
+	async function addGroup(willOpen: () => void, event: Event) {
+		const { invalidInputs, withErrors, validationHadErrors, errors } = await getResponse<
+			boolean | null,
+			Pick<
+				Group,
+				"name" | "spots" | "availableSpots" | "teachers" | "classrooms" | "schedule"
+			>
+		>(
+			async (newGroup) => {
+				if (!course.value) return { data: null };
+
+				try {
+					// update category
+					const data = await useDocumentUpdate<Course>(course.value, {
+						unreported: arrayUnion(newGroup),
+					});
+
+					return { data };
+				} catch (errors: FirebaseError | unknown) {
+					return { errors };
+				}
+			},
+			addGroupInputs.value,
+			event
+		);
+
+		invalidAddGroup.value = invalidInputs;
+
+		if (!withErrors) {
+			// Succesful request, notify user of the success
+			Swal.fire({
+				title: "Grupo añadido exitosamente",
+				text: "En breve veras tu grupo nuevo",
+				icon: "success",
+				willOpen,
+			});
+		} else {
+			if (!validationHadErrors) {
+				Swal.fire({
+					title: "¡Algo sucedió!",
+					text: "Ocurrió un error mientras añadiamos el grupo",
+					icon: "error",
+					target: <HTMLElement>event.target,
+				});
+
+				if (errors instanceof FirebaseError) console.debug(errors.code, errors);
+				else console.error(errors);
+			}
+		}
+	}
 
 	// lifecycle
 
@@ -221,7 +322,9 @@
 				}
 
 				// refresh if same course
-				if (SIACourse.code === course.value?.code) course.value = useMapCourse(SIACourse);
+				if (SIACourse.code === course.value?.code) {
+					course.value = { ...course.value, ...useMapCourse(SIACourse) };
+				}
 
 				// Reindex, do not await
 				return useIndexCourse({ ...SIACourse, updatedAt, indexed: true, indexedTeachers });

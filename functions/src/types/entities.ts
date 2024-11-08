@@ -92,7 +92,6 @@ export interface GroupData {
 	 * @example "CLASE TEORICA 2015162 (2015162)"
 	 */
 	activity?: string;
-	programs?: uSIAProgram[];
 	availableSpots?: number;
 	classrooms?: string[];
 	/**
@@ -124,6 +123,11 @@ export interface CourseData extends FirebaseData {
 	/** Multiple programs for the same course */
 	programs?: uSIAProgram[];
 	groups?: GroupData[];
+	/**
+	 * For non reported groups
+	 * SIA Beta update delay
+	 */
+	unreported?: GroupData[];
 	/** @search */
 	indexes?: string[];
 	/**
