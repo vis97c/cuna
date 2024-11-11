@@ -6,16 +6,7 @@
 				⋅
 			</div>
 			<template v-for="(childValue, childValueIndex) in props.value" :key="childValueIndex">
-				<XamuActionLink
-					v-if="!unassigned(childValue)"
-					:theme="'estudiantes' as any"
-					tooltip="Ver en los estudiantes"
-					:href="`${losEstudiantesProfessors}/${kebabCase(childValue)}`"
-				>
-					<XamuIconFa name="hand-fist" />
-					<XamuValue v-bind="{ value: childValue, modalProps: props.modalProps }" />
-				</XamuActionLink>
-				<XamuValue v-else v-bind="{ value: childValue, modalProps: props.modalProps }" />
+				<TeacherItem :teacher="childValue" />
 				<span v-if="childValueIndex < props.value.length - 1">⋅</span>
 			</template>
 		</div>
@@ -23,8 +14,6 @@
 	</div>
 </template>
 <script setup lang="ts">
-	import { deburr, kebabCase } from "lodash-es";
-
 	/**
 	 * Teachers list
 	 *
@@ -35,17 +24,5 @@
 
 	const props = defineProps<{
 		value: string[];
-		modalProps?: Record<string, any>;
 	}>();
-
-	const APP = useAppStore();
-	const { losEstudiantesUrl = "", losEstudiantesProfessorsPath = "" } =
-		APP.instance?.config || {};
-	const losEstudiantesProfessors = `${losEstudiantesUrl}${losEstudiantesProfessorsPath}`;
-
-	function unassigned(name = ""): boolean {
-		const clean = deburr(name.toLowerCase());
-
-		return clean.includes("informado") || clean.includes("docente");
-	}
 </script>

@@ -14,7 +14,7 @@ export function TimedPromise<T>(executor: tPromiseExecutor<T>, fallback?: T, tim
 		new Promise((resolve, reject) => {
 			setTimeout(() => {
 				if (fallback) {
-					console.log("Timed out with fallback");
+					console.warn("Timed out with fallback");
 
 					return resolve(fallback);
 				}

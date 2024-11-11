@@ -26,8 +26,9 @@
 							<XamuActionButton
 								:theme="'estudiantes' as any"
 								tooltip="Ver en los estudiantes"
-								:href="`${losEstudiantesCourses}/${course.code}`"
+								:href="`${losEstudiantesCourses}/${course.losEstudiantesCode}?from=cuna`"
 								:size="eSizes.LG"
+								:disabled="!course.losEstudiantesCode"
 								round
 							>
 								<XamuIconFa name="hand-fist" :size="20" />
@@ -137,7 +138,7 @@
 </template>
 
 <script setup lang="ts">
-	import { debounce } from "lodash-es";
+	import { debounce, startCase } from "lodash-es";
 	import { arrayUnion, doc, onSnapshot } from "firebase/firestore";
 	import { FirebaseError } from "firebase/app";
 	import type { iInvalidInput, iPageEdge } from "@open-xamu-co/ui-common-types";
@@ -173,6 +174,7 @@
 	const refetching = ref(false);
 	const deactivated = ref(false);
 	const course = ref<Course>();
+	const indexedTeachers = ref<Teacher[]>();
 	const fromSIA = ref<boolean>();
 	const routeCourseId = computed(() => <string>route.params.courseId);
 	const addGroupInputs = ref(markRaw(useGroupInputs()));
@@ -190,7 +192,7 @@
 		name,
 		activity,
 		classrooms,
-		teachers,
+		teachers = [],
 		schedule,
 		spots,
 		availableSpots,
@@ -202,6 +204,11 @@
 		});
 
 		const [lunes, martes, miercoles, jueves, viernes, sabado, domingo] = reschedule;
+		const mappedTeachers = teachers.map((name) => {
+			const teacher = indexedTeachers.value?.find((t) => t.name === name);
+
+			return teacher || name;
+		});
 
 		classrooms = classrooms?.filter((c) => !!c);
 
@@ -210,7 +217,7 @@
 			cupos: `${availableSpots} de ${spots}`,
 			actividad: activity,
 			espacios: classrooms,
-			profesores: teachers,
+			profesores: mappedTeachers,
 			horarios: { lunes, martes, miercoles, jueves, viernes, sabado, domingo },
 		};
 	}
@@ -315,11 +322,12 @@
 	}
 
 	// lifecycle
+	const courseRef = doc($clientFirestore, "courses", routeCourseId.value);
 
 	/**
 	 * Get course from firebase, then SIA & reindex
 	 */
-	const unsub = onSnapshot(doc($clientFirestore, "courses", routeCourseId.value), (snapshot) => {
+	const unsub = onSnapshot(courseRef, async (snapshot) => {
 		// prevent hydration if not active
 		if (deactivated.value) return;
 		if (!snapshot.exists()) {
@@ -364,11 +372,8 @@
 					typology,
 					code,
 				}),
-				useFetchQuery<iPageEdge<Teacher, string>[]>("/api/teachers/search", {
-					courses: [code],
-				}),
 			])
-				.then(async ([{ data }, SIAgroups, indexedTeachers]) => {
+				.then(async ([{ data }, SIAgroups]) => {
 					// Omit courses without groups
 					const courses = data
 						.map(useMapCourseFromSia)
@@ -385,12 +390,16 @@
 					if (SIAgroups) {
 						SIACourse = {
 							...SIACourse,
-							groups: SIAgroups.map(({ spots = 0, ...group }) => {
+							groups: SIAgroups.map(({ spots = 0, teachers = [], ...group }) => {
 								const SIA = SIACourse?.groups?.find(
 									({ name }) => name === group.name
 								);
 
-								return { ...group, spots: SIA?.spots || spots };
+								return {
+									...group,
+									spots: SIA?.spots || spots,
+									teachers: teachers.map((t) => startCase(t.toLowerCase())),
+								};
 							}),
 							scrapedAt: new Date(),
 						};
@@ -402,7 +411,6 @@
 						...SIACourse,
 						updatedAt,
 						indexed: true,
-						indexedTeachers,
 					});
 				})
 				.catch((err) => {
@@ -413,7 +421,12 @@
 				});
 		}
 
+		const teachers = await useFetchQuery<iPageEdge<Teacher, string>[]>("/api/teachers/search", {
+			courses: [code],
+		});
+
 		route.meta.title = firebaseCourse.name;
+		indexedTeachers.value = teachers.map(({ node }) => node);
 		course.value = useMapCourse(firebaseCourse);
 		loading.value = false;
 	});

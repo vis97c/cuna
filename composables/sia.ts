@@ -1,7 +1,8 @@
 import { arrayUnion, Timestamp } from "firebase/firestore";
+import { startCase } from "lodash-es";
 import type { GroupData } from "~/functions/src/types/entities";
 import type { SIACoursesResponse } from "~/functions/src/types/SIA";
-import type { Course, CourseRef, Teacher, TeacherRef } from "~/resources/types/entities";
+import type { Course, CourseRef, TeacherRef } from "~/resources/types/entities";
 import type { CourseValues } from "~/resources/types/values";
 import { triGram } from "~/resources/utils/firestore";
 
@@ -25,7 +26,6 @@ export function useSIACourses(values: CourseValues, page = 1) {
 export async function useIndexCourse(
 	{
 		indexed,
-		indexedTeachers = [],
 		groups = [],
 		programs = [],
 		typologies = [],
@@ -34,7 +34,7 @@ export async function useIndexCourse(
 		updatedAt,
 		scrapedAt,
 		...course
-	}: Course & { indexed?: boolean; indexedTeachers?: Teacher[] },
+	}: Course & { indexed?: boolean },
 	indexedCourse?: Course
 ) {
 	const APP = useAppStore();
@@ -43,18 +43,11 @@ export async function useIndexCourse(
 	groups.forEach((group: GroupData = {}) => {
 		(group.teachers || []).forEach((teacher) => {
 			const id = `teachers/${useCyrb53([teacher])}`;
-			// search for existing teacher
-			const existingTeacher = indexedTeachers.find((t) => t.id === id);
-			const teacherCourses = existingTeacher?.courses || [];
-
-			// omit if already included
-			if (!course.code || teacherCourses.includes(course.code)) return;
 
 			// creates or updates teacher
-			// TODO: index teacher on server side
 			return useDocumentCreate<TeacherRef>("teachers", {
 				id,
-				name: teacher,
+				name: startCase(teacher.toLowerCase()),
 				indexes: triGram([teacher]),
 				courses: arrayUnion(course.code),
 			});
@@ -80,14 +73,18 @@ export async function useIndexCourse(
 		indexedCourse?.alternativeNames?.every((p) => alternativeNames.includes(p))
 	) {
 		// Do not update if updated less than threshold
-		if (indexed && updatedDiffMilis <= useMinMilis(minutes)) return;
+		if ((indexed || indexedCourse) && updatedDiffMilis <= useMinMilis(minutes)) return;
 	}
 
 	const scrapedAtMilis = new Date(indexedCourse?.scrapedAt || "").getTime();
 	const scrapedDiffMilis = nowMilis - scrapedAtMilis;
 
 	// Do not override SIA scraping, unless too old
-	if (scrapedAt || scrapedDiffMilis > useMinMilis(minutes * 100)) {
+	if (
+		!indexedCourse?.groups?.length ||
+		scrapedAt ||
+		scrapedDiffMilis > useMinMilis(minutes * 100)
+	) {
 		courseToIndex.groups = groups;
 
 		if (scrapedAt && typeof scrapedAt !== "string") {

@@ -110,7 +110,7 @@
 	import type { iPageEdge } from "@open-xamu-co/ui-common-types";
 
 	import { XamuBaseAction } from "#components";
-	import type { Course, Teacher } from "~/resources/types/entities";
+	import type { Course } from "~/resources/types/entities";
 	import type { CourseValues } from "~/resources/types/values";
 	import {
 		eSIATypology,
@@ -251,13 +251,6 @@
 				savedUntrackedCourses.value[page.currentPage] = reMappedCourses;
 			}
 
-			const coursesCodes = courses.map(({ code }) => code);
-			const indexedTeacherEdges = await useFetchQuery<iPageEdge<Teacher, string>[]>(
-				"/api/teachers/search",
-				{ courses: coursesCodes }
-			);
-			const indexedTeachers = (indexedTeacherEdges || []).map(({ node }) => node);
-
 			// Index courses
 			await Promise.all(
 				mappedCourses.map((course) => {
@@ -265,7 +258,7 @@
 						return node.id === course.id;
 					});
 
-					return useIndexCourse({ ...course, indexedTeachers }, indexedCourse);
+					return useIndexCourse({ ...course }, indexedCourse?.node);
 				})
 			);
 

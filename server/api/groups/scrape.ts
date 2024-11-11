@@ -336,7 +336,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 					classrooms = [
 						...new Set([
 							...classrooms,
-							trimHTML(classroomSpan).replace(".", "") || "Sin asignar",
+							trimHTML(classroomSpan).replaceAll(".", "") || "Sin Asignar",
 						]),
 					];
 
@@ -374,7 +374,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 					classrooms,
 					name: fullName.substring(startAt + 2),
 					activity: trimHTML(activityH3) || "Desconocida",
-					teachers: [trimHTML(teacherSpan) || "No informado"],
+					teachers: [trimHTML(teacherSpan).replaceAll(".", "") || "No Informado"],
 				};
 			});
 		});

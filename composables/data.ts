@@ -1,4 +1,4 @@
-import { capitalize, deburr } from "lodash-es";
+import { capitalize, deburr, startCase } from "lodash-es";
 
 import type { SIACourse, SIAGroup } from "~/functions/src/types/SIA";
 import type { Course, Group, User } from "~/resources/types/entities";
@@ -40,7 +40,7 @@ export function useMapGroupFromSia(source: SIAGroup): Group {
 			source.HORARIO_SABADO,
 			source.HORARIO_DOMINGO,
 		],
-		teachers: [source.DOCENTE],
+		teachers: [startCase(source.DOCENTE.toLowerCase())],
 		activity: source.ACTIVIDAD,
 		availableSpots: source.CUPOS_DISPONIBLES,
 		classrooms: [source.AULA],

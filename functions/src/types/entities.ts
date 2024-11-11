@@ -99,6 +99,8 @@ export interface InstanceData extends FirebaseData {
 export interface TeacherData extends FirebaseData {
 	name?: string;
 	courses?: string[];
+	/** @automation */
+	losEstudiantesSlug?: string;
 	/** @search */
 	indexes?: string[];
 }
@@ -158,6 +160,8 @@ export interface CourseData extends FirebaseData {
 	 * SIA Beta update delay
 	 */
 	unreported?: GroupData[];
+	/** @automation */
+	losEstudiantesCode?: string;
 	/** @search */
 	indexes?: string[];
 	/**
