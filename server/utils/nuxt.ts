@@ -18,33 +18,41 @@ export function getQueryParam<T>(name: string, e: H3Event): T {
  * @returns event handler
  */
 export const defineConditionallyCachedEventHandler = <T extends EventHandlerRequest, D>(
-	handler: EventHandler<T, D>
+	handler: (event: H3Event<T>, instance?: Instance) => D
 ): EventHandler<T, D> => {
 	return defineEventHandler<T>(async (event) => {
-		const cookies = parseCookies(event);
-		const instance: Instance | undefined = JSON.parse(cookies?.app || "{}")?.instance;
-		const canModerate = getRequestHeader(event, "canModerate");
-		const minutes = instance?.config?.coursesRefreshRate || 5;
-		const cachedData = defineCachedEventHandler(handler, { maxAge: minutes * 60 });
+		const authorization = getRequestHeader(event, "authorization");
 
 		try {
-			if (canModerate) {
+			const { instance: instanceId } = useRuntimeConfig().public;
+			const instanceRef = apiFirestore.collection("instances").doc(instanceId);
+			const instanceSnapshot = await instanceRef.get();
+			const instance: Instance | undefined = instanceSnapshot.data();
+
+			if (!instance) throw new Error("Missing instance");
+
+			const maxAge = (instance?.config?.coursesRefreshRate || 5) * 60;
+			const cachedData = defineCachedEventHandler((e) => handler(e, instance), { maxAge });
+
+			if (authorization) {
 				// Validate authorization
 				const auth = getAuth(apiFirebaseApp);
-				const { uid } = await auth.verifyIdToken(canModerate);
+				const { uid } = await auth.verifyIdToken(authorization);
 				const userRef = apiFirestore.collection("users").doc(uid);
 				const userSnapshot = await userRef.get();
 				const user: Partial<User> | undefined = userSnapshot.data();
 
 				// Omit cache for moderators and above
-				if ((user?.role ?? 3) < 3) return handler(event);
+				if ((user?.role ?? 3) < 3) return handler(event, instance);
 
 				return cachedData(event);
 			}
 
 			// Prevent access from unauthorized users
 			throw new Error("Unauthorized");
-		} catch (error) {
+		} catch (err) {
+			console.error(err);
+
 			throw createError({
 				statusCode: 401,
 				statusMessage: "Unauthorized",

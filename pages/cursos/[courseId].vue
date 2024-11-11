@@ -14,32 +14,39 @@
 					<p v-if="loading || refetching" class="--txtSize-sm">Actualizando...</p>
 					<p v-else class="--txtSize-sm">Actualizado {{ updatedAt }}</p>
 				</div>
-				<div class="txt">
-					<h4 class="">Herramientas:</h4>
-					<p v-if="SESSION.canModerate && fromSIA === false" class="">
-						Parece que este curso contiene datos erroneos, considera eliminarlo
-					</p>
-					<div class="flx --flxRow-wrap --flx-start-center">
-						<XamuActionButton
-							:theme="'estudiantes' as any"
-							tooltip="Ver en los estudiantes"
-							:href="`${losEstudiantesCourses}/${course.code}`"
-							:size="eSizes.LG"
-							round
+				<div class="flx --flxColumn --flx-start --width-100">
+					<div class="txt">
+						<h4 class="">Herramientas:</h4>
+						<p v-if="SESSION.canModerate && fromSIA === false" class="">
+							Parece que este curso contiene datos erroneos, considera eliminarlo
+						</p>
+					</div>
+					<div class="flx --flxRow-wrap --flx-between-center --width-100">
+						<div class="flx --flxRow-wrap --flx-start-center">
+							<XamuActionButton
+								:theme="'estudiantes' as any"
+								tooltip="Ver en los estudiantes"
+								:href="`${losEstudiantesCourses}/${course.code}`"
+								:size="eSizes.LG"
+								round
+							>
+								<XamuIconFa name="hand-fist" :size="20" />
+							</XamuActionButton>
+							<XamuActionButtonToggle
+								tooltip="Notificarme"
+								:disabled="!APP.instance?.flags?.trackCourses"
+								:size="eSizes.LG"
+								round
+								@click="trackCourse"
+							>
+								<XamuIconFa name="bell" :size="20" regular />
+								<XamuIconFa name="bell" :size="20" />
+							</XamuActionButtonToggle>
+						</div>
+						<div
+							v-if="SESSION.canModerate"
+							class="flx --flxRow-wrap --flx-start-center"
 						>
-							<XamuIconFa name="hand-fist" :size="20" />
-						</XamuActionButton>
-						<XamuActionButtonToggle
-							tooltip="Notificarme"
-							:disabled="!APP.instance?.flags?.trackCourses"
-							:size="eSizes.LG"
-							round
-							@click="trackCourse"
-						>
-							<XamuIconFa name="bell" :size="20" regular />
-							<XamuIconFa name="bell" :size="20" />
-						</XamuActionButtonToggle>
-						<template v-if="SESSION.canModerate">
 							<XamuModal
 								class="--txtColor"
 								title="Añadir grupo no reportado"
@@ -73,7 +80,7 @@
 							>
 								Eliminar
 							</XamuActionButton>
-						</template>
+						</div>
 					</div>
 				</div>
 				<div class="grd --grdColumns-auto3 --gap">
@@ -340,6 +347,7 @@
 
 		// Do once & update if updated more than threshold
 		if (
+			!refetching.value &&
 			fromSIA.value === undefined &&
 			(!firebaseCourse?.scrapedAt || updatedDiffMilis > useMinMilis(minutes))
 		) {
@@ -348,53 +356,61 @@
 			// Get data from sia & reindex, do not await
 			Promise.all([
 				useSIACourses({ level, place, program: programs[0], code }),
-				$fetch<Group[] | null>("/api/groups/scrape", {
-					query: { level, place, faculty, program: programs[0], typology, code },
-					cache: "no-cache",
-					headers: { canModerate: SESSION.token || "" },
+				useFetchQuery<Group[] | null>("/api/groups/scrape", {
+					level,
+					place,
+					faculty,
+					program: programs[0],
+					typology,
+					code,
 				}),
-				$fetch<iPageEdge<Teacher, string>[]>("/api/teachers/search", {
-					query: { courses: [code] },
-					cache: "no-cache",
-					headers: { canModerate: SESSION.token || "" },
+				useFetchQuery<iPageEdge<Teacher, string>[]>("/api/teachers/search", {
+					courses: [code],
 				}),
-			]).then(async ([{ data }, SIAgroups, indexedTeachers]) => {
-				// Omit courses without groups
-				const courses = data
-					.map(useMapCourseFromSia)
-					.filter(({ groups }) => !!groups?.length);
-				let SIACourse = courses.find((c) => c.id === id);
+			])
+				.then(async ([{ data }, SIAgroups, indexedTeachers]) => {
+					// Omit courses without groups
+					const courses = data
+						.map(useMapCourseFromSia)
+						.filter(({ groups }) => !!groups?.length);
+					let SIACourse = courses.find((c) => c.id === id);
 
-				if (!SIACourse) {
-					fromSIA.value = false;
+					if (!SIACourse) {
+						fromSIA.value = false;
 
-					return;
-				}
+						return;
+					}
 
-				// prefer scrapped groups
-				if (SIAgroups) {
-					SIACourse = {
+					// prefer scrapped groups
+					if (SIAgroups) {
+						SIACourse = {
+							...SIACourse,
+							groups: SIAgroups.map(({ spots = 0, ...group }) => {
+								const SIA = SIACourse?.groups?.find(
+									({ name }) => name === group.name
+								);
+
+								return { ...group, spots: SIA?.spots || spots };
+							}),
+							scrapedAt: new Date(),
+						};
+					}
+
+					// Reindex, refresh is done by firebase
+					await useIndexCourse({
+						...course.value,
 						...SIACourse,
-						groups: SIAgroups.map(({ spots = 0, ...group }) => {
-							const SIA = SIACourse?.groups?.find(({ name }) => name === group.name);
-
-							return { ...group, spots: SIA?.spots || spots };
-						}),
-						scrapedAt: new Date(),
-					};
-				}
-
-				// Reindex, refresh is done by firebase
-				await useIndexCourse({
-					...course.value,
-					...SIACourse,
-					updatedAt,
-					indexed: true,
-					indexedTeachers,
+						updatedAt,
+						indexed: true,
+						indexedTeachers,
+					});
+				})
+				.catch((err) => {
+					console.error(err);
+				})
+				.finally(() => {
+					refetching.value = false;
 				});
-
-				refetching.value = false;
-			});
 		}
 
 		route.meta.title = firebaseCourse.name;

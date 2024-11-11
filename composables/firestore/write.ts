@@ -11,7 +11,8 @@ import {
 
 import type { SharedDocument, GetRef } from "~/resources/types/entities";
 import { getDocumentId } from "~/resources/utils/firestore";
-import { ConvertCollection, ConvertDocument, TimedPromise } from "./utils";
+import { ConvertCollection, ConvertDocument } from "./utils";
+import { TimedPromise } from "~/resources/utils/promises";
 
 /** Creates document with the given values */
 export async function useDocumentCreate<

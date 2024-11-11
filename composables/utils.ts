@@ -67,3 +67,14 @@ export function useTCredits(count = 0) {
 export function useMinMilis(minutes: number) {
 	return minutes * 60 * 1000;
 }
+
+export function useFetchQuery<R>(url: string, query: Record<string, any> = {}) {
+	const SESSION = useSessionStore();
+
+	return $fetch<R>(url, {
+		cache: "no-cache",
+		credentials: "same-origin",
+		query,
+		headers: { authorization: SESSION.token || "" },
+	});
+}

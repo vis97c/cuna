@@ -127,7 +127,6 @@
 
 	const props = defineProps<{ values: CourseValues }>();
 
-	const SESSION = useSessionStore();
 	const Swal = useSwal();
 
 	const searchUntrackedRef = ref<HTMLElement>();
@@ -230,13 +229,9 @@
 	async function indexCourses(courses: Course[], page: SIACoursesResponse) {
 		try {
 			const include = courses.map(({ id }) => id);
-			const indexedCoursesEdges = await $fetch<iPageEdge<Course, string>[]>(
+			const indexedCoursesEdges = await useFetchQuery<iPageEdge<Course, string>[]>(
 				"/api/all/courses",
-				{
-					query: { include },
-					cache: "no-cache",
-					headers: { canModerate: SESSION.token || "" },
-				}
+				{ include }
 			);
 			const mappedCourses: (Course & { indexed: boolean })[] = courses.map((course) => {
 				const indexedCourse = indexedCoursesEdges.find(({ node }) => node.id === course.id);
@@ -257,13 +252,9 @@
 			}
 
 			const coursesCodes = courses.map(({ code }) => code);
-			const indexedTeacherEdges = await $fetch<iPageEdge<Teacher, string>[]>(
+			const indexedTeacherEdges = await useFetchQuery<iPageEdge<Teacher, string>[]>(
 				"/api/teachers/search",
-				{
-					query: { courses: coursesCodes },
-					cache: "no-cache",
-					headers: { canModerate: SESSION.token || "" },
-				}
+				{ courses: coursesCodes }
 			);
 			const indexedTeachers = (indexedTeacherEdges || []).map(({ node }) => node);
 

@@ -242,10 +242,10 @@
 	async function fetchCourses(
 		{ faculty, ...query }: Partial<CourseValues> = values.value
 	): Promise<Course[]> {
-		const page = await $fetch<iPage<Course, string>>("/api/courses/search", {
-			query: { ...query, first: 6, page: true },
-			cache: "no-cache",
-			headers: { canModerate: SESSION.token || "" },
+		const page = await useFetchQuery<iPage<Course, string>>("/api/courses/search", {
+			...query,
+			first: 6,
+			page: true,
 		});
 		const courses: Course[] = [];
 

@@ -15,7 +15,12 @@
     },
     {
       "source": ".output/server",
-      "codebase": "nuxt"
+      "codebase": "nuxt",
+      "predeploy": [
+        "yarn build",
+        "cp .env .output/server/.env",
+        "node scripts/puppeteer.cjs"
+      ]
     }
   ],
   "firestore": {

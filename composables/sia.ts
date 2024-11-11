@@ -10,18 +10,15 @@ export function useSIACourses(values: CourseValues, page = 1) {
 	const { siaCoursesURL = "", siaCoursesPath = "" } = APP.instance?.config || {};
 	const coursesEndpoint = `${siaCoursesURL}${siaCoursesPath}`;
 
-	return $fetch<SIACoursesResponse>(coursesEndpoint, {
-		query: {
-			nivel: values.level,
-			sede: values.place,
-			planEstudio: values.program || undefined,
-			codigo_asignatura: values.code || undefined,
-			nombre_asignatura: values.name || undefined,
-			tipologia: values.typology || undefined,
-			limit: 30, // firebase compound limit
-			page,
-		},
-		cache: "no-cache",
+	return useFetchQuery<SIACoursesResponse>(coursesEndpoint, {
+		nivel: values.level,
+		sede: values.place,
+		planEstudio: values.program || undefined,
+		codigo_asignatura: values.code || undefined,
+		nombre_asignatura: values.name || undefined,
+		tipologia: values.typology || undefined,
+		limit: 30, // firebase compound limit
+		page,
 	});
 }
 

@@ -9,7 +9,7 @@ import {
 	type uSIAFaculty,
 	type uSIAProgram,
 } from "~/functions/src/types/SIA";
-import type { Group, Instance } from "~/resources/types/entities";
+import type { Group } from "~/resources/types/entities";
 import { debugFirebaseServer } from "~/server/utils/firebase";
 import { defineConditionallyCachedEventHandler, getQueryParam } from "~/server/utils/nuxt";
 import {
@@ -22,6 +22,7 @@ import {
 	eSIAMedellinFaculty,
 	eSIAMedellinProgram,
 } from "~/functions/src/types/SIA/enums";
+import { TimedPromise } from "~/resources/utils/promises";
 
 /**
  * This scraper follows sia_scrapper implementation by https://github.com/pablomancera
@@ -128,88 +129,84 @@ function useId(id: string): string {
 	return `#${id.replace(/:/g, "\\:")}`;
 }
 
+const puppetConfig = {
+	headless: true,
+	args: [
+		"--no-sandbox",
+		"--disable-setuid-sandbox",
+		"--disable-dev-shm-usage",
+		"--disable-accelerated-2d-canvas",
+		"--no-first-run",
+		"--no-zygote",
+		"--disable-gpu",
+	],
+};
+
 /**
  * Scrape course from old SIA
  *
  * @see https://github.com/pablomancera/sia_scrapper
  */
-export default defineConditionallyCachedEventHandler(async (event) => {
+export default defineConditionallyCachedEventHandler(async (event, instance) => {
 	const { debugFirebase } = useRuntimeConfig().public;
-	const cookies = parseCookies(event);
-	const instance: Instance | undefined = JSON.parse(cookies?.app || "{}")?.instance;
 	const { siaOldURL = "", siaOldPath = "", siaOldQuery = "" } = instance?.config || {};
 	const siaOldEnpoint = siaOldURL + siaOldPath + siaOldQuery;
-	const puppet: Browser = await launch({
-		headless: true,
-		args: [
-			"--disable-gpu",
-			"--disable-dev-shm-usage",
-			"--disable-setuid-sandbox",
-			"--timeout=30000",
-			"--no-first-run",
-			"--no-sandbox",
-			"--no-zygote",
-			"--single-process",
-			"--proxy-server='direct://'",
-			"--proxy-bypass-list=*",
-			"--deterministic-fetch",
-		],
-	});
+	const puppet: Browser = await launch(puppetConfig);
+	const puppetPage: Page = await puppet.newPage();
 
-	try {
-		const name: string = getQueryParam("name", event) || "";
-		const code: string = getQueryParam("code", event) || "";
-		const level: eSIALevel = getQueryParam("level", event);
-		const place: eSIAPlace = getQueryParam("place", event);
-		let faculty: uSIAFaculty = getQueryParam("faculty", event);
-		let program: uSIAProgram = getQueryParam("program", event);
-		let typology: eSIATypology | undefined = getQueryParam("typology", event);
+	/**
+	 * Show puppet page logs
+	 * @see https://stackoverflow.com/a/59919144/3304008
+	 */
+	if (debugFirebase) {
+		puppetPage
+			.on("console", (message) =>
+				console.log(`${message.type().substr(0, 3).toUpperCase()} ${message.text()}`)
+			)
+			.on("pageerror", ({ message }) => console.log(message))
+			.on("response", (response) => console.log(`${response.status()} ${response.url()}`))
+			.on("requestfailed", (request) =>
+				console.log(`${request.failure()?.errorText} ${request.url()}`)
+			);
+	}
 
-		debugFirebaseServer(event, "api:courses:scrape", { name, program, typology });
+	// event data
+	const name: string = getQueryParam("name", event) || "";
+	const code: string = getQueryParam("code", event) || "";
+	const level: eSIALevel = getQueryParam("level", event);
+	const place: eSIAPlace = getQueryParam("place", event);
+	let faculty: uSIAFaculty = getQueryParam("faculty", event);
+	let program: uSIAProgram = getQueryParam("program", event);
+	let typology: eSIATypology | undefined = getQueryParam("typology", event);
 
-		if (!siaOldURL || !siaOldPath) return null;
+	debugFirebaseServer(event, "api:courses:scrape", { name, program, typology });
 
-		const puppetPage: Page = await puppet.newPage();
+	// Override data if missing, assume LE
+	if (!program || !faculty) {
+		typology = eSIATypology.LIBRE_ELECCIÓN;
 
-		/**
-		 * Show puppet page logs
-		 * @see https://stackoverflow.com/a/59919144/3304008
-		 */
-		if (debugFirebase) {
-			puppetPage
-				.on("console", (message) =>
-					console.log(`${message.type().substr(0, 3).toUpperCase()} ${message.text()}`)
-				)
-				.on("pageerror", ({ message }) => console.log(message))
-				.on("response", (response) => console.log(`${response.status()} ${response.url()}`))
-				.on("requestfailed", (request) =>
-					console.log(`${request.failure()?.errorText} ${request.url()}`)
-				);
+		switch (place) {
+			case eSIAPlace.BOGOTÁ:
+				faculty = eSIABogotaFaculty.SEDE_BOGOTÁ;
+				program = eSIABogotaProgram.COMPONENTE_DE_LIBRE_ELECCIÓN;
+				break;
+			case eSIAPlace.LA_PAZ:
+				faculty = eSIALaPazFaculty.SEDE_LA_PAZ;
+				program = eSIALaPazProgram.COMPONENTE_DE_LIBRE_ELECCIÓN;
+				break;
+			case eSIAPlace.MEDELLÍN:
+				faculty = eSIAMedellinFaculty.SEDE_MEDELLÍN;
+				program = eSIAMedellinProgram.COMPONENTE_DE_LIBRE_ELECCIÓN;
+				break;
+			case eSIAPlace.MANIZALES:
+				faculty = eSIAManizalesFaculty.SEDE_MANIZALES;
+				program = eSIAManizalesProgram.COMPONENTE_DE_LIBRE_ELECCIÓN;
+				break;
 		}
+	}
 
-		// Override data if missing, assume LE
-		if (!program || !faculty) {
-			typology = eSIATypology.LIBRE_ELECCIÓN;
-
-			switch (place) {
-				case eSIAPlace.BOGOTÁ:
-					faculty = eSIABogotaFaculty.SEDE_BOGOTÁ;
-					program = eSIABogotaProgram.COMPONENTE_DE_LIBRE_ELECCIÓN;
-					break;
-				case eSIAPlace.LA_PAZ:
-					faculty = eSIALaPazFaculty.SEDE_LA_PAZ;
-					program = eSIALaPazProgram.COMPONENTE_DE_LIBRE_ELECCIÓN;
-					break;
-				case eSIAPlace.MEDELLÍN:
-					faculty = eSIAMedellinFaculty.SEDE_MEDELLÍN;
-					program = eSIAMedellinProgram.COMPONENTE_DE_LIBRE_ELECCIÓN;
-					break;
-				case eSIAPlace.MANIZALES:
-					faculty = eSIAManizalesFaculty.SEDE_MANIZALES;
-					program = eSIAManizalesProgram.COMPONENTE_DE_LIBRE_ELECCIÓN;
-					break;
-			}
-		}
+	async function handler(): Promise<Group[]> {
+		if (!siaOldURL || !siaOldPath) throw new Error("Missing endpoint");
 
 		await puppetPage.goto(siaOldEnpoint);
 		await puppetPage.evaluate(() => {
@@ -222,15 +219,14 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		// Select level
 		await puppetPage.click(useId(eIds.LEVEL));
 		await puppetPage.select(useId(eIds.LEVEL), eSIALevelOld[level]);
+		await waitForSelect(puppetPage, eIds.PLACE);
 
 		// Select Place
-		await waitForSelect(puppetPage, eIds.PLACE);
 		await puppetPage.click(useId(eIds.PLACE));
 		await puppetPage.select(useId(eIds.PLACE), eSIAPlaceOld[place]);
-
-		// Select Faculty
 		await waitForSelect(puppetPage, eIds.FACULTY);
 
+		// Select Faculty
 		const faculties = await getOptions(puppetPage, eIds.FACULTY);
 		const facultyValue = faculties.find(({ alias }) => alias === faculty);
 
@@ -238,10 +234,9 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 
 		await puppetPage.click(useId(eIds.FACULTY));
 		await puppetPage.select(useId(eIds.FACULTY), facultyValue.value);
-
-		// Select Program
 		await waitForSelect(puppetPage, eIds.PROGRAM);
 
+		// Select Program
 		const programs = await getOptions(puppetPage, eIds.PROGRAM);
 		const programValue = programs.find(({ alias }) => alias === program);
 
@@ -250,21 +245,22 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		await puppetPage.click(useId(eIds.PROGRAM));
 		await puppetPage.select(useId(eIds.PROGRAM), programValue.value);
 
-		// By default the system will return all but LE
 		if (typology) {
 			await waitForSelect(puppetPage, eIds.TYPOLOGY);
+
+			// Select typology, by default the system will return all but LE
 			await puppetPage.click(useId(eIds.TYPOLOGY));
 			await puppetPage.select(useId(eIds.TYPOLOGY), eSIATypologyOld[typology]);
 
 			if (typology === eSIATypology.LIBRE_ELECCIÓN) {
-				// Search by program
 				await puppetPage.waitForSelector(useId(eIds.SEARCH_LE), { visible: true });
+
+				// Select search mode, search by program
 				await puppetPage.click(useId(eIds.SEARCH_LE));
 				await puppetPage.select(useId(eIds.SEARCH_LE), "1");
-
-				// Select Program
 				await puppetPage.waitForSelector(useId(eIds.PROGRAM_LE), { visible: true });
 
+				// Select LE Program
 				const programsLE = await getOptions(puppetPage, eIds.PROGRAM_LE);
 				const programLeValue = programsLE.find(({ alias }) => alias === program);
 
@@ -276,7 +272,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		}
 
 		// Search by name
-		await puppetPage.type(useId(eIds.NAME), name);
+		if (name) await puppetPage.type(useId(eIds.NAME), name);
 
 		// Load courses
 		await puppetPage.waitForSelector(`${useId(eIds.SHOW)}:not(.p_AFDisabled)`);
@@ -384,11 +380,23 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		});
 
 		return groups;
-	} catch (err) {
-		console.error(err);
-
-		return null;
-	} finally {
-		puppet.close();
 	}
+
+	// Time out after 2 minutes
+	return TimedPromise<Group[] | false>(
+		async (resolve) => {
+			try {
+				const response = await handler();
+
+				resolve(response);
+			} catch (err) {
+				console.error(err);
+				puppet.close();
+
+				resolve(false);
+			}
+		},
+		false,
+		120
+	);
 });

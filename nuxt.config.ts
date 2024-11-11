@@ -101,6 +101,8 @@ export default defineNuxtConfig({
 				region: "us-east1",
 				maxInstances: 3,
 				enforceAppCheck: true,
+				memory: "2GiB",
+				timeoutSeconds: 300,
 			},
 		},
 		compressPublicAssets: true,
