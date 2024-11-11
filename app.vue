@@ -1,6 +1,6 @@
 <template>
 	<div class="x-layout">
-		<NuxtLoadingIndicator class="x-layout-loader" :duration="5000" color="#2980b9" />
+		<NuxtLoadingIndicator class="x-layout-loader" :duration="5000" color="#0f47af" />
 		<div class="flx --flxColumn --flx-start-stretch --gap-0">
 			<div
 				v-if="SESSION.user && APP.instance?.banner?.message"

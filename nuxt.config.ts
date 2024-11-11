@@ -41,7 +41,7 @@ const description =
 	"Cuna es una herramienta para que busques los cursos de la UNAL fácilmente. Consulta la disponibilidad de materias y los cupos disponibles durante la matrícula. ¡No te quedes sin cupo!";
 
 // compile on runtime when debuggin CSS
-debugCSS ? css.push("@/assets/scss/vendor.scss") : stylesheets.push("/dist/vendor.min.css");
+debugCSS ? css.push("@/assets/scss/vendor.scss") : stylesheets.push("/dist/vendor.min.css?k=1");
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({

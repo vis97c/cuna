@@ -72,6 +72,18 @@ export interface InstanceData extends FirebaseData {
 		 * @example ?taskflowId=task-flow-AC_CatalogoAsignaturas
 		 */
 		siaOldQuery?: string;
+		/**
+		 * @example https://losestudiantes.com
+		 */
+		losEstudiantesUrl?: string;
+		/**
+		 * @example /universidad-nacional/courses
+		 */
+		losEstudiantesCoursesPath?: string;
+		/**
+		 * @example /universidad-nacional/professors
+		 */
+		losEstudiantesProfessorsPath?: string;
 	};
 	/**
 	 * Feature flags

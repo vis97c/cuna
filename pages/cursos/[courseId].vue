@@ -21,22 +21,38 @@
 					</p>
 					<div class="flx --flxRow-wrap --flx-start-center">
 						<XamuActionButton
+							:theme="'estudiantes' as any"
+							tooltip="Ver en los estudiantes"
+							:href="`${losEstudiantesCourses}/${course.code}`"
+							:size="eSizes.LG"
+							round
+						>
+							<XamuIconFa name="hand-fist" :size="20" />
+						</XamuActionButton>
+						<XamuActionButtonToggle
+							tooltip="Notificarme"
 							:disabled="!APP.instance?.flags?.trackCourses"
+							:size="eSizes.LG"
+							round
 							@click="trackCourse"
 						>
-							Notificarme
-						</XamuActionButton>
+							<XamuIconFa name="bell" :size="20" regular />
+							<XamuIconFa name="bell" :size="20" />
+						</XamuActionButtonToggle>
 						<template v-if="SESSION.canModerate">
 							<XamuModal
 								class="--txtColor"
-								title="Nuevo grupo"
+								title="Añadir grupo no reportado"
 								:save-button="{ title: 'Añadir grupo' }"
 								invert-theme
 								@close="closeAddGroup"
 								@save="addGroup"
 							>
 								<template #toggle="{ toggleModal }">
-									<XamuActionButton @click="toggleModal">
+									<XamuActionButton
+										tooltip="¿Hay un grupo no reportado?"
+										@click="toggleModal"
+									>
 										Añadir grupo
 									</XamuActionButton>
 								</template>
@@ -45,11 +61,16 @@
 										<XamuForm
 											v-model="addGroupInputs"
 											v-model:invalid="invalidAddGroup"
+											title="Nuevo grupo"
 										/>
 									</div>
 								</template>
 							</XamuModal>
-							<XamuActionButton :theme="eColors.DANGER" @click="removeCourse">
+							<XamuActionButton
+								tooltip="¿Se indexo con errores?"
+								:theme="eColors.DANGER"
+								@click="removeCourse"
+							>
 								Eliminar
 							</XamuActionButton>
 						</template>
@@ -85,6 +106,7 @@
 					<XamuTable
 						:nodes="mapGroups"
 						:modal-props="{ class: '--txtColor', invertTheme: true }"
+						:properties="[{ value: 'profesores', component: TeachersList }]"
 					/>
 				</div>
 				<div v-if="mapUnreported.length" class="flx --flxColumn --flx-start --width-100">
@@ -99,6 +121,7 @@
 						:nodes="mapUnreported"
 						:theme="eColors.PRIMARY"
 						:modal-props="{ class: '--txtColor', invertTheme: true }"
+						:properties="[{ value: 'profesores', component: TeachersList }]"
 					/>
 				</div>
 			</template>
@@ -111,11 +134,12 @@
 	import { arrayUnion, doc, onSnapshot } from "firebase/firestore";
 	import { FirebaseError } from "firebase/app";
 	import type { iInvalidInput, iPageEdge } from "@open-xamu-co/ui-common-types";
-	import { eColors } from "@open-xamu-co/ui-common-enums";
+	import { eColors, eSizes } from "@open-xamu-co/ui-common-enums";
 
 	import type { Course, Group, Teacher } from "~/resources/types/entities";
 	import { resolveSnapshotDefaults } from "~/resources/utils/firestore";
 	import { eSIALevel, eSIAPlace } from "~/functions/src/types/SIA";
+	import { TeachersList } from "#components";
 
 	/**
 	 * Course page
@@ -136,6 +160,8 @@
 	const { $clientFirestore } = useNuxtApp();
 	const { getResponse } = useFormInput();
 
+	const { losEstudiantesUrl = "", losEstudiantesCoursesPath = "" } = APP.instance?.config || {};
+	const losEstudiantesCourses = `${losEstudiantesUrl}${losEstudiantesCoursesPath}`;
 	const loading = ref(true);
 	const refetching = ref(false);
 	const deactivated = ref(false);
@@ -177,7 +203,7 @@
 			cupos: `${availableSpots} de ${spots}`,
 			actividad: activity,
 			espacios: classrooms,
-			profesores: teachers?.map((teacher) => `${teacher}ㅤ`), // hotfix to prevent it to parse as date
+			profesores: teachers,
 			horarios: { lunes, martes, miercoles, jueves, viernes, sabado, domingo },
 		};
 	}
@@ -358,13 +384,14 @@
 					};
 				}
 
-				// refresh if same course
-				if (SIACourse.code === course.value?.code) {
-					course.value = { ...course.value, ...useMapCourse(SIACourse) };
-				}
-
-				// Reindex
-				await useIndexCourse({ ...SIACourse, updatedAt, indexed: true, indexedTeachers });
+				// Reindex, refresh is done by firebase
+				await useIndexCourse({
+					...course.value,
+					...SIACourse,
+					updatedAt,
+					indexed: true,
+					indexedTeachers,
+				});
 
 				refetching.value = false;
 			});

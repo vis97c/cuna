@@ -139,7 +139,22 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 	const instance: Instance | undefined = JSON.parse(cookies?.app || "{}")?.instance;
 	const { siaOldURL = "", siaOldPath = "", siaOldQuery = "" } = instance?.config || {};
 	const siaOldEnpoint = siaOldURL + siaOldPath + siaOldQuery;
-	const puppet: Browser = await launch({ headless: true });
+	const puppet: Browser = await launch({
+		headless: true,
+		args: [
+			"--disable-gpu",
+			"--disable-dev-shm-usage",
+			"--disable-setuid-sandbox",
+			"--timeout=30000",
+			"--no-first-run",
+			"--no-sandbox",
+			"--no-zygote",
+			"--single-process",
+			"--proxy-server='direct://'",
+			"--proxy-bypass-list=*",
+			"--deterministic-fetch",
+		],
+	});
 
 	try {
 		const name: string = getQueryParam("name", event) || "";

@@ -13,6 +13,7 @@ export function resolveSnapshotDefaults<T extends PseudoNode>(
 		id,
 		updatedAt: node?.updatedAt?.toDate(),
 		createdAt: node?.createdAt?.toDate(),
+		scrapedAt: node?.scrapedAt?.toDate(),
 	});
 }
 export function getDocumentId(path?: string): string {
