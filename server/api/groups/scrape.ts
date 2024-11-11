@@ -12,6 +12,16 @@ import {
 import type { Group, Instance } from "~/resources/types/entities";
 import { debugFirebaseServer } from "~/server/utils/firebase";
 import { defineConditionallyCachedEventHandler, getQueryParam } from "~/server/utils/nuxt";
+import {
+	eSIABogotaFaculty,
+	eSIABogotaProgram,
+	eSIALaPazFaculty,
+	eSIALaPazProgram,
+	eSIAManizalesFaculty,
+	eSIAManizalesProgram,
+	eSIAMedellinFaculty,
+	eSIAMedellinProgram,
+} from "~/functions/src/types/SIA/enums";
 
 /**
  * This scraper follows sia_scrapper implementation by https://github.com/pablomancera
@@ -27,8 +37,7 @@ enum eIds {
 	TYPOLOGY = "pt1:r1:0:soc4::content",
 	NAME = "pt1:r1:0:it11::content",
 	SEARCH_LE = "pt1:r1:0:soc5::content",
-	PROGRAM_LE = "pt1:r1:0:soc7::content",
-	SEARCH = "pt1:r1:0:pgBusqueda",
+	PROGRAM_LE = "pt1:r1:0:soc8::content",
 	SHOW = "pt1:r1:0:cb1",
 	TABLE = "pt1:r1:0:t4::db",
 }
@@ -137,9 +146,9 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		const code: string = getQueryParam("code", event) || "";
 		const level: eSIALevel = getQueryParam("level", event);
 		const place: eSIAPlace = getQueryParam("place", event);
-		const faculty: uSIAFaculty = getQueryParam("faculty", event);
-		const program: uSIAProgram = getQueryParam("program", event);
-		const typology: eSIATypology | undefined = getQueryParam("typology", event);
+		let faculty: uSIAFaculty = getQueryParam("faculty", event);
+		let program: uSIAProgram = getQueryParam("program", event);
+		let typology: eSIATypology | undefined = getQueryParam("typology", event);
 
 		debugFirebaseServer(event, "api:courses:scrape", { name, program, typology });
 
@@ -161,6 +170,30 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 				.on("requestfailed", (request) =>
 					console.log(`${request.failure()?.errorText} ${request.url()}`)
 				);
+		}
+
+		// Override data if missing, assume LE
+		if (!program || !faculty) {
+			typology = eSIATypology.LIBRE_ELECCIÓN;
+
+			switch (place) {
+				case eSIAPlace.BOGOTÁ:
+					faculty = eSIABogotaFaculty.SEDE_BOGOTÁ;
+					program = eSIABogotaProgram.COMPONENTE_DE_LIBRE_ELECCIÓN;
+					break;
+				case eSIAPlace.LA_PAZ:
+					faculty = eSIALaPazFaculty.SEDE_LA_PAZ;
+					program = eSIALaPazProgram.COMPONENTE_DE_LIBRE_ELECCIÓN;
+					break;
+				case eSIAPlace.MEDELLÍN:
+					faculty = eSIAMedellinFaculty.SEDE_MEDELLÍN;
+					program = eSIAMedellinProgram.COMPONENTE_DE_LIBRE_ELECCIÓN;
+					break;
+				case eSIAPlace.MANIZALES:
+					faculty = eSIAManizalesFaculty.SEDE_MANIZALES;
+					program = eSIAManizalesProgram.COMPONENTE_DE_LIBRE_ELECCIÓN;
+					break;
+			}
 		}
 
 		await puppetPage.goto(siaOldEnpoint);
@@ -210,11 +243,12 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 
 			if (typology === eSIATypology.LIBRE_ELECCIÓN) {
 				// Search by program
-				await puppetPage.waitForSelector(eIds.SEARCH, { visible: true });
+				await puppetPage.waitForSelector(useId(eIds.SEARCH_LE), { visible: true });
 				await puppetPage.click(useId(eIds.SEARCH_LE));
 				await puppetPage.select(useId(eIds.SEARCH_LE), "1");
+
 				// Select Program
-				await puppetPage.waitForSelector(`${useId(eIds.PROGRAM_LE)}:not([disabled])`);
+				await puppetPage.waitForSelector(useId(eIds.PROGRAM_LE), { visible: true });
 
 				const programsLE = await getOptions(puppetPage, eIds.PROGRAM_LE);
 				const programLeValue = programsLE.find(({ alias }) => alias === program);
@@ -238,26 +272,24 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 
 		if (!tableHandle) throw new Error("Missing results");
 
-		const linkId = await tableHandle.evaluate(async (table, innerCode) => {
+		const courseLinks: CourseLink[] = await tableHandle.evaluate(async (table) => {
 			const tbody = table?.firstElementChild?.lastElementChild;
 
 			if (tbody?.tagName !== "TBODY") throw new Error("No courses found");
 
 			const rows = tbody?.children;
-			const courseLinks: CourseLink[] = Array.from(rows).map((row) => {
+
+			return Array.from(rows).map((row) => {
 				const link = row.children[0].getElementsByTagName("a")[0];
 
 				return { id: link.id, code: link.innerHTML };
 			});
+		});
+		const courseLink = courseLinks.find((item) => item.code === code);
 
-			const courseLink = courseLinks.find((item) => item.code === innerCode);
+		if (!courseLink) throw new Error("No course matches the provided code");
 
-			if (!courseLink) throw new Error("No course matches the provided code");
-
-			return courseLink.id;
-		}, code);
-
-		await puppetPage.click(useId(linkId));
+		await puppetPage.click(useId(courseLink.id));
 
 		// Get groups
 		await puppetPage.waitForNetworkIdle();
