@@ -46,10 +46,10 @@ export function triGram(strings: (string | undefined)[]) {
 	const n = 5; // 5 letters words
 	let k = 0;
 
-	while (indexes.length <= 30 && k <= string.length - n) {
+	while (indexes.length <= 50 && k <= string.length - n) {
 		indexes.push(string.substring(k, k + n));
 
-		k += 3;
+		k += 2;
 	}
 
 	return indexes;

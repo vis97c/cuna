@@ -63,3 +63,7 @@ export function useTCredits(count = 0) {
 
 	return `${count} ${t}`;
 }
+
+export function useMinMilis(minutes: number) {
+	return minutes * 60 * 1000;
+}

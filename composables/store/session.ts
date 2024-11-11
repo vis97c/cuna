@@ -4,6 +4,7 @@ import { deleteUser, getAuth } from "firebase/auth";
 import type { Course, User } from "~/resources/types/entities";
 import {
 	eSIABogotaFaculty,
+	eSIALevel,
 	eSIAPlace,
 	eSIAScienceBogotaProgram,
 	type uSIAFaculty,
@@ -18,6 +19,7 @@ export interface iStateSession {
 	 * Courses to track (ids)
 	 */
 	track: string[];
+	level: eSIALevel;
 	place: eSIAPlace;
 	lastFacultySearch: uSIAFaculty;
 	lastProgramSearch: uSIAProgram;
@@ -41,6 +43,7 @@ export const useSessionStore = defineStore("session", {
 			token: undefined,
 			expiredToken: false,
 			track: [],
+			level: eSIALevel.PREGRADO,
 			place: eSIAPlace.BOGOTÁ,
 			lastFacultySearch: eSIABogotaFaculty.CIENCIAS,
 			lastProgramSearch: eSIAScienceBogotaProgram.CC,
@@ -140,6 +143,9 @@ export const useSessionStore = defineStore("session", {
 		setLastSearch(faculty: uSIAFaculty, program: uSIAProgram) {
 			this.lastFacultySearch = faculty;
 			this.lastProgramSearch = program;
+		},
+		setLevel(level: eSIALevel) {
+			this.level = level;
 		},
 		setPlace(place: eSIAPlace) {
 			this.place = place;

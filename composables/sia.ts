@@ -1,4 +1,4 @@
-import { arrayUnion } from "firebase/firestore";
+import { arrayUnion, Timestamp } from "firebase/firestore";
 import type { GroupData } from "~/functions/src/types/entities";
 import type { SIACoursesResponse } from "~/functions/src/types/SIA";
 import type { Course, CourseRef, Teacher, TeacherRef } from "~/resources/types/entities";
@@ -12,7 +12,8 @@ export function useSIACourses(values: CourseValues, page = 1) {
 
 	return $fetch<SIACoursesResponse>(coursesEndpoint, {
 		query: {
-			sede: values.place || undefined,
+			nivel: values.level,
+			sede: values.place,
 			planEstudio: values.program || undefined,
 			codigo_asignatura: values.code || undefined,
 			nombre_asignatura: values.name || undefined,
@@ -34,6 +35,7 @@ export async function useIndexCourse(
 		alternativeNames = [],
 		createdAt,
 		updatedAt,
+		scrapedAt,
 		...course
 	}: Course & { indexed?: boolean; indexedTeachers?: Teacher[] },
 	indexedCourse?: Course
@@ -62,10 +64,17 @@ export async function useIndexCourse(
 		});
 	});
 
-	const updatedAtMilis = new Date(updatedAt || "").getTime();
-	const nowMilis = new Date().getTime();
-	const millisDiff = nowMilis - updatedAtMilis;
+	const courseToIndex: CourseRef = {
+		...course,
+		programs: arrayUnion(...programs),
+		typologies: arrayUnion(...typologies),
+		alternativeNames: arrayUnion(...alternativeNames),
+		indexes: triGram([course.name]),
+	};
 	const minutes = APP.instance?.config?.coursesRefreshRate || 5;
+	const nowMilis = new Date().getTime();
+	const updatedAtMilis = new Date(updatedAt || "").getTime();
+	const updatedDiffMilis = nowMilis - updatedAtMilis;
 
 	// Same programs & typologies
 	if (
@@ -74,17 +83,21 @@ export async function useIndexCourse(
 		indexedCourse?.alternativeNames?.every((p) => alternativeNames.includes(p))
 	) {
 		// Do not update if updated less than threshold
-		if (indexed && millisDiff <= minutes * 60 * 1000) return;
+		if (indexed && updatedDiffMilis <= useMinMilis(minutes)) return;
+	}
+
+	const scrapedAtMilis = new Date(indexedCourse?.scrapedAt || "").getTime();
+	const scrapedDiffMilis = nowMilis - scrapedAtMilis;
+
+	// Do not override SIA scraping, unless too old
+	if (scrapedAt || scrapedDiffMilis > useMinMilis(minutes * 100)) {
+		courseToIndex.groups = groups;
+
+		if (scrapedAt && typeof scrapedAt !== "string") {
+			courseToIndex.scrapedAt = Timestamp.fromDate(scrapedAt);
+		}
 	}
 
 	// creates or updates course
-	// TODO: index course on server side
-	return useDocumentCreate<CourseRef>("courses", {
-		...course,
-		groups,
-		programs: arrayUnion(...programs),
-		typologies: arrayUnion(...typologies),
-		alternativeNames: arrayUnion(...alternativeNames),
-		indexes: triGram([course.name]),
-	});
+	return useDocumentCreate<CourseRef>("courses", courseToIndex);
 }

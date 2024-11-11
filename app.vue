@@ -96,6 +96,13 @@
 														</li>
 														<li>
 															<XamuSelect
+																v-model="selectedLevel"
+																:options="levels"
+																class="--txtAlign-center"
+															/>
+														</li>
+														<li>
+															<XamuSelect
 																v-model="selectedPlace"
 																:options="places"
 																class="--txtAlign-center"
@@ -177,12 +184,18 @@
 	const route = useRoute();
 	const { indexable } = useRuntimeConfig().public;
 
-	const { places } = useCourseProgramOptions([eSIALevel.PREGRADO, SESSION.place], true);
+	const { levels, places } = useCourseProgramOptions([eSIALevel.PREGRADO, SESSION.place], true);
 
 	const withNonRegular = computed({
 		get: () => SESSION.withNonRegular,
 		set: (value) => {
 			SESSION.toggleNonRegular(value);
+		},
+	});
+	const selectedLevel = computed({
+		get: () => SESSION.level,
+		set: (value) => {
+			SESSION.setLevel(value);
 		},
 	});
 	const selectedPlace = computed({

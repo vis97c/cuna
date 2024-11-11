@@ -155,6 +155,7 @@
 </template>
 
 <script setup lang="ts">
+	import { debounce } from "lodash-es";
 	import { eSizes } from "@open-xamu-co/ui-common-enums";
 	import type { iPage } from "@open-xamu-co/ui-common-types";
 
@@ -166,8 +167,6 @@
 		PartialCourseValues,
 	} from "~/resources/types/values";
 	import { getDocumentId } from "~/resources/utils/firestore";
-	import { eSIALevel } from "~/functions/src/types/SIA";
-	import { debounce } from "lodash-es";
 
 	/**
 	 * Landing page
@@ -183,6 +182,12 @@
 
 	const SESSION = useSessionStore();
 
+	const selectedLevel = computed({
+		get: () => SESSION.level,
+		set: (value) => {
+			SESSION.setLevel(value);
+		},
+	});
 	const selectedPlace = computed({
 		get: () => SESSION.place,
 		set: (value) => {
@@ -191,7 +196,7 @@
 	});
 
 	const { selectedFaculty, selectedProgram, faculties, programs } = useCourseProgramOptions(
-		[eSIALevel.PREGRADO, selectedPlace, SESSION.lastFacultySearch, SESSION.lastProgramSearch],
+		[selectedLevel, selectedPlace, SESSION.lastFacultySearch, SESSION.lastProgramSearch],
 		true
 	);
 	const { selectedTypology, typologies } = useCourseTypeOptions();
@@ -204,6 +209,7 @@
 	const isCodeSearch = computed<boolean>(() => !!search.value && /^\d/.test(search.value));
 	const values = computed<CourseValues>(() => {
 		const payload: PartialCourseValues = {
+			level: selectedLevel.value,
 			place: selectedPlace.value,
 			typology: selectedTypology.value,
 		};

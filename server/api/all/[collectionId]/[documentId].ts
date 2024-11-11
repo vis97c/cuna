@@ -27,11 +27,10 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		}
 
 		const params = getQuery(event);
-		const canModerate = getRequestHeader(event, "canModerate");
 		const level = Array.isArray(params.level) || !params.level ? 0 : Number(params.level);
 		const omit = Array.isArray(params.omit) ? params.omit : [params.omit];
 
-		return resolveSnapshotRefs(snapshot, { level, omit, canModerate });
+		return resolveSnapshotRefs(snapshot, { level, omit });
 	} catch (err) {
 		console.error(err);
 

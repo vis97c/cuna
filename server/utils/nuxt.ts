@@ -1,8 +1,14 @@
-import type { EventHandler, EventHandlerRequest } from "h3";
+import type { EventHandler, EventHandlerRequest, H3Event } from "h3";
 import { getAuth } from "firebase-admin/auth";
 
 import { apiFirebaseApp } from "./firebase";
 import type { Instance, User } from "~/resources/types/entities";
+
+export function getQueryParam<T>(name: string, e: H3Event): T {
+	const params = getQuery(e);
+
+	return Array.isArray(params[name]) ? params[name][0] : params[name];
+}
 
 /**
  * Conditionally cache event data.

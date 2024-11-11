@@ -87,10 +87,15 @@ export interface GroupRef extends GetRef<Group> {}
 export interface Course extends SharedDocument, FromData<CourseData> {
 	groups?: Group[];
 	unreported?: Group[];
+	/** @automated Last scrape date */
+	scrapedAt?: string | Date;
 }
 /**
  * This one goes to the database
  *
  * Omit automation
  */
-export interface CourseRef extends GetRef<Course> {}
+export interface CourseRef extends Omit<GetRef<Course>, "scrapedAt"> {
+	/** @automated Last scrape date */
+	scrapedAt?: Timestamp;
+}

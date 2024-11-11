@@ -60,6 +60,18 @@ export interface InstanceData extends FirebaseData {
 		 * Number of minutes before refreshing a course
 		 */
 		coursesRefreshRate?: number;
+		/**
+		 * @example https://sia.unal.edu.co
+		 */
+		siaOldURL?: string;
+		/**
+		 * @example /Catalogo/facespublico/public/servicioPublico.jsf
+		 */
+		siaOldPath?: string;
+		/**
+		 * @example ?taskflowId=task-flow-AC_CatalogoAsignaturas
+		 */
+		siaOldQuery?: string;
 	};
 	/**
 	 * Feature flags
@@ -79,6 +91,8 @@ export interface TeacherData extends FirebaseData {
 	indexes?: string[];
 }
 
+export type tWeeklySchedule = [string?, string?, string?, string?, string?, string?, string?];
+
 /**
  * Interface representing a SIA Group data.
  */
@@ -89,7 +103,7 @@ export interface GroupData {
 	/** Total number of available spots. */
 	spots?: number;
 	/** Schedule for each day of the week */
-	schedule?: [string?, string?, string?, string?, string?, string?, string?];
+	schedule?: tWeeklySchedule;
 	teachers?: string[];
 	/**
 	 * Activity name.
@@ -153,4 +167,6 @@ export interface CourseData extends FirebaseData {
 	 * @automation
 	 */
 	spotsCount?: number;
+	/** @automated Last scrape date */
+	scrapedAt?: Timestamp;
 }

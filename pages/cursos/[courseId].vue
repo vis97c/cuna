@@ -11,7 +11,8 @@
 					<p v-if="course.alternativeNames?.length" title="Otros nombres">
 						{{ course.alternativeNames.join(", ") }}.
 					</p>
-					<p class="--txtSize-sm">Actualizado {{ updatedAt }}</p>
+					<p v-if="loading || refetching" class="--txtSize-sm">Actualizando...</p>
+					<p v-else class="--txtSize-sm">Actualizado {{ updatedAt }}</p>
 				</div>
 				<div class="txt">
 					<h4 class="">Herramientas:</h4>
@@ -114,7 +115,7 @@
 
 	import type { Course, Group, Teacher } from "~/resources/types/entities";
 	import { resolveSnapshotDefaults } from "~/resources/utils/firestore";
-	import { eSIAPlace } from "~/functions/src/types/SIA";
+	import { eSIALevel, eSIAPlace } from "~/functions/src/types/SIA";
 
 	/**
 	 * Course page
@@ -136,6 +137,8 @@
 	const { getResponse } = useFormInput();
 
 	const loading = ref(true);
+	const refetching = ref(false);
+	const deactivated = ref(false);
 	const course = ref<Course>();
 	const fromSIA = ref<boolean>();
 	const routeCourseId = computed(() => <string>route.params.courseId);
@@ -174,7 +177,7 @@
 			cupos: `${availableSpots} de ${spots}`,
 			actividad: activity,
 			espacios: classrooms,
-			profesores: teachers,
+			profesores: teachers?.map((teacher) => `${teacher}ㅤ`), // hotfix to prevent it to parse as date
 			horarios: { lunes, martes, miercoles, jueves, viernes, sabado, domingo },
 		};
 	}
@@ -284,6 +287,8 @@
 	 * Get course from firebase, then SIA & reindex
 	 */
 	const unsub = onSnapshot(doc($clientFirestore, "courses", routeCourseId.value), (snapshot) => {
+		// prevent hydration if not active
+		if (deactivated.value) return;
 		if (!snapshot.exists()) {
 			throw createError({
 				statusCode: 404,
@@ -295,31 +300,44 @@
 		const {
 			id,
 			code = "",
-			programs = [],
+			level = eSIALevel.PREGRADO,
 			place = eSIAPlace.BOGOTÁ,
+			faculty,
+			programs = [],
+			typology,
 			updatedAt,
 		} = firebaseCourse;
-		const updatedAtMilis = new Date(updatedAt || "").getTime();
-		const nowMilis = new Date().getTime();
-		const millisDiff = nowMilis - updatedAtMilis;
 		const minutes = APP.instance?.config?.coursesRefreshRate || 5;
+		const nowMilis = new Date().getTime();
+		const updatedAtMilis = new Date(updatedAt || "").getTime();
+		const updatedDiffMilis = nowMilis - updatedAtMilis;
 
 		// Do once & update if updated more than threshold
-		if (fromSIA.value === undefined && millisDiff > minutes * 60 * 1000) {
+		if (
+			fromSIA.value === undefined &&
+			(!firebaseCourse?.scrapedAt || updatedDiffMilis > useMinMilis(minutes))
+		) {
+			refetching.value = true;
+
 			// Get data from sia & reindex, do not await
 			Promise.all([
-				useSIACourses({ code, program: programs[0], place }),
+				useSIACourses({ level, place, program: programs[0], code }),
+				$fetch<Group[] | null>("/api/groups/scrape", {
+					query: { level, place, faculty, program: programs[0], typology, code },
+					cache: "no-cache",
+					headers: { canModerate: SESSION.token || "" },
+				}),
 				$fetch<iPageEdge<Teacher, string>[]>("/api/teachers/search", {
 					query: { courses: [code] },
 					cache: "no-cache",
 					headers: { canModerate: SESSION.token || "" },
 				}),
-			]).then(([{ data }, indexedTeachers]) => {
+			]).then(async ([{ data }, SIAgroups, indexedTeachers]) => {
 				// Omit courses without groups
 				const courses = data
 					.map(useMapCourseFromSia)
 					.filter(({ groups }) => !!groups?.length);
-				const SIACourse = courses.find((c) => c.id === id);
+				let SIACourse = courses.find((c) => c.id === id);
 
 				if (!SIACourse) {
 					fromSIA.value = false;
@@ -327,13 +345,28 @@
 					return;
 				}
 
+				// prefer scrapped groups
+				if (SIAgroups) {
+					SIACourse = {
+						...SIACourse,
+						groups: SIAgroups.map(({ spots = 0, ...group }) => {
+							const SIA = SIACourse?.groups?.find(({ name }) => name === group.name);
+
+							return { ...group, spots: SIA?.spots || spots };
+						}),
+						scrapedAt: new Date(),
+					};
+				}
+
 				// refresh if same course
 				if (SIACourse.code === course.value?.code) {
 					course.value = { ...course.value, ...useMapCourse(SIACourse) };
 				}
 
-				// Reindex, do not await
-				return useIndexCourse({ ...SIACourse, updatedAt, indexed: true, indexedTeachers });
+				// Reindex
+				await useIndexCourse({ ...SIACourse, updatedAt, indexed: true, indexedTeachers });
+
+				refetching.value = false;
 			});
 		}
 
@@ -342,6 +375,8 @@
 		loading.value = false;
 	});
 
+	onActivated(() => (deactivated.value = false));
+	onDeactivated(() => (deactivated.value = true));
 	onBeforeUnmount(unsub);
 </script>
 

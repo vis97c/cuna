@@ -24,7 +24,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 
 		let query: CollectionReference | Query = apiFirestore.collection("courses");
 
-		debugFirebaseServer(event, "api:courses", { name, code, faculty, typology, page });
+		debugFirebaseServer(event, "api:courses:search", { name, code, program, typology, page });
 
 		// where code equals
 		if (code) query = query.where("code", "==", code);
