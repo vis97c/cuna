@@ -327,7 +327,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 					const scheduleSpan = scheduledSpace.firstElementChild;
 					const [day, unparsedSpan] = trimHTML(scheduleSpan).toLowerCase().split(" de ");
 
-					if (!classroomSpan || !day || !unparsedSpan) {
+					if (!day || !unparsedSpan) {
 						throw new Error("Non supported schedule format");
 					}
 

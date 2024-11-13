@@ -261,6 +261,7 @@
 		}
 		.x-info {
 			opacity: 0.7;
+			z-index: 9;
 		}
 		.x-navigation {
 			position: absolute;

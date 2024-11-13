@@ -261,13 +261,17 @@ export function useMapCourseFromSia(source: SIACourse): Course {
 
 export function useMapCourse({ groups = [], ...course }: Course): Course {
 	const SESSION = useSessionStore();
-	const lowerPlace = deburr(course.place).toLowerCase();
-	const otherPlaces = groups.some(({ name = "" }) => {
+	const [, placeOnly] = deburr(SESSION.place).toLowerCase().replace(" de la", "").split("sede ");
+	const thisPlace = groups.some(({ name = "" }) => {
 		const lowerName = deburr(name).toLowerCase();
 
-		return lowerName.includes("otras sedes");
+		return lowerName.includes(placeOnly);
 	});
+	const withPlaces = groups.some(({ name = "" }) => {
+		const lowerName = deburr(name).toLowerCase();
 
+		return lowerName.includes("sede");
+	});
 	const filteredGroups = groups.filter(({ name }) => {
 		const lowerName = deburr(name).toLowerCase();
 
@@ -276,8 +280,10 @@ export function useMapCourse({ groups = [], ...course }: Course): Course {
 			(lowerName.includes("peama") || lowerName.includes("paes"))
 		) {
 			return false;
-		} else if (otherPlaces) {
-			return lowerName.includes(lowerPlace);
+		} else if (thisPlace) {
+			return lowerName.includes(placeOnly);
+		} else if (withPlaces) {
+			return lowerName.includes("otras sedes");
 		}
 
 		return true;

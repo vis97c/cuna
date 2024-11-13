@@ -87,10 +87,10 @@
 					<div class="x-values grd-item">
 						<XamuValueList
 							:value="{
-								sede: course.place,
-								facultad: course.faculty,
-								programas: course.programs,
+								código: course.code,
+								créditos: course.credits,
 								cuposDisponibles: course.spotsCount,
+								actividad: course.groups?.[0]?.activity || 'No definida',
 							}"
 							:modal-props="{ class: '--txtColor', invertTheme: true }"
 						/>
@@ -98,8 +98,9 @@
 					<div class="x-values grd-item">
 						<XamuValueList
 							:value="{
-								código: course.code,
-								créditos: course.credits,
+								sede: course.place,
+								facultad: course.faculty,
+								programas: course.programs,
 								tipologías: course.typologies,
 							}"
 							:modal-props="{ class: '--txtColor', invertTheme: true }"
@@ -110,11 +111,12 @@
 					:loading="pending || refetching"
 					:content="!!mapGroups.length || !!mapUnreported.length"
 					label="Actualizando desde el SIA..."
+					no-content-message="No hay grupos disponibles."
 					class="--width-100"
 				>
 					<div v-if="mapGroups.length" class="flx --flxColumn --flx-start --width-100">
 						<div class="txt">
-							<h4>Grupos ({{ course.groupCount || course.groups?.length || 0 }}):</h4>
+							<h4>Grupos ({{ course.groups?.length || 0 }}):</h4>
 						</div>
 						<XamuTable
 							:nodes="mapGroups"
@@ -205,7 +207,11 @@
 	});
 
 	const course = computed({
-		get: () => courseAndTeachers.value?.[0],
+		get: () => {
+			if (!courseAndTeachers.value?.[0]) return;
+
+			return useMapCourse(courseAndTeachers.value?.[0]);
+		},
 		set(newCourse) {
 			if (!newCourse) return;
 
@@ -225,7 +231,6 @@
 
 	function mapGroupLike({
 		name,
-		activity,
 		classrooms,
 		teachers = [],
 		schedule,
@@ -248,9 +253,8 @@
 		classrooms = classrooms?.filter((c) => !!c);
 
 		return {
-			nombre: `${name}ㅤ`, // hotfix to prevent it to parse as date
+			nombre: `${name}`, // hotfix to prevent it to parse as date
 			cupos: `${availableSpots} de ${spots}`,
-			actividad: activity,
 			espacios: classrooms,
 			profesores: mappedTeachers,
 			horarios: { lunes, martes, miercoles, jueves, viernes, sabado, domingo },
@@ -401,7 +405,7 @@
 			// Update with hydration conditionally
 			if (course.value?.updatedAt !== updatedAt) {
 				route.meta.title = name; // Update meta
-				course.value = useMapCourse(firebaseCourse);
+				course.value = firebaseCourse;
 			}
 
 			const minutes = APP.instance?.config?.coursesRefreshRate || 5;
