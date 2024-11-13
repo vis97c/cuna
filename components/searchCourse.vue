@@ -29,41 +29,46 @@
 					v-if="untrackedCourses?.length"
 					class="grd --grdColumns-auto3 --gap --width-100"
 				>
-					<XamuBaseBox
+					<XamuLoaderContent
 						v-for="course in untrackedCourses"
 						:key="course.code"
-						:el="XamuBaseAction"
-						class="grd-item txt --txtAlign-left --txtSize-sm --gap-5"
-						title="Ver detalles del curso"
-						:disabled="!course.indexed"
-						:to="`/cursos/${getDocumentId(course.id)}`"
-						button
+						:loading="!course.indexed"
+						content
 					>
-						<p class="--maxWidth-220 ellipsis">{{ course.name }}</p>
-						<div class="txt --txtSize-xs --txtWeight-regular --gap-0 --flx">
-							<p>
-								<b title="Codigo">{{ course.code }}</b>
-								⋅
-								<span title="Creditos">{{ useTCredits(course.credits) }}</span>
-								⋅
-								<span title="Cupos disponibles">
-									{{ useTSpot(course.spotsCount) }}
-								</span>
-							</p>
-							<p v-if="course.programs?.length" title="Programas">
-								{{ course.programs.join(", ") }}.
-							</p>
-							<p v-if="course.typologies?.length" title="Tipologías">
-								{{ course.typologies.join(", ") }}.
-							</p>
-						</div>
-						<div
-							v-if="course.indexed"
-							class="flx --flxRow --flx-end-center --width-100"
+						<XamuBaseBox
+							:el="XamuBaseAction"
+							class="grd-item txt --txtAlign-left --txtSize-sm --gap-5"
+							title="Ver detalles del curso"
+							:disabled="!course.indexed"
+							:to="`/cursos/${getDocumentId(course.id)}`"
+							button
 						>
-							<XamuIconFa name="arrow-right" />
-						</div>
-					</XamuBaseBox>
+							<p class="--maxWidth-220 ellipsis">{{ course.name }}</p>
+							<div class="txt --txtSize-xs --txtWeight-regular --gap-0 --flx">
+								<p>
+									<b title="Codigo">{{ course.code }}</b>
+									⋅
+									<span title="Creditos">{{ useTCredits(course.credits) }}</span>
+									⋅
+									<span title="Cupos disponibles">
+										{{ useTSpot(course.spotsCount) }}
+									</span>
+								</p>
+								<p v-if="course.programs?.length" title="Programas">
+									{{ course.programs.join(", ") }}.
+								</p>
+								<p v-if="course.typologies?.length" title="Tipologías">
+									{{ course.typologies.join(", ") }}.
+								</p>
+							</div>
+							<div
+								v-if="course.indexed"
+								class="flx --flxRow --flx-end-center --width-100"
+							>
+								<XamuIconFa name="arrow-right" />
+							</div>
+						</XamuBaseBox>
+					</XamuLoaderContent>
 				</div>
 				<XamuBoxMessage
 					v-else-if="canPaginate"
@@ -233,41 +238,30 @@
 				"/api/all/courses",
 				{ include }
 			);
-			const mappedCourses: (Course & { indexed: boolean })[] = courses.map((course) => {
-				const indexedCourse = indexedCoursesEdges.find(({ node }) => node.id === course.id);
 
-				return {
-					...course,
-					indexed: !!indexedCourse,
-					updatedAt: indexedCourse?.node?.updatedAt,
-				};
+			const mappedCourses: (Course & { indexed?: Course })[] = courses.map((course) => {
+				const indexed = indexedCoursesEdges.find(({ node }) => node.id === course.id)?.node;
+
+				return { ...course, indexed, updatedAt: indexed?.updatedAt };
 			});
 
 			// Conditionally Refresh UI again
 			if (untrackedCurrentPage.value?.currentPage === page.currentPage) {
-				const reMappedCourses = mappedCourses.map(useMapCourse);
-
-				untrackedCourses.value = reMappedCourses;
-				savedUntrackedCourses.value[page.currentPage] = reMappedCourses;
+				untrackedCourses.value = mappedCourses;
+				savedUntrackedCourses.value[page.currentPage] = mappedCourses;
 			}
 
-			// Index courses
-			await Promise.all(
-				mappedCourses.map((course) => {
-					const indexedCourse = indexedCoursesEdges.find(({ node }) => {
-						return node.id === course.id;
-					});
+			// Index or update courses
+			const allIndexed = await Promise.all(
+				mappedCourses.map(async ({ indexed, ...course }) => {
+					await useIndexCourse(course, indexed);
 
-					return useIndexCourse({ ...course }, indexedCourse?.node);
+					return { ...course, indexed: true };
 				})
 			);
 
 			// Conditionally Refresh UI again, 2nd time
 			if (untrackedCurrentPage.value?.currentPage === page.currentPage) {
-				const allIndexed = mappedCourses.map((course) => {
-					return useMapCourse({ ...course, indexed: true });
-				});
-
 				untrackedCourses.value = allIndexed;
 				savedUntrackedCourses.value[page.currentPage] = allIndexed;
 			}

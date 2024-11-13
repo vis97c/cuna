@@ -1,7 +1,17 @@
+import type { NitroFetchOptions, NitroFetchRequest } from "nitropack";
 import { isEqual } from "lodash-es";
 
 import type { Group } from "~/resources/types/entities";
 import { isNotUndefString } from "~/resources/utils/guards";
+
+export function useImagePath(
+	path?: string,
+	preset: "avatar" | "small" | "medium" | "large" = "avatar"
+) {
+	if (!path) return "/images/sample.png";
+
+	return `/api/media/images/${path}/${preset}.webp`;
+}
 
 export function valuesAreEqual<V extends Record<string, any>>(
 	values: V,
@@ -68,13 +78,20 @@ export function useMinMilis(minutes: number) {
 	return minutes * 60 * 1000;
 }
 
-export function useFetchQuery<R>(url: string, query: Record<string, any> = {}) {
+export function useFetchQuery<R>(
+	url: string,
+	{
+		options,
+		...query
+	}: Record<string, any> & { options?: Omit<NitroFetchOptions<NitroFetchRequest>, "query"> } = {}
+) {
 	const SESSION = useSessionStore();
 
 	return $fetch<R>(url, {
 		cache: "no-cache",
 		credentials: "same-origin",
+		...options,
 		query,
-		headers: { authorization: SESSION.token || "" },
+		headers: { authorization: SESSION.token || "", ...options?.headers },
 	});
 }

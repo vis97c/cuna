@@ -1,9 +1,9 @@
 <template>
-	<section id="course" :key="routeCourseId" class="--width-100">
+	<section id="course" :key="course?.id" class="--width-100">
 		<XamuLoaderContent
 			class="x-course flx --flxColumn --flx-start --gap-30"
 			:content="!!course"
-			:loading="loading"
+			:loading="pending"
 		>
 			<template v-if="course">
 				<div class="txt">
@@ -11,8 +11,7 @@
 					<p v-if="course.alternativeNames?.length" title="Otros nombres">
 						{{ course.alternativeNames.join(", ") }}.
 					</p>
-					<p v-if="loading || refetching" class="--txtSize-sm">Actualizando...</p>
-					<p v-else class="--txtSize-sm">Actualizado {{ updatedAt }}</p>
+					<p class="--txtSize-sm">Actualizado {{ courseUpdatedAt }}</p>
 				</div>
 				<div class="flx --flxColumn --flx-start --width-100">
 					<div class="txt">
@@ -107,31 +106,41 @@
 						/>
 					</div>
 				</div>
-				<div v-if="mapGroups.length" class="flx --flxColumn --flx-start --width-100">
-					<div class="txt">
-						<h4>Grupos ({{ course.groupCount || course.groups?.length || 0 }}):</h4>
+				<XamuLoaderContent
+					:loading="pending || refetching"
+					:content="!!mapGroups.length || !!mapUnreported.length"
+					label="Actualizando desde el SIA..."
+					class="--width-100"
+				>
+					<div v-if="mapGroups.length" class="flx --flxColumn --flx-start --width-100">
+						<div class="txt">
+							<h4>Grupos ({{ course.groupCount || course.groups?.length || 0 }}):</h4>
+						</div>
+						<XamuTable
+							:nodes="mapGroups"
+							:modal-props="{ class: '--txtColor', invertTheme: true }"
+							:properties="[{ value: 'profesores', component: TeachersList }]"
+						/>
 					</div>
-					<XamuTable
-						:nodes="mapGroups"
-						:modal-props="{ class: '--txtColor', invertTheme: true }"
-						:properties="[{ value: 'profesores', component: TeachersList }]"
-					/>
-				</div>
-				<div v-if="mapUnreported.length" class="flx --flxColumn --flx-start --width-100">
-					<div class="txt --gap-5">
-						<h4>Grupos no reportados ({{ course.unreported?.length || 0 }}):</h4>
-						<p class="--txtSize-xs">
-							*Estos grupos estan activos en el SIA, pero aun no podemos actualizar
-							sus cupos.
-						</p>
+					<div
+						v-if="mapUnreported.length"
+						class="flx --flxColumn --flx-start --width-100"
+					>
+						<div class="txt --gap-5">
+							<h4>Grupos no reportados ({{ course.unreported?.length || 0 }}):</h4>
+							<p class="--txtSize-xs">
+								*Estos grupos estan activos en el SIA, pero aun no podemos
+								actualizar sus cupos.
+							</p>
+						</div>
+						<XamuTable
+							:nodes="mapUnreported"
+							:theme="eColors.PRIMARY"
+							:modal-props="{ class: '--txtColor', invertTheme: true }"
+							:properties="[{ value: 'profesores', component: TeachersList }]"
+						/>
 					</div>
-					<XamuTable
-						:nodes="mapUnreported"
-						:theme="eColors.PRIMARY"
-						:modal-props="{ class: '--txtColor', invertTheme: true }"
-						:properties="[{ value: 'profesores', component: TeachersList }]"
-					/>
-				</div>
+				</XamuLoaderContent>
 			</template>
 		</XamuLoaderContent>
 	</section>
@@ -139,7 +148,7 @@
 
 <script setup lang="ts">
 	import { debounce, startCase } from "lodash-es";
-	import { arrayUnion, doc, onSnapshot } from "firebase/firestore";
+	import { arrayUnion, doc, onSnapshot, type Unsubscribe } from "firebase/firestore";
 	import { FirebaseError } from "firebase/app";
 	import type { iInvalidInput, iPageEdge } from "@open-xamu-co/ui-common-types";
 	import { eColors, eSizes } from "@open-xamu-co/ui-common-enums";
@@ -149,6 +158,8 @@
 	import { eSIALevel, eSIAPlace } from "~/functions/src/types/SIA";
 	import { TeachersList } from "#components";
 
+	type tCourseAndTeachers = [Course, iPageEdge<Teacher, string>[]];
+
 	/**
 	 * Course page
 	 *
@@ -157,7 +168,7 @@
 
 	definePageMeta({
 		path_label: "Curso",
-		middleware: ["auth-only"],
+		middleware: ["auth-only", "course-exists"],
 	});
 
 	const APP = useAppStore();
@@ -170,17 +181,41 @@
 
 	const { losEstudiantesUrl = "", losEstudiantesCoursesPath = "" } = APP.instance?.config || {};
 	const losEstudiantesCourses = `${losEstudiantesUrl}${losEstudiantesCoursesPath}`;
-	const loading = ref(true);
 	const refetching = ref(false);
 	const deactivated = ref(false);
-	const course = ref<Course>();
-	const indexedTeachers = ref<Teacher[]>();
 	const fromSIA = ref<boolean>();
-	const routeCourseId = computed(() => <string>route.params.courseId);
 	const addGroupInputs = ref(markRaw(useGroupInputs()));
 	const invalidAddGroup = ref<iInvalidInput[]>([]);
+	let unsub: Unsubscribe = () => undefined;
 
-	const updatedAt = computed(() => {
+	const { data: courseAndTeachers, pending } = useAsyncData<tCourseAndTeachers>(async () => {
+		const courseId = <string>route.params.courseId;
+		const nuxtCourse = await useFetchQuery<Course>(`/api/all/courses/${courseId}`);
+		const { name, code } = nuxtCourse;
+
+		// Update meta
+		route.meta.title = name;
+
+		const teachersEdges = await useFetchQuery<iPageEdge<Teacher, string>[]>(
+			"/api/teachers/search",
+			{ courses: [code] }
+		);
+
+		return [nuxtCourse, teachersEdges];
+	});
+
+	const course = computed({
+		get: () => courseAndTeachers.value?.[0],
+		set(newCourse) {
+			if (!newCourse) return;
+
+			courseAndTeachers.value = [newCourse, courseAndTeachers.value?.[1] || []];
+		},
+	});
+	const indexedTeachers = computed(() => {
+		return (courseAndTeachers.value?.[1] || []).map(({ node }) => node);
+	});
+	const courseUpdatedAt = computed(() => {
 		const date = new Date(course.value?.updatedAt || new Date());
 
 		return useTimeAgo(date);
@@ -245,6 +280,8 @@
 		});
 
 		if (!value) return;
+
+		unsub(); // close firebase socket
 
 		const removed = await useDocumentDelete(course.value);
 
@@ -322,118 +359,119 @@
 	}
 
 	// lifecycle
-	const courseRef = doc($clientFirestore, "courses", routeCourseId.value);
-
-	/**
-	 * Get course from firebase, then SIA & reindex
-	 */
-	const unsub = onSnapshot(courseRef, async (snapshot) => {
-		// prevent hydration if not active
-		if (deactivated.value) return;
-		if (!snapshot.exists()) {
-			throw createError({
-				statusCode: 404,
-				statusMessage: "El curso que buscas no esta indexado o no existe",
-			});
-		}
-
-		const firebaseCourse: Course = resolveSnapshotDefaults(snapshot.ref.path, snapshot.data());
-		const {
-			id,
-			code = "",
-			level = eSIALevel.PREGRADO,
-			place = eSIAPlace.BOGOTÁ,
-			faculty,
-			programs = [],
-			typology,
-			updatedAt,
-		} = firebaseCourse;
-		const minutes = APP.instance?.config?.coursesRefreshRate || 5;
-		const nowMilis = new Date().getTime();
-		const updatedAtMilis = new Date(updatedAt || "").getTime();
-		const updatedDiffMilis = nowMilis - updatedAtMilis;
-
-		// Do once & update if updated more than threshold
-		if (
-			!refetching.value &&
-			fromSIA.value === undefined &&
-			(!firebaseCourse?.scrapedAt || updatedDiffMilis > useMinMilis(minutes))
-		) {
-			refetching.value = true;
-
-			// Get data from sia & reindex, do not await
-			Promise.all([
-				useSIACourses({ level, place, program: programs[0], code }),
-				useFetchQuery<Group[] | null>("/api/groups/scrape", {
-					level,
-					place,
-					faculty,
-					program: programs[0],
-					typology,
-					code,
-				}),
-			])
-				.then(async ([{ data }, SIAgroups]) => {
-					// Omit courses without groups
-					const courses = data
-						.map(useMapCourseFromSia)
-						.filter(({ groups }) => !!groups?.length);
-					let SIACourse = courses.find((c) => c.id === id);
-
-					if (!SIACourse) {
-						fromSIA.value = false;
-
-						return;
-					}
-
-					// prefer scrapped groups
-					if (SIAgroups) {
-						SIACourse = {
-							...SIACourse,
-							groups: SIAgroups.map(({ spots = 0, teachers = [], ...group }) => {
-								const SIA = SIACourse?.groups?.find(
-									({ name }) => name === group.name
-								);
-
-								return {
-									...group,
-									spots: SIA?.spots || spots,
-									teachers: teachers.map((t) => startCase(t.toLowerCase())),
-								};
-							}),
-							scrapedAt: new Date(),
-						};
-					}
-
-					// Reindex, refresh is done by firebase
-					await useIndexCourse({
-						...course.value,
-						...SIACourse,
-						updatedAt,
-						indexed: true,
-					});
-				})
-				.catch((err) => {
-					console.error(err);
-				})
-				.finally(() => {
-					refetching.value = false;
-				});
-		}
-
-		const teachers = await useFetchQuery<iPageEdge<Teacher, string>[]>("/api/teachers/search", {
-			courses: [code],
-		});
-
-		route.meta.title = firebaseCourse.name;
-		indexedTeachers.value = teachers.map(({ node }) => node);
-		course.value = useMapCourse(firebaseCourse);
-		loading.value = false;
-	});
 
 	onActivated(() => (deactivated.value = false));
 	onDeactivated(() => (deactivated.value = true));
 	onBeforeUnmount(unsub);
+	onMounted(() => {
+		if (process.server) return;
+
+		const courseId = <string>route.params.courseId;
+		const courseRef = doc($clientFirestore, "courses", courseId);
+
+		// Hydrate course from firebase, then SIA & reindex
+		unsub = onSnapshot(courseRef, async (snapshot) => {
+			// prevent hydration if not active
+			if (deactivated.value) return;
+			if (!snapshot.exists()) {
+				unsub();
+
+				throw showError({
+					statusCode: 404,
+					statusMessage: "El curso que buscas fue eliminado.",
+				});
+			}
+
+			const firebaseCourse: Course = resolveSnapshotDefaults(
+				snapshot.ref.path,
+				snapshot.data()
+			);
+			const {
+				id,
+				name,
+				code = "",
+				level = eSIALevel.PREGRADO,
+				place = eSIAPlace.BOGOTÁ,
+				faculty,
+				programs = [],
+				typologies = [],
+				updatedAt,
+			} = firebaseCourse;
+
+			// Update with hydration conditionally
+			if (course.value?.updatedAt !== updatedAt) {
+				route.meta.title = name; // Update meta
+				course.value = useMapCourse(firebaseCourse);
+			}
+
+			const minutes = APP.instance?.config?.coursesRefreshRate || 5;
+			const nowMilis = new Date().getTime();
+			const updatedAtMilis = new Date(updatedAt || "").getTime();
+			const updatedDiffMilis = nowMilis - updatedAtMilis;
+
+			// Do once & update if updated more than threshold
+			if (
+				refetching.value ||
+				fromSIA.value !== undefined ||
+				(firebaseCourse?.scrapedAt && updatedDiffMilis < useMinMilis(minutes))
+			) {
+				return;
+			}
+
+			refetching.value = true;
+
+			try {
+				// Get data from sia & reindex
+				const [{ data }, SIAgroups] = await Promise.all([
+					useSIACourses({ level, place, program: programs[0], code }),
+					useFetchQuery<Group[] | null>("/api/groups/scrape", {
+						level,
+						place,
+						faculty,
+						program: programs[0],
+						typology: typologies[0],
+						code,
+					}),
+				]);
+
+				// Omit courses without groups
+				const courses = data
+					.map(useMapCourseFromSia)
+					.filter(({ groups }) => !!groups?.length);
+				let SIACourse = courses.find((c) => c.id === id);
+
+				if (!SIACourse) {
+					fromSIA.value = false;
+
+					return;
+				}
+
+				// Prefer scrapped groups
+				if (SIAgroups) {
+					SIACourse = {
+						...SIACourse,
+						groups: SIAgroups.map(({ spots = 0, teachers = [], ...group }) => {
+							const SIA = SIACourse?.groups?.find(({ name }) => name === group.name);
+
+							return {
+								...group,
+								spots: SIA?.spots || spots,
+								teachers: teachers.map((t) => startCase(t.toLowerCase())),
+							};
+						}),
+						scrapedAt: new Date(),
+					};
+				}
+
+				// Reindex, refresh is done by firebase
+				await useIndexCourse({ ...SIACourse, updatedAt }, firebaseCourse);
+			} catch (err) {
+				console.error(err);
+			}
+
+			refetching.value = false;
+		});
+	});
 </script>
 
 <style lang="scss">

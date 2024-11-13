@@ -1,17 +1,152 @@
 import { capitalize, deburr, startCase } from "lodash-es";
 
-import type { SIACourse, SIAGroup } from "~/functions/src/types/SIA";
+import type { SIACourse, SIAGroup, uSIAFaculty, uSIAProgram } from "~/functions/src/types/SIA";
 import type { Course, Group, User } from "~/resources/types/entities";
+import {
+	eSIAAgrarianScienceBogotaProgram,
+	eSIAAgrarianSciencesMedellinProgram,
+	eSIAArchitectureMedellinProgram,
+	eSIAArtsBogotaProgram,
+	eSIABogotaFaculty,
+	eSIABogotaProgram,
+	eSIAEconomicalScienceBogotaProgram,
+	eSIAEnfermeryBogotaProgram,
+	eSIAEngineeringAndArchitectureManizalesProgram,
+	eSIAEngineeringBogotaProgram,
+	eSIAExactSciencesManizalesProgram,
+	eSIAHumanScienceBogotaProgram,
+	eSIAHumanSciencesAMedellinProgram,
+	eSIALaPazFaculty,
+	eSIALaPazProgram,
+	eSIALawBogotaProgram,
+	eSIAManagementManizalesProgram,
+	eSIAManizalesFaculty,
+	eSIAManizalesProgram,
+	eSIAMedellinFaculty,
+	eSIAMedellinProgram,
+	eSIAMedicineBogotaProgram,
+	eSIAMinesMedellinProgram,
+	eSIAOdontologyBogotaProgram,
+	eSIAPlace,
+	eSIAPregradoLaPazProgram,
+	eSIAScienceBogotaProgram,
+	eSIAScienceMedellinProgram,
+	eSIATypology,
+	eSIAVetMedicineBogotaProgram,
+} from "~/functions/src/types/SIA/enums";
 import { isNotUndefString } from "~/resources/utils/guards";
 
-export function useImagePath(
-	path?: string,
-	preset: "avatar" | "small" | "medium" | "large" = "avatar"
-) {
-	if (!path) return "/images/sample.png";
-
-	return `/api/media/images/${path}/${preset}.webp`;
+interface UNALItem {
+	faculty: uSIAFaculty;
+	programs: uSIAProgram[];
 }
+
+const UNAL: Record<eSIAPlace, UNALItem[]> = {
+	[eSIAPlace.BOGOTÁ]: [
+		{
+			faculty: eSIABogotaFaculty.SEDE_BOGOTÁ,
+			programs: Object.values(eSIABogotaProgram),
+		},
+		{
+			faculty: eSIABogotaFaculty.MEDICINA,
+			programs: Object.values(eSIAMedicineBogotaProgram),
+		},
+		{
+			faculty: eSIABogotaFaculty.MEDICINA_VETERINARIA,
+			programs: Object.values(eSIAVetMedicineBogotaProgram),
+		},
+		{
+			faculty: eSIABogotaFaculty.ENFERMERÍA,
+			programs: Object.values(eSIAEnfermeryBogotaProgram),
+		},
+		{
+			faculty: eSIABogotaFaculty.ARTES,
+			programs: Object.values(eSIAArtsBogotaProgram),
+		},
+		{
+			faculty: eSIABogotaFaculty.INGENIERÍA,
+			programs: Object.values(eSIAEngineeringBogotaProgram),
+		},
+		{
+			faculty: eSIABogotaFaculty.ODONTOLOGÍA,
+			programs: Object.values(eSIAOdontologyBogotaProgram),
+		},
+		{
+			faculty: eSIABogotaFaculty.DERECHO,
+			programs: Object.values(eSIALawBogotaProgram),
+		},
+		{
+			faculty: eSIABogotaFaculty.CIENCIAS,
+			programs: Object.values(eSIAScienceBogotaProgram),
+		},
+		{
+			faculty: eSIABogotaFaculty.CIENCIAS_HUMANAS,
+			programs: Object.values(eSIAHumanScienceBogotaProgram),
+		},
+		{
+			faculty: eSIABogotaFaculty.CIENCIAS_ECONÓMICAS,
+			programs: Object.values(eSIAEconomicalScienceBogotaProgram),
+		},
+		{
+			faculty: eSIABogotaFaculty.CIENCIAS_AGRARIAS,
+			programs: Object.values(eSIAAgrarianScienceBogotaProgram),
+		},
+	],
+	[eSIAPlace.LA_PAZ]: [
+		{
+			faculty: eSIALaPazFaculty.SEDE_LA_PAZ,
+			programs: Object.values(eSIALaPazProgram),
+		},
+		{
+			faculty: eSIALaPazFaculty.ESCUELA_DE_PREGRADO,
+			programs: Object.values(eSIAPregradoLaPazProgram),
+		},
+	],
+	[eSIAPlace.MEDELLÍN]: [
+		{
+			faculty: eSIAMedellinFaculty.SEDE_MEDELLÍN,
+			programs: Object.values(eSIAMedellinProgram),
+		},
+		{
+			faculty: eSIAMedellinFaculty.FACULTAD_DE_MINAS,
+			programs: Object.values(eSIAMinesMedellinProgram),
+		},
+		{
+			faculty: eSIAMedellinFaculty.FACULTAD_DE_ARQUITECTURA,
+			programs: Object.values(eSIAArchitectureMedellinProgram),
+		},
+		{
+			faculty: eSIAMedellinFaculty.FACULTAD_DE_CIENCIAS,
+			programs: Object.values(eSIAScienceMedellinProgram),
+		},
+		{
+			faculty: eSIAMedellinFaculty.FACULTAD_DE_CIENCIAS_AGRARIAS,
+			programs: Object.values(eSIAAgrarianSciencesMedellinProgram),
+		},
+		{
+			faculty: eSIAMedellinFaculty.FACULTAD_DE_CIENCIAS_HUMANAS_Y_ECONÓMICAS_A,
+			programs: Object.values(eSIAHumanSciencesAMedellinProgram),
+		},
+	],
+	[eSIAPlace.MANIZALES]: [
+		{
+			faculty: eSIAManizalesFaculty.SEDE_MANIZALES,
+			programs: Object.values(eSIAManizalesProgram),
+		},
+		{
+			faculty: eSIAManizalesFaculty.FACULTAD_DE_INGENIERIA_Y_ARQUITECTURA,
+			programs: Object.values(eSIAEngineeringAndArchitectureManizalesProgram),
+		},
+		{
+			faculty: eSIAManizalesFaculty.FACULTAD_DE_CIENCIAS_EXACTAS_Y_NATURALES,
+			programs: Object.values(eSIAExactSciencesManizalesProgram),
+		},
+		{
+			faculty: eSIAManizalesFaculty.FACULTAD_DE_ADMINISTRACIÓN,
+			programs: Object.values(eSIAManagementManizalesProgram),
+		},
+	],
+};
 
 export function useMapUser({ role = 3, ...user }: User) {
 	let roleName = "Invitado";
@@ -27,6 +162,9 @@ export function useMapUser({ role = 3, ...user }: User) {
 }
 
 export function useMapGroupFromSia(source: SIAGroup): Group {
+	const programsString = source.PLANES_ASOCIADOS || "";
+	const [, ...programs] = programsString.split("*** Plan:").map((p) => <uSIAProgram>p.trim());
+
 	return {
 		SIA: source.ID,
 		name: source.GRUPO,
@@ -45,19 +183,39 @@ export function useMapGroupFromSia(source: SIAGroup): Group {
 		availableSpots: source.CUPOS_DISPONIBLES,
 		classrooms: [source.AULA],
 		period: source.PERIODO,
+		programs,
 	};
 }
 
 export function useMapCourseFromSia(source: SIACourse): Course {
 	const id = `courses/${useCyrb53([source.CODIGO_ASIGNATURA])}`;
 	const groups: Group[] = [];
+	const typology = source.TIPOLOGIA;
+	const place = source.SEDE;
+	let faculty = source.FACULTAD;
+	let programs = source.PLANDEESTUDIO ? [source.PLANDEESTUDIO] : [];
 
 	// Dedupe groups
 	source.DETALLECURSOASIGNATURA.map(useMapGroupFromSia).forEach((group) => {
 		// Groups can be duplicated diff(teacher, schedule, classroom)
 		const groupIndex = groups.findIndex(({ name }) => name === group.name);
 
-		if (groupIndex === -1) return groups.push(group); // Index group
+		// Index group
+		if (groupIndex === -1) {
+			// Assign one of the associated programs
+			// Some global LE programs do not have an associated program and are hard to find on old SIA
+			if (!programs.length && typology === eSIATypology.LIBRE_ELECCIÓN) {
+				const [program] = group.programs || [];
+				const associatedFaculty = UNAL[place].find((f) => f.programs.includes(program));
+
+				if (!associatedFaculty) return groups.push(group);
+
+				faculty = associatedFaculty.faculty;
+				programs = [program];
+			}
+
+			return groups.push(group);
+		}
 
 		const currentSchedule = groups[groupIndex].schedule || [];
 		const newSchedule = group.schedule || [];
@@ -91,11 +249,11 @@ export function useMapCourseFromSia(source: SIACourse): Course {
 		alternativeNames: [source.NOMBREASIGNATURA],
 		code: source.CODIGO_ASIGNATURA,
 		credits: source.NUM_CREDITOS,
-		typologies: [source.TIPOLOGIA],
+		typologies: [typology],
 		level: source.NIVELDEESTUDIO,
-		place: source.SEDE,
-		faculty: source.FACULTAD,
-		programs: source.PLANDEESTUDIO ? [source.PLANDEESTUDIO] : [],
+		place,
+		faculty,
+		programs,
 		groups,
 		spotsCount,
 	};

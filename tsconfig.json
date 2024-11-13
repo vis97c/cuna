@@ -16,5 +16,8 @@
     "typeRoots": [
       "node_modules/@types"
     ]
-  }
+  },
+  "exclude": [
+    "functions/lib"
+  ]
 }

@@ -1,39 +1,21 @@
-import { kebabCase } from "lodash";
-
-import type { TeacherData } from "./types/entities";
+import type { InstanceData, TeacherData } from "./types/entities";
 import { onCreated, onUpdated } from "./utils/event";
-import { functionsFirestore } from "./utils/initialize";
+import { getLESlug } from "./utils/data";
 
-async function getLESlug(name = ""): Promise<string | undefined | void> {
-	const instanceRef = functionsFirestore.collection("instances").doc("live");
-	const instance = (await instanceRef.get()).data();
-	const { losEstudiantesUrl = "", losEstudiantesProfessorsPath = "" } = instance?.config || {};
-	const losEstudiantesProfessors = `${losEstudiantesUrl}${losEstudiantesProfessorsPath}`;
-	const slugValues = kebabCase(name).split("-");
-	let isValidUrl = false;
+function getLEPath({ config = {} }: InstanceData): string {
+	const { losEstudiantesUrl = "", losEstudiantesProfessorsPath = "" } = config;
 
-	do {
-		const path = `${losEstudiantesProfessors}/${slugValues.join("-")}`;
-		const headRq = new Request(path, { method: "HEAD" });
-
-		const { status } = await fetch(headRq);
-
-		isValidUrl = status === 200;
-
-		if (!isValidUrl) slugValues.pop();
-	} while (!isValidUrl && slugValues.length);
-
-	if (isValidUrl) return slugValues.join("-");
+	return `${losEstudiantesUrl}${losEstudiantesProfessorsPath}`;
 }
 
 // teachers timestamp
 export const onCreatedTeacher = onCreated<TeacherData>("teachers", async (snapshot) => {
 	const { name } = snapshot.data();
 
-	return { losEstudiantesSlug: await getLESlug(name) };
+	return { losEstudiantesSlug: await getLESlug(name, getLEPath) };
 });
 export const onUpdatedTeacher = onUpdated<TeacherData>("teachers", async (snapshot) => {
 	const { name, losEstudiantesSlug } = snapshot.data();
 
-	return { losEstudiantesSlug: losEstudiantesSlug || (await getLESlug(name)) };
+	return { losEstudiantesSlug: losEstudiantesSlug || (await getLESlug(name, getLEPath)) };
 });

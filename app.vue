@@ -9,7 +9,7 @@
 				<hr />
 				<div class="flx --flx-center --flx --txtSize-sm --txtColor-dark5 --pX">
 					<XamuActionLink v-if="APP.instance?.banner?.url" :to="APP.instance.banner.url">
-						{{ APP.instance.banner.message }}
+						<span class="--txtWrap">{{ APP.instance.banner.message }}</span>
 					</XamuActionLink>
 					<p v-else class="--txtAlign-center">{{ APP.instance.banner.message }}</p>
 				</div>
@@ -141,18 +141,24 @@
 											<span>Cuna</span>
 										</XamuActionLink>
 									</h1>
-									<div class="flx --flxRow --flx-center --gap-5">
-										<p class="--txtSize-sm --txtColor-dark5">
-											Visor de cursos UNAL
-										</p>
-										<XamuActionLink
-											class="x-info"
-											:theme="eColors.DARK"
-											tooltip="Cuna no esta afiliada a la UNAL"
-											tooltip-as-text
+									<div class="flx --flxColumn --flx-center --gap-5">
+										<div class="flx --flxRow --flx-center --gap-10">
+											<p class="--txtColor-dark5">Visor de cursos UNAL</p>
+											<XamuActionLink
+												class="x-info"
+												:theme="eColors.DARK"
+												tooltip="Cuna no esta afiliada a la UNAL"
+												tooltip-as-text
+											>
+												<XamuIconFa name="circle-info" />
+											</XamuActionLink>
+										</div>
+										<p
+											v-if="APP.instance?.config?.version"
+											class="--txtSize-xs --txtColor-dark5"
 										>
-											<XamuIconFa name="circle-info" />
-										</XamuActionLink>
+											{{ APP.instance?.config?.version }}
+										</p>
 									</div>
 								</div>
 								<div id="renderer" class="flx --flxColumn --flx-center --width-100">
@@ -247,8 +253,6 @@
 		.x-banner {
 			height: 4rem;
 			order: 2;
-			// background: utils.color(secondary);
-			// border-bottom: 2px dashed utils.color(secondary, 0.1);
 		}
 		.x-main {
 			width: 100%;

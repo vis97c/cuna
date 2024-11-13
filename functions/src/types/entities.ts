@@ -44,6 +44,8 @@ export interface InstanceData extends FirebaseData {
 	 * Api, flexible if endpoints do change
 	 */
 	config?: {
+		/** Cuna version */
+		version?: string;
 		/**
 		 * Bloquear la navegacion con un mensaje
 		 */
@@ -131,6 +133,7 @@ export interface GroupData {
 	 * @example "07/10/24-03/02/25"
 	 */
 	period?: string;
+	programs?: uSIAProgram[];
 }
 
 /**

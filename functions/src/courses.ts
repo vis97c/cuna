@@ -1,27 +1,11 @@
-import type { CourseData } from "./types/entities";
+import type { CourseData, InstanceData } from "./types/entities";
+import { getLESlug } from "./utils/data";
 import { onCreated, onUpdated } from "./utils/event";
-import { functionsFirestore } from "./utils/initialize";
 
-async function getLECode(code = ""): Promise<string | undefined | void> {
-	const instanceRef = functionsFirestore.collection("instances").doc("live");
-	const instance = (await instanceRef.get()).data();
-	const { losEstudiantesUrl = "", losEstudiantesCoursesPath = "" } = instance?.config || {};
-	const losEstudiantesCourses = `${losEstudiantesUrl}${losEstudiantesCoursesPath}`;
-	const slugValues = code.split("-");
-	let isValidUrl = false;
+function getLEPath({ config = {} }: InstanceData): string {
+	const { losEstudiantesUrl = "", losEstudiantesCoursesPath = "" } = config;
 
-	do {
-		const path = `${losEstudiantesCourses}/${code}`;
-		const headRq = new Request(path, { method: "HEAD" });
-
-		const { status } = await fetch(headRq);
-
-		isValidUrl = status === 200;
-
-		if (!isValidUrl) slugValues.pop();
-	} while (!isValidUrl && slugValues.length);
-
-	if (isValidUrl) return slugValues.join("-");
+	return `${losEstudiantesUrl}${losEstudiantesCoursesPath}`;
 }
 
 // courses timestamp
@@ -35,7 +19,7 @@ export const onCreatedCourse = onCreated<CourseData>("courses", async (snapshot)
 		spotsCount,
 		programsIndexes: { ...programs },
 		typologiesIndexes: { ...typologies },
-		losEstudiantesCode: await getLECode(code),
+		losEstudiantesCode: await getLESlug(code, getLEPath),
 	};
 });
 export const onUpdatedCourse = onUpdated<CourseData>(
@@ -64,7 +48,7 @@ export const onUpdatedCourse = onUpdated<CourseData>(
 			spotsCount,
 			programsIndexes: { ...programs },
 			typologiesIndexes: { ...typologies },
-			losEstudiantesCode: losEstudiantesCode || (await getLECode(code)),
+			losEstudiantesCode: losEstudiantesCode || (await getLESlug(code, getLEPath)),
 		};
 	}
 );

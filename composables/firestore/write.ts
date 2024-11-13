@@ -30,6 +30,7 @@ export async function useDocumentCreate<
 	// get collection ref
 	const collectionRef = ConvertCollection<Vgr>(collection($clientFirestore, collectionId));
 	const partialRef = <Vgr>middleRef;
+	let createdRef: DocumentReference<Vgr>;
 
 	if (SESSION.id) {
 		const createdByRef = doc($clientFirestore, SESSION.id);
@@ -37,7 +38,8 @@ export async function useDocumentCreate<
 		partialRef.createdByRef = partialRef.updatedByRef = createdByRef;
 	}
 
-	let createdRef: DocumentReference<Vgr>;
+	delete partialRef.createdAt;
+	delete partialRef.updatedAt;
 
 	if (id) {
 		createdRef = doc(collectionRef, getDocumentId(id));
@@ -80,16 +82,25 @@ export async function useDocumentCreate<
 export async function useDocumentUpdate<
 	V extends Record<string, any>,
 	Vgr extends GetRef<V> = GetRef<V>,
->(node: SharedDocument, partialRef: Partial<Vgr> = {}): Promise<boolean> {
+>(node: SharedDocument, middleRef: Partial<Vgr> = {}): Promise<boolean> {
 	if (process.server) return false;
 
 	const SESSION = useSessionStore();
 	const { $clientFirestore } = useNuxtApp();
 	const docRef = ConvertDocument<Vgr>(doc($clientFirestore, node.id || "")); // get node ref
-	const updatedByRef = doc($clientFirestore, SESSION.id);
+	const partialRef = <Vgr>middleRef;
 	const lastUpdatedAt = node.updatedAt ? new Date(node.updatedAt).getTime() : 0;
 
-	await setDoc(docRef, { ...partialRef, updatedByRef }, { merge: true });
+	if (SESSION.id) {
+		const updatedByRef = doc($clientFirestore, SESSION.id);
+
+		partialRef.updatedByRef = updatedByRef;
+	}
+
+	delete partialRef.createdAt;
+	delete partialRef.updatedAt;
+
+	await setDoc(docRef, partialRef, { merge: true });
 
 	// Wait for cloud function snapshot
 	return TimedPromise((resolve, reject) => {
@@ -113,7 +124,7 @@ export async function useDocumentUpdate<
 export async function useDocumentClone<
 	V extends Record<string, any>,
 	Vgr extends GetRef<V> = GetRef<V>,
->(node: SharedDocument, partialRef: Partial<Vgr> = {}): Promise<boolean> {
+>(node: SharedDocument, middleRef: Partial<Vgr> = {}): Promise<boolean> {
 	if (process.server) return false;
 
 	const { $clientFirestore } = useNuxtApp();
@@ -121,20 +132,22 @@ export async function useDocumentClone<
 	const path = node.id || "";
 	const docRef = ConvertDocument<Vgr>(doc($clientFirestore, path));
 	const data = (await getDoc(docRef)).data();
+	const partialRef = <Vgr>middleRef;
 
 	if (!data) return false;
+	if (SESSION.id) {
+		const createdByRef = doc($clientFirestore, SESSION.id);
+
+		partialRef.createdByRef = partialRef.updatedByRef = createdByRef;
+	}
 
 	delete data.createdAt;
 	delete data.updatedAt;
+	delete partialRef.createdAt;
+	delete partialRef.updatedAt;
 
 	const collectionRef = docRef.parent;
-	const createdByRef = doc($clientFirestore, SESSION.id);
-	const clonedDoc = await addDoc(collectionRef, {
-		...data,
-		...partialRef,
-		createdByRef,
-		updatedByRef: createdByRef,
-	});
+	const clonedDoc = await addDoc(collectionRef, { ...data, ...partialRef });
 
 	// Wait for cloud function snapshot
 	return TimedPromise((resolve, reject) => {

@@ -68,12 +68,12 @@ export const eSIAPlaceOld: Record<eSIAPlace, `${number}`> = {
 };
 
 export const eSIATypologyOld: Record<eSIATypology, `${number}`> = {
-	[eSIATypology.DISC_OPTATIVA]: "1",
-	[eSIATypology.FUND_OBLIGATORIA]: "2",
-	[eSIATypology.FUND_OPTATIVA]: "3",
-	[eSIATypology.TRABAJO_DE_GRADO]: "4",
-	[eSIATypology.DISC_OBLIGATORIA]: "5",
-	[eSIATypology.NIVELACIÓN]: "6",
+	[eSIATypology.DISC_OBLIGATORIA]: "1",
+	[eSIATypology.NIVELACIÓN]: "2",
+	[eSIATypology.TRABAJO_DE_GRADO]: "3",
+	[eSIATypology.FUND_OBLIGATORIA]: "4",
+	[eSIATypology.DISC_OPTATIVA]: "5",
+	[eSIATypology.FUND_OPTATIVA]: "6",
 	[eSIATypology.LIBRE_ELECCIÓN]: "7",
 };
 

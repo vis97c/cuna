@@ -34,26 +34,10 @@ export async function useIndexCourse(
 		updatedAt,
 		scrapedAt,
 		...course
-	}: Course & { indexed?: boolean },
+	}: Course,
 	indexedCourse?: Course
 ) {
 	const APP = useAppStore();
-
-	// index teachers conditionally
-	groups.forEach((group: GroupData = {}) => {
-		(group.teachers || []).forEach((teacher) => {
-			const id = `teachers/${useCyrb53([teacher])}`;
-
-			// creates or updates teacher
-			return useDocumentCreate<TeacherRef>("teachers", {
-				id,
-				name: startCase(teacher.toLowerCase()),
-				indexes: triGram([teacher]),
-				courses: arrayUnion(course.code),
-			});
-		});
-	});
-
 	const courseToIndex: CourseRef = {
 		...course,
 		programs: arrayUnion(...programs),
@@ -73,17 +57,32 @@ export async function useIndexCourse(
 		indexedCourse?.alternativeNames?.every((p) => alternativeNames.includes(p))
 	) {
 		// Do not update if updated less than threshold
-		if ((indexed || indexedCourse) && updatedDiffMilis <= useMinMilis(minutes)) return;
+		if (updatedDiffMilis <= useMinMilis(minutes)) return;
 	}
+
+	// Index teachers
+	groups.forEach((group: GroupData = {}) => {
+		(group.teachers || []).forEach((teacher) => {
+			const id = `teachers/${useCyrb53([teacher])}`;
+
+			// creates or updates teacher
+			useDocumentCreate<TeacherRef>("teachers", {
+				id,
+				name: startCase(teacher.toLowerCase()),
+				indexes: triGram([teacher]),
+				courses: arrayUnion(course.code),
+			});
+		});
+	});
 
 	const scrapedAtMilis = new Date(indexedCourse?.scrapedAt || "").getTime();
 	const scrapedDiffMilis = nowMilis - scrapedAtMilis;
 
 	// Do not override SIA scraping, unless too old
 	if (
-		!indexedCourse?.groups?.length ||
 		scrapedAt ||
-		scrapedDiffMilis > useMinMilis(minutes * 100)
+		scrapedDiffMilis > useMinMilis(minutes * 2) ||
+		!indexedCourse?.groups?.length
 	) {
 		courseToIndex.groups = groups;
 
