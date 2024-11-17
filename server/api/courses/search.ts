@@ -29,6 +29,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		const page = getBoolean(getQueryParam("page", event) || "");
 
 		let query: CollectionReference | Query = apiFirestore.collection("courses");
+		let indexes: string[] = [];
 
 		debugFirebaseServer(event, "api:courses:search", { name, code, program, typology, page });
 
@@ -36,7 +37,15 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		if (code) query = query.where("code", "==", code);
 		else if (name && typeof name === "string") {
 			// search by name instead
-			const indexes = triGram([name]);
+			indexes = triGram([name]);
+
+			/**
+			 * limited subset of documents
+			 *
+			 * According to firebase docs, queries are limited to 30 disjuntion operations
+			 * @see https://firebase.google.com/docs/firestore/query-data/queries#limits_on_or_queries
+			 */
+			indexes = indexes.slice(0, Math.min(10, indexes.length));
 
 			if (!indexes.length) return null;
 			if (level) query = query.where("level", "==", level); // where level equals
@@ -44,14 +53,23 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			if (faculty) query = query.where("faculty", "==", faculty); // where faculty equals
 			if (program) {
 				// where program equals
-				query = query.where(
-					Filter.or(
-						Filter.where("programsIndexes.0", "==", program),
-						Filter.where("programsIndexes.1", "==", program),
-						Filter.where("programsIndexes.2", "==", program),
-						Filter.where("programsIndexes.3", "==", program)
-					)
-				);
+				if (indexes.length > 5 || typology) {
+					query = query.where(
+						Filter.or(
+							Filter.where("programsIndexes.0", "==", program),
+							Filter.where("programsIndexes.1", "==", program)
+						)
+					);
+				} else {
+					query = query.where(
+						Filter.or(
+							Filter.where("programsIndexes.0", "==", program),
+							Filter.where("programsIndexes.1", "==", program),
+							Filter.where("programsIndexes.2", "==", program),
+							Filter.where("programsIndexes.3", "==", program)
+						)
+					);
+				}
 			}
 
 			query = query.orderBy("name").where("indexes", "array-contains-any", indexes);
@@ -59,12 +77,16 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 
 		if (typology) {
 			// where typology equals
-			query = query.where(
-				Filter.or(
-					Filter.where("typologiesIndexes.0", "==", typology),
-					Filter.where("typologiesIndexes.1", "==", typology)
-				)
-			);
+			if (indexes.length > 5) {
+				query = query.where("typologiesIndexes.0", "==", typology);
+			} else {
+				query = query.where(
+					Filter.or(
+						Filter.where("typologiesIndexes.0", "==", typology),
+						Filter.where("typologiesIndexes.1", "==", typology)
+					)
+				);
+			}
 		}
 
 		// order at last

@@ -331,7 +331,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 						throw new Error("Non supported schedule format");
 					}
 
-					const span = unparsedSpan.split(" a ").join("|");
+					const span = unparsedSpan.replaceAll(".", "").split(" a ").join("|");
 
 					classrooms = [
 						...new Set([

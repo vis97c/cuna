@@ -11,7 +11,7 @@
 			class="flx --flxColumn --flx-start-stretch --gap-30 --width-100"
 		>
 			<div class="flx --flxColumn --flx-start-stretch --gap-30 --width-100">
-				<div class="txt --gap-0">
+				<div class="txt --gap-5">
 					<h3>
 						Resultados de la busqueda
 						<template v-if="lastSearch.name || lastSearch?.code">

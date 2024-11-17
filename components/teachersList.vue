@@ -20,8 +20,6 @@
 	 * @component
 	 */
 
-	defineOptions({ name: "ValueComplex", inheritAttrs: false });
-
 	const props = defineProps<{
 		value: string[];
 	}>();

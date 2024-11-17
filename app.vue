@@ -22,24 +22,42 @@
 								class="flx --flxColumn --flx-center --gap-30 --pTop-50 --width-100 --minHeight-100"
 							>
 								<div
-									class="x-navigation flx --flxRow-wrap --flx-between-center --width-100"
+									class="x-navigation flx --flxRow --flx-between-center --width-100"
 								>
-									<div class="">
+									<div class="flx --flxRow --flx-start-center --gap-30:sm">
 										<XamuActionLink
 											v-if="SESSION.user && route.path != '/cursos'"
-											@click="$router.back()"
+											to="/cursos"
 										>
 											<XamuIconFa name="chevron-left" />
-											<span class="--hidden:xs-inv">Volver</span>
+											<span class="--hidden:sm-inv">Volver</span>
 										</XamuActionLink>
+										<XamuDropdown
+											v-if="enrolledCount"
+											:position="['bottom', 'left']"
+											invert-theme
+										>
+											<template #toggle="{ setModel, model }">
+												<XamuActionButtonToggle
+													tooltip="Ver mi horario"
+													:active="model"
+													@click="setModel()"
+												>
+													<XamuIconFa name="book" />
+													<XamuIconFa name="book" />
+													<span>{{ enrolledCount }}</span>
+												</XamuActionButtonToggle>
+											</template>
+											<template #default><Week /></template>
+										</XamuDropdown>
 									</div>
-									<div class="flx --flxRow --flx-end-center --gap-30">
+									<div class="flx --flxRow --flx-end-center --gap-30:sm">
 										<XamuActionLink
 											v-if="APP.instance?.instagramId"
 											tooltip="Síguenos para estar al tanto de las novedades"
 											:href="`https://www.instagram.com/${APP.instance.instagramId}/`"
 										>
-											<span class="x-uncapitalize">
+											<span class="x-uncapitalize --hidden:xs-inv">
 												{{ APP.instance.instagramId }}
 											</span>
 											<XamuIconFa name="instagram" :size="20" brand />
@@ -210,6 +228,7 @@
 			SESSION.setPlace(value);
 		},
 	});
+	const enrolledCount = computed(() => Object.keys(SESSION.enrolled).length);
 
 	// lifecycle
 	useHead(() => {
@@ -256,7 +275,7 @@
 		}
 		.x-main {
 			width: 100%;
-			overflow: hidden;
+			// overflow: hidden;
 			box-sizing: border-box;
 		}
 		.x-info {

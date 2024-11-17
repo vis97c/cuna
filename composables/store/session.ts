@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { deleteUser, getAuth } from "firebase/auth";
 
-import type { Course, User } from "~/resources/types/entities";
+import type { Course, EnrolledGroup, User } from "~/resources/types/entities";
 import {
 	eSIABogotaFaculty,
 	eSIALevel,
@@ -28,6 +28,10 @@ export interface iStateSession {
 	 * PAES, PEAMA
 	 */
 	withNonRegular: boolean;
+	/**
+	 * Enrolled courses (codes)
+	 */
+	enrolled: Record<string, EnrolledGroup>;
 }
 
 /**
@@ -48,6 +52,7 @@ export const useSessionStore = defineStore("session", {
 			lastFacultySearch: eSIABogotaFaculty.CIENCIAS,
 			lastProgramSearch: eSIAScienceBogotaProgram.CC,
 			withNonRegular: false,
+			enrolled: {},
 		};
 	},
 	getters: {
@@ -152,6 +157,12 @@ export const useSessionStore = defineStore("session", {
 		},
 		toggleNonRegular(this, newValue = !this.withNonRegular) {
 			this.withNonRegular = newValue;
+		},
+		enroll(group: EnrolledGroup) {
+			this.enrolled[group.courseCode] = group;
+		},
+		unenroll(group: EnrolledGroup) {
+			delete this.enrolled[group.courseCode];
 		},
 	},
 });

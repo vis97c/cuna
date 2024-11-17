@@ -8,9 +8,11 @@ $estudiantes: #337ab7;
 	// allowances
 	$allow-responsive-upscaling: false,
 	// sizes
-	$size-px: (1080, 980, 480, 440, 330, 220, 180, 90),
+	$size-px: (980, 440, 220, 180, 90),
 	// colors
-	$extra-colors: (estudiantes: $estudiantes)
+	$extra-colors: (estudiantes: $estudiantes),
+	// loops
+	$loop-rows: 14
 );
 
 @forward "@open-xamu-co/ui-styles/src/utils/module";

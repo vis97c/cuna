@@ -119,9 +119,13 @@
 							<h4>Grupos ({{ course.groups?.length || 0 }}):</h4>
 						</div>
 						<XamuTable
+							:property-order="() => 0"
 							:nodes="mapGroups"
 							:modal-props="{ class: '--txtColor', invertTheme: true }"
-							:properties="[{ value: 'profesores', component: TeachersList }]"
+							:properties="[
+								{ value: 'inscrito', component: Enroll },
+								{ value: 'profesores', component: TeachersList },
+							]"
 						/>
 					</div>
 					<div
@@ -136,10 +140,14 @@
 							</p>
 						</div>
 						<XamuTable
+							:property-order="() => 0"
 							:nodes="mapUnreported"
 							:theme="eColors.PRIMARY"
 							:modal-props="{ class: '--txtColor', invertTheme: true }"
-							:properties="[{ value: 'profesores', component: TeachersList }]"
+							:properties="[
+								{ value: 'inscrito', component: Enroll },
+								{ value: 'profesores', component: TeachersList },
+							]"
 						/>
 					</div>
 				</XamuLoaderContent>
@@ -155,10 +163,10 @@
 	import type { iInvalidInput, iPageEdge } from "@open-xamu-co/ui-common-types";
 	import { eColors, eSizes } from "@open-xamu-co/ui-common-enums";
 
-	import type { Course, Group, Teacher } from "~/resources/types/entities";
+	import type { Course, EnrolledGroup, Group, Teacher } from "~/resources/types/entities";
 	import { resolveSnapshotDefaults } from "~/resources/utils/firestore";
 	import { eSIALevel, eSIAPlace } from "~/functions/src/types/SIA";
-	import { TeachersList } from "#components";
+	import { TeachersList, Enroll } from "#components";
 
 	type tCourseAndTeachers = [Course, iPageEdge<Teacher, string>[]];
 
@@ -242,22 +250,30 @@
 
 			return interval.split("|").join(" a ");
 		});
-
 		const [lunes, martes, miercoles, jueves, viernes, sabado, domingo] = reschedule;
 		const mappedTeachers = teachers.map((name) => {
 			const teacher = indexedTeachers.value?.find((t) => t.name === name);
 
 			return teacher || name;
 		});
+		const inscrito: EnrolledGroup = {
+			schedule,
+			teachers,
+			name,
+			courseId: course.value?.id || "",
+			courseCode: course.value?.code || "",
+			courseName: course.value?.name || "",
+		};
 
 		classrooms = classrooms?.filter((c) => !!c);
 
 		return {
-			nombre: `${name}`, // hotfix to prevent it to parse as date
+			id: `${name}`, // hotfix to prevent it to parse as date
 			cupos: `${availableSpots} de ${spots}`,
 			espacios: classrooms,
 			profesores: mappedTeachers,
 			horarios: { lunes, martes, miercoles, jueves, viernes, sabado, domingo },
+			inscrito,
 		};
 	}
 
