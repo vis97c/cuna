@@ -1,5 +1,32 @@
 {
-  "private": true,
+  "name": "cuna",
+  "private": "true",
+  "version": "0.0.1",
+  "description": "Visor de cursos UNAL",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/vis97c/cuna.git"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "bugs": {
+    "url": "https://github.com/vis97c/cuna/issues"
+  },
+  "homepage": "https://github.com/vis97c/cuna#readme",
+  "keywords": [
+    "Visor de cupos UNAL",
+    "Cursos disponibles UNAL",
+    "Matrícula UNAL",
+    "Herramienta de búsqueda de cursos",
+    "Seguimiento de cupos UNAL",
+    "Estudiantes Universidad Nacional",
+    "Disponibilidad de cursos UNAL",
+    "Cuna UNAL",
+    "Plataforma de matrícula UNAL"
+  ],
+  "author": "@vis97c <vis97c@outlook.com>",
+  "license": "GPL-3.0-or-later",
   "scripts": {
     "dev": "nuxt dev",
     "build": "yarn vendor && nuxt build --preset=firebase",

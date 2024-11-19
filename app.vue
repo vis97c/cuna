@@ -171,12 +171,21 @@
 												<XamuIconFa name="circle-info" />
 											</XamuActionLink>
 										</div>
-										<p
-											v-if="APP.instance?.config?.version"
-											class="--txtSize-xs --txtColor-dark5"
+
+										<div
+											class="flx --flxRow --flx-center --gap-10 --txtSize-xs --txtColor-dark5"
 										>
-											{{ APP.instance?.config?.version }}
-										</p>
+											<template v-if="APP.instance?.config?.version">
+												<span>{{ APP.instance.config.version }}</span>
+												⋅
+											</template>
+											<XamuActionLink
+												href="https://github.com/vis97c/cuna"
+												tooltip="Código fuente. GNU GPL v3"
+											>
+												<XamuIconFa name="github" brand />
+											</XamuActionLink>
+										</div>
 									</div>
 								</div>
 								<div id="renderer" class="flx --flxColumn --flx-center --width-100">
