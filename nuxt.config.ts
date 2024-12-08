@@ -68,6 +68,7 @@ export default defineNuxtConfig({
 				{ name: "twitter:title", content: "Cuna ⋅ Visor de cupos UNAL." },
 				{ name: "twitter:description", content: description },
 				{ name: "twitter:image", content: "/images/seo.jpg" },
+				{ name: "msvalidate.01", content: "BBF99508118DB02449397517DA5EAE5C" },
 			],
 			link: [
 				{ rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
