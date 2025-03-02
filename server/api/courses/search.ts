@@ -8,8 +8,6 @@ import type {
 	eSIATypology,
 } from "~/functions/src/types/SIA";
 import { getBoolean } from "~/resources/utils/node";
-import { debugFirebaseServer, getOrderedQuery, getEdgesPage } from "~/server/utils/firebase";
-import { defineConditionallyCachedEventHandler } from "~/server/utils/nuxt";
 import { triGram } from "~/resources/utils/firestore";
 
 /**
@@ -18,6 +16,8 @@ import { triGram } from "~/resources/utils/firestore";
  * @see https://es.stackoverflow.com/questions/316170/c%c3%b3mo-hacer-una-consulta-del-tipo-like-en-firebase
  */
 export default defineConditionallyCachedEventHandler(async (event) => {
+	const { serverFirestore } = getServerFirebase();
+
 	try {
 		const name: string = getQueryParam("name", event) || "";
 		const code: string = getQueryParam("code", event) || "";
@@ -28,7 +28,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		const typology: eSIATypology | undefined = getQueryParam("typology", event);
 		const page = getBoolean(getQueryParam("page", event) || "");
 
-		let query: CollectionReference | Query = apiFirestore.collection("courses");
+		let query: CollectionReference | Query = serverFirestore.collection("courses");
 		let indexes: string[] = [];
 
 		debugFirebaseServer(event, "api:courses:search", { name, code, program, typology, page });
@@ -95,8 +95,8 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		if (page) return getEdgesPage(event, query);
 		else return getQueryAsEdges(event, query);
 	} catch (err) {
-		console.error(err);
+		if (isError(err)) serverLogger("api:courses:search", err.message, err);
 
-		return null;
+		throw err;
 	}
 });

@@ -188,6 +188,7 @@ export function useMapGroupFromSia(source: SIAGroup): Group {
 }
 
 export function useMapCourseFromSia(source: SIACourse): Course {
+	// Generate deduped course UID
 	const id = `courses/${useCyrb53([source.CODIGO_ASIGNATURA])}`;
 	const groups: Group[] = [];
 	const typology = source.TIPOLOGIA;

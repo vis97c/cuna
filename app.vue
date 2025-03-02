@@ -57,10 +57,10 @@
 											tooltip="Síguenos para estar al tanto de las novedades"
 											:href="`https://www.instagram.com/${APP.instance.instagramId}/`"
 										>
+											<XamuIconFa name="instagram" :size="20" brand />
 											<span class="x-uncapitalize --hidden:xs-inv">
 												{{ APP.instance.instagramId }}
 											</span>
-											<XamuIconFa name="instagram" :size="20" brand />
 										</XamuActionLink>
 										<XamuDropdown
 											v-if="SESSION.user"
@@ -81,7 +81,7 @@
 														{{ SESSION.userName || "Sin nombre" }}
 													</span>
 													<figure
-														v-if="SESSION.user.photoURL"
+														v-if="SESSION.user?.photoURL"
 														class="avatar --size-sm --bdr"
 													>
 														<XamuBaseImg
@@ -99,7 +99,7 @@
 													<ul class="list-group --gap-5">
 														<li>
 															<p class="--txtSize-xs">
-																Cuenta ⋅ {{ SESSION.user.email }}
+																Cuenta ⋅ {{ SESSION.user?.email }}
 															</p>
 														</li>
 														<li>
@@ -150,6 +150,14 @@
 												</nav>
 											</template>
 										</XamuDropdown>
+										<XamuActionLink v-else-if="route.path != '/'" to="/">
+											<XamuIconFa
+												name="circle-user"
+												:size="20"
+												force-regular
+											/>
+											<span class="--hidden:xs-inv">Iniciar sesión</span>
+										</XamuActionLink>
 									</div>
 								</div>
 								<div class="txt --txtAlign-center --gap-0">

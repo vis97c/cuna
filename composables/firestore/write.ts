@@ -7,11 +7,11 @@ import {
 	getDoc,
 	setDoc,
 	onSnapshot,
+	CollectionReference,
 } from "firebase/firestore";
 
 import type { SharedDocument, GetRef } from "~/resources/types/entities";
 import { getDocumentId } from "~/resources/utils/firestore";
-import { ConvertCollection, ConvertDocument } from "./utils";
 import { TimedPromise } from "~/resources/utils/promises";
 
 /** Creates document with the given values */
@@ -28,7 +28,7 @@ export async function useDocumentCreate<
 	const SESSION = useSessionStore();
 	const { $clientFirestore } = useNuxtApp();
 	// get collection ref
-	const collectionRef = ConvertCollection<Vgr>(collection($clientFirestore, collectionId));
+	const collectionRef = <CollectionReference<Vgr>>collection($clientFirestore, collectionId);
 	const partialRef = <Vgr>middleRef;
 	let createdRef: DocumentReference<Vgr>;
 
@@ -45,7 +45,7 @@ export async function useDocumentCreate<
 		createdRef = doc(collectionRef, getDocumentId(id));
 
 		await setDoc(createdRef, partialRef, { merge: true });
-	} else createdRef = await addDoc<Vgr>(collectionRef, partialRef);
+	} else createdRef = await addDoc(collectionRef, partialRef);
 
 	try {
 		// Perform additional actions with the new document
@@ -53,7 +53,7 @@ export async function useDocumentCreate<
 
 		// Wait for cloud function snapshot
 		return TimedPromise((resolve, reject) => {
-			const unsub = onSnapshot<Vgr>(
+			const unsub = onSnapshot(
 				createdRef,
 				async (snapshot) => {
 					// Cloud function should inject timestamps
@@ -66,7 +66,7 @@ export async function useDocumentCreate<
 			);
 		}, createdRef);
 	} catch (err) {
-		console.log(err);
+		useLogger("composables:useDocumentCreate", err);
 
 		return createdRef;
 	}
@@ -87,7 +87,7 @@ export async function useDocumentUpdate<
 
 	const SESSION = useSessionStore();
 	const { $clientFirestore } = useNuxtApp();
-	const docRef = ConvertDocument<Vgr>(doc($clientFirestore, node.id || "")); // get node ref
+	const docRef = <DocumentReference<Vgr>>doc($clientFirestore, node.id || ""); // get node ref
 	const partialRef = <Vgr>middleRef;
 	const lastUpdatedAt = node.updatedAt ? new Date(node.updatedAt).getTime() : 0;
 
@@ -104,7 +104,7 @@ export async function useDocumentUpdate<
 
 	// Wait for cloud function snapshot
 	return TimedPromise((resolve, reject) => {
-		const unsub = onSnapshot<Vgr>(
+		const unsub = onSnapshot(
 			docRef,
 			async (snapshot) => {
 				const updatedAt = snapshot.data()?.updatedAt?.toMillis() ?? 0;
@@ -130,7 +130,7 @@ export async function useDocumentClone<
 	const { $clientFirestore } = useNuxtApp();
 	const SESSION = useSessionStore();
 	const path = node.id || "";
-	const docRef = ConvertDocument<Vgr>(doc($clientFirestore, path));
+	const docRef = <DocumentReference<Vgr>>doc($clientFirestore, path);
 	const data = (await getDoc(docRef)).data();
 	const partialRef = <Vgr>middleRef;
 

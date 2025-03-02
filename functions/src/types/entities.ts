@@ -1,6 +1,6 @@
 import type { Timestamp } from "firebase-admin/firestore";
 
-import { eSIATypology, eSIALevel, eSIAPlace, uSIAFaculty, uSIAProgram } from "./SIA";
+import type { eSIATypology, eSIALevel, eSIAPlace, uSIAFaculty, uSIAProgram } from "./SIA";
 
 /**
  * Extended firebase DocumentData
@@ -10,6 +10,18 @@ export interface FirebaseData extends Record<string, any> {
 	createdAt?: Timestamp;
 	/** @automated Last update date */
 	updatedAt?: Timestamp;
+}
+
+/**
+ * Firebase log
+ *
+ * @collection
+ */
+export interface LogData extends FirebaseData {
+	at?: string;
+	code?: string;
+	message?: string;
+	error?: string;
 }
 
 /**

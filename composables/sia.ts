@@ -1,5 +1,5 @@
 import { arrayUnion, Timestamp } from "firebase/firestore";
-import { startCase } from "lodash-es";
+import { startCase, deburr } from "lodash-es";
 import type { GroupData } from "~/functions/src/types/entities";
 import type { SIACoursesResponse } from "~/functions/src/types/SIA";
 import type { Course, CourseRef, TeacherRef } from "~/resources/types/entities";
@@ -63,7 +63,8 @@ export async function useIndexCourse(
 	// Index teachers
 	groups.forEach((group: GroupData = {}) => {
 		(group.teachers || []).forEach((teacher) => {
-			const id = `teachers/${useCyrb53([teacher])}`;
+			// Generate deduped teacher UID
+			const id = `teachers/${useCyrb53([deburr(teacher)])}`;
 
 			// creates or updates teacher
 			useDocumentCreate<TeacherRef>("teachers", {

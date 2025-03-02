@@ -2,7 +2,7 @@ import { region } from "firebase-functions/v1";
 
 import { beforeUserCreated, HttpsError } from "firebase-functions/v2/identity";
 
-import { functionsFirestore } from "./utils/initialize";
+import { functionLogger, functionsFirestore } from "./utils/initialize";
 import { onCreated, onUpdated } from "./utils/event";
 
 // users timestamp
@@ -30,14 +30,20 @@ export const onUpdatedUser = onUpdated("users");
  * @event created
  */
 export const onCreatedAuth = beforeUserCreated({ region: "us-east1" }, ({ data }) => {
-	if (!data || !data.email?.includes("@unal.edu.co")) {
-		throw new HttpsError("invalid-argument", "Unauthorized email");
+	try {
+		if (!data || !data.email?.includes("@unal.edu.co")) {
+			throw new HttpsError("invalid-argument", "Unauthorized email");
+		}
+
+		const { uid, email, displayName, photoURL } = data;
+		const userRef = functionsFirestore.collection("users").doc(uid);
+
+		userRef.set({ uid, email, name: displayName, role: 3, photoURL }, { merge: true });
+	} catch (err) {
+		functionLogger("functions:users:onCreatedAuth", err);
+
+		throw err;
 	}
-
-	const { uid, email, displayName, photoURL } = data;
-	const userRef = functionsFirestore.collection("users").doc(uid);
-
-	userRef.set({ uid, email, name: displayName, role: 3, photoURL }, { merge: true });
 });
 /**
  * Remove user data from firestore
@@ -50,9 +56,15 @@ export const onCreatedAuth = beforeUserCreated({ region: "us-east1" }, ({ data }
 export const onDeletedAuth = region("us-east1")
 	.auth.user()
 	.onDelete((user) => {
-		const { uid } = user;
+		try {
+			const { uid } = user;
 
-		const userRef = functionsFirestore.collection("users").doc(uid);
+			const userRef = functionsFirestore.collection("users").doc(uid);
 
-		return userRef.delete();
+			return userRef.delete();
+		} catch (err) {
+			functionLogger("functions:users:onDeletedAuth", err);
+
+			throw err;
+		}
 	});

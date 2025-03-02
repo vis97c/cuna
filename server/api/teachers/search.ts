@@ -1,8 +1,6 @@
 import type { CollectionReference, Query } from "firebase-admin/firestore";
 
 import { getBoolean } from "~/resources/utils/node";
-import { debugFirebaseServer, getOrderedQuery, getEdgesPage } from "~/server/utils/firebase";
-import { defineConditionallyCachedEventHandler } from "~/server/utils/nuxt";
 import { triGram } from "~/resources/utils/firestore";
 
 /**
@@ -11,12 +9,14 @@ import { triGram } from "~/resources/utils/firestore";
  * @see https://es.stackoverflow.com/questions/316170/c%c3%b3mo-hacer-una-consulta-del-tipo-like-en-firebase
  */
 export default defineConditionallyCachedEventHandler(async (event) => {
+	const { serverFirestore } = getServerFirebase();
+
 	try {
 		const params = getQuery(event);
 		const name: string = Array.isArray(params.name) ? params.name[0] : params.name;
 		const courses = Array.isArray(params.courses) ? params.courses : [params.courses];
 		const page = getBoolean(params.page);
-		let query: CollectionReference | Query = apiFirestore.collection("teachers");
+		let query: CollectionReference | Query = serverFirestore.collection("teachers");
 
 		debugFirebaseServer(event, "api:teachers", params);
 
@@ -42,8 +42,8 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		if (page) return getEdgesPage(event, query);
 		else return getQueryAsEdges(event, query);
 	} catch (err) {
-		console.error(err);
+		if (isError(err)) serverLogger("api:teachers", err.message, err);
 
-		return null;
+		throw err;
 	}
 });

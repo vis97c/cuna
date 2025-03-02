@@ -5,6 +5,7 @@ import type {
 	FirebaseData,
 	GroupData,
 	InstanceData,
+	LogData,
 	TeacherData,
 	UserData,
 } from "~/functions/src/types/entities";
@@ -48,6 +49,13 @@ export type GetRef<T extends SharedDocument> = Omit<T, "id" | "createdAt" | "upd
 	createdByRef?: DocumentReference;
 	updatedByRef?: DocumentReference;
 };
+
+/**
+ * Firebase log
+ */
+export interface Log extends FirebaseDocument, FromData<LogData> {}
+/** This one goes to the database */
+export interface LogRef extends GetRef<Log> {}
 
 /**
  * Firebase user

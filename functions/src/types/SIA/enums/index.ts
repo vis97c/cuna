@@ -1,7 +1,7 @@
-import { eSIABogotaFaculty, uSIABogotaProgram } from "./bogota";
-import { eSIALaPazFaculty, uSIALaPazProgram } from "./la-paz";
-import { eSIAManizalesFaculty, uSIAManizalesProgram } from "./manizales";
-import { eSIAMedellinFaculty, uSIAMedellinProgram } from "./medellin";
+import type { eSIABogotaFaculty, uSIABogotaProgram } from "./bogota";
+import type { eSIALaPazFaculty, uSIALaPazProgram } from "./la-paz";
+import type { eSIAManizalesFaculty, uSIAManizalesProgram } from "./manizales";
+import type { eSIAMedellinFaculty, uSIAMedellinProgram } from "./medellin";
 
 export * from "./bogota";
 export * from "./la-paz";

@@ -1,8 +1,10 @@
 import type { NitroFetchOptions, NitroFetchRequest } from "nitropack";
 import { isEqual } from "lodash-es";
 
-import type { Group } from "~/resources/types/entities";
+import type { Group, LogRef } from "~/resources/types/entities";
 import { isNotUndefString } from "~/resources/utils/guards";
+import type { tLogger } from "@open-xamu-co/ui-common-types";
+import { getLog } from "~/functions/src/utils/logs";
 
 export function useImagePath(
 	path?: string,
@@ -95,3 +97,15 @@ export function useFetchQuery<R>(
 		headers: { authorization: SESSION.token || "", ...options?.headers },
 	});
 }
+
+export const useLogger: tLogger = async (...args): Promise<void> => {
+	const logData = getLog(...args);
+
+	if (!logData) return;
+
+	try {
+		useDocumentCreate<LogRef>("logs", logData);
+	} catch (err) {
+		console.error("Error logging to db", err);
+	}
+};

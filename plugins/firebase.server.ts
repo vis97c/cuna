@@ -1,10 +1,7 @@
-import { initializeApp, getApps, getApp } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
-import { getAuth } from "firebase-admin/auth";
-
 import { resolveSnapshotDefaults } from "~/resources/utils/firestore";
 import type { User } from "~/resources/types/entities";
-import { credential, instance } from "~/resources/utils/enviroment";
+import { getServerFirebase } from "~/server/utils/firebase";
+import { instance } from "~/resources/utils/enviroment";
 
 /**
  * Setup firebase server instance
@@ -12,9 +9,7 @@ import { credential, instance } from "~/resources/utils/enviroment";
 export default defineNuxtPlugin(async () => {
 	const SESSION = useSessionStore();
 	const APP = useAppStore();
-	const serverFirebaseApp = getApps().length ? getApp() : initializeApp({ credential });
-	const serverFirestore = getFirestore(serverFirebaseApp);
-	const auth = getAuth(serverFirebaseApp);
+	const { serverAuth, serverFirestore, serverLogger } = getServerFirebase();
 
 	try {
 		const intanceRef = serverFirestore.doc(`instances/${instance}`); // set app instance
@@ -25,8 +20,8 @@ export default defineNuxtPlugin(async () => {
 		// set session
 		if (!SESSION.token) return SESSION.unsetSession();
 
-		const { uid } = await auth.verifyIdToken(SESSION.token);
-		const { displayName, email, photoURL, emailVerified } = await auth.getUser(uid);
+		const { uid } = await serverAuth.verifyIdToken(SESSION.token);
+		const { displayName, email, photoURL, emailVerified } = await serverAuth.getUser(uid);
 
 		// do not allow unverified users to login
 		if (!emailVerified) SESSION.unsetSession();
@@ -46,8 +41,8 @@ export default defineNuxtPlugin(async () => {
 			);
 		}
 	} catch (err: any) {
-		if (err.code) console.debug(err.code);
+		if (err.code === "auth/id-token-expired") return SESSION.unsetSession(true);
 
-		SESSION.unsetSession(err.code === "auth/id-token-expired");
+		serverLogger("plugins:firebase.server", err);
 	}
 });

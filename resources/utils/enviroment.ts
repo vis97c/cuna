@@ -1,6 +1,5 @@
 import type { FirebaseOptions } from "firebase/app";
 import { defineString, defineBoolean } from "firebase-functions/params";
-import { cert } from "firebase-admin/app";
 
 const environment = defineString("NODE_ENV", { default: "development" });
 
@@ -21,9 +20,10 @@ export const debugFirebase =
 	!production && defineBoolean("DEBUG_FIREBASE", { default: false }).value();
 
 // Service account
-const projectId = defineString("F_PROJECT_ID").value();
-const privateKey = defineString("F_PRIVATE_KEY").value();
-const clientEmail = defineString("F_CLIENT_EMAIL").value();
+export const projectId = defineString("F_PROJECT_ID").value();
+export const privateKey = defineString("F_PRIVATE_KEY").value();
+export const clientEmail = defineString("F_CLIENT_EMAIL").value();
+
 /**
  * App check, public key
  */
@@ -53,9 +53,3 @@ export const runtimeConfig = {
 		countriesUrl,
 	},
 };
-
-export const credential = cert({
-	projectId,
-	privateKey,
-	clientEmail,
-});

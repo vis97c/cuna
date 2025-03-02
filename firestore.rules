@@ -54,6 +54,16 @@ service cloud.firestore {
     	allow read, write: if false;
     }
     
+    match /logs/{id} {
+    	// lectura explicita, desarrolladores
+      allow read: if canDevelop();
+    	// creacion explicita, cualquiera
+      allow create: if true;
+      // modificacion granular, desarrolladores hacia arriba
+      allow update: if canDevelop();
+      allow delete: if canDevelop();
+    }
+
     match /counters/{id} {
     	// lectura explicita, cualquiera
       allow read: if true;

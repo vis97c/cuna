@@ -1,7 +1,9 @@
+import { getAnalytics } from "firebase/analytics";
 import { initializeApp } from "firebase/app";
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-check";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import { doc, getDoc, getFirestore, onSnapshot, setDoc } from "firebase/firestore";
+import { getPerformance } from "firebase/performance";
 
 import type { User } from "~/resources/types/entities";
 import { resolveSnapshotDefaults } from "~/resources/utils/firestore";
@@ -26,6 +28,8 @@ export default defineNuxtPlugin(() => {
 		provider: new ReCaptchaEnterpriseProvider(recaptchaEnterpriseKey),
 		isTokenAutoRefreshEnabled: true,
 	});
+	getAnalytics(clientFirebaseApp); // Initialize Analytics
+	getPerformance(clientFirebaseApp); // Initialize Performance Monitoring
 
 	// set session
 	const auth = getAuth(clientFirebaseApp);

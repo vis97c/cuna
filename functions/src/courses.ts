@@ -1,6 +1,7 @@
 import type { CourseData, InstanceData } from "./types/entities";
 import { getLESlug } from "./utils/data";
 import { onCreated, onUpdated } from "./utils/event";
+import { functionLogger } from "./utils/initialize";
 
 function getLEPath({ config = {} }: InstanceData): string {
 	const { losEstudiantesUrl = "", losEstudiantesCoursesPath = "" } = config;
@@ -25,30 +26,39 @@ export const onCreatedCourse = onCreated<CourseData>("courses", async (snapshot)
 export const onUpdatedCourse = onUpdated<CourseData>(
 	"courses",
 	async (newSnapshot, existingSnapshot) => {
-		let { unreported = [] } = newSnapshot.data();
-		const {
-			code,
-			losEstudiantesCode,
-			groups = [],
-			programs = [],
-			typologies = [],
-		} = newSnapshot.data();
-		const existing = existingSnapshot.data();
-		const existingGroupCount = existing.groups?.length || 0;
-		const groupCount = groups.length || 0;
+		try {
+			let { unreported = [] } = newSnapshot.data();
+			const {
+				code,
+				losEstudiantesCode,
+				groups = [],
+				programs = [],
+				typologies = [],
+			} = newSnapshot.data();
+			const existing = existingSnapshot.data();
+			const existingGroupCount = existing.groups?.length || 0;
+			const groupCount = groups.length || 0;
 
-		// remove unreported when new groups are added
-		if (groupCount > existingGroupCount) unreported = [];
+			// remove unreported when new groups are added
+			if (groupCount > existingGroupCount) unreported = [];
 
-		const spotsCount = groups.reduce((sum, { availableSpots = 0 }) => sum + availableSpots, 0);
+			const spotsCount = groups.reduce(
+				(sum, { availableSpots = 0 }) => sum + availableSpots,
+				0
+			);
 
-		return {
-			unreported,
-			groupCount,
-			spotsCount,
-			programsIndexes: { ...programs },
-			typologiesIndexes: { ...typologies },
-			losEstudiantesCode: losEstudiantesCode || (await getLESlug(code, getLEPath)),
-		};
+			return {
+				unreported,
+				groupCount,
+				spotsCount,
+				programsIndexes: { ...programs },
+				typologiesIndexes: { ...typologies },
+				losEstudiantesCode: losEstudiantesCode || (await getLESlug(code, getLEPath)),
+			};
+		} catch (err) {
+			functionLogger("functions:courses:onUpdatedCourse", err);
+
+			throw err;
+		}
 	}
 );

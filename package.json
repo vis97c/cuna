@@ -1,6 +1,5 @@
 {
   "name": "cuna",
-  "private": "true",
   "version": "0.0.1",
   "description": "Visor de cursos UNAL",
   "repository": {
@@ -32,7 +31,7 @@
     "build": "yarn vendor && nuxt build --preset=firebase",
     "start": "node .output/server/index.mjs",
     "lint:eslint": "eslint --ext .ts,.js,.vue --ignore-path .prettierignore .",
-    "lint:stylelint": "stylelint **/{*,**/*,**/**/*}.{vue,css} --ignore-path .prettierignore",
+    "lint:stylelint": "node scripts/stylelint.cjs",
     "lint:prettier": "prettier . --check --ignore-unknown",
     "lint": "yarn lint:eslint && yarn lint:stylelint && yarn lint:prettier",
     "vendor:sass": "sass --load-path=node_modules assets/scss/vendor.scss public/dist/vendor.css",
@@ -54,19 +53,19 @@
   ],
   "dependencies": {
     "@nuxt/scripts": "^0.9.5",
-    "@open-xamu-co/ui-common-enums": "^3.0.0-next.6",
-    "@open-xamu-co/ui-common-helpers": "^3.0.0-next.14",
-    "@open-xamu-co/ui-components-vue": "^3.0.0-next.47",
-    "@open-xamu-co/ui-nuxt": "^3.0.0-next.9",
+    "@open-xamu-co/ui-common-enums": "^3.0.0-next.7",
+    "@open-xamu-co/ui-common-helpers": "^3.0.0-next.18",
+    "@open-xamu-co/ui-components-vue": "^3.0.0-next.67",
+    "@open-xamu-co/ui-nuxt": "^3.0.0-next.11",
     "@pinia-plugin-persistedstate/nuxt": "^1.1.0",
-    "@pinia/nuxt": "^0.5.1",
+    "@pinia/nuxt": "^0.7.0",
     "@vueuse/core": "^10.7.2",
-    "firebase": "^9.22.0",
-    "firebase-admin": "^11.8.0",
-    "firebase-functions": "^4.7.0",
+    "firebase": "^11.0.2",
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^6.1.0",
     "lodash-es": "^4.17.21",
-    "nuxt": "^3.10.1",
-    "pinia": "^2.1.7",
+    "nuxt": "^3.14.159",
+    "pinia": "^2.2.6",
     "puppeteer": "^23.7.1",
     "vue": "^3.5.12",
     "vue-router": "^4.2.5"
@@ -75,8 +74,8 @@
     "@firebase/app-types": "^0.9.0",
     "@nuxt/devtools": "^1.0.8",
     "@open-xamu-co/eslint-config": "^3.0.1",
-    "@open-xamu-co/ui-common-types": "^3.0.0-next.20",
-    "@open-xamu-co/ui-styles": "^3.0.0-next.26",
+    "@open-xamu-co/ui-common-types": "^3.0.0-next.23",
+    "@open-xamu-co/ui-styles": "^3.0.0-next.36",
     "@types/lodash": "^4.14.191",
     "@types/lodash-es": "^4",
     "@typescript-eslint/eslint-plugin": "^6.15.0",
@@ -102,10 +101,13 @@
     "prettier": "^3.0.0",
     "sass": "^1.70.0",
     "stylelint": "^16.1.0",
-    "stylelint-config-recommended-vue": "^1.5.0",
-    "stylelint-config-standard-scss": "^12.0.0",
+    "stylelint-config-recommended-scss": "^14.1.0",
+    "stylelint-config-standard-scss": "^14.0.0",
+    "stylelint-config-standard-vue": "^1.0.0",
     "stylelint-prettier": "^4.0.0",
-    "typescript": "^5.3.3"
+    "stylelint-scss": "^6.11.1",
+    "typescript": "5.6.3",
+    "vue-tsc": "^2.1.10"
   },
   "lint-staged": {
     "*.{ts,js,vue}": [
@@ -125,10 +127,12 @@
   "stylelint": {
     "extends": [
       "stylelint-config-standard-scss",
+      "stylelint-config-standard-vue/scss",
       "stylelint-config-recommended-vue/scss",
       "stylelint-prettier/recommended"
     ],
     "plugins": [
+      "stylelint-scss",
       "stylelint-prettier"
     ],
     "rules": {
@@ -139,6 +143,7 @@
       "no-descending-specificity": null,
       "scss/operator-no-newline-after": null,
       "scss/comment-no-empty": null,
+      "selector-id-pattern": null,
       "rule-empty-line-before": "never-multi-line",
       "at-rule-empty-line-before": [
         "always",

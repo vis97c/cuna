@@ -279,7 +279,7 @@
 				matches.value = await fetchCourses(newValues);
 				loading.value = false;
 			} catch (err) {
-				console.error(err);
+				useLogger("pages:cursos:index", err);
 				errors.value = err;
 				matches.value = [];
 				loading.value = false;

@@ -45,6 +45,7 @@ debugCSS ? css.push("@/assets/scss/vendor.scss") : stylesheets.push("/dist/vendo
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
+	compatibilityDate: "2025-03-02",
 	devtools: { enabled: debugNuxt, timeline: { enabled: debugNuxt } },
 	experimental: { viewTransition: true },
 	app: {
@@ -87,12 +88,7 @@ export default defineNuxtConfig({
 			noscript: [{ textContent: "This app requires javascript to work" }],
 		},
 	},
-	devServer: {
-		https: debugHTTPS && {
-			key: "server.key",
-			cert: "server.crt",
-		},
-	},
+	devServer: { https: debugHTTPS && { key: "server.key", cert: "server.crt" } },
 	runtimeConfig,
 	nitro: {
 		preset: "firebase",
@@ -101,7 +97,6 @@ export default defineNuxtConfig({
 			httpsOptions: {
 				region: "us-east1",
 				maxInstances: 3,
-				enforceAppCheck: true,
 				memory: "2GiB",
 				timeoutSeconds: 300,
 			},
@@ -132,11 +127,7 @@ export default defineNuxtConfig({
 		"@open-xamu-co/ui-nuxt",
 	],
 	piniaPersistedstate: {
-		cookieOptions: {
-			sameSite: "strict",
-			maxAge: 365 * 24 * 60 * 60,
-			secure: production,
-		},
+		cookieOptions: { sameSite: "strict", maxAge: 365 * 24 * 60 * 60, secure: production },
 		storage: "cookies",
 	},
 	xamu: {
@@ -168,10 +159,15 @@ export default defineNuxtConfig({
 			providers: { bypass: { provider: "~/providers/bypass.ts" } },
 		},
 		imageHosts: ["lh3.googleusercontent.com"],
-	},
-	scripts: {
-		registry: {
-			googleAnalytics: { id: "G-X7H48BMMRK" },
+		async logger(...args) {
+			if (import.meta.server) {
+				const { serverLogger } = await import("./server/utils/firebase");
+
+				return serverLogger(...args);
+			}
+
+			useLogger(...args);
 		},
 	},
+	scripts: { registry: { googleAnalytics: { id: "G-X7H48BMMRK" } } },
 });

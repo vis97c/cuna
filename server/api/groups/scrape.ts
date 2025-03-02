@@ -10,8 +10,6 @@ import {
 	type uSIAProgram,
 } from "~/functions/src/types/SIA";
 import type { Group } from "~/resources/types/entities";
-import { debugFirebaseServer } from "~/server/utils/firebase";
-import { defineConditionallyCachedEventHandler, getQueryParam } from "~/server/utils/nuxt";
 import {
 	eSIABogotaFaculty,
 	eSIABogotaProgram,
@@ -176,43 +174,44 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 	const level: eSIALevel = getQueryParam("level", event);
 	const place: eSIAPlace = getQueryParam("place", event);
 	let faculty: uSIAFaculty = getQueryParam("faculty", event);
-	let program: uSIAProgram = getQueryParam("program", event);
+	// Compare against multiple courses before giving up
+	let programs: uSIAProgram[] = getQueryParam("programs", event);
 	let typology: eSIATypology | undefined = getQueryParam("typology", event);
 
-	debugFirebaseServer(event, "api:courses:scrape", { name, program, typology });
+	debugFirebaseServer(event, "api:courses:scrape", { name, programs, typology });
 
 	// Override data if missing, assume LE
-	if (!program || !faculty) {
+	if (!programs.length || !faculty) {
 		typology = eSIATypology.LIBRE_ELECCIÓN;
 
 		switch (place) {
 			case eSIAPlace.BOGOTÁ:
 				faculty = eSIABogotaFaculty.SEDE_BOGOTÁ;
-				program = eSIABogotaProgram.COMPONENTE_DE_LIBRE_ELECCIÓN;
+				programs = [eSIABogotaProgram.COMPONENTE_DE_LIBRE_ELECCIÓN];
 				break;
 			case eSIAPlace.LA_PAZ:
 				faculty = eSIALaPazFaculty.SEDE_LA_PAZ;
-				program = eSIALaPazProgram.COMPONENTE_DE_LIBRE_ELECCIÓN;
+				programs = [eSIALaPazProgram.COMPONENTE_DE_LIBRE_ELECCIÓN];
 				break;
 			case eSIAPlace.MEDELLÍN:
 				faculty = eSIAMedellinFaculty.SEDE_MEDELLÍN;
-				program = eSIAMedellinProgram.COMPONENTE_DE_LIBRE_ELECCIÓN;
+				programs = [eSIAMedellinProgram.COMPONENTE_DE_LIBRE_ELECCIÓN];
 				break;
 			case eSIAPlace.MANIZALES:
 				faculty = eSIAManizalesFaculty.SEDE_MANIZALES;
-				program = eSIAManizalesProgram.COMPONENTE_DE_LIBRE_ELECCIÓN;
+				programs = [eSIAManizalesProgram.COMPONENTE_DE_LIBRE_ELECCIÓN];
 				break;
 		}
 	}
 
 	async function handler(): Promise<Group[]> {
-		if (!siaOldURL || !siaOldPath) throw new Error("Missing endpoint");
+		if (!siaOldURL || !siaOldPath) throw createError("Missing endpoint");
 
 		await puppetPage.goto(siaOldEnpoint);
 		await puppetPage.evaluate(() => {
 			// #d1 es un div que tiene altura 1 cuando la página se carga incorrectamente
 			if (document.querySelector("#d1")?.clientHeight === 1) {
-				throw new Error("There was an error loading the page");
+				throw createError("There was an error loading the page");
 			}
 		});
 
@@ -230,17 +229,19 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 		const faculties = await getOptions(puppetPage, eIds.FACULTY);
 		const facultyValue = faculties.find(({ alias }) => alias === faculty);
 
-		if (!facultyValue) throw new Error("Faculty not found");
+		if (!facultyValue) throw createError("Faculty not found");
 
 		await puppetPage.click(useId(eIds.FACULTY));
 		await puppetPage.select(useId(eIds.FACULTY), facultyValue.value);
 		await waitForSelect(puppetPage, eIds.PROGRAM);
 
 		// Select Program
-		const programs = await getOptions(puppetPage, eIds.PROGRAM);
-		const programValue = programs.find(({ alias }) => alias === program);
+		const programOptions = await getOptions(puppetPage, eIds.PROGRAM);
+		const programValue = programOptions.find(({ alias }) => {
+			return alias && programs.includes(<uSIAProgram>alias);
+		});
 
-		if (!programValue) throw new Error("Program not found");
+		if (!programValue) throw createError("Program not found");
 
 		await puppetPage.click(useId(eIds.PROGRAM));
 		await puppetPage.select(useId(eIds.PROGRAM), programValue.value);
@@ -261,10 +262,12 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 				await puppetPage.waitForSelector(useId(eIds.PROGRAM_LE), { visible: true });
 
 				// Select LE Program
-				const programsLE = await getOptions(puppetPage, eIds.PROGRAM_LE);
-				const programLeValue = programsLE.find(({ alias }) => alias === program);
+				const programOptionsLE = await getOptions(puppetPage, eIds.PROGRAM_LE);
+				const programLeValue = programOptionsLE.find(({ alias }) => {
+					return alias && programs.includes(<uSIAProgram>alias);
+				});
 
-				if (!programLeValue) throw new Error("LE program not found");
+				if (!programLeValue) throw createError("LE program not found");
 
 				await puppetPage.click(useId(eIds.PROGRAM_LE));
 				await puppetPage.select(useId(eIds.PROGRAM_LE), programLeValue.value);
@@ -281,12 +284,12 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 		// Go to course
 		const tableHandle = await puppetPage.waitForSelector(useId(eIds.TABLE), { visible: true });
 
-		if (!tableHandle) throw new Error("Missing results");
+		if (!tableHandle) throw createError("Missing results");
 
 		const courseLinks: CourseLink[] = await tableHandle.evaluate(async (table) => {
 			const tbody = table?.firstElementChild?.lastElementChild;
 
-			if (tbody?.tagName !== "TBODY") throw new Error("No courses found");
+			if (tbody?.tagName !== "TBODY") throw createError("No courses found");
 
 			const rows = tbody?.children;
 
@@ -298,7 +301,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 		});
 		const courseLink = courseLinks.find((item) => item.code === code);
 
-		if (!courseLink) throw new Error("No course matches the provided code");
+		if (!courseLink) throw createError("No course matches the provided code");
 
 		await puppetPage.click(useId(courseLink.id));
 
@@ -328,7 +331,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 					const [day, unparsedSpan] = trimHTML(scheduleSpan).toLowerCase().split(" de ");
 
 					if (!day || !unparsedSpan) {
-						throw new Error("Non supported schedule format");
+						throw createError("Non supported schedule format");
 					}
 
 					const span = unparsedSpan.replaceAll(".", "").split(" a ").join("|");
@@ -382,21 +385,26 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 		return groups;
 	}
 
-	// Time out after 2 minutes
-	return TimedPromise<Group[] | false>(
-		async (resolve) => {
-			try {
-				const response = await handler();
+	try {
+		// Time out after 2 minutes
+		return TimedPromise<Group[] | false>(
+			async (resolve, reject) => {
+				try {
+					const response = await handler();
 
-				resolve(response);
-			} catch (err) {
-				console.error(err);
-				puppet.close();
+					resolve(response);
+				} catch (err) {
+					puppet.close();
 
-				resolve(false);
-			}
-		},
-		false,
-		120
-	);
+					reject(err);
+				}
+			},
+			false,
+			120
+		);
+	} catch (err) {
+		if (isError(err)) serverLogger("api:groups:scrape", err.message, err);
+
+		throw err;
+	}
 });

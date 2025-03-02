@@ -1,5 +1,3 @@
-import { defineConditionallyCachedEventHandler } from "~/server/utils/nuxt";
-
 /**
  * Get purchase confirmation
  */
@@ -11,8 +9,8 @@ export default defineConditionallyCachedEventHandler((event) => {
 
 		return true;
 	} catch (err) {
-		console.error(err);
+		if (isError(err)) serverLogger("api:confirm", err.message, err);
 
-		return null;
+		throw err;
 	}
 });

@@ -8,10 +8,20 @@
 			<template v-if="course">
 				<div class="txt">
 					<h2 :key="course.id">{{ course.name }}</h2>
+
 					<p v-if="course.alternativeNames?.length" title="Otros nombres">
 						{{ course.alternativeNames.join(", ") }}.
 					</p>
-					<p class="--txtSize-sm">Actualizado {{ courseUpdatedAt }}</p>
+					<div class="flx --flxColumn --flx-start --gap-5">
+						<p
+							v-if="!SESSION.user"
+							class="--txtSize-xs --txtColor-dark5"
+							title="Modo lectura"
+						>
+							Inicia sesión para buscar cursos y obtener información actualizada.
+						</p>
+						<p class="--txtSize-sm">Actualizado {{ courseUpdatedAt }}</p>
+					</div>
 				</div>
 				<div class="flx --flxColumn --flx-start --width-100">
 					<div class="txt">
@@ -25,7 +35,7 @@
 							<XamuActionButton
 								:theme="'estudiantes' as any"
 								tooltip="Ver en los estudiantes"
-								:href="`${losEstudiantesCourses}/${course.losEstudiantesCode}?from=cuna`"
+								:href="`${losEstudiantesCourses}/${course.losEstudiantesCode}?from=cuna.com.co`"
 								:size="eSizes.LG"
 								:disabled="!course.losEstudiantesCode"
 								round
@@ -33,6 +43,7 @@
 								<XamuIconFa name="hand-fist" :size="20" />
 							</XamuActionButton>
 							<XamuActionButtonToggle
+								v-if="SESSION.user"
 								tooltip="Notificarme"
 								:disabled="!APP.instance?.flags?.trackCourses"
 								:size="eSizes.LG"
@@ -109,27 +120,27 @@
 				</div>
 				<XamuLoaderContent
 					:loading="pending || refetching"
-					:content="!!mapGroups.length || !!mapUnreported.length"
+					:content="!!groups.length || !!unreportedGroups.length"
 					label="Actualizando desde el SIA..."
 					no-content-message="No hay grupos disponibles."
 					class="--width-100"
 				>
-					<div v-if="mapGroups.length" class="flx --flxColumn --flx-start --width-100">
+					<div v-if="groups.length" class="flx --flxColumn --flx-start --width-100">
 						<div class="txt">
 							<h4>Grupos ({{ course.groups?.length || 0 }}):</h4>
 						</div>
 						<XamuTable
 							:property-order="() => 0"
-							:nodes="mapGroups"
+							:nodes="groups"
 							:modal-props="{ class: '--txtColor', invertTheme: true }"
 							:properties="[
-								{ value: 'inscrito', component: Enroll },
+								{ value: 'inscrito', component: Enroll, hidden: !SESSION.user },
 								{ value: 'profesores', component: TeachersList },
 							]"
 						/>
 					</div>
 					<div
-						v-if="mapUnreported.length"
+						v-if="unreportedGroups.length"
 						class="flx --flxColumn --flx-start --width-100"
 					>
 						<div class="txt --gap-5">
@@ -141,11 +152,11 @@
 						</div>
 						<XamuTable
 							:property-order="() => 0"
-							:nodes="mapUnreported"
+							:nodes="unreportedGroups"
 							:theme="eColors.PRIMARY"
 							:modal-props="{ class: '--txtColor', invertTheme: true }"
 							:properties="[
-								{ value: 'inscrito', component: Enroll },
+								{ value: 'inscrito', component: Enroll, hidden: !SESSION.user },
 								{ value: 'profesores', component: TeachersList },
 							]"
 						/>
@@ -176,10 +187,7 @@
 	 * @page
 	 */
 
-	definePageMeta({
-		path_label: "Curso",
-		middleware: ["auth-only", "course-exists"],
-	});
+	definePageMeta({ path_label: "Curso", middleware: ["course-exists"] });
 
 	const APP = useAppStore();
 	const SESSION = useSessionStore();
@@ -234,8 +242,8 @@
 
 		return useTimeAgo(date);
 	});
-	const mapGroups = computed(() => (course.value?.groups || []).map(mapGroupLike));
-	const mapUnreported = computed(() => (course.value?.unreported || []).map(mapGroupLike));
+	const groups = computed(() => (course.value?.groups || []).map(mapGroupLike));
+	const unreportedGroups = computed(() => (course.value?.unreported || []).map(mapGroupLike));
 
 	function mapGroupLike({
 		name,
@@ -424,6 +432,9 @@
 				course.value = firebaseCourse;
 			}
 
+			// Read only mode
+			if (!SESSION.user) return;
+
 			const minutes = APP.instance?.config?.coursesRefreshRate || 5;
 			const nowMilis = new Date().getTime();
 			const updatedAtMilis = new Date(updatedAt || "").getTime();
@@ -443,12 +454,14 @@
 			try {
 				// Get data from sia & reindex
 				const [{ data }, SIAgroups] = await Promise.all([
+					// Get from new SIA
 					useSIACourses({ level, place, program: programs[0], code }),
+					// Scrape from old SIA
 					useFetchQuery<Group[] | null>("/api/groups/scrape", {
 						level,
 						place,
 						faculty,
-						program: programs[0],
+						programs,
 						typology: typologies[0],
 						code,
 					}),
@@ -486,7 +499,7 @@
 				// Reindex, refresh is done by firebase
 				await useIndexCourse({ ...SIACourse, updatedAt }, firebaseCourse);
 			} catch (err) {
-				console.error(err);
+				useLogger("pages:cursos:[courseId]:onMounted", err);
 			}
 
 			refetching.value = false;

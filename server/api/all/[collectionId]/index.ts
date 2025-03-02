@@ -2,13 +2,13 @@ import { FieldPath, Query } from "firebase-admin/firestore";
 
 import { getDocumentId } from "~/resources/utils/firestore";
 import { getBoolean } from "~/resources/utils/node";
-import { getOrderedQuery, getQueryAsEdges, debugFirebaseServer } from "~/server/utils/firebase";
-import { defineConditionallyCachedEventHandler } from "~/server/utils/nuxt";
 
 /**
  * Get the edges from a given collection
  */
 export default defineConditionallyCachedEventHandler((event) => {
+	const { serverFirestore } = getServerFirebase();
+
 	try {
 		const params = getQuery(event);
 		const page = getBoolean(params.page);
@@ -23,7 +23,7 @@ export default defineConditionallyCachedEventHandler((event) => {
 			});
 		}
 
-		let query: Query = apiFirestore.collection(collectionId);
+		let query: Query = serverFirestore.collection(collectionId);
 
 		// filtered query cannot be mixed with any other query type
 		if (params.include) {
@@ -51,8 +51,8 @@ export default defineConditionallyCachedEventHandler((event) => {
 		if (page) return getEdgesPage(event, query);
 		else return getQueryAsEdges(event, query);
 	} catch (err) {
-		console.error(err);
+		if (isError(err)) serverLogger("api:all:[collectionId]", err.message, err);
 
-		return [];
+		throw err;
 	}
 });

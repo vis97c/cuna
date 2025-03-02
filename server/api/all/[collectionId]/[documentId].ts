@@ -1,7 +1,6 @@
-import { debugFirebaseServer, resolveSnapshotRefs } from "~/server/utils/firebase";
-import { defineConditionallyCachedEventHandler } from "~/server/utils/nuxt";
-
 export default defineConditionallyCachedEventHandler(async (event) => {
+	const { serverFirestore } = getServerFirebase();
+
 	try {
 		const collectionId = getRouterParam(event, "collectionId");
 		const documentId = getRouterParam(event, "documentId");
@@ -16,7 +15,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		}
 
 		const path = `${collectionId}/${documentId}`;
-		const documentRef = apiFirestore.doc(path);
+		const documentRef = serverFirestore.doc(path);
 		const snapshot = await documentRef.get();
 
 		if (!snapshot.exists) {
@@ -32,8 +31,8 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 
 		return resolveSnapshotRefs(snapshot, { level, omit });
 	} catch (err) {
-		console.error(err);
+		if (isError(err)) serverLogger("api:all:[collectionId]:[documentId]", err.message, err);
 
-		return null;
+		throw err;
 	}
 });

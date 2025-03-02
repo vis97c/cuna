@@ -14,7 +14,7 @@
 				<div class="txt --gap-5">
 					<h3>
 						Resultados de la busqueda
-						<template v-if="lastSearch.name || lastSearch?.code">
+						<template v-if="lastSearch?.name || lastSearch?.code">
 							de "{{ lastSearch?.name || lastSearch?.code }}"
 						</template>
 						:
@@ -44,7 +44,9 @@
 							button
 						>
 							<p class="--maxWidth-220 ellipsis">{{ course.name }}</p>
-							<div class="txt --txtSize-xs --txtWeight-regular --gap-0 --flx">
+							<div
+								class="txt --txtSize-xs --txtWrap --txtWeight-regular --gap-0 --flx"
+							>
 								<p>
 									<b title="Codigo">{{ course.code }}</b>
 									⋅
@@ -217,7 +219,7 @@
 			// Index course, do not await
 			indexCourses(dedupedCourses, coursesPage);
 		} catch (err) {
-			console.error(err);
+			useLogger("components:SearchCourse", err);
 			errors.value = err;
 
 			Swal.fire({
@@ -266,7 +268,7 @@
 				savedUntrackedCourses.value[page.currentPage] = allIndexed;
 			}
 		} catch (err) {
-			console.error(err);
+			useLogger("components:SearchCourse:indexCourses", err);
 			errors.value = err;
 
 			Swal.fire({

@@ -4,10 +4,14 @@ import {
 	onDocumentCreated,
 	onDocumentUpdated,
 } from "firebase-functions/v2/firestore";
+
 import type { FirebaseData } from "../types/entities";
 
 /**
  * Adds timestamps
+ *
+ * If the callback returns an error the document will be deleted
+ *
  * @param collectionId target collection
  * @param callback optional callback fn
  * @returns firebase function
@@ -15,7 +19,8 @@ import type { FirebaseData } from "../types/entities";
 export function onCreated<T extends FirebaseData>(
 	collectionId: string,
 	callback?: (
-		newDoc: QueryDocumentSnapshot<T>
+		newDoc: QueryDocumentSnapshot<T>,
+		at: Date
 	) => Partial<T> | undefined | void | Promise<Partial<T> | undefined | void>,
 	overrides: Partial<T> = {}
 ) {
@@ -23,22 +28,28 @@ export function onCreated<T extends FirebaseData>(
 		{ document: `${collectionId}/{documentId}`, region: "us-east1" },
 		async (event) => {
 			const newDoc = <QueryDocumentSnapshot<T> | undefined>event.data;
-			const createdAt = new Date();
 
 			if (!newDoc) return null;
 
-			// additional tasks
-			const callbackData = await callback?.(newDoc);
+			try {
+				const createdAt = new Date();
 
-			return newDoc.ref.set(
-				{
-					...callbackData,
-					...overrides,
-					createdAt,
-					updatedAt: createdAt,
-				},
-				{ merge: true }
-			);
+				// additional tasks
+				const callbackData = await callback?.(newDoc, createdAt);
+
+				return newDoc.ref.set(
+					{
+						...overrides,
+						...callbackData,
+						createdAt,
+						updatedAt: createdAt,
+					},
+					{ merge: true }
+				);
+			} catch (err) {
+				// Remove document, logging handled on error source
+				return newDoc.ref.delete();
+			}
 		}
 	);
 }
@@ -52,7 +63,8 @@ export function onUpdated<T extends FirebaseData>(
 	collectionId: string,
 	callback?: (
 		newDoc: QueryDocumentSnapshot<T>,
-		oldDoc: QueryDocumentSnapshot<T>
+		oldDoc: QueryDocumentSnapshot<T>,
+		at: Date
 	) => Partial<T> | undefined | void | Promise<Partial<T> | undefined | void>,
 	overrides: Partial<T> = {}
 ) {
@@ -72,9 +84,9 @@ export function onUpdated<T extends FirebaseData>(
 			if (!oldUpdatedAt || !newUpdatedAt || !newUpdatedAt.isEqual(oldUpdatedAt)) return null;
 
 			// additional tasks
-			const callbackData = await callback?.(newDoc, oldDoc);
+			const callbackData = await callback?.(newDoc, oldDoc, updatedAt);
 
-			return newDoc.ref.set({ ...callbackData, ...overrides, updatedAt }, { merge: true });
+			return newDoc.ref.set({ ...overrides, ...callbackData, updatedAt }, { merge: true });
 		}
 	);
 }

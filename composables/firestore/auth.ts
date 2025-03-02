@@ -37,7 +37,7 @@ export function useGoogleAuth() {
 			// rdr, Restricted rdr handled by plugin
 			if (!restricted && route.path !== "/cursos") router.push("/");
 		} catch (err: FirebaseError | unknown) {
-			console.error(err);
+			useLogger("composables:useGoogleAuth:loginWithGoogle", err);
 
 			if (err instanceof FirebaseError) console.debug(err.code);
 

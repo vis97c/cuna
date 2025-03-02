@@ -1,7 +1,5 @@
 import type { EventHandler, EventHandlerRequest, H3Event } from "h3";
-import { getAuth } from "firebase-admin/auth";
 
-import { apiFirebaseApp } from "./firebase";
 import type { Instance, User } from "~/resources/types/entities";
 
 export function getQueryParam<T>(name: string, e: H3Event): T {
@@ -21,42 +19,29 @@ export const defineConditionallyCachedEventHandler = <T extends EventHandlerRequ
 	handler: (event: H3Event<T>, instance?: Instance) => D
 ): EventHandler<T, D> => {
 	return defineEventHandler<T>(async (event) => {
+		const { serverFirestore, serverAuth } = getServerFirebase();
 		const authorization = getRequestHeader(event, "authorization");
+		const { instance: instanceId } = useRuntimeConfig().public;
+		const instanceRef = serverFirestore.collection("instances").doc(instanceId);
+		const instanceSnapshot = await instanceRef.get();
+		const instance: Instance | undefined = instanceSnapshot.data();
 
-		try {
-			const { instance: instanceId } = useRuntimeConfig().public;
-			const instanceRef = apiFirestore.collection("instances").doc(instanceId);
-			const instanceSnapshot = await instanceRef.get();
-			const instance: Instance | undefined = instanceSnapshot.data();
+		if (!instance) throw new Error("Missing instance");
 
-			if (!instance) throw new Error("Missing instance");
+		const maxAge = (instance?.config?.coursesRefreshRate || 5) * 60;
+		const cachedData = defineCachedEventHandler((e) => handler(e, instance), { maxAge });
 
-			const maxAge = (instance?.config?.coursesRefreshRate || 5) * 60;
-			const cachedData = defineCachedEventHandler((e) => handler(e, instance), { maxAge });
+		if (authorization) {
+			// Validate authorization
+			const { uid } = await serverAuth.verifyIdToken(authorization);
+			const userRef = serverFirestore.collection("users").doc(uid);
+			const userSnapshot = await userRef.get();
+			const user: Partial<User> | undefined = userSnapshot.data();
 
-			if (authorization) {
-				// Validate authorization
-				const auth = getAuth(apiFirebaseApp);
-				const { uid } = await auth.verifyIdToken(authorization);
-				const userRef = apiFirestore.collection("users").doc(uid);
-				const userSnapshot = await userRef.get();
-				const user: Partial<User> | undefined = userSnapshot.data();
-
-				// Omit cache for moderators and above
-				if ((user?.role ?? 3) < 3) return handler(event, instance);
-
-				return cachedData(event);
-			}
-
-			// Prevent access from unauthorized users
-			throw new Error("Unauthorized");
-		} catch (err) {
-			console.error(err);
-
-			throw createError({
-				statusCode: 401,
-				statusMessage: "Unauthorized",
-			});
+			// Omit cache for moderators and above
+			if ((user?.role ?? 3) < 3) return handler(event, instance);
 		}
+
+		return cachedData(event);
 	});
 };
