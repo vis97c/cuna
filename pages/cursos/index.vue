@@ -76,7 +76,7 @@
 						</template>
 						<div class="flx --flxColumn --flx-start --flx --gap-5">
 							<p class="">Tipología</p>
-							<XamuSelectFilter
+							<XamuSelect
 								id="typology"
 								v-model="selectedTypology"
 								class="--width-180 --minWidth-100"

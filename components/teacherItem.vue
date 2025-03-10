@@ -1,5 +1,5 @@
 <template>
-	<div class="flx --flxRow --flx-center">
+	<div class="flx --flxRow --flx-between-center --flx">
 		<XamuActionLink
 			v-if="!unassigned && teacherData.losEstudiantesSlug"
 			:theme="theme"

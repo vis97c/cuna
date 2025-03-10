@@ -158,6 +158,7 @@ export interface CourseData extends FirebaseData {
 	/** Unique SIA id */
 	SIA?: number;
 	name?: string;
+	description?: string;
 	alternativeNames?: string[];
 	/** Used as firebase id */
 	code?: string;

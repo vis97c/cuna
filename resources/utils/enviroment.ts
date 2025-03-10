@@ -18,6 +18,8 @@ export const debugAppCheck =
 	!production && defineBoolean("DEBUG_APP_CHECK", { default: false }).value();
 export const debugFirebase =
 	!production && defineBoolean("DEBUG_FIREBASE", { default: false }).value();
+export const debugScrapper =
+	!production && defineBoolean("DEBUG_SCRAPPER", { default: false }).value();
 
 // Service account
 export const projectId = defineString("F_PROJECT_ID").value();
@@ -49,6 +51,7 @@ export const runtimeConfig = {
 		recaptchaEnterpriseKey,
 		debugAppCheck,
 		debugFirebase,
+		debugScrapper,
 		instance,
 		countriesUrl,
 	},

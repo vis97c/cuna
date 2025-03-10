@@ -10,6 +10,7 @@ import {
 	type uSIAProgram,
 } from "~/functions/src/types/SIA";
 import type { Group } from "~/resources/types/entities";
+import type { ScrapedCourse } from "~/resources/types/scraping";
 import {
 	eSIABogotaFaculty,
 	eSIABogotaProgram,
@@ -45,6 +46,8 @@ interface CourseLink {
 	/** Element id */
 	id: string;
 	code: string;
+	name: string;
+	description: string;
 }
 
 export const eSIALevelOld: Record<eSIALevel, `${number}`> = {
@@ -146,7 +149,7 @@ const puppetConfig = {
  * @see https://github.com/pablomancera/sia_scrapper
  */
 export default defineConditionallyCachedEventHandler(async (event, instance) => {
-	const { debugFirebase } = useRuntimeConfig().public;
+	const { debugScrapper } = useRuntimeConfig().public;
 	const { siaOldURL = "", siaOldPath = "", siaOldQuery = "" } = instance?.config || {};
 	const siaOldEnpoint = siaOldURL + siaOldPath + siaOldQuery;
 	const puppet: Browser = await launch(puppetConfig);
@@ -156,7 +159,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 	 * Show puppet page logs
 	 * @see https://stackoverflow.com/a/59919144/3304008
 	 */
-	if (debugFirebase) {
+	if (debugScrapper) {
 		puppetPage
 			.on("console", (message) =>
 				console.log(`${message.type().substr(0, 3).toUpperCase()} ${message.text()}`)
@@ -204,7 +207,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 		}
 	}
 
-	async function handler(): Promise<Group[]> {
+	async function handler(): Promise<ScrapedCourse> {
 		if (!siaOldURL || !siaOldPath) throw createError("Missing endpoint");
 
 		await puppetPage.goto(siaOldEnpoint);
@@ -227,22 +230,56 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 
 		// Select Faculty
 		const faculties = await getOptions(puppetPage, eIds.FACULTY);
-		const facultyValue = faculties.find(({ alias }) => alias === faculty);
+		const facultyValues = faculties.filter(({ alias }) => alias === faculty);
 
-		if (!facultyValue) throw createError("Faculty not found");
+		if (!facultyValues.length) throw createError("Faculties not found");
 
-		await puppetPage.click(useId(eIds.FACULTY));
-		await puppetPage.select(useId(eIds.FACULTY), facultyValue.value);
-		await waitForSelect(puppetPage, eIds.PROGRAM);
+		const errors: any[] = [];
+		let response: ScrapedCourse = { groups: [], code: "", name: "", description: "" };
 
-		// Select Program
-		const programOptions = await getOptions(puppetPage, eIds.PROGRAM);
-		const programValue = programOptions.find(({ alias }) => {
-			return alias && programs.includes(<uSIAProgram>alias);
-		});
+		// Iterate over associated faculties
+		for (const facultyValue of facultyValues) {
+			await puppetPage.click(useId(eIds.FACULTY));
+			await puppetPage.select(useId(eIds.FACULTY), facultyValue.value);
+			await waitForSelect(puppetPage, eIds.PROGRAM);
 
-		if (!programValue) throw createError("Program not found");
+			// Select Program
+			const programOptions = await getOptions(puppetPage, eIds.PROGRAM);
+			const programValues = programOptions.filter(({ alias }) => {
+				return alias && programs.includes(<uSIAProgram>alias);
+			});
 
+			try {
+				if (!programValues.length) throw createError("Programs not found");
+
+				// Iterate over associated programs
+				for (const programValue of programValues) {
+					try {
+						if (response.groups.length) return response;
+
+						// Attempt to get groups from this progra
+						response = await getGroups(programValue);
+					} catch (err) {
+						errors.push(err);
+					}
+				}
+			} catch (err) {
+				errors.push(err);
+			}
+		}
+
+		// If no groups found, throw errors if any
+		if (!response.groups.length && errors.length) throw createError(errors.pop());
+
+		return response;
+	}
+
+	/**
+	 * Get course groups from a given program
+	 */
+	async function getGroups(
+		programValue: iSelectOption & { value: string }
+	): Promise<ScrapedCourse> {
 		await puppetPage.click(useId(eIds.PROGRAM));
 		await puppetPage.select(useId(eIds.PROGRAM), programValue.value);
 
@@ -295,8 +332,15 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 
 			return Array.from(rows).map((row) => {
 				const link = row.children[0].getElementsByTagName("a")[0];
+				const nameSpan = row.children[1].querySelector("span[title]");
+				const descriptionSpan = row.children[4].querySelector("span[title]");
 
-				return { id: link.id, code: link.innerHTML };
+				return {
+					id: link.id,
+					code: link.innerHTML,
+					name: nameSpan?.innerHTML || "",
+					description: descriptionSpan?.innerHTML || "",
+				};
 			});
 		});
 		const courseLink = courseLinks.find((item) => item.code === code);
@@ -382,29 +426,25 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 			});
 		});
 
-		return groups;
+		return { groups, code, name: courseLink.name, description: courseLink.description };
 	}
 
-	try {
-		// Time out after 2 minutes
-		return TimedPromise<Group[] | false>(
-			async (resolve, reject) => {
-				try {
-					const response = await handler();
+	// Time out after 2 minutes
+	return TimedPromise<ScrapedCourse | false>(
+		async (resolve, reject) => {
+			try {
+				const response = await handler();
 
-					resolve(response);
-				} catch (err) {
-					puppet.close();
+				resolve(response);
+			} catch (err) {
+				puppet.close();
 
-					reject(err);
-				}
-			},
-			false,
-			120
-		);
-	} catch (err) {
-		if (isError(err)) serverLogger("api:groups:scrape", err.message, err);
+				if (isError(err)) serverLogger("api:groups:scrape", err.message, err);
 
-		throw err;
-	}
+				reject(err);
+			}
+		},
+		false,
+		120
+	);
 });

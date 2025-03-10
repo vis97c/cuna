@@ -8,9 +8,9 @@ Cuna implementa [Sia scrapper](https://github.com/pablomancera/sia_scrapper) par
 
 Este proyecto usa [Nuxt3](https://nuxt.com/) y [firebase](https://firebase.google.com/).
 
--   Se requiere una cuenta de servicio de Firebase.
--   Firebase requiere la clave del sitio de reCAPTCHA Enterprise.
--   El token de depuración permite omitir la [validación](https://firebase.google.com/docs/app-check) en entornos de desarrollo.
+- Se requiere una cuenta de servicio de Firebase.
+- Firebase requiere la clave del sitio de reCAPTCHA Enterprise.
+- El token de depuración permite omitir la [validación](https://firebase.google.com/docs/app-check) en entornos de desarrollo.
 
 Para usar el servidor de desarrollo HTTPS, consulta: https://stackoverflow.com/a/57895543
 
@@ -50,6 +50,8 @@ DEBUG_CSS=false
 DEBUG_NUXT=false
 # Preferir servidor de desarrollo HTTPS
 DEBUG_HTTPS=false
+# Depuración de scrapper del SIA
+DEBUG_SCRAPPER=false
 ```
 
 ### Terraform

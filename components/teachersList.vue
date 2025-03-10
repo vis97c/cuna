@@ -1,6 +1,6 @@
 <template>
-	<div class="flx --flxRow --flx-start-center --gap-5">
-		<div v-if="props.value.length" class="flx --flxRow --flx-start-center --gap-5">
+	<div class="flx --flxRow --flx-start-center --gap-5 --width-100">
+		<div v-if="props.value.length" class="flx --flxRow --flx-start-center --gap-5 --width-100">
 			<div class="--txtWrap-nowrap">
 				<b class="--txtColor-estudiantes">{{ props.value.length }}</b>
 				⋅
