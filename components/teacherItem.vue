@@ -2,7 +2,7 @@
 	<div class="flx --flxRow --flx-between-center --flx">
 		<XamuActionLink
 			v-if="!unassigned && teacherData.losEstudiantesSlug"
-			:theme="theme"
+			:theme="estudiantesTheme"
 			tooltip="Ver en los estudiantes"
 			:href="`${losEstudiantesProfessors}/${teacherData.losEstudiantesSlug}?from=cuna.com.co`"
 			:data-id="teacherData.id"
@@ -15,7 +15,7 @@
 			v-if="SESSION.canModerate"
 			class="--txtColor"
 			title="Actualizar slug de los estudiantes"
-			:theme="theme"
+			:theme="estudiantesTheme"
 			:save-button="{ title: 'Actualizar slug' }"
 			invert-theme
 			@close="() => closeAddSlug()"
@@ -23,7 +23,7 @@
 		>
 			<template #toggle="{ toggleModal }">
 				<XamuActionButton
-					:theme="theme"
+					:theme="estudiantesTheme"
 					tooltip="¿Actualizar slug de los estudiantes?"
 					@click="toggleModal"
 				>
@@ -71,7 +71,7 @@
 		APP.instance?.config || {};
 
 	const losEstudiantesProfessors = `${losEstudiantesUrl}${losEstudiantesProfessorsPath}`;
-	const theme = "estudiantes" as any;
+	const estudiantesTheme = "estudiantes" as any;
 
 	const addSlugInputs = ref<FormInput[]>();
 	const invalidAddSlug = ref<iInvalidInput[]>([]);

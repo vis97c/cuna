@@ -1,6 +1,6 @@
 <template>
 	<XamuLoaderContent
-		class="flx --flxColumn --flx-start-center --gap-30 --width-100"
+		class="flx --flxColumn --flx-start-center --gap-30:sm --width-100"
 		:loading="searching"
 		:errors="errors"
 		content

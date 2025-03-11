@@ -211,7 +211,7 @@ export function useCourseProgramOptions(
  * Program related options
  */
 export function useCourseTypeOptions([typology]: [eSIATypology?] = []) {
-	const selectedTypology = ref<eSIATypology | undefined>(typology);
+	const selectedTypology = ref<eSIATypology | undefined>(typology || ("" as eSIATypology));
 
 	// static
 	const typologies = [{ value: "", alias: "TODAS" }, ...toOptions(eSIATypology)];

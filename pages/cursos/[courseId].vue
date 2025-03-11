@@ -35,7 +35,7 @@
 					<div class="flx --flxRow-wrap --flx-between-center --width-100">
 						<div class="flx --flxRow-wrap --flx-start-center">
 							<XamuActionButton
-								:theme="'estudiantes' as any"
+								:theme="estudiantesTheme"
 								tooltip="Ver en los estudiantes"
 								:href="`${losEstudiantesCourses}/${course.losEstudiantesCode}?from=cuna.com.co`"
 								:size="eSizes.LG"
@@ -211,6 +211,7 @@
 	const { $clientFirestore } = useNuxtApp();
 	const { getResponse } = useFormInput();
 
+	const estudiantesTheme = "estudiantes" as any;
 	const { losEstudiantesUrl = "", losEstudiantesCoursesPath = "" } = APP.instance?.config || {};
 	const losEstudiantesCourses = `${losEstudiantesUrl}${losEstudiantesCoursesPath}`;
 	const refetching = ref(false);

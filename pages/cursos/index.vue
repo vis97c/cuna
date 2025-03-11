@@ -1,5 +1,9 @@
 <template>
-	<section id="index" key="index" class="--width-100 --maxWidth-980">
+	<section
+		id="index"
+		key="index"
+		class="flx --flxColumn --flx-start-center --gap-30:sm --width-100 --maxWidth-980"
+	>
 		<SearchCourse v-slot="{ searchCourse, searching }" :values="values">
 			<XamuBaseBox
 				class="x-box flx --flxColumn --flx-start-stretch --width-100 --p-20:md"
@@ -151,6 +155,30 @@
 				</XamuLoaderContent>
 			</XamuBaseBox>
 		</SearchCourse>
+		<section class="flx --flxColumn --flx-center --width-100">
+			<div class="txt">
+				<h3 class="--txtColor-dark5">Otros recursos</h3>
+			</div>
+			<ul class="x-items flx --flxRow --flx-center">
+				<li>
+					<XamuBoxAction
+						to="https://calc-unal.vercel.app?from=cuna.com.co"
+						icon="calculator"
+						label="Calculadora de PAPPI"
+						target="_blank"
+					/>
+				</li>
+				<li>
+					<XamuBoxAction
+						:theme="estudiantesTheme"
+						to="https://losestudiantes.com/universidad-nacional?from=cuna.com.co"
+						icon="hand-fist"
+						label="Los estudiantes"
+						target="_blank"
+					/>
+				</li>
+			</ul>
+		</section>
 	</section>
 </template>
 
@@ -181,6 +209,8 @@
 	});
 
 	const SESSION = useSessionStore();
+
+	const estudiantesTheme = "estudiantes" as any;
 
 	const selectedLevel = computed({
 		get: () => SESSION.level,
@@ -302,6 +332,13 @@
 			right: 1rem;
 			transform: translateY(-50%);
 			z-index: 1;
+		}
+		.x-items li {
+			max-width: 14ch;
+			p {
+				white-space: normal;
+				font-size: 1em;
+			}
 		}
 	}
 </style>
