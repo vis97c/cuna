@@ -28,7 +28,7 @@
 				<div class="flx --flxColumn --flx-start --width-100">
 					<div class="txt">
 						<h4 class="">Herramientas:</h4>
-						<p v-if="SESSION.canModerate && fromSIA === false" class="">
+						<p v-if="SESSION.canDevelop && fromSIA === false" class="">
 							Parece que este curso contiene datos erroneos, considera eliminarlo
 						</p>
 					</div>
@@ -93,6 +93,7 @@
 								</template>
 							</XamuModal>
 							<XamuActionButton
+								v-if="SESSION.canDevelop"
 								tooltip="¿Se indexo con errores?"
 								:theme="eColors.DANGER"
 								@click="removeCourse"
@@ -122,7 +123,7 @@
 							<XamuValueList
 								:value="{
 									sede: course.place,
-									facultad: course.faculty,
+									facultades: course.faculties,
 									programas: course.programs,
 									tipologías: course.typologies,
 								}"
@@ -440,6 +441,7 @@
 			level = eSIALevel.PREGRADO,
 			place = eSIAPlace.BOGOTÁ,
 			faculty,
+			faculties = [faculty],
 			programs = [],
 			typologies = [],
 			updatedAt,
@@ -454,7 +456,7 @@
 				useFetchQuery<ScrapedCourse | null>("/api/groups/scrape", {
 					level,
 					place,
-					faculty,
+					faculties,
 					programs,
 					typologies,
 					code,

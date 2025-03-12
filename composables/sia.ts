@@ -27,6 +27,7 @@ export async function useIndexCourse(
 	{
 		indexed,
 		groups = [],
+		faculties = [],
 		programs = [],
 		typologies = [],
 		alternativeNames = [],
@@ -40,6 +41,7 @@ export async function useIndexCourse(
 	const APP = useAppStore();
 	const courseToIndex: CourseRef = {
 		...course,
+		faculties: arrayUnion(...faculties),
 		programs: arrayUnion(...programs),
 		typologies: arrayUnion(...typologies),
 		alternativeNames: arrayUnion(...alternativeNames),

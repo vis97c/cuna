@@ -177,8 +177,10 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 	const code: string = getQueryParam("code", event) || "";
 	const level: eSIALevel = getQueryParam("level", event);
 	const place: eSIAPlace = getQueryParam("place", event);
-	let faculty: uSIAFaculty = getQueryParam("faculty", event);
-	// Compare against multiple courses before giving up
+	// Compare against multiple sources before giving up
+	let faculties: uSIAFaculty[] = Array.isArray(params.faculties)
+		? params.faculties
+		: [params.faculties];
 	let programs: uSIAProgram[] = Array.isArray(params.programs)
 		? params.programs
 		: [params.programs];
@@ -189,37 +191,42 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 	debugFirebaseServer(event, "api:courses:scrape", { name, programs, typologies });
 
 	// Override data if missing, assume LE
-	if (!programs.length || !faculty) {
+	if (!programs.length || !faculties.length) {
 		typologies = [eSIATypology.LIBRE_ELECCIÓN];
 
 		switch (place) {
 			case eSIAPlace.BOGOTÁ:
-				faculty = eSIABogotaFaculty.SEDE_BOGOTÁ;
+				faculties = [eSIABogotaFaculty.SEDE_BOGOTÁ];
 				programs = [eSIABogotaProgram.COMPONENTE_DE_LIBRE_ELECCIÓN];
 				break;
 			case eSIAPlace.LA_PAZ:
-				faculty = eSIALaPazFaculty.SEDE_LA_PAZ;
+				faculties = [eSIALaPazFaculty.SEDE_LA_PAZ];
 				programs = [eSIALaPazProgram.COMPONENTE_DE_LIBRE_ELECCIÓN];
 				break;
 			case eSIAPlace.MEDELLÍN:
-				faculty = eSIAMedellinFaculty.SEDE_MEDELLÍN;
+				faculties = [eSIAMedellinFaculty.SEDE_MEDELLÍN];
 				programs = [eSIAMedellinProgram.COMPONENTE_DE_LIBRE_ELECCIÓN];
 				break;
 			case eSIAPlace.MANIZALES:
-				faculty = eSIAManizalesFaculty.SEDE_MANIZALES;
+				faculties = [eSIAManizalesFaculty.SEDE_MANIZALES];
 				programs = [eSIAManizalesProgram.COMPONENTE_DE_LIBRE_ELECCIÓN];
 				break;
 		}
 	}
 
 	async function handler(): Promise<ScrapedCourse> {
-		if (!siaOldURL || !siaOldPath) throw createError("Missing endpoint");
+		if (!siaOldURL || !siaOldPath) {
+			throw createError({ statusCode: 500, statusMessage: "Missing endpoint" });
+		}
 
 		await puppetPage.goto(siaOldEnpoint);
 		await puppetPage.evaluate(() => {
 			// #d1 es un div que tiene altura 1 cuando la página se carga incorrectamente
 			if (document.querySelector("#d1")?.clientHeight === 1) {
-				throw createError("There was an error loading the page");
+				throw createError({
+					statusCode: 500,
+					statusMessage: "There was an error loading the page",
+				});
 			}
 		});
 
@@ -234,33 +241,48 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 		await waitForSelect(puppetPage, eIds.FACULTY);
 
 		// Select Faculty
-		const faculties = await getOptions(puppetPage, eIds.FACULTY);
-		const facultyValue = faculties.find(({ alias }) => alias === faculty);
+		const facultyOptions = await getOptions(puppetPage, eIds.FACULTY);
+		const facultyValues = facultyOptions.filter(({ alias }) => {
+			return alias && faculties.includes(<uSIAFaculty>alias);
+		});
 
-		if (!facultyValue) throw createError("Faculties not found");
+		if (!facultyValues.length) {
+			throw createError({ statusCode: 400, statusMessage: "No faculties matched" });
+		}
 
 		const errors: any[] = [];
 		let response: ScrapedCourse = { groups: [], code: "", name: "", description: "" };
 
-		await puppetPage.click(useId(eIds.FACULTY));
-		await puppetPage.select(useId(eIds.FACULTY), facultyValue.value);
-		await waitForSelect(puppetPage, eIds.PROGRAM);
-
-		// Select Program
-		const programOptions = await getOptions(puppetPage, eIds.PROGRAM);
-		const programValues = programOptions.filter(({ alias }) => {
-			return alias && programs.includes(<uSIAProgram>alias);
-		});
-
-		if (!programValues.length) throw createError("No programs matched");
-
-		// Iterate over associated programs
-		for (const programValue of programValues) {
+		for (const facultyValue of facultyValues) {
 			try {
 				if (response.groups.length) return response;
 
-				// Attempt to get groups from this progra
-				response = await getGroups(programValue);
+				// Attempt to get groups from this faculty
+				await puppetPage.click(useId(eIds.FACULTY));
+				await puppetPage.select(useId(eIds.FACULTY), facultyValue.value);
+				await waitForSelect(puppetPage, eIds.PROGRAM);
+
+				// Select Program
+				const programOptions = await getOptions(puppetPage, eIds.PROGRAM);
+				const programValues = programOptions.filter(({ alias }) => {
+					return alias && programs.includes(<uSIAProgram>alias);
+				});
+
+				if (!programValues.length) {
+					throw createError({ statusCode: 400, statusMessage: "No programs matched" });
+				}
+
+				// Iterate over associated programs
+				for (const programValue of programValues) {
+					try {
+						if (response.groups.length) return response;
+
+						// Attempt to get groups from this progra
+						response = await getGroups(programValue);
+					} catch (err) {
+						errors.push(err);
+					}
+				}
 			} catch (err) {
 				errors.push(err);
 			}
@@ -303,7 +325,9 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 					return alias && programs.includes(<uSIAProgram>alias);
 				});
 
-				if (!programLeValue) throw createError("LE program not found");
+				if (!programLeValue) {
+					throw createError({ statusCode: 400, statusMessage: "LE program not found" });
+				}
 
 				await puppetPage.click(useId(eIds.PROGRAM_LE));
 				await puppetPage.select(useId(eIds.PROGRAM_LE), programLeValue.value);
@@ -320,12 +344,14 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 		// Go to course
 		const tableHandle = await puppetPage.waitForSelector(useId(eIds.TABLE), { visible: true });
 
-		if (!tableHandle) throw createError("Missing results");
+		if (!tableHandle) throw createError({ statusCode: 404, statusMessage: "Missing results" });
 
 		const courseLinks: CourseLink[] = await tableHandle.evaluate(async (table) => {
 			const tbody = table?.firstElementChild?.lastElementChild;
 
-			if (tbody?.tagName !== "TBODY") throw createError("No courses found");
+			if (tbody?.tagName !== "TBODY") {
+				throw createError({ statusCode: 404, statusMessage: "No courses found" });
+			}
 
 			const rows = tbody?.children;
 
@@ -344,7 +370,12 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 		});
 		const courseLink = courseLinks.find((item) => item.code === code);
 
-		if (!courseLink) throw createError("No course matches the provided code");
+		if (!courseLink) {
+			throw createError({
+				statusCode: 400,
+				statusMessage: "No course matches the provided code",
+			});
+		}
 
 		await puppetPage.click(useId(courseLink.id));
 
@@ -374,7 +405,10 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 					const [day, unparsedSpan] = trimHTML(scheduleSpan).toLowerCase().split(" de ");
 
 					if (!day || !unparsedSpan) {
-						throw createError("Non supported schedule format");
+						throw createError({
+							statusCode: 400,
+							statusMessage: "Non supported schedule format",
+						});
 					}
 
 					const span = unparsedSpan.replaceAll(".", "").split(" a ").join("|");

@@ -184,7 +184,7 @@
 			 * The system return entities with the same data but differing in the internal id
 			 */
 			coursesPage.data.forEach((SIAcourse) => {
-				const course = useMapCourseFromSia(SIAcourse);
+				const { faculties = [], ...course } = useMapCourseFromSia(SIAcourse);
 
 				if (!course.code || !course.groups?.length) return;
 
@@ -206,8 +206,13 @@
 					return;
 				}
 
+				// Inject faculty, that helped in search
+				if (props.values.faculty && !faculties.includes(props.values.faculty)) {
+					faculties.push(props.values.faculty);
+				}
+
 				codes.push(course.code);
-				dedupedCourses.push(course);
+				dedupedCourses.push({ ...course, faculties });
 			});
 
 			// Refresh UI

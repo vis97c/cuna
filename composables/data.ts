@@ -187,6 +187,9 @@ export function useMapGroupFromSia(source: SIAGroup): Group {
 	};
 }
 
+/**
+ * Map course from SIA beta
+ */
 export function useMapCourseFromSia(source: SIACourse): Course {
 	// Generate deduped course UID
 	const id = `courses/${useCyrb53([source.CODIGO_ASIGNATURA])}`;
@@ -194,6 +197,7 @@ export function useMapCourseFromSia(source: SIACourse): Course {
 	const typology = source.TIPOLOGIA;
 	const place = source.SEDE;
 	let faculty = source.FACULTAD;
+	let faculties = [faculty];
 	let programs = source.PLANDEESTUDIO ? [source.PLANDEESTUDIO] : [];
 
 	// Dedupe groups
@@ -212,6 +216,7 @@ export function useMapCourseFromSia(source: SIACourse): Course {
 				if (!associatedFaculty) return groups.push(group);
 
 				faculty = associatedFaculty.faculty;
+				faculties = [faculty];
 				programs = [program];
 			}
 
@@ -254,6 +259,7 @@ export function useMapCourseFromSia(source: SIACourse): Course {
 		level: source.NIVELDEESTUDIO,
 		place,
 		faculty,
+		faculties,
 		programs,
 		groups,
 		spotsCount,

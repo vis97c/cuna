@@ -167,7 +167,10 @@ export interface CourseData extends FirebaseData {
 	typologies?: eSIATypology[];
 	level?: eSIALevel;
 	place?: eSIAPlace;
+	/** Main faculty */
 	faculty?: uSIAFaculty;
+	/** Multiple faculties for the same course */
+	faculties?: uSIAFaculty[];
 	/** Multiple programs for the same course */
 	programs?: uSIAProgram[];
 	groups?: GroupData[];
