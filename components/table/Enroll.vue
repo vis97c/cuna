@@ -2,7 +2,7 @@
 	<XamuActionButtonToggle
 		:key="props.value.name"
 		:theme="enrolled ? eColors.SUCCESS : eColors.SECONDARY"
-		:tooltip="enrolled ? 'Inscrito' : '¿Inscrito?'"
+		:tooltip="enrolled ? 'En mi horario' : 'Añadir al horario'"
 		:active="enrolled"
 		round
 		@click="enrolled = !enrolled"

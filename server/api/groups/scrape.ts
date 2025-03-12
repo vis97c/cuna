@@ -172,20 +172,25 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 	}
 
 	// event data
+	const params = getQuery(event);
 	const name: string = getQueryParam("name", event) || "";
 	const code: string = getQueryParam("code", event) || "";
 	const level: eSIALevel = getQueryParam("level", event);
 	const place: eSIAPlace = getQueryParam("place", event);
 	let faculty: uSIAFaculty = getQueryParam("faculty", event);
 	// Compare against multiple courses before giving up
-	let programs: uSIAProgram[] = getQueryParam("programs", event);
-	let typology: eSIATypology | undefined = getQueryParam("typology", event);
+	let programs: uSIAProgram[] = Array.isArray(params.programs)
+		? params.programs
+		: [params.programs];
+	let typologies: eSIATypology[] = Array.isArray(params.typologies)
+		? params.typologies
+		: [params.typologies];
 
-	debugFirebaseServer(event, "api:courses:scrape", { name, programs, typology });
+	debugFirebaseServer(event, "api:courses:scrape", { name, programs, typologies });
 
 	// Override data if missing, assume LE
 	if (!programs.length || !faculty) {
-		typology = eSIATypology.LIBRE_ELECCIÓN;
+		typologies = [eSIATypology.LIBRE_ELECCIÓN];
 
 		switch (place) {
 			case eSIAPlace.BOGOTÁ:
@@ -230,39 +235,32 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 
 		// Select Faculty
 		const faculties = await getOptions(puppetPage, eIds.FACULTY);
-		const facultyValues = faculties.filter(({ alias }) => alias === faculty);
+		const facultyValue = faculties.find(({ alias }) => alias === faculty);
 
-		if (!facultyValues.length) throw createError("Faculties not found");
+		if (!facultyValue) throw createError("Faculties not found");
 
 		const errors: any[] = [];
 		let response: ScrapedCourse = { groups: [], code: "", name: "", description: "" };
 
-		// Iterate over associated faculties
-		for (const facultyValue of facultyValues) {
-			await puppetPage.click(useId(eIds.FACULTY));
-			await puppetPage.select(useId(eIds.FACULTY), facultyValue.value);
-			await waitForSelect(puppetPage, eIds.PROGRAM);
+		await puppetPage.click(useId(eIds.FACULTY));
+		await puppetPage.select(useId(eIds.FACULTY), facultyValue.value);
+		await waitForSelect(puppetPage, eIds.PROGRAM);
 
-			// Select Program
-			const programOptions = await getOptions(puppetPage, eIds.PROGRAM);
-			const programValues = programOptions.filter(({ alias }) => {
-				return alias && programs.includes(<uSIAProgram>alias);
-			});
+		// Select Program
+		const programOptions = await getOptions(puppetPage, eIds.PROGRAM);
+		const programValues = programOptions.filter(({ alias }) => {
+			return alias && programs.includes(<uSIAProgram>alias);
+		});
 
+		if (!programValues.length) throw createError("No programs matched");
+
+		// Iterate over associated programs
+		for (const programValue of programValues) {
 			try {
-				if (!programValues.length) throw createError("Programs not found");
+				if (response.groups.length) return response;
 
-				// Iterate over associated programs
-				for (const programValue of programValues) {
-					try {
-						if (response.groups.length) return response;
-
-						// Attempt to get groups from this progra
-						response = await getGroups(programValue);
-					} catch (err) {
-						errors.push(err);
-					}
-				}
+				// Attempt to get groups from this progra
+				response = await getGroups(programValue);
 			} catch (err) {
 				errors.push(err);
 			}
@@ -283,7 +281,8 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 		await puppetPage.click(useId(eIds.PROGRAM));
 		await puppetPage.select(useId(eIds.PROGRAM), programValue.value);
 
-		if (typology) {
+		// Iterate over associated typologies
+		for (const typology of typologies) {
 			await waitForSelect(puppetPage, eIds.TYPOLOGY);
 
 			// Select typology, by default the system will return all but LE

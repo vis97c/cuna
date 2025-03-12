@@ -14,9 +14,9 @@
 		<XamuModal
 			v-if="SESSION.canModerate"
 			class="--txtColor"
-			title="Actualizar slug de los estudiantes"
+			title="Editar slug de los estudiantes"
 			:theme="estudiantesTheme"
-			:save-button="{ title: 'Actualizar slug' }"
+			:save-button="{ title: 'Editar slug' }"
 			invert-theme
 			@close="() => closeAddSlug()"
 			@save="addSlug"
@@ -24,11 +24,11 @@
 			<template #toggle="{ toggleModal }">
 				<XamuActionButton
 					:theme="estudiantesTheme"
-					tooltip="¿Actualizar slug de los estudiantes?"
+					tooltip="¿Editar slug de los estudiantes?"
 					@click="toggleModal"
 				>
 					<XamuIconFa name="hand-fist" />
-					<span>Actualizar slug</span>
+					<span>Editar slug</span>
 				</XamuActionButton>
 			</template>
 			<template #default="{ invertedTheme }">
@@ -73,13 +73,17 @@
 	const losEstudiantesProfessors = `${losEstudiantesUrl}${losEstudiantesProfessorsPath}`;
 	const estudiantesTheme = "estudiantes" as any;
 
+	const updatedSlug = ref("");
 	const addSlugInputs = ref<FormInput[]>();
 	const invalidAddSlug = ref<iInvalidInput[]>([]);
 
 	const teacherData = computed<Teacher>(() => {
 		if (typeof props.teacher == "string") return { name: props.teacher };
 
-		return props.teacher;
+		return {
+			...props.teacher,
+			losEstudiantesSlug: props.teacher.losEstudiantesSlug || updatedSlug.value,
+		};
 	});
 	const unassigned = computed(() => {
 		const clean = deburr(teacherData.value.name?.toLowerCase() || "");
@@ -97,13 +101,15 @@
 			Teacher
 		>(
 			async ({ losEstudiantesSlug = "" }) => {
-				if (!teacherData.value) return { data: null };
+				if (!teacherData.value?.id) return { data: null };
 
 				try {
 					// update category
 					const data = await useDocumentUpdate<Teacher>(teacherData.value, {
 						losEstudiantesSlug,
 					});
+
+					updatedSlug.value = losEstudiantesSlug;
 
 					return { data };
 				} catch (errors: FirebaseError | unknown) {

@@ -3,7 +3,7 @@
 		<XamuLoaderContent
 			class="x-course flx --flxColumn --flx-start --gap-30"
 			:content="!!course"
-			:loading="pending"
+			:loading="coursePending || teachersPending"
 		>
 			<template v-if="course">
 				<div class="flx --flxColumn --flx-start">
@@ -132,24 +132,38 @@
 					</div>
 				</div>
 				<XamuLoaderContent
-					:loading="pending || refetching"
+					:loading="coursePending || teachersPending || refetching"
 					:content="!!groups.length || !!unreportedGroups.length"
 					label="Actualizando desde el SIA..."
 					no-content-message="No hay grupos disponibles."
 					class="--width-100"
 				>
 					<div v-if="groups.length" class="flx --flxColumn --flx-start --width-100">
-						<div class="txt">
+						<div class="flx --flxRow --flx-start-center">
 							<h4>Grupos ({{ course.groups?.length || 0 }}):</h4>
+							<XamuActionButton
+								v-if="SESSION.canModerate"
+								:disabled="teachersPending"
+								@click="refreshTeachers"
+							>
+								<XamuIconFa name="refresh" />
+								<span>Actualizar profesores</span>
+							</XamuActionButton>
 						</div>
 						<XamuTable
 							:property-order="() => 0"
 							:nodes="groups"
 							:modal-props="{ class: '--txtColor', invertTheme: true }"
 							:properties="[
-								{ value: 'inscrito', component: Enroll, hidden: !SESSION.user },
-								{ value: 'profesores', component: TeachersList },
+								{
+									value: 'inscrito',
+									component: TableEnroll,
+									hidden: !SESSION.user,
+								},
+								{ value: 'profesores', component: TableTeachersList },
+								{ value: 'horarios', component: TableWeek },
 							]"
+							prefer-id
 						/>
 					</div>
 					<div
@@ -169,9 +183,15 @@
 							:theme="eColors.PRIMARY"
 							:modal-props="{ class: '--txtColor', invertTheme: true }"
 							:properties="[
-								{ value: 'inscrito', component: Enroll, hidden: !SESSION.user },
-								{ value: 'profesores', component: TeachersList },
+								{
+									value: 'inscrito',
+									component: TableEnroll,
+									hidden: !SESSION.user,
+								},
+								{ value: 'profesores', component: TableTeachersList },
+								{ value: 'horarios', component: TableWeek },
 							]"
+							prefer-id
 						/>
 					</div>
 				</XamuLoaderContent>
@@ -191,9 +211,7 @@
 	import type { ScrapedCourse } from "~/resources/types/scraping";
 	import { resolveSnapshotDefaults } from "~/resources/utils/firestore";
 	import { eSIALevel, eSIAPlace } from "~/functions/src/types/SIA";
-	import { TeachersList, Enroll } from "#components";
-
-	type tCourseAndTeachers = [Course, iPageEdge<Teacher, string>[]];
+	import { TableTeachersList, TableEnroll, TableWeek } from "#components";
 
 	/**
 	 * Course page
@@ -221,37 +239,50 @@
 	const invalidAddGroup = ref<iInvalidInput[]>([]);
 	let unsub: Unsubscribe = () => undefined;
 
-	const { data: courseAndTeachers, pending } = useAsyncData<tCourseAndTeachers>(async () => {
+	const { data: indexedCourse, pending: coursePending } = useAsyncData(async () => {
 		const courseId = <string>route.params.courseId;
 		const nuxtCourse = await useFetchQuery<Course>(`/api/all/courses/${courseId}`);
-		const { name, code } = nuxtCourse;
+		const { name } = nuxtCourse;
 
 		// Update meta
 		route.meta.title = name;
 
-		const teachersEdges = await useFetchQuery<iPageEdge<Teacher, string>[]>(
-			"/api/teachers/search",
-			{ courses: [code] }
-		);
-
-		return [nuxtCourse, teachersEdges];
+		return nuxtCourse;
 	});
+
+	const {
+		data: indexedTeachers,
+		pending: teachersPending,
+		refresh: refreshTeachers,
+	} = useAsyncData(
+		async () => {
+			const code = course.value?.code;
+
+			if (!code) return [];
+
+			const teachersEdges = await useFetchQuery<iPageEdge<Teacher, string>[]>(
+				"/api/teachers/search",
+				{ courses: [code] }
+			);
+
+			return teachersEdges.map(({ node }) => node);
+		},
+		{ watch: [indexedCourse] }
+	);
 
 	const course = computed({
 		get: () => {
-			if (!courseAndTeachers.value?.[0]) return;
+			if (!indexedCourse.value) return;
 
-			return useMapCourse(courseAndTeachers.value?.[0]);
+			return useMapCourse(indexedCourse.value);
 		},
 		set(newCourse) {
 			if (!newCourse) return;
 
-			courseAndTeachers.value = [newCourse, courseAndTeachers.value?.[1] || []];
+			indexedCourse.value = newCourse;
 		},
 	});
-	const indexedTeachers = computed(() => {
-		return (courseAndTeachers.value?.[1] || []).map(({ node }) => node);
-	});
+
 	const courseUpdatedAt = computed(() => {
 		const date = new Date(course.value?.updatedAt || new Date());
 
@@ -268,12 +299,6 @@
 		spots,
 		availableSpots,
 	}: Group) {
-		const reschedule = (schedule || []).map((interval) => {
-			if (!interval) return;
-
-			return interval.split("|").join(" a ");
-		});
-		const [lunes, martes, miercoles, jueves, viernes, sabado, domingo] = reschedule;
 		const mappedTeachers = teachers.map((name) => {
 			const teacher = indexedTeachers.value?.find((t) => t.name === name);
 
@@ -295,7 +320,7 @@
 			cupos: `${availableSpots} de ${spots}`,
 			espacios: classrooms,
 			profesores: mappedTeachers,
-			horarios: { lunes, martes, miercoles, jueves, viernes, sabado, domingo },
+			horarios: inscrito,
 			inscrito,
 		};
 	}
@@ -401,6 +426,11 @@
 		}
 	}
 
+	/**
+	 * Scrape course & update
+	 *
+	 * Do not remove PEAMA & PAES from indexing
+	 */
 	async function updateCourse(firebaseCourse: Course) {
 		refetching.value = true;
 
@@ -426,14 +456,22 @@
 					place,
 					faculty,
 					programs,
-					typology: typologies[0],
+					typologies,
 					code,
 				}),
 			]);
 
-			// Omit courses without groups
-			const courses = data.map(useMapCourseFromSia).filter(({ groups }) => !!groups?.length);
-			let SIACourse = courses.find((c) => c.id === id);
+			let SIACourse: Course | undefined;
+
+			for (const courseData of data) {
+				const course = useMapCourseFromSia(courseData);
+
+				if (course.id === id) {
+					if (course.groups?.length) SIACourse = course;
+
+					break;
+				}
+			}
 
 			if (!SIACourse) {
 				fromSIA.value = false;
@@ -461,6 +499,8 @@
 
 			// Reindex, refresh is done by firebase
 			await useIndexCourse({ ...SIACourse, updatedAt }, firebaseCourse);
+
+			await refreshTeachers();
 		} catch (err) {
 			useLogger("pages:cursos:[courseId]:onMounted", err);
 		}
@@ -473,7 +513,7 @@
 	onDeactivated(() => (deactivated.value = true));
 	onBeforeUnmount(unsub);
 	onMounted(() => {
-		if (process.server) return;
+		if (import.meta.server) return;
 
 		const courseId = <string>route.params.courseId;
 		const courseRef = doc($clientFirestore, "courses", courseId);

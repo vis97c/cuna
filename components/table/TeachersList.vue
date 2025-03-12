@@ -6,7 +6,7 @@
 				⋅
 			</div>
 			<template v-for="(childValue, childValueIndex) in props.value" :key="childValueIndex">
-				<TeacherItem :teacher="childValue" />
+				<TableTeacherItem :teacher="childValue" />
 				<span v-if="childValueIndex < props.value.length - 1">⋅</span>
 			</template>
 		</div>

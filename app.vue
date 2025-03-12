@@ -48,7 +48,22 @@
 													<span>{{ enrolledCount }}</span>
 												</XamuActionButtonToggle>
 											</template>
-											<template #default><Week /></template>
+											<template #default>
+												<div
+													class="flx --flxColumn --flx-start --gap-10 --txtColor"
+												>
+													<div class="txt --gap-5">
+														<p class="--txtSize-xs">Cursos inscritos</p>
+														<h4>Mi horario académico</h4>
+													</div>
+													<hr />
+													<Week
+														:enrolled-groups="
+															Object.values(SESSION.enrolled)
+														"
+													/>
+												</div>
+											</template>
 										</XamuDropdown>
 									</div>
 									<div class="flx --flxRow --flx-end-center --gap-30:sm">

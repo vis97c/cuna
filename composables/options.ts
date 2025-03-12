@@ -214,7 +214,7 @@ export function useCourseTypeOptions([typology]: [eSIATypology?] = []) {
 	const selectedTypology = ref<eSIATypology | undefined>(typology || ("" as eSIATypology));
 
 	// static
-	const typologies = [{ value: "", alias: "TODAS" }, ...toOptions(eSIATypology)];
+	const typologies = [{ value: "", alias: "TODAS MENOS L.E." }, ...toOptions(eSIATypology)];
 
 	return {
 		selectedTypology,
