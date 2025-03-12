@@ -14,6 +14,17 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			});
 		}
 
+		// Require auth
+		if (collectionId !== "courses") {
+			const authorization = getRequestHeader(event, "authorization");
+
+			if (!authorization) {
+				throw createError({ statusCode: 401, statusMessage: `Missing auth` });
+			}
+
+			await getAuth(event, authorization);
+		}
+
 		const path = `${collectionId}/${documentId}`;
 		const documentRef = serverFirestore.doc(path);
 		const snapshot = await documentRef.get();

@@ -6,15 +6,6 @@ import { isNotUndefString } from "~/resources/utils/guards";
 import type { tLogger } from "@open-xamu-co/ui-common-types";
 import { getLog } from "~/functions/src/utils/logs";
 
-export function useImagePath(
-	path?: string,
-	preset: "avatar" | "small" | "medium" | "large" = "avatar"
-) {
-	if (!path) return "/images/sample.png";
-
-	return `/api/media/images/${path}/${preset}.webp`;
-}
-
 export function valuesAreEqual<V extends Record<string, any>>(
 	values: V,
 	expectedValues: Partial<V>

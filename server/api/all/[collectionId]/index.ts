@@ -6,7 +6,7 @@ import { getBoolean } from "~/resources/utils/node";
 /**
  * Get the edges from a given collection
  */
-export default defineConditionallyCachedEventHandler((event) => {
+export default defineConditionallyCachedEventHandler(async (event) => {
 	const { serverFirestore } = getServerFirebase();
 
 	try {
@@ -15,6 +15,13 @@ export default defineConditionallyCachedEventHandler((event) => {
 		const collectionId = getRouterParam(event, "collectionId");
 
 		debugFirebaseServer(event, "api:all:collection", collectionId);
+
+		// Require auth
+		const authorization = getRequestHeader(event, "authorization");
+
+		if (!authorization) throw createError({ statusCode: 401, statusMessage: `Missing auth` });
+
+		await getAuth(event, authorization);
 
 		if (!collectionId) {
 			throw createError({

@@ -25,7 +25,7 @@
 						{{ course.description }}
 					</p>
 				</div>
-				<div class="flx --flxColumn --flx-start --width-100">
+				<div v-if="SESSION.user" class="flx --flxColumn --flx-start --width-100">
 					<div class="txt">
 						<h4 class="">Herramientas:</h4>
 						<p v-if="SESSION.canDevelop && fromSIA === false" class="">
@@ -259,7 +259,7 @@
 		async () => {
 			const code = course.value?.code;
 
-			if (!code) return [];
+			if (!code || !SESSION.user) return [];
 
 			const teachersEdges = await useFetchQuery<iPageEdge<Teacher, string>[]>(
 				"/api/teachers/search",

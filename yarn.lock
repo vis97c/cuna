@@ -2976,7 +2976,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@pinia-plugin-persistedstate/nuxt@npm:^1.1.0":
+"@pinia-plugin-persistedstate/nuxt@npm:^1.2.1":
   version: 1.2.1
   resolution: "@pinia-plugin-persistedstate/nuxt@npm:1.2.1"
   dependencies:
@@ -2989,13 +2989,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@pinia/nuxt@npm:^0.7.0":
-  version: 0.7.0
-  resolution: "@pinia/nuxt@npm:0.7.0"
+"@pinia/nuxt@npm:^0.10.1":
+  version: 0.10.1
+  resolution: "@pinia/nuxt@npm:0.10.1"
   dependencies:
     "@nuxt/kit": "npm:^3.9.0"
-    pinia: "npm:^2.2.6"
-  checksum: 10c0/d04299998acd8df128f72906699dba36abcba288faa8faecf910763bd52df778e3493b600676eb84aa8e13ac2cd006933eeae660ad186c9ba3d3dc1a5f461492
+  peerDependencies:
+    pinia: ^3.0.1
+  checksum: 10c0/e93654bbf58141ff0218ad99293c920ca193f901310ec34425a2ce8fb02e129f868ebbd417064a5629ef972fb084da41de29ca2fbbd589b3a94a74a885badcba
   languageName: node
   linkType: hard
 
@@ -6613,8 +6614,8 @@ __metadata:
     "@open-xamu-co/ui-components-vue": "npm:^3.0.0-next.67"
     "@open-xamu-co/ui-nuxt": "npm:^3.0.0-next.11"
     "@open-xamu-co/ui-styles": "npm:^3.0.0-next.36"
-    "@pinia-plugin-persistedstate/nuxt": "npm:^1.1.0"
-    "@pinia/nuxt": "npm:^0.7.0"
+    "@pinia-plugin-persistedstate/nuxt": "npm:^1.2.1"
+    "@pinia/nuxt": "npm:^0.10.1"
     "@types/lodash": "npm:^4.14.191"
     "@types/lodash-es": "npm:^4"
     "@typescript-eslint/eslint-plugin": "npm:^6.15.0"

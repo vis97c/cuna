@@ -20,6 +20,13 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 
 		debugFirebaseServer(event, "api:teachers", params);
 
+		// Require auth
+		const authorization = getRequestHeader(event, "authorization");
+
+		if (!authorization) throw createError({ statusCode: 401, statusMessage: `Missing auth` });
+
+		await getAuth(event, authorization);
+
 		if (name) {
 			// search by name
 			const indexes = triGram([name]);

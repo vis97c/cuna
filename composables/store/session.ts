@@ -97,6 +97,13 @@ export const useSessionStore = defineStore("session", {
 			this.track = [];
 			this.user = this.token = undefined;
 			this.expiredToken = expiredToken;
+			// Reset preferences
+			this.level = eSIALevel.PREGRADO;
+			this.place = eSIAPlace.BOGOTÁ;
+			this.lastFacultySearch = eSIABogotaFaculty.CIENCIAS;
+			this.lastProgramSearch = eSIAScienceBogotaProgram.CC;
+			this.withNonRegular = false;
+			this.enrolled = {};
 		},
 		async logout() {
 			if (!process.client) return;

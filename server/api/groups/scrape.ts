@@ -152,6 +152,14 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 	const { debugScrapper } = useRuntimeConfig().public;
 	const { siaOldURL = "", siaOldPath = "", siaOldQuery = "" } = instance?.config || {};
 	const siaOldEnpoint = siaOldURL + siaOldPath + siaOldQuery;
+
+	// Require auth
+	const authorization = getRequestHeader(event, "authorization");
+
+	if (!authorization) throw createError({ statusCode: 401, statusMessage: `Missing auth` });
+
+	await getAuth(event, authorization);
+
 	const puppet: Browser = await launch(puppetConfig);
 	const puppetPage: Page = await puppet.newPage();
 
