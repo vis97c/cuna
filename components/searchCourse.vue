@@ -11,15 +11,18 @@
 			class="flx --flxColumn --flx-start-stretch --gap-30 --width-100"
 		>
 			<div class="flx --flxColumn --flx-start-stretch --gap-30 --width-100">
-				<div class="txt --gap-5">
-					<h3>
-						Resultados de la busqueda
-						<template v-if="lastSearch?.name || lastSearch?.code">
-							de "{{ lastSearch?.name || lastSearch?.code }}"
-						</template>
-						:
-					</h3>
-					<p class="--txtSize-xs">
+				<div class="txt">
+					<div>
+						<h3>
+							Resultados de la busqueda
+							<template v-if="lastSearch?.name || lastSearch?.code">
+								de "{{ lastSearch?.name || lastSearch?.code }}"
+							</template>
+							:
+						</h3>
+						<p class="--txtSize-xs">Datos obtenidos del buscador del SIA (Beta).</p>
+					</div>
+					<p>
 						{{ untrackedCurrentPage.totalRecords }} resultados. Pagina
 						{{ untrackedCurrentPage.currentPage }} de
 						{{ untrackedCurrentPage.totalPages }}.

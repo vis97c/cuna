@@ -6,9 +6,12 @@
 				v-if="SESSION.user && APP.instance?.banner?.message"
 				class="x-banner flx --flxColumn --flx-center --gap-0 --width-100 --maxWidth --mX"
 			>
-				<hr />
-				<div class="flx --flx-center --flx --txtSize-sm --txtColor-dark5 --pX">
-					<XamuActionLink v-if="APP.instance?.banner?.url" :to="APP.instance.banner.url">
+				<div class="flx --flx-center --flx --txtColor-secondary --pX">
+					<XamuActionLink
+						v-if="APP.instance?.banner?.url"
+						:to="APP.instance.banner.url"
+						:theme="eColors.SECONDARY"
+					>
 						<span class="--txtWrap">{{ APP.instance.banner.message }}</span>
 					</XamuActionLink>
 					<p v-else class="--txtAlign-center">{{ APP.instance.banner.message }}</p>
@@ -310,9 +313,15 @@
 				max-width: 100%;
 				white-space: normal;
 			}
-			+ .x-main .--minHeightVh-100 {
-				min-height: calc(100vh - 4rem);
-				min-height: calc(100dvh - 4rem);
+			+ .x-main {
+				border-top-left-radius: 0.5rem;
+				border-top-right-radius: 0.5rem;
+				box-shadow: 0 -0.5rem 1rem rgba(var(--rgb-secondary), 0.1);
+
+				.--minHeightVh-100 {
+					min-height: calc(100vh - 3rem);
+					min-height: calc(100dvh - 3rem);
+				}
 			}
 		}
 	}
@@ -327,13 +336,13 @@
 			transition: background 0.5s ease;
 		}
 		.x-banner {
-			height: 4rem;
-			order: 2;
+			height: 3rem;
 		}
 		.x-main {
 			width: 100%;
 			// overflow: hidden;
 			box-sizing: border-box;
+			background: utils.color(light);
 		}
 		.x-info {
 			opacity: 0.7;

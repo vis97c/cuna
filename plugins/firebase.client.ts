@@ -1,7 +1,7 @@
 import { getAnalytics } from "firebase/analytics";
 import { initializeApp } from "firebase/app";
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-check";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
+import { getAuth, onIdTokenChanged } from "firebase/auth";
 import { doc, getDoc, getFirestore, onSnapshot, setDoc } from "firebase/firestore";
 import { getPerformance } from "firebase/performance";
 
@@ -39,7 +39,7 @@ export default defineNuxtPlugin(() => {
 	onSnapshot(instanceRef, (snapshot) => {
 		APP.setInstance(resolveSnapshotDefaults(snapshot.id, snapshot.data()));
 	});
-	onAuthStateChanged(auth, async (user) => {
+	onIdTokenChanged(auth, async (user) => {
 		if (!user) return SESSION.unsetSession();
 
 		const { uid, displayName, email, photoURL, emailVerified, isAnonymous } = user;

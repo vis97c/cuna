@@ -1,5 +1,6 @@
-import { arrayUnion, Timestamp } from "firebase/firestore";
+import { arrayUnion } from "firebase/firestore";
 import { startCase, deburr } from "lodash-es";
+
 import type { GroupData } from "~/functions/src/types/entities";
 import type { SIACoursesResponse } from "~/functions/src/types/SIA";
 import type { Course, CourseRef, TeacherRef } from "~/resources/types/entities";
@@ -26,7 +27,6 @@ export function useSIACourses(values: CourseValues, page = 1) {
 export async function useIndexCourse(
 	{
 		indexed,
-		groups = [],
 		faculties = [],
 		programs = [],
 		typologies = [],
@@ -63,7 +63,7 @@ export async function useIndexCourse(
 	}
 
 	// Index teachers
-	groups.forEach((group: GroupData = {}) => {
+	course.groups?.forEach((group: GroupData = {}) => {
 		(group.teachers || []).forEach((teacher) => {
 			// Generate deduped teacher UID
 			const id = `teachers/${useCyrb53([deburr(teacher)])}`;
@@ -78,19 +78,13 @@ export async function useIndexCourse(
 		});
 	});
 
-	const scrapedAtMilis = new Date(indexedCourse?.scrapedAt || "").getTime();
-	const scrapedDiffMilis = nowMilis - scrapedAtMilis;
+	// Do not override SIA scraping, unless too old or rescraped
+	if (!scrapedAt && indexedCourse?.scrapedAt) {
+		const scrapedAtMilis = new Date(indexedCourse.scrapedAt).getTime();
+		const scrapedDiffMilis = nowMilis - scrapedAtMilis;
 
-	// Do not override SIA scraping, unless too old
-	if (
-		scrapedAt ||
-		scrapedDiffMilis > useMinMilis(minutes * 2) ||
-		!indexedCourse?.groups?.length
-	) {
-		courseToIndex.groups = groups;
-
-		if (scrapedAt && typeof scrapedAt !== "string") {
-			courseToIndex.scrapedAt = Timestamp.fromDate(scrapedAt);
+		if (scrapedDiffMilis < useMinMilis(minutes * 20)) {
+			courseToIndex.groups = indexedCourse?.groups || [];
 		}
 	}
 

@@ -35,12 +35,13 @@
 					</div>
 					<XamuActionButton
 						:size="eSizes.LG"
-						:disabled="!search || search.length < 5 || searching"
+						:disabled="(search && search.length < 5) || searching"
 						type="submit"
-						title="Buscar curso"
+						:tooltip="search ? 'Buscar curso' : 'Descubrir cursos disponibles'"
 						round
 					>
-						<XamuIconFa name="arrow-right" :size="20" />
+						<XamuIconFa v-if="search" name="magnifying-glass" :size="20" />
+						<XamuIconFa v-else name="wand-magic-sparkles" :size="20" />
 					</XamuActionButton>
 				</form>
 				<XamuLoaderContent
@@ -94,7 +95,7 @@
 							v-if="matches.length"
 							class="flx --flxColumn --flx-start-stretch --gap-10 --width-100"
 						>
-							<h4 class="--txtSize-xs">Sugerencias:</h4>
+							<h4 class="--txtSize-xs">Sugerencias de búsquedas (otros usuarios):</h4>
 							<ul class="grd --grdColumns-auto3 --gap">
 								<li
 									v-for="match in matches"
@@ -179,6 +180,13 @@
 				</li>
 			</ul>
 		</section>
+		<section class="txt --txtAlign-center --txtSize-xs --txtColor-dark5 --gap-5 --minWidth-100">
+			<p>
+				*Usamos el buscador del SIA (Beta) para listar los cursos, su frecuencia de
+				actualización es baja.
+			</p>
+			<p>Visita cada pagina de curso para obtener los cupos en tiempo real (Antiguo SIA).</p>
+		</section>
 	</section>
 </template>
 
@@ -257,7 +265,7 @@
 	});
 
 	const preventSearch = debounce((fn: () => any) => {
-		if (!search.value || search.value.length < 5) return;
+		if (search.value && search.value.length < 5) return;
 
 		return fn();
 	});
@@ -287,7 +295,7 @@
 			else {
 				const course = useMapCourse({
 					...node,
-					updatedAt: useTimeAgo(new Date(node.updatedAt || "")),
+					updatedAt: useTimeAgo(new Date(node.scrapedAt || node.updatedAt || "")),
 				});
 
 				courses.push(course);

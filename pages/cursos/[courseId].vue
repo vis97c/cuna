@@ -135,7 +135,7 @@
 				<XamuLoaderContent
 					:loading="coursePending || teachersPending || refetching"
 					:content="!!groups.length || !!unreportedGroups.length"
-					label="Actualizando desde el SIA..."
+					label="Actualizando desde el antiguo SIA..."
 					no-content-message="No hay grupos disponibles."
 					class="--width-100"
 				>
