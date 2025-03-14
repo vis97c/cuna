@@ -1,6 +1,6 @@
 import type { EventHandler, EventHandlerRequest, H3Event } from "h3";
 
-import type { Instance, User } from "~/resources/types/entities";
+import type { Instance } from "~/resources/types/entities";
 
 export function getQueryParam<T>(name: string, e: H3Event): T {
 	const params = getQuery(e);
@@ -15,12 +15,15 @@ export function getQueryParam<T>(name: string, e: H3Event): T {
  * @param handler event handler, should have its own error handling
  * @returns event handler
  */
-export const defineConditionallyCachedEventHandler = <T extends EventHandlerRequest, D>(
-	handler: (event: H3Event<T>, instance?: Instance) => D
-): EventHandler<T, D> => {
-	return defineEventHandler<T>(async (event) => {
-		const { serverFirestore, serverAuth } = getServerFirebase();
-		const authorization = getRequestHeader(event, "authorization");
+export function defineConditionallyCachedEventHandler<T extends EventHandlerRequest, D>(
+	handler: (
+		event: H3Event<T>,
+		instance?: Instance,
+		auth?: { role: number; uid: string; id: string }
+	) => D
+): EventHandler<T, D> {
+	return defineEventHandler<T>(async function (event) {
+		const { serverFirestore } = getServerFirebase();
 		const { instance: instanceId } = useRuntimeConfig().public;
 		const instanceRef = serverFirestore.collection("instances").doc(instanceId);
 		const instanceSnapshot = await instanceRef.get();
@@ -28,20 +31,18 @@ export const defineConditionallyCachedEventHandler = <T extends EventHandlerRequ
 
 		if (!instance) throw new Error("Missing instance");
 
+		const auth = await getAuth(event);
 		const maxAge = (instance?.config?.coursesRefreshRate || 5) * 60;
-		const cachedData = defineCachedEventHandler((e) => handler(e, instance), { maxAge });
+		const cachedData = defineCachedEventHandler(
+			function (e) {
+				return handler(e, instance, auth);
+			},
+			{ maxAge }
+		);
 
-		if (authorization) {
-			// Validate authorization
-			const { uid } = await serverAuth.verifyIdToken(authorization);
-			const userRef = serverFirestore.collection("users").doc(uid);
-			const userSnapshot = await userRef.get();
-			const user: Partial<User> | undefined = userSnapshot.data();
-
-			// Omit cache for moderators and above
-			if ((user?.role ?? 3) < 3) return handler(event, instance);
-		}
+		// Omit cache for moderators and above
+		if ((auth?.role ?? 3) < 3) return handler(event, instance, auth);
 
 		return cachedData(event);
 	});
-};
+}

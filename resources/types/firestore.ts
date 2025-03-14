@@ -5,6 +5,23 @@ export interface PseudoNode extends Record<string, any> {
 	[key: `${string}Refs`]: Record<string, any>[];
 }
 
+export interface PseudoDocumentSnapshot<T extends PseudoNode> extends Record<string, any> {
+	data(): T | undefined;
+	exists: boolean | (() => boolean);
+}
+
+export interface PseudoDocumentReference<T extends PseudoNode> extends Record<string, any> {
+	get(): Promise<PseudoDocumentSnapshot<T>>;
+	// The following list is here just to appease getDoc on client
+	converter: any;
+	type: any;
+	firestore: any;
+	id: any;
+	parent: any;
+	path: any;
+	withConverter: any;
+}
+
 export interface iSnapshotConfig {
 	/**
 	 * Refs level
@@ -19,6 +36,10 @@ export interface iSnapshotConfig {
 	 * @example { omit: [ "product"]}
 	 */
 	omit?: string[];
+	/**
+	 * Can moderate
+	 */
+	canModerate?: boolean;
 }
 export interface iUseEdges extends iPagination, iSnapshotConfig {
 	/**

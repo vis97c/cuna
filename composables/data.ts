@@ -223,7 +223,7 @@ export function useMapCourseFromSia(source: SIACourse): Course {
 			return groups.push(group);
 		}
 
-		const currentSchedule = groups[groupIndex].schedule || [];
+		const currentSchedule = groups[groupIndex]?.schedule || [];
 		const newSchedule = group.schedule || [];
 		const uniqueClassrooms = [
 			...new Set([groups[groupIndex].classrooms, group.classrooms].flat()),

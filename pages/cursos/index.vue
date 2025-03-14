@@ -180,12 +180,17 @@
 				</li>
 			</ul>
 		</section>
-		<section class="txt --txtAlign-center --txtSize-xs --txtColor-dark5 --gap-5 --minWidth-100">
-			<p>
-				*Usamos el buscador del SIA (Beta) para listar los cursos, su frecuencia de
-				actualización es baja.
-			</p>
-			<p>Visita cada pagina de curso para obtener los cupos en tiempo real (Antiguo SIA).</p>
+		<section class="txt --txtAlign-center --txtSize-xs --txtColor-dark5 --minWidth-100">
+			<div class="flx --flxColumn --flx-start --gap-5">
+				<p>
+					*Usamos el buscador del SIA (Beta) para listar los cursos, su frecuencia de
+					actualización es baja.
+				</p>
+				<p>
+					Visita cada pagina de curso para obtener los cupos en tiempo real (Antiguo SIA).
+				</p>
+			</div>
+			<p>No dudes en reportar cualquier problema o sugerencia a nuestro instagram</p>
 		</section>
 	</section>
 </template>

@@ -1,8 +1,7 @@
-import { DocumentReference, Timestamp } from "firebase/firestore";
+import { DocumentReference, FieldValue, Timestamp } from "firebase/firestore";
 
 import type {
 	CourseData,
-	FirebaseData,
 	GroupData,
 	InstanceData,
 	LogData,
@@ -29,10 +28,12 @@ export interface SharedDocument extends FirebaseDocument {
 	updatedBy?: User;
 }
 
-type FromData<Data extends FirebaseData> = {
-	[K in keyof Data as K extends `${string}Ref` | `${string}Refs` | `${string}At`
+export type FromData<Data extends Record<string, any>> = {
+	[K in keyof Data as K extends `${string}Ref` | `${string}Refs`
 		? never
-		: K]: Data[K];
+		: K]: K extends `${string}At` ? string | Date | undefined : Data[K];
+} & {
+	id?: string;
 };
 
 /**
@@ -41,13 +42,13 @@ type FromData<Data extends FirebaseData> = {
  * Ref are used to create and modify firebase document
  * Removed properties are not required or part of automation
  */
-export type GetRef<T extends SharedDocument> = Omit<T, "id" | "createdAt" | "updatedAt"> & {
-	/** @automated Creation date */
-	createdAt?: Timestamp;
-	/** @automated Last update date */
-	updatedAt?: Timestamp;
-	createdByRef?: DocumentReference;
-	updatedByRef?: DocumentReference;
+export type GetRef<T extends SharedDocument, O extends keyof T = never> = {
+	[K in keyof FromData<Omit<T, "id" | O>> as K extends `${string}At` ? never : K]: FromData<
+		Omit<T, "id" | O>
+	>[K];
+} & {
+	createdByRef?: DocumentReference | FieldValue;
+	updatedByRef?: DocumentReference | FieldValue;
 };
 
 /**

@@ -15,7 +15,7 @@ import { triGram } from "~/resources/utils/firestore";
  *
  * @see https://es.stackoverflow.com/questions/316170/c%c3%b3mo-hacer-una-consulta-del-tipo-like-en-firebase
  */
-export default defineConditionallyCachedEventHandler(async (event) => {
+export default defineConditionallyCachedEventHandler(async function (event, instance, auth) {
 	const { serverFirestore } = getServerFirebase();
 
 	try {
@@ -29,11 +29,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		const page = getBoolean(getQueryParam("page", event) || "");
 
 		// Require auth
-		const authorization = getRequestHeader(event, "authorization");
-
-		if (!authorization) throw createError({ statusCode: 401, statusMessage: `Missing auth` });
-
-		await getAuth(event, authorization);
+		if (!auth) throw createError({ statusCode: 401, statusMessage: `Missing auth` });
 
 		let query: CollectionReference | Query = serverFirestore.collection("courses");
 		let indexes: string[] = [];
@@ -99,8 +95,8 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		// order at last
 		query = getOrderedQuery(event, query);
 
-		if (page) return getEdgesPage(event, query);
-		else return getQueryAsEdges(event, query);
+		if (page) return getEdgesPage({ event, instance, auth }, query);
+		else return getQueryAsEdges({ event, instance, auth }, query);
 	} catch (err) {
 		if (isError(err)) serverLogger("api:courses:search", err.message, err);
 

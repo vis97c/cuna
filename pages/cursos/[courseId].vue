@@ -208,7 +208,13 @@
 	import type { iInvalidInput, iPageEdge } from "@open-xamu-co/ui-common-types";
 	import { eColors, eSizes } from "@open-xamu-co/ui-common-enums";
 
-	import type { Course, EnrolledGroup, Group, Teacher } from "~/resources/types/entities";
+	import type {
+		Course,
+		CourseRef,
+		EnrolledGroup,
+		Group,
+		Teacher,
+	} from "~/resources/types/entities";
 	import type { ScrapedCourse } from "~/resources/types/scraping";
 	import { resolveSnapshotDefaults } from "~/resources/utils/firestore";
 	import { eSIALevel, eSIAPlace } from "~/functions/src/types/SIA";
@@ -289,8 +295,17 @@
 
 		return useTimeAgo(date);
 	});
-	const groups = computed(() => (course.value?.groups || []).map(mapGroupLike));
-	const unreportedGroups = computed(() => (course.value?.unreported || []).map(mapGroupLike));
+	const groups = computed(() => {
+		if (!Array.isArray(course.value?.groups)) return [];
+
+		return (course.value?.groups || []).map(mapGroupLike);
+	});
+	const unreportedGroups = computed(() => {
+		if (!Array.isArray(course.value?.unreported)) return [];
+		if (!Array.isArray(course.value?.unreported)) return [];
+
+		return (course.value?.unreported || []).map(mapGroupLike);
+	});
 
 	function mapGroupLike({
 		name,
@@ -448,6 +463,9 @@
 		} = firebaseCourse;
 
 		try {
+			// Do not refetch from hydration
+			fromSIA.value = false;
+
 			// Get data from sia & reindex
 			const [{ data }, SIAScraps] = await Promise.all([
 				// Get from new SIA
@@ -475,11 +493,9 @@
 				}
 			}
 
-			if (!SIACourse) {
-				fromSIA.value = false;
+			fromSIA.value = !SIACourse;
 
-				return;
-			}
+			if (!SIACourse) return;
 
 			// Prefer scrapped groups
 			if (SIAScraps) {
@@ -533,16 +549,14 @@
 				});
 			}
 
-			const firebaseCourse: Course = resolveSnapshotDefaults(
-				snapshot.ref.path,
-				snapshot.data()
-			);
+			const { createdByRef, updatedByRef, scrapedAt, ...firebaseCourse }: CourseRef =
+				resolveSnapshotDefaults(snapshot.ref.path, snapshot.data());
 			const { name, updatedAt } = firebaseCourse;
 
 			// Update with hydration conditionally
 			if (course.value?.updatedAt !== updatedAt) {
 				route.meta.title = name; // Update meta
-				course.value = firebaseCourse;
+				course.value = { ...course.value, ...firebaseCourse };
 			}
 
 			// Read only mode
@@ -557,7 +571,7 @@
 			if (
 				refetching.value ||
 				fromSIA.value !== undefined ||
-				(firebaseCourse?.scrapedAt && updatedDiffMilis < useMinMilis(minutes))
+				(scrapedAt && updatedDiffMilis < useMinMilis(minutes))
 			) {
 				return;
 			}

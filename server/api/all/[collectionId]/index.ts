@@ -6,7 +6,7 @@ import { getBoolean } from "~/resources/utils/node";
 /**
  * Get the edges from a given collection
  */
-export default defineConditionallyCachedEventHandler(async (event) => {
+export default defineConditionallyCachedEventHandler(async (event, instance, auth) => {
 	const { serverFirestore } = getServerFirebase();
 
 	try {
@@ -16,19 +16,15 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 
 		debugFirebaseServer(event, "api:all:collection", collectionId);
 
-		// Require auth
-		const authorization = getRequestHeader(event, "authorization");
-
-		if (!authorization) throw createError({ statusCode: 401, statusMessage: `Missing auth` });
-
-		await getAuth(event, authorization);
-
 		if (!collectionId) {
 			throw createError({
 				statusCode: 400,
 				statusMessage: `collectionId is required`,
 			});
 		}
+
+		// Require auth
+		if (!auth) throw createError({ statusCode: 401, statusMessage: `Missing auth` });
 
 		let query: Query = serverFirestore.collection(collectionId);
 
@@ -55,8 +51,8 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			} else return []; // empty query
 		} else query = getOrderedQuery(event, collectionId);
 
-		if (page) return getEdgesPage(event, query);
-		else return getQueryAsEdges(event, query);
+		if (page) return getEdgesPage({ event, instance, auth }, query);
+		else return getQueryAsEdges({ event, instance, auth }, query);
 	} catch (err) {
 		if (isError(err)) serverLogger("api:all:[collectionId]", err.message, err);
 

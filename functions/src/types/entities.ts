@@ -28,11 +28,11 @@ export interface LogData extends FirebaseData {
  * Firebase user
  */
 export interface UserData extends FirebaseData {
-	uid: string;
+	uid?: string;
 	name?: string | null;
 	email?: string | null;
 	photoURL?: string | null;
-	role?: number | null;
+	role?: number;
 	isAnonymous?: boolean | null;
 }
 

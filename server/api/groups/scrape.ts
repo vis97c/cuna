@@ -148,17 +148,13 @@ const puppetConfig = {
  *
  * @see https://github.com/pablomancera/sia_scrapper
  */
-export default defineConditionallyCachedEventHandler(async (event, instance) => {
+export default defineConditionallyCachedEventHandler(async (event, instance, auth) => {
 	const { debugScrapper } = useRuntimeConfig().public;
 	const { siaOldURL = "", siaOldPath = "", siaOldQuery = "" } = instance?.config || {};
 	const siaOldEnpoint = siaOldURL + siaOldPath + siaOldQuery;
 
 	// Require auth
-	const authorization = getRequestHeader(event, "authorization");
-
-	if (!authorization) throw createError({ statusCode: 401, statusMessage: `Missing auth` });
-
-	await getAuth(event, authorization);
+	if (!auth) throw createError({ statusCode: 401, statusMessage: `Missing auth` });
 
 	const puppet: Browser = await launch(puppetConfig);
 	const puppetPage: Page = await puppet.newPage();
@@ -196,8 +192,6 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 		? params.typologies
 		: [params.typologies];
 
-	debugFirebaseServer(event, "api:courses:scrape", { name, programs, typologies });
-
 	// Override data if missing, assume LE
 	if (!programs.length || !faculties.length) {
 		typologies = [eSIATypology.LIBRE_ELECCIÓN];
@@ -221,6 +215,13 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 				break;
 		}
 	}
+
+	debugFirebaseServer(event, "api:courses:scrape", {
+		siaOldEnpoint,
+		scrape: code || name,
+		programs,
+		typologies,
+	});
 
 	async function handler(): Promise<ScrapedCourse> {
 		if (!siaOldURL || !siaOldPath) {
@@ -285,14 +286,78 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 					try {
 						if (response.groups.length) return response;
 
-						// Attempt to get groups from this progra
-						response = await getGroups(programValue);
+						// Select Program
+						await puppetPage.click(useId(eIds.PROGRAM));
+						await puppetPage.select(useId(eIds.PROGRAM), programValue.value);
+						await waitForSelect(puppetPage, eIds.TYPOLOGY);
+
+						// Attempt to get groups from this program
+						if (!typologies.length) {
+							response = await getGroups();
+
+							continue;
+						}
+
+						// Iterate over associated typologies
+						for (const typology of typologies) {
+							try {
+								if (response.groups.length) return response;
+
+								// Select typology, by default the system will return all but LE
+								await puppetPage.click(useId(eIds.TYPOLOGY));
+								await puppetPage.select(
+									useId(eIds.TYPOLOGY),
+									eSIATypologyOld[typology]
+								);
+
+								// Additional actions for LE
+								if (typology === eSIATypology.LIBRE_ELECCIÓN) {
+									await puppetPage.waitForSelector(useId(eIds.SEARCH_LE), {
+										visible: true,
+									});
+
+									// Select search mode, search by program
+									await puppetPage.click(useId(eIds.SEARCH_LE));
+									await puppetPage.select(useId(eIds.SEARCH_LE), "1");
+									await puppetPage.waitForSelector(useId(eIds.PROGRAM_LE), {
+										visible: true,
+									});
+
+									// Select LE Program
+									const programOptionsLE = await getOptions(
+										puppetPage,
+										eIds.PROGRAM_LE
+									);
+									const programLeValue = programOptionsLE.find(({ alias }) => {
+										return alias && programs.includes(<uSIAProgram>alias);
+									});
+
+									if (!programLeValue) {
+										throw createError({
+											statusCode: 400,
+											statusMessage: "LE program not found",
+										});
+									}
+
+									await puppetPage.click(useId(eIds.PROGRAM_LE));
+									await puppetPage.select(
+										useId(eIds.PROGRAM_LE),
+										programLeValue.value
+									);
+								}
+
+								// Attempt to get groups from this typology
+								response = await getGroups();
+							} catch (err) {
+								errors.push(err); // save typologies errors
+							}
+						}
 					} catch (err) {
-						errors.push(err);
+						errors.push(err); // save programs errors
 					}
 				}
 			} catch (err) {
-				errors.push(err);
+				errors.push(err); // save faculties errors
 			}
 		}
 
@@ -305,43 +370,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 	/**
 	 * Get course groups from a given program
 	 */
-	async function getGroups(
-		programValue: iSelectOption & { value: string }
-	): Promise<ScrapedCourse> {
-		await puppetPage.click(useId(eIds.PROGRAM));
-		await puppetPage.select(useId(eIds.PROGRAM), programValue.value);
-
-		// Iterate over associated typologies
-		for (const typology of typologies) {
-			await waitForSelect(puppetPage, eIds.TYPOLOGY);
-
-			// Select typology, by default the system will return all but LE
-			await puppetPage.click(useId(eIds.TYPOLOGY));
-			await puppetPage.select(useId(eIds.TYPOLOGY), eSIATypologyOld[typology]);
-
-			if (typology === eSIATypology.LIBRE_ELECCIÓN) {
-				await puppetPage.waitForSelector(useId(eIds.SEARCH_LE), { visible: true });
-
-				// Select search mode, search by program
-				await puppetPage.click(useId(eIds.SEARCH_LE));
-				await puppetPage.select(useId(eIds.SEARCH_LE), "1");
-				await puppetPage.waitForSelector(useId(eIds.PROGRAM_LE), { visible: true });
-
-				// Select LE Program
-				const programOptionsLE = await getOptions(puppetPage, eIds.PROGRAM_LE);
-				const programLeValue = programOptionsLE.find(({ alias }) => {
-					return alias && programs.includes(<uSIAProgram>alias);
-				});
-
-				if (!programLeValue) {
-					throw createError({ statusCode: 400, statusMessage: "LE program not found" });
-				}
-
-				await puppetPage.click(useId(eIds.PROGRAM_LE));
-				await puppetPage.select(useId(eIds.PROGRAM_LE), programLeValue.value);
-			}
-		}
-
+	async function getGroups(): Promise<ScrapedCourse> {
 		// Search by name
 		if (name) await puppetPage.type(useId(eIds.NAME), name);
 
@@ -349,13 +378,14 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 		await puppetPage.waitForSelector(`${useId(eIds.SHOW)}:not(.p_AFDisabled)`);
 		await puppetPage.click(useId(eIds.SHOW));
 
-		// Go to course
+		// Go to courses
 		const tableHandle = await puppetPage.waitForSelector(useId(eIds.TABLE), { visible: true });
 
 		if (!tableHandle) throw createError({ statusCode: 404, statusMessage: "Missing results" });
 
+		// TODO: index all returned courses server side
 		const courseLinks: CourseLink[] = await tableHandle.evaluate(async (table) => {
-			const tbody = table?.firstElementChild?.lastElementChild;
+			const tbody = table?.querySelector("tbody");
 
 			if (tbody?.tagName !== "TBODY") {
 				throw createError({ statusCode: 404, statusMessage: "No courses found" });
@@ -381,7 +411,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance) => 
 		if (!courseLink) {
 			throw createError({
 				statusCode: 400,
-				statusMessage: "No course matches the provided code",
+				statusMessage: `No course matches the code ${code}`,
 			});
 		}
 

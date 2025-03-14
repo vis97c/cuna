@@ -27,7 +27,7 @@ export const onUpdatedCourse = onUpdated<CourseData>(
 	"courses",
 	async (newSnapshot, existingSnapshot) => {
 		try {
-			let { unreported = [] } = newSnapshot.data();
+			let { unreported } = newSnapshot.data();
 			const {
 				code,
 				losEstudiantesCode,
@@ -40,7 +40,7 @@ export const onUpdatedCourse = onUpdated<CourseData>(
 			const groupCount = groups.length || 0;
 
 			// remove unreported when new groups are added
-			if (groupCount > existingGroupCount) unreported = [];
+			if (groupCount > existingGroupCount) unreported = undefined;
 
 			const spotsCount = groups.reduce(
 				(sum, { availableSpots = 0 }) => sum + availableSpots,

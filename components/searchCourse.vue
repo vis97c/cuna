@@ -264,6 +264,11 @@
 			// Index or update courses
 			const allIndexed = await Promise.all(
 				mappedCourses.map(async ({ indexed, ...course }) => {
+					// Force array type
+					if (indexed?.programs && !Array.isArray(indexed?.programs)) {
+						indexed.programs = [];
+					}
+
 					await useIndexCourse(course, indexed);
 
 					return { ...course, indexed: true };

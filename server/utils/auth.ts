@@ -1,5 +1,9 @@
+import type { DocumentReference } from "firebase-admin/firestore";
 import type { H3Event } from "h3";
 import { createHash } from "node:crypto";
+import type { UserData } from "~/functions/src/types/entities";
+
+import type { User } from "~/resources/types/entities";
 
 /**
  * Get current auth
@@ -7,16 +11,29 @@ import { createHash } from "node:crypto";
  * @cache 2 minutes
  */
 export const getAuth = defineCachedFunction(
-	async (event: H3Event, authorization: string) => {
-		const { serverAuth } = getServerFirebase();
-		const { uid } = await serverAuth.verifyIdToken(authorization);
+	async function (event: H3Event) {
+		const { serverAuth, serverFirestore } = getServerFirebase();
+		const authorization = getRequestHeader(event, "authorization");
 
-		return uid;
+		if (!authorization) return;
+
+		const { uid } = await serverAuth.verifyIdToken(authorization);
+		const userRef: DocumentReference<UserData, User> = serverFirestore
+			.collection("users")
+			.doc(uid);
+		const userSnapshot = await userRef.get();
+		const { role = 3, ...user } = userSnapshot.data() || {};
+
+		return { ...user, uid, id: `users/${uid}`, role };
 	},
 	{
 		name: "getAuth",
 		maxAge: 120, // 2 minutes
-		getKey(event, authorization: string) {
+		getKey(event) {
+			const authorization = getRequestHeader(event, "authorization");
+
+			if (!authorization) return "guest";
+
 			return createHash("sha256").update(authorization).digest("hex");
 		},
 	}

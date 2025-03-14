@@ -9,8 +9,13 @@ import { QuerySnapshot } from "@google-cloud/firestore";
 
 import type { iPage, iPageEdge, tOrderBy } from "@open-xamu-co/ui-common-types";
 
-import type { iSnapshotConfig, PseudoNode } from "~/resources/types/firestore";
-import type { FirebaseDocument } from "~/resources/types/entities";
+import type {
+	iSnapshotConfig,
+	PseudoDocumentReference,
+	PseudoDocumentSnapshot,
+	PseudoNode,
+} from "~/resources/types/firestore";
+import type { FirebaseDocument, Instance } from "~/resources/types/entities";
 import { isNumberOrString } from "~/resources/utils/guards";
 import { resolveSnapshotDefaults } from "~/resources/utils/firestore";
 import { getBoolean } from "~/resources/utils/node";
@@ -31,83 +36,116 @@ const encodeCursor = (ref: DocumentReference) => {
  * @param level get nested refs
  * @returns {Object} desired object
  */
-export async function resolveSnapshotRefs<T extends PseudoNode>(
-	snapshot: DocumentSnapshot<T>,
-	{ level = 0, omit = [] }: iSnapshotConfig
-): Promise<FirebaseDocument> {
-	const node = snapshot.data();
-	const path = snapshot.ref.path;
+export async function resolveSnapshotRefs<
+	T extends PseudoNode,
+	R extends FirebaseDocument = FirebaseDocument,
+>(snapshot: PseudoDocumentSnapshot<T>, config: iSnapshotConfig = {}) {
+	const { level = 0, omit = [], canModerate } = config;
 
-	for (const key in node) {
-		if (!Object.hasOwn(node, key)) continue;
+	try {
+		const exists = typeof snapshot.exists === "function" ? snapshot.exists() : snapshot.exists;
 
-		const newKey: keyof T = key.replace(/(Ref|Refs)$/, "");
-		const innerOmit = omit
-			.filter((k) => k && k.startsWith(newKey))
-			.map((k) => k.replace(`${newKey.toString()}.`, ""));
+		if (!exists) return;
 
-		// transform firebase paths
-		if (key.endsWith("Ref")) {
-			const ref: DocumentReference = node[key];
+		const node = snapshot.data();
+		const path = snapshot.ref.path;
 
-			// omit author metadata
-			// TODO: allow if authorized (role<3)
-			if (!newKey.endsWith("By")) {
-				// Prevent infinite fetching loop
+		for (const key in node) {
+			if (!Object.hasOwn(node, key)) continue;
 
-				if (
-					level > 0 &&
-					!omit.includes(newKey) &&
-					typeof ref === "object" &&
-					ref !== null
-				) {
-					// single ref
-					const snapshot = await ref.get(); // node
+			const newKey: keyof T = key.replace(/(Ref|Refs)$/, "");
+			const innerOmit = omit
+				.filter((k) => k && k.startsWith(newKey))
+				.map((k) => k.replace(`${newKey.toString()}.`, ""));
 
-					if (snapshot) {
-						const resolved = await resolveSnapshotRefs(snapshot, {
-							level: level - 1,
-							omit: innerOmit,
-						});
+			// transform firebase paths
+			if (key.endsWith("Ref")) {
+				const ref: PseudoDocumentReference<T> = node[key];
 
-						node[newKey] = <T[keyof T]>resolved;
+				// omit user if non authorized
+				if (!(!canModerate && newKey.endsWith("By"))) {
+					// Prevent infinite fetching loop
+
+					if (
+						level > 0 &&
+						!omit.includes(newKey) &&
+						typeof ref === "object" &&
+						ref !== null
+					) {
+						// single ref
+						const snapshot = await ref.get(); // node
+
+						if (snapshot) {
+							const resolved = await resolveSnapshotRefs(snapshot, {
+								level: level - 1,
+								omit: innerOmit,
+								canModerate,
+							});
+
+							// typescript nonsense
+							node[newKey] = <T[keyof T]>resolved;
+						}
 					}
 				}
-			}
 
-			delete node[key];
-		} else if (key.endsWith("Refs")) {
-			const nodes: DocumentReference[] = node[key];
+				delete node[key];
+			} else if (key.endsWith("Refs")) {
+				const nodes: PseudoDocumentReference<T>[] = node[key];
 
-			// Prevent infinite fetching loop
-			if (level > 0 && !omit.includes(newKey) && Array.isArray(nodes)) {
-				// ref array
-				const refs = await Promise.all(
-					nodes.map(async (ref) => {
+				// Prevent infinite fetching loop
+				if (level > 0 && !omit.includes(newKey) && Array.isArray(nodes)) {
+					const refs: FirebaseDocument[] = [];
+
+					for (const ref of nodes) {
 						// bypass invalid ref
-						if (typeof ref !== "object" || ref === null) return;
+						if (typeof ref !== "object" || ref === null) continue;
 
 						const snapshot = await ref.get(); // node
-						const data = snapshot.data();
+						const data = snapshot?.data();
 
-						if (!snapshot || !data) return;
+						if (!snapshot || !data) continue;
 
-						return resolveSnapshotRefs(snapshot, {
+						const resolved = await resolveSnapshotRefs(snapshot, {
 							level: Math.max(0, level - 1),
 							omit: innerOmit,
+							canModerate,
 						});
-					})
-				);
 
-				// typescript nonsense
-				node[newKey] = <T[keyof T]>refs.filter((ref) => ref);
+						if (resolved) refs.push(resolved);
+					}
+
+					// typescript nonsense
+					node[newKey] = <T[keyof T]>refs;
+				}
+
+				delete node[key];
+			} else if (!key.endsWith("At") && node[key] && typeof node[key] === "object") {
+				if (node[key][0]) {
+					// Fix array shaped object
+					const dataArr = Object.values(node[key]).map((data) => {
+						if (typeof data !== "object" || data === null) return data;
+
+						const { id, ...newData } = resolveSnapshotDefaults("", data);
+
+						return newData;
+					});
+
+					node[key] = <T[Extract<keyof T, string>]>dataArr;
+				} else {
+					// Prevent non serializable inherits from being returned
+					const { id, ...newData } = resolveSnapshotDefaults("", node[key]);
+
+					node[key] = <T[Extract<keyof T, string>]>newData;
+				}
 			}
-
-			delete node[key];
 		}
-	}
 
-	return resolveSnapshotDefaults(path, node);
+		return <Promise<R>>resolveSnapshotDefaults(path, node);
+	} catch (err) {
+		serverLogger(`resolveSnapshotRefs:${snapshot.ref.path}`, { config, canModerate, err });
+
+		return;
+	}
 }
 
 export async function mapEdges<T extends Record<string, any>>(
@@ -121,7 +159,7 @@ export async function mapEdges<T extends Record<string, any>>(
 		const document = collectionSnapshot.docs[i];
 		const node = await resolveSnapshotRefs(document, snapshotConfig);
 
-		edges.push({ cursor: encoder(document.ref), node });
+		if (node) edges.push({ cursor: encoder(document.ref), node });
 	}
 
 	return edges;
@@ -140,11 +178,17 @@ export function getOrderedQuery<T extends EventHandlerRequest>(
 	return query.orderBy(...orderByValues);
 }
 
+interface EventData<T extends EventHandlerRequest> {
+	event: H3Event<T>;
+	instance?: Instance;
+	auth?: { role: number; uid: string; id: string };
+}
+
 /**
  * Get the edges from a given query
  */
 export async function getQueryAsEdges<T extends EventHandlerRequest>(
-	event: H3Event<T>,
+	{ event, auth }: EventData<T>,
 	query: Query,
 	callback?: (v: QuerySnapshot<DocumentData>) => void | Promise<void>
 ): Promise<iPageEdge<DocumentData, string>[]> {
@@ -163,15 +207,16 @@ export async function getQueryAsEdges<T extends EventHandlerRequest>(
 	// do something with the snapshot
 	await callback?.(snapshot);
 
-	return mapEdges(snapshot, encodeCursor, { level, omit });
+	return mapEdges(snapshot, encodeCursor, { level, omit, canModerate: (auth?.role ?? 3) < 3 });
 }
 
 export async function getEdgesPage<T extends EventHandlerRequest>(
-	event: H3Event<T>,
+	eventData: EventData<T>,
 	query: Query
 ): Promise<iPage<DocumentData, string>> {
 	const { serverFirestore } = getServerFirebase();
-	const params = getQuery(event);
+	const params = getQuery(eventData.event);
+
 	/**
 	 * Cursor or encoded cursor path.
 	 *
@@ -188,7 +233,7 @@ export async function getEdgesPage<T extends EventHandlerRequest>(
 		pageInfo: {
 			hasNextPage: false,
 			hasPreviousPage: false,
-			path: event.path,
+			path: eventData.event.path,
 		},
 		totalCount: count || 0,
 	};
@@ -213,13 +258,13 @@ export async function getEdgesPage<T extends EventHandlerRequest>(
 
 	const paginatedRef = cursorRef.limit(first + 1); // First n+1 items in collection after cursor
 
-	page.edges = await getQueryAsEdges(event, paginatedRef, async (snapshot) => {
+	page.edges = await getQueryAsEdges(eventData, paginatedRef, async (snapshot) => {
 		// is first page
 		if (at === undefined) return;
 
 		const previousPaginatedRef = query.endBefore(snapshot.docs[0]).limit(first); // end collection before given cursor
 
-		await getQueryAsEdges(event, previousPaginatedRef, async (previousSnapshot) => {
+		await getQueryAsEdges(eventData, previousPaginatedRef, async (previousSnapshot) => {
 			// no items in previous page
 			if (previousSnapshot.size !== first) return;
 

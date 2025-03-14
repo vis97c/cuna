@@ -1,4 +1,4 @@
-export default defineConditionallyCachedEventHandler(async (event) => {
+export default defineConditionallyCachedEventHandler(async (event, instance, auth) => {
 	const { serverFirestore } = getServerFirebase();
 
 	try {
@@ -16,13 +16,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 
 		// Require auth
 		if (collectionId !== "courses") {
-			const authorization = getRequestHeader(event, "authorization");
-
-			if (!authorization) {
-				throw createError({ statusCode: 401, statusMessage: `Missing auth` });
-			}
-
-			await getAuth(event, authorization);
+			if (!auth) throw createError({ statusCode: 401, statusMessage: `Missing auth` });
 		}
 
 		const path = `${collectionId}/${documentId}`;
@@ -40,7 +34,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		const level = Array.isArray(params.level) || !params.level ? 0 : Number(params.level);
 		const omit = Array.isArray(params.omit) ? params.omit : [params.omit];
 
-		return resolveSnapshotRefs(snapshot, { level, omit });
+		return resolveSnapshotRefs(snapshot, { level, omit, canModerate: (auth?.role ?? 3) < 3 });
 	} catch (err) {
 		if (isError(err)) serverLogger("api:all:[collectionId]:[documentId]", err.message, err);
 
