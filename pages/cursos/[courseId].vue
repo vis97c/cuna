@@ -511,12 +511,13 @@
 							teachers: teachers.map((t) => startCase(t.toLowerCase())),
 						};
 					}),
+					updatedAt,
 					scrapedAt: new Date(),
 				};
 			}
 
 			// Reindex, refresh is done by firebase
-			await useIndexCourse({ ...SIACourse, updatedAt }, firebaseCourse);
+			await useIndexCourse(SIACourse, firebaseCourse);
 
 			await refreshTeachers();
 		} catch (err) {

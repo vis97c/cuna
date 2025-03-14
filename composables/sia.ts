@@ -83,7 +83,8 @@ export async function useIndexCourse(
 		const scrapedAtMilis = new Date(indexedCourse.scrapedAt).getTime();
 		const scrapedDiffMilis = nowMilis - scrapedAtMilis;
 
-		if (scrapedDiffMilis < useMinMilis(minutes * 20)) {
+		// if minutes = 2, then 3 hours
+		if (scrapedDiffMilis < useMinMilis(minutes * 30 * 3)) {
 			courseToIndex.groups = indexedCourse?.groups || [];
 		}
 	}

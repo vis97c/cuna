@@ -263,9 +263,16 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 		let response: ScrapedCourse = { groups: [], code: "", name: "", description: "" };
 
 		for (const facultyValue of facultyValues) {
-			try {
-				if (response.groups.length) return response;
+			if (response.groups.length) break;
 
+			debugFirebaseServer(
+				event,
+				"api:courses:scrape:handler:faculty",
+				[facultyValue.alias],
+				response.groups.length
+			);
+
+			try {
 				// Attempt to get groups from this faculty
 				await puppetPage.click(useId(eIds.FACULTY));
 				await puppetPage.select(useId(eIds.FACULTY), facultyValue.value);
@@ -283,9 +290,16 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 
 				// Iterate over associated programs
 				for (const programValue of programValues) {
-					try {
-						if (response.groups.length) return response;
+					if (response.groups.length) break;
 
+					debugFirebaseServer(
+						event,
+						"api:courses:scrape:handler:program",
+						[facultyValue.alias, programValue.alias],
+						response.groups.length
+					);
+
+					try {
 						// Select Program
 						await puppetPage.click(useId(eIds.PROGRAM));
 						await puppetPage.select(useId(eIds.PROGRAM), programValue.value);
@@ -300,9 +314,16 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 
 						// Iterate over associated typologies
 						for (const typology of typologies) {
-							try {
-								if (response.groups.length) return response;
+							if (response.groups.length) break;
 
+							debugFirebaseServer(
+								event,
+								"api:courses:scrape:handler:typology",
+								[facultyValue.alias, programValue.alias, typology],
+								response.groups.length
+							);
+
+							try {
 								// Select typology, by default the system will return all but LE
 								await puppetPage.click(useId(eIds.TYPOLOGY));
 								await puppetPage.select(
@@ -346,18 +367,42 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 									);
 								}
 
+								// Necessary for switching beetwen typologies
+								await puppetPage.waitForNetworkIdle();
+
 								// Attempt to get groups from this typology
 								response = await getGroups();
 							} catch (err) {
 								errors.push(err); // save typologies errors
+
+								debugFirebaseServer(
+									event,
+									"api:courses:scrape:handler:typologyError",
+									[facultyValue.alias, programValue.alias, typology],
+									err
+								);
 							}
 						}
 					} catch (err) {
 						errors.push(err); // save programs errors
+
+						debugFirebaseServer(
+							event,
+							"api:courses:scrape:handler:programError",
+							[facultyValue.alias, programValue.alias],
+							err
+						);
 					}
 				}
 			} catch (err) {
 				errors.push(err); // save faculties errors
+
+				debugFirebaseServer(
+					event,
+					"api:courses:scrape:handler:facultyError",
+					[facultyValue.alias],
+					err
+				);
 			}
 		}
 
@@ -367,10 +412,18 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 		return response;
 	}
 
+	let attemp = 0;
+
 	/**
 	 * Get course groups from a given program
 	 */
 	async function getGroups(): Promise<ScrapedCourse> {
+		const currentAttemp = attemp;
+
+		debugFirebaseServer(event, "api:courses:scrape:getGroups:start", `Attemp ${currentAttemp}`);
+
+		attemp++;
+
 		// Search by name
 		if (name) await puppetPage.type(useId(eIds.NAME), name);
 
@@ -416,10 +469,9 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 		}
 
 		await puppetPage.click(useId(courseLink.id));
-
-		// Get groups
 		await puppetPage.waitForNetworkIdle();
 
+		// Get groups
 		const groups: Group[] = await puppetPage.evaluate(() => {
 			const activityH3 = document.querySelector("span[id$=w-titulo] h3");
 
@@ -496,6 +548,12 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 				};
 			});
 		});
+
+		debugFirebaseServer(
+			event,
+			"api:courses:scrape:getGroups:end",
+			`Attemp ${currentAttemp} with ${groups.length} groups`
+		);
 
 		return { groups, code, name: courseLink.name, description: courseLink.description };
 	}
