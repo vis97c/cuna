@@ -35,6 +35,7 @@ import {
 	eSIAVetMedicineBogotaProgram,
 } from "~/functions/src/types/SIA/enums";
 import { isNotUndefString } from "~/resources/utils/guards";
+import { Cyrb53 } from "~/resources/utils/firestore";
 
 interface UNALItem {
 	faculty: uSIAFaculty;
@@ -161,7 +162,7 @@ export function useMapUser({ role = 3, ...user }: User) {
 	return { ...user, role: roleName };
 }
 
-export function useMapGroupFromSia(source: SIAGroup): Group {
+export function useMapGroupFromBETA(source: SIAGroup): Group {
 	const programsString = source.PLANES_ASOCIADOS || "";
 	const [, ...programs] = programsString.split("*** Plan:").map((p) => <uSIAProgram>p.trim());
 
@@ -190,9 +191,9 @@ export function useMapGroupFromSia(source: SIAGroup): Group {
 /**
  * Map course from SIA beta
  */
-export function useMapCourseFromSia(source: SIACourse): Course {
+export function useMapCourseFromBETA(source: SIACourse): Course {
 	// Generate deduped course UID
-	const id = `courses/${useCyrb53([source.CODIGO_ASIGNATURA])}`;
+	const id = `courses/${Cyrb53([source.CODIGO_ASIGNATURA])}`;
 	const groups: Group[] = [];
 	const typology = source.TIPOLOGIA;
 	const place = source.SEDE;
@@ -201,7 +202,8 @@ export function useMapCourseFromSia(source: SIACourse): Course {
 	let programs = source.PLANDEESTUDIO ? [source.PLANDEESTUDIO] : [];
 
 	// Dedupe groups
-	source.DETALLECURSOASIGNATURA.map(useMapGroupFromSia).forEach((group) => {
+	source.DETALLECURSOASIGNATURA.forEach((groupBETA) => {
+		const group = useMapGroupFromBETA(groupBETA);
 		// Groups can be duplicated diff(teacher, schedule, classroom)
 		const groupIndex = groups.findIndex(({ name }) => name === group.name);
 
@@ -269,6 +271,9 @@ export function useMapCourseFromSia(source: SIACourse): Course {
 export function useMapCourse({ groups = [], ...course }: Course): Course {
 	const SESSION = useSessionStore();
 	const [, placeOnly] = deburr(SESSION.place).toLowerCase().replace(" de la", "").split("sede ");
+
+	if (!Array.isArray(groups)) groups = [];
+
 	const thisPlace = groups.some(({ name = "" }) => {
 		const lowerName = deburr(name).toLowerCase();
 

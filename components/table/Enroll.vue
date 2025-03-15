@@ -1,5 +1,6 @@
 <template>
 	<XamuActionButtonToggle
+		v-if="props.value.schedule?.some((day) => day)"
 		:key="props.value.name"
 		:theme="enrolled ? eColors.SUCCESS : eColors.SECONDARY"
 		:tooltip="enrolled ? 'En mi horario' : 'Añadir al horario'"
@@ -10,6 +11,7 @@
 		<XamuIconFa name="question" />
 		<XamuIconFa name="check" />
 	</XamuActionButtonToggle>
+	<span v-else>-</span>
 </template>
 <script setup lang="ts">
 	import { eColors } from "@open-xamu-co/ui-common-enums";

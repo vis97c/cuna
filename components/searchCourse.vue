@@ -55,8 +55,11 @@
 									⋅
 									<span title="Creditos">{{ useTCredits(course.credits) }}</span>
 									⋅
-									<span title="Cupos disponibles">
+									<span v-if="course.scrapedAt" title="Cupos disponibles">
 										{{ useTSpot(course.spotsCount) }}
+									</span>
+									<span v-else title="Cupos disponibles">
+										Abrir para obtener los cupos
 									</span>
 								</p>
 								<p v-if="course.programs?.length" title="Programas">
@@ -187,7 +190,7 @@
 			 * The system return entities with the same data but differing in the internal id
 			 */
 			coursesPage.data.forEach((SIAcourse) => {
-				const { faculties = [], ...course } = useMapCourseFromSia(SIAcourse);
+				const { faculties = [], ...course } = useMapCourseFromBETA(SIAcourse);
 
 				if (!course.code || !course.groups?.length) return;
 
@@ -241,6 +244,9 @@
 		searching.value = false;
 	}
 
+	/**
+	 * Index unindexed courses
+	 */
 	async function indexCourses(courses: Course[], page: SIACoursesResponse) {
 		try {
 			const include = courses.map(({ id }) => id);
@@ -252,7 +258,7 @@
 			const mappedCourses: (Course & { indexed?: Course })[] = courses.map((course) => {
 				const indexed = indexedCoursesEdges.find(({ node }) => node.id === course.id)?.node;
 
-				return { ...course, indexed, updatedAt: indexed?.updatedAt };
+				return { ...course, indexed };
 			});
 
 			// Conditionally Refresh UI again
@@ -269,7 +275,29 @@
 						indexed.programs = [];
 					}
 
-					await useIndexCourse(course, indexed);
+					// Prevent overrides
+					if (indexed) {
+						delete course?.groups;
+						delete course?.groupCount;
+						delete course?.spotsCount;
+
+						// Update existing course, do not await
+						useIndexCourse(course, indexed);
+
+						// Prefer indexed data
+						return {
+							...course,
+							spotsCount: indexed?.spotsCount || course.spotsCount,
+							groupCount: indexed?.groupCount || course.groupCount,
+							groups: indexed?.groups || course.groups,
+							updatedAt: indexed?.updatedAt,
+							scrapedAt: indexed?.scrapedAt,
+							indexed: true,
+						};
+					}
+
+					// Index new course
+					await useIndexCourse(course);
 
 					return { ...course, indexed: true };
 				})

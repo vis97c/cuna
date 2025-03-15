@@ -1,9 +1,7 @@
 import { arrayUnion } from "firebase/firestore";
-import { startCase, deburr } from "lodash-es";
 
-import type { GroupData } from "~/functions/src/types/entities";
 import type { SIACoursesResponse } from "~/functions/src/types/SIA";
-import type { Course, CourseRef, TeacherRef } from "~/resources/types/entities";
+import type { Course, CourseRef } from "~/resources/types/entities";
 import type { CourseValues } from "~/resources/types/values";
 import { triGram } from "~/resources/utils/firestore";
 
@@ -61,22 +59,6 @@ export async function useIndexCourse(
 		// Do not update if updated less than threshold
 		if (updatedDiffMilis <= useMinMilis(minutes)) return;
 	}
-
-	// Index teachers
-	course.groups?.forEach((group: GroupData = {}) => {
-		(group.teachers || []).forEach((teacher) => {
-			// Generate deduped teacher UID
-			const id = `teachers/${useCyrb53([deburr(teacher)])}`;
-
-			// creates or updates teacher
-			useDocumentCreate<TeacherRef>("teachers", {
-				id,
-				name: startCase(teacher.toLowerCase()),
-				indexes: triGram([teacher]),
-				courses: arrayUnion(course.code),
-			});
-		});
-	});
 
 	// Do not override SIA scraping, unless too old or rescraped
 	if (!scrapedAt && indexedCourse?.scrapedAt) {

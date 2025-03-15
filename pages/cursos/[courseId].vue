@@ -62,7 +62,7 @@
 						>
 							<XamuActionButton
 								tooltip="Forzar actualizacion"
-								@click="() => course && updateCourse(course)"
+								@click="() => course && scrapeCourse(course)"
 							>
 								<XamuIconFa name="refresh" />
 							</XamuActionButton>
@@ -202,7 +202,7 @@
 </template>
 
 <script setup lang="ts">
-	import { debounce, startCase } from "lodash-es";
+	import { debounce } from "lodash-es";
 	import { arrayUnion, doc, onSnapshot, type Unsubscribe } from "firebase/firestore";
 	import { FirebaseError } from "firebase/app";
 	import type { iInvalidInput, iPageEdge } from "@open-xamu-co/ui-common-types";
@@ -215,7 +215,6 @@
 		Group,
 		Teacher,
 	} from "~/resources/types/entities";
-	import type { ScrapedCourse } from "~/resources/types/scraping";
 	import { resolveSnapshotDefaults } from "~/resources/utils/firestore";
 	import { eSIALevel, eSIAPlace } from "~/functions/src/types/SIA";
 	import { TableTeachersList, TableEnroll, TableWeek } from "#components";
@@ -246,16 +245,20 @@
 	const invalidAddGroup = ref<iInvalidInput[]>([]);
 	let unsub: Unsubscribe = () => undefined;
 
-	const { data: indexedCourse, pending: coursePending } = useAsyncData(async () => {
-		const courseId = <string>route.params.courseId;
-		const nuxtCourse = await useFetchQuery<Course>(`/api/all/courses/${courseId}`);
-		const { name } = nuxtCourse;
+	const routeId = computed(() => <string>route.params.courseId);
 
-		// Update meta
-		route.meta.title = name;
+	const { data: indexedCourse, pending: coursePending } = useAsyncData(
+		`api:all:courses:${routeId.value}`,
+		async () => {
+			const nuxtCourse = await useFetchQuery<Course>(`/api/all/courses/${routeId.value}`);
+			const { name } = nuxtCourse;
 
-		return nuxtCourse;
-	});
+			// Update meta
+			route.meta.title = name;
+
+			return nuxtCourse;
+		}
+	);
 
 	const {
 		data: indexedTeachers,
@@ -447,11 +450,10 @@
 	 *
 	 * Do not remove PEAMA & PAES from indexing
 	 */
-	async function updateCourse(firebaseCourse: Course) {
+	async function scrapeCourse(firebaseCourse: Course) {
 		refetching.value = true;
 
 		const {
-			id,
 			code = "",
 			level = eSIALevel.PREGRADO,
 			place = eSIAPlace.BOGOTÁ,
@@ -459,67 +461,18 @@
 			faculties = [faculty],
 			programs = [],
 			typologies = [],
-			updatedAt,
 		} = firebaseCourse;
 
 		try {
-			// Do not refetch from hydration
-			fromSIA.value = false;
-
-			// Get data from sia & reindex
-			const [{ data }, SIAScraps] = await Promise.all([
-				// Get from new SIA
-				useSIACourses({ level, place, program: programs[0], code }),
-				// Scrape from old SIA
-				useFetchQuery<ScrapedCourse | null>("/api/groups/scrape", {
-					level,
-					place,
-					faculties,
-					programs,
-					typologies,
-					code,
-				}),
-			]);
-
-			let SIACourse: Course | undefined;
-
-			for (const courseData of data) {
-				const course = useMapCourseFromSia(courseData);
-
-				if (course.id === id) {
-					if (course.groups?.length) SIACourse = course;
-
-					break;
-				}
-			}
-
-			fromSIA.value = !SIACourse;
-
-			if (!SIACourse) return;
-
-			// Prefer scrapped groups
-			if (SIAScraps) {
-				SIACourse = {
-					...SIACourse,
-					description: SIAScraps.description,
-					groups: SIAScraps.groups.map(({ spots = 0, teachers = [], ...group }) => {
-						const SIA = SIACourse?.groups?.find(({ name }) => name === group.name);
-
-						return {
-							...group,
-							spots: SIA?.spots || spots,
-							teachers: teachers.map((t) => startCase(t.toLowerCase())),
-						};
-					}),
-					updatedAt,
-					scrapedAt: new Date(),
-				};
-			}
-
-			// Reindex, refresh is done by firebase
-			await useIndexCourse(SIACourse, firebaseCourse);
-
-			await refreshTeachers();
+			// Scrape from old SIA. Do not refetch from hydration
+			fromSIA.value = await useFetchQuery<boolean>("/api/groups/scrape", {
+				level,
+				place,
+				faculties,
+				programs,
+				typologies,
+				code,
+			});
 		} catch (err) {
 			useLogger("pages:cursos:[courseId]:onMounted", err);
 		}
@@ -577,7 +530,7 @@
 				return;
 			}
 
-			updateCourse(firebaseCourse);
+			scrapeCourse(firebaseCourse);
 		});
 	});
 </script>

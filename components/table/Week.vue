@@ -1,5 +1,10 @@
 <template>
-	<XamuModal class="--txtColor" :title="`${value.courseName}. ${value.name}`" invert-theme>
+	<XamuModal
+		v-if="value.schedule?.some((day) => day)"
+		class="--txtColor"
+		:title="`${value.courseName}. ${value.name}`"
+		invert-theme
+	>
 		<template #toggle="{ toggleModal, model }">
 			<XamuActionButton tooltip="Ver horario" :active="model" @click="toggleModal()">
 				<XamuIconFa name="calendar-week" />
@@ -13,6 +18,7 @@
 			</Week>
 		</template>
 	</XamuModal>
+	<span v-else>-</span>
 </template>
 <script setup lang="ts">
 	import type { EnrolledGroup } from "~/resources/types/entities";

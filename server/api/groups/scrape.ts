@@ -1,7 +1,10 @@
 import { type Browser, Page, launch } from "puppeteer";
+import _ from "lodash";
+import { DocumentReference, FieldValue, Timestamp } from "firebase-admin/firestore";
+
 import type { iSelectOption } from "@open-xamu-co/ui-common-types";
 
-import type { tWeeklySchedule } from "~/functions/src/types/entities";
+import type { CourseData, TeacherData, tWeeklySchedule } from "~/functions/src/types/entities";
 import {
 	eSIALevel,
 	eSIAPlace,
@@ -22,6 +25,7 @@ import {
 	eSIAMedellinProgram,
 } from "~/functions/src/types/SIA/enums";
 import { TimedPromise } from "~/resources/utils/promises";
+import { Cyrb53, triGram } from "~/resources/utils/firestore";
 
 /**
  * This scraper follows sia_scrapper implementation by https://github.com/pablomancera
@@ -191,39 +195,45 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 	let typologies: eSIATypology[] = Array.isArray(params.typologies)
 		? params.typologies
 		: [params.typologies];
+	const LEByProgram = !programs[0];
+	const LEByFaculty = !faculties[0];
 
 	// Override data if missing, assume LE
-	if (!programs.length || !faculties.length) {
+	if (LEByProgram || LEByFaculty) {
 		typologies = [eSIATypology.LIBRE_ELECCIÓN];
 
 		switch (place) {
 			case eSIAPlace.BOGOTÁ:
-				faculties = [eSIABogotaFaculty.SEDE_BOGOTÁ];
-				programs = [eSIABogotaProgram.COMPONENTE_DE_LIBRE_ELECCIÓN];
+				if (LEByFaculty) faculties = [eSIABogotaFaculty.SEDE_BOGOTÁ];
+				if (LEByProgram) programs = [eSIABogotaProgram.COMPONENTE_DE_LIBRE_ELECCIÓN];
+
 				break;
 			case eSIAPlace.LA_PAZ:
-				faculties = [eSIALaPazFaculty.SEDE_LA_PAZ];
-				programs = [eSIALaPazProgram.COMPONENTE_DE_LIBRE_ELECCIÓN];
+				if (LEByFaculty) faculties = [eSIALaPazFaculty.SEDE_LA_PAZ];
+				if (LEByProgram) programs = [eSIALaPazProgram.COMPONENTE_DE_LIBRE_ELECCIÓN];
+
 				break;
 			case eSIAPlace.MEDELLÍN:
-				faculties = [eSIAMedellinFaculty.SEDE_MEDELLÍN];
-				programs = [eSIAMedellinProgram.COMPONENTE_DE_LIBRE_ELECCIÓN];
+				if (LEByFaculty) faculties = [eSIAMedellinFaculty.SEDE_MEDELLÍN];
+				if (LEByProgram) programs = [eSIAMedellinProgram.COMPONENTE_DE_LIBRE_ELECCIÓN];
+
 				break;
 			case eSIAPlace.MANIZALES:
-				faculties = [eSIAManizalesFaculty.SEDE_MANIZALES];
-				programs = [eSIAManizalesProgram.COMPONENTE_DE_LIBRE_ELECCIÓN];
+				if (LEByFaculty) faculties = [eSIAManizalesFaculty.SEDE_MANIZALES];
+				if (LEByProgram) programs = [eSIAManizalesProgram.COMPONENTE_DE_LIBRE_ELECCIÓN];
+
 				break;
 		}
 	}
 
-	debugFirebaseServer(event, "api:courses:scrape", {
+	debugFirebaseServer(event, "api:groups:scrape", {
 		siaOldEnpoint,
 		scrape: code || name,
 		programs,
 		typologies,
 	});
 
-	async function handler(): Promise<ScrapedCourse> {
+	async function scraper(): Promise<ScrapedCourse> {
 		if (!siaOldURL || !siaOldPath) {
 			throw createError({ statusCode: 500, statusMessage: "Missing endpoint" });
 		}
@@ -232,10 +242,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 		await puppetPage.evaluate(() => {
 			// #d1 es un div que tiene altura 1 cuando la página se carga incorrectamente
 			if (document.querySelector("#d1")?.clientHeight === 1) {
-				throw createError({
-					statusCode: 500,
-					statusMessage: "There was an error loading the page",
-				});
+				throw new Error("There was an error loading the page");
 			}
 		});
 
@@ -263,13 +270,13 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 		let response: ScrapedCourse = { groups: [], code: "", name: "", description: "" };
 
 		for (const facultyValue of facultyValues) {
-			if (response.groups.length) break;
+			if (response.code) break;
 
 			debugFirebaseServer(
 				event,
-				"api:courses:scrape:handler:faculty",
+				"api:groups:scrape:scraper:faculty",
 				[facultyValue.alias],
-				response.groups.length
+				response.groups?.length
 			);
 
 			try {
@@ -281,6 +288,8 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 				// Select Program
 				const programOptions = await getOptions(puppetPage, eIds.PROGRAM);
 				const programValues = programOptions.filter(({ alias }) => {
+					if (LEByProgram) return true;
+
 					return alias && programs.includes(<uSIAProgram>alias);
 				});
 
@@ -290,13 +299,13 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 
 				// Iterate over associated programs
 				for (const programValue of programValues) {
-					if (response.groups.length) break;
+					if (response.code) break;
 
 					debugFirebaseServer(
 						event,
-						"api:courses:scrape:handler:program",
+						"api:groups:scrape:scraper:program",
 						[facultyValue.alias, programValue.alias],
-						response.groups.length
+						response.groups?.length
 					);
 
 					try {
@@ -307,20 +316,20 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 
 						// Attempt to get groups from this program
 						if (!typologies.length) {
-							response = await getGroups();
+							response = await getResponse();
 
 							continue;
 						}
 
 						// Iterate over associated typologies
 						for (const typology of typologies) {
-							if (response.groups.length) break;
+							if (response.code) break;
 
 							debugFirebaseServer(
 								event,
-								"api:courses:scrape:handler:typology",
+								"api:groups:scrape:scraper:typology",
 								[facultyValue.alias, programValue.alias, typology],
-								response.groups.length
+								response.groups?.length
 							);
 
 							try {
@@ -367,17 +376,17 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 									);
 								}
 
-								// Necessary for switching beetwen typologies
+								// Necessary for switching between typologies
 								await puppetPage.waitForNetworkIdle();
 
 								// Attempt to get groups from this typology
-								response = await getGroups();
+								response = await getResponse();
 							} catch (err) {
 								errors.push(err); // save typologies errors
 
 								debugFirebaseServer(
 									event,
-									"api:courses:scrape:handler:typologyError",
+									"api:groups:scrape:scraper:typologyError",
 									[facultyValue.alias, programValue.alias, typology],
 									err
 								);
@@ -388,7 +397,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 
 						debugFirebaseServer(
 							event,
-							"api:courses:scrape:handler:programError",
+							"api:groups:scrape:scraper:programError",
 							[facultyValue.alias, programValue.alias],
 							err
 						);
@@ -399,7 +408,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 
 				debugFirebaseServer(
 					event,
-					"api:courses:scrape:handler:facultyError",
+					"api:groups:scrape:scraper:facultyError",
 					[facultyValue.alias],
 					err
 				);
@@ -407,7 +416,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 		}
 
 		// If no groups found, throw errors if any
-		if (!response.groups.length && errors.length) throw createError(errors.pop());
+		if (!response.groups?.length && errors.length) throw createError(errors.pop());
 
 		return response;
 	}
@@ -417,10 +426,14 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 	/**
 	 * Get course groups from a given program
 	 */
-	async function getGroups(): Promise<ScrapedCourse> {
+	async function getResponse(): Promise<ScrapedCourse> {
 		const currentAttemp = attemp;
 
-		debugFirebaseServer(event, "api:courses:scrape:getGroups:start", `Attemp ${currentAttemp}`);
+		debugFirebaseServer(
+			event,
+			"api:groups:scrape:getResponse:start",
+			`Attemp ${currentAttemp}`
+		);
 
 		attemp++;
 
@@ -436,13 +449,11 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 
 		if (!tableHandle) throw createError({ statusCode: 404, statusMessage: "Missing results" });
 
-		// TODO: index all returned courses server side
+		// Get courses
 		const courseLinks: CourseLink[] = await tableHandle.evaluate(async (table) => {
 			const tbody = table?.querySelector("tbody");
 
-			if (tbody?.tagName !== "TBODY") {
-				throw createError({ statusCode: 404, statusMessage: "No courses found" });
-			}
+			if (tbody?.tagName !== "TBODY") throw new Error("No courses found");
 
 			const rows = tbody?.children;
 
@@ -471,100 +482,180 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 		await puppetPage.click(useId(courseLink.id));
 		await puppetPage.waitForNetworkIdle();
 
-		// Get groups
-		const groups: Group[] = await puppetPage.evaluate(() => {
-			const activityH3 = document.querySelector("span[id$=w-titulo] h3");
+		try {
+			// Get groups
+			const groups: Group[] = await puppetPage.evaluate(() => {
+				const trimHTML = (el?: Element | null) => (el ? el.innerHTML.trim() : "");
+				const activityH3 = document.querySelector("span[id$=w-titulo] h3");
+				const activity = trimHTML(activityH3) || "Desconocida";
 
-			function trimHTML(el?: Element | null) {
-				return el ? el.innerHTML.trim() : "";
-			}
+				return Array.from(document.querySelectorAll("span[id$=pgl14]")).map((root) => {
+					const teacherSpan = root.querySelector("span[id$=ot8]");
+					const spotsSpan = root.querySelector("span[id$=ot24]");
+					const spots: number = Number(trimHTML(spotsSpan)) || 0;
+					const nameH2 = root.querySelector("h2.af_showDetailHeader_title-text0");
+					const fullName = trimHTML(nameH2) || "(0) No reportado";
+					const startAt = fullName.indexOf(")");
+					const schedule: tWeeklySchedule = ["", "", "", "", "", "", ""];
+					let classrooms: string[] = [];
 
-			return Array.from(document.querySelectorAll("span[id$=pgl14]")).map((root) => {
-				const teacherSpan = root.querySelector("span[id$=ot8]");
-				const spotsSpan = root.querySelector("span[id$=ot24]");
-				const spots: number = Number(trimHTML(spotsSpan)) || 0;
-				const nameH2 = root.querySelector("h2.af_showDetailHeader_title-text0");
-				const fullName = trimHTML(nameH2) || "(0) No reportado";
-				const startAt = fullName.indexOf(")");
-				const schedule: tWeeklySchedule = ["", "", "", "", "", "", ""];
-				let classrooms: string[] = [];
+					Array.from(root.querySelectorAll("span[id$=pgl10]")).forEach(
+						(scheduledSpace) => {
+							const classroomSpan = scheduledSpace.lastElementChild?.children[1];
+							const scheduleSpan = scheduledSpace?.firstElementChild;
+							const [day, unparsedSpan] = trimHTML(scheduleSpan)
+								.toLowerCase()
+								.split(" de ");
 
-				Array.from(root.querySelectorAll("span[id$=pgl10]")).forEach((scheduledSpace) => {
-					const classroomSpan = scheduledSpace.lastElementChild?.children[1];
-					const scheduleSpan = scheduledSpace.firstElementChild;
-					const [day, unparsedSpan] = trimHTML(scheduleSpan).toLowerCase().split(" de ");
+							if (!day || !unparsedSpan) {
+								throw new Error("Non supported schedule format");
+							}
 
-					if (!day || !unparsedSpan) {
-						throw createError({
-							statusCode: 400,
-							statusMessage: "Non supported schedule format",
-						});
-					}
+							const span = unparsedSpan.replaceAll(".", "").split(" a ").join("|");
 
-					const span = unparsedSpan.replaceAll(".", "").split(" a ").join("|");
+							classrooms = [
+								...new Set([
+									...classrooms,
+									trimHTML(classroomSpan).replaceAll(".", "") || "Sin Asignar",
+								]),
+							];
 
-					classrooms = [
-						...new Set([
-							...classrooms,
-							trimHTML(classroomSpan).replaceAll(".", "") || "Sin Asignar",
-						]),
-					];
+							switch (day) {
+								case "lunes":
+									schedule[0] = span;
+									break;
+								case "martes":
+									schedule[1] = span;
+									break;
+								case "miercoles":
+								case "miércoles":
+									schedule[2] = span;
+									break;
+								case "jueves":
+									schedule[3] = span;
+									break;
+								case "viernes":
+									schedule[4] = span;
+									break;
+								case "sabado":
+								case "sábado":
+									schedule[5] = span;
+									break;
+								case "domingo":
+									schedule[6] = span;
+									break;
+							}
+						}
+					);
 
-					switch (day) {
-						case "lunes":
-							schedule[0] = span;
-							break;
-						case "martes":
-							schedule[1] = span;
-							break;
-						case "miercoles":
-						case "miércoles":
-							schedule[2] = span;
-							break;
-						case "jueves":
-							schedule[3] = span;
-							break;
-						case "viernes":
-							schedule[4] = span;
-							break;
-						case "sabado":
-						case "sábado":
-							schedule[5] = span;
-							break;
-						case "domingo":
-							schedule[6] = span;
-							break;
-					}
+					const teacher = trimHTML(teacherSpan).replaceAll(".", "").toLowerCase();
+
+					return {
+						spots,
+						activity,
+						availableSpots: spots,
+						schedule,
+						classrooms,
+						name: fullName.substring(startAt + 2),
+						teachers: [teacher || "No Informado"],
+					};
+				});
+			});
+
+			debugFirebaseServer(
+				event,
+				"api:groups:scrape:getResponse:end",
+				`Attemp ${currentAttemp} with ${groups.length} groups`
+			);
+
+			return {
+				code,
+				groups,
+				name: courseLink.name,
+				description: courseLink.description,
+			};
+		} catch (err) {
+			debugFirebaseServer(
+				event,
+				"api:groups:scrape:getResponse:end",
+				`Attemp ${currentAttemp} with errors`,
+				err
+			);
+
+			// Prevent further scraping
+			return {
+				code,
+				name: courseLink.name,
+				description: courseLink.description,
+			};
+		}
+	}
+
+	/**
+	 * Update firebase course
+	 */
+	async function updateCourse(): Promise<boolean> {
+		const { serverFirestore } = getServerFirebase();
+
+		try {
+			const SIAScraps = await scraper();
+
+			// Prevent updating if missing groups
+			if (!SIAScraps.groups) return false;
+
+			const courseId = `courses/${Cyrb53([code])}`;
+			const courseRef: DocumentReference<CourseData> = serverFirestore.doc(courseId);
+
+			// Index teachers
+			SIAScraps.groups = SIAScraps.groups?.map(({ teachers, ...group }) => {
+				teachers = teachers?.map((teacher) => {
+					// Generate deduped teacher UID
+					const teacherId = `teachers/${Cyrb53([_.deburr(teacher)])}`;
+					const teacherRef: DocumentReference<TeacherData> =
+						serverFirestore.doc(teacherId);
+					const name = _.startCase(teacher.toLowerCase());
+
+					// Set teacher, do not await
+					teacherRef.set(
+						{
+							name,
+							indexes: triGram([teacher]),
+							courses: FieldValue.arrayUnion(SIAScraps.code),
+						},
+						{ merge: true }
+					);
+
+					return name;
 				});
 
-				return {
-					spots,
-					availableSpots: spots,
-					schedule,
-					classrooms,
-					name: fullName.substring(startAt + 2),
-					activity: trimHTML(activityH3) || "Desconocida",
-					teachers: [trimHTML(teacherSpan).replaceAll(".", "") || "No Informado"],
-				};
+				return { ...group, teachers };
 			});
-		});
 
-		debugFirebaseServer(
-			event,
-			"api:courses:scrape:getGroups:end",
-			`Attemp ${currentAttemp} with ${groups.length} groups`
-		);
+			// Update course, do not await
+			courseRef.set(
+				{
+					description: SIAScraps.description,
+					groups: SIAScraps.groups,
+					scrapedAt: Timestamp.fromDate(new Date()),
+				},
+				{ merge: true }
+			);
 
-		return { groups, code, name: courseLink.name, description: courseLink.description };
+			return true;
+		} catch (err) {
+			if (isError(err)) serverLogger("api:groups:scrape", err.message, err);
+
+			return false;
+		}
 	}
 
 	// Time out after 2 minutes
-	return TimedPromise<ScrapedCourse | false>(
+	return TimedPromise<boolean>(
 		async (resolve, reject) => {
 			try {
-				const response = await handler();
+				const scraped = await updateCourse();
 
-				resolve(response);
+				resolve(scraped);
 			} catch (err) {
 				puppet.close();
 
