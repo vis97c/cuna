@@ -265,8 +265,9 @@
 		pending: teachersPending,
 		refresh: refreshTeachers,
 	} = useAsyncData(
+		`api:teachers:course:${routeId.value}`,
 		async () => {
-			const code = course.value?.code;
+			const code = indexedCourse.value?.code;
 
 			if (!code || !SESSION.user) return [];
 
@@ -277,7 +278,7 @@
 
 			return teachersEdges.map(({ node }) => node);
 		},
-		{ watch: [indexedCourse] }
+		{ watch: [() => indexedCourse.value?.updatedAt] }
 	);
 
 	const course = computed({

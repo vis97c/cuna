@@ -18,27 +18,22 @@ jobs:
             - name: Checkout repository
               uses: actions/checkout@v4
             - name: Setup environment
-              uses: SpicyPizza/create-envfile@v2.0.3
-              with:
-                  file_name: .env
-                  envkey_F_API_KEY: ${{ vars.F_API_KEY }}
-                  envkey_F_AUTH_DOMAIN: ${{ vars.F_AUTH_DOMAIN }}
-                  envkey_F_PROJECT_ID: ${{ vars.F_PROJECT_ID }}
-                  envkey_F_STORAGE_BUCKET: ${{ vars.F_STORAGE_BUCKET }}
-                  envkey_F_MESSAGING_SENDER_ID: ${{ vars.F_MESSAGING_SENDER_ID }}
-                  envkey_F_APP_ID: ${{ vars.F_APP_ID }}
-                  envkey_F_MEASUREMENT_ID: ${{ vars.F_MEASUREMENT_ID }}
-                  envkey_F_PRIVATE_KEY: ${{ secrets.F_PRIVATE_KEY }}
-                  envkey_F_CLIENT_EMAIL: ${{ secrets.F_CLIENT_EMAIL }}
-                  envkey_RECAPTCHA_ENTERPRISE_SITE_KEY: ${{ vars.RECAPTCHA_ENTERPRISE_SITE_KEY }}
-                  envkey_INSTANCE: "localhost"
-                  envkey_COUNTRIES_API: ${{ vars.COUNTRIES_API }}
-                  envkey_INDEXABLE: false
-                  envkey_DEBUG_APP_CHECK: true
+              run: |
+                  echo "F_API_KEY=\"${vars.F_API_KEY}\"" >> .env
+                  echo "F_AUTH_DOMAIN=\"${vars.F_AUTH_DOMAIN}\"" >> .env
+                  echo "F_PROJECT_ID=\"${vars.F_PROJECT_ID}\"" >> .env
+                  echo "F_STORAGE_BUCKET=\"${vars.F_STORAGE_BUCKET}\"" >> .env
+                  echo "F_MESSAGING_SENDER_ID=\"${vars.F_MESSAGING_SENDER_ID}\"" >> .env
+                  echo "F_APP_ID=\"${vars.F_APP_ID}\"" >> .env
+                  echo "F_MEASUREMENT_ID=\"${vars.F_MEASUREMENT_ID}\"" >> .env
+                  echo "F_PRIVATE_KEY=${secrets.F_PRIVATE_KEY}" >> .env
+                  echo "F_CLIENT_EMAIL=${secrets.F_CLIENT_EMAIL}" >> .env
+                  echo "RECAPTCHA_ENTERPRISE_SITE_KEY=\"${vars.RECAPTCHA_ENTERPRISE_SITE_KEY}\"" >> .env
+                  echo "COUNTRIES_API=\"${vars.COUNTRIES_API}\"" >> .env
+                  echo "INSTANCE=\"${vars.INSTANCE}\"" >> .env
+                  echo "INDEXABLE=\"${vars.INDEXABLE}\"" >> .env
             - name: Install dependencies
               run: corepack enable && yarn
-            - name: Build nuxt
-              run: yarn build
             - name: Deploy to firebase preview
               uses: FirebaseExtended/action-hosting-deploy@v0
               with:
