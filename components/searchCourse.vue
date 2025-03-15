@@ -275,31 +275,18 @@
 						indexed.programs = [];
 					}
 
-					// Prevent overrides
-					if (indexed) {
-						delete course?.groups;
-						delete course?.groupCount;
-						delete course?.spotsCount;
+					// Set course
+					await useIndexCourse(course, indexed);
 
-						// Update existing course, do not await
-						useIndexCourse(course, indexed);
-
-						// Prefer indexed data
-						return {
-							...course,
-							spotsCount: indexed?.spotsCount || course.spotsCount,
-							groupCount: indexed?.groupCount || course.groupCount,
-							groups: indexed?.groups || course.groups,
-							updatedAt: indexed?.updatedAt,
-							scrapedAt: indexed?.scrapedAt,
-							indexed: true,
-						};
-					}
-
-					// Index new course
-					await useIndexCourse(course);
-
-					return { ...course, indexed: true };
+					return {
+						...course,
+						spotsCount: indexed?.spotsCount || course.spotsCount,
+						groupCount: indexed?.groupCount || course.groupCount,
+						groups: indexed?.groups || course.groups,
+						updatedAt: indexed?.updatedAt,
+						scrapedAt: indexed?.scrapedAt,
+						indexed: true,
+					};
 				})
 			);
 

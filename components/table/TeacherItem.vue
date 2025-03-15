@@ -12,7 +12,7 @@
 		</XamuActionLink>
 		<span v-else :data-id="teacherData.id">{{ teacherData.name }}</span>
 		<XamuModal
-			v-if="SESSION.canModerate"
+			v-if="!unassigned && SESSION.canModerate"
 			class="--txtColor"
 			title="Editar slug de los estudiantes"
 			:theme="estudiantesTheme"

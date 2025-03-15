@@ -516,21 +516,20 @@
 			// Read only mode
 			if (!SESSION.user) return;
 
-			const minutes = APP.instance?.config?.coursesRefreshRate || 5;
+			const minutes = APP.instance?.config?.coursesScrapeRate || 5;
 			const nowMilis = new Date().getTime();
 			const updatedAtMilis = new Date(updatedAt || "").getTime();
 			const updatedDiffMilis = nowMilis - updatedAtMilis;
 
 			// Do once & update if updated more than threshold
 			if (
-				refetching.value ||
 				fromSIA.value !== undefined ||
 				(scrapedAt && updatedDiffMilis < useMinMilis(minutes))
 			) {
-				return;
+				if (firebaseCourse.description) return;
 			}
 
-			scrapeCourse(firebaseCourse);
+			if (!refetching.value) scrapeCourse(firebaseCourse);
 		});
 	});
 </script>

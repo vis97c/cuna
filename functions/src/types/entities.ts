@@ -75,6 +75,10 @@ export interface InstanceData extends FirebaseData {
 		 */
 		coursesRefreshRate?: number;
 		/**
+		 * Number of minutes before scraping a course
+		 */
+		coursesScrapeRate?: number;
+		/**
 		 * @example https://sia.unal.edu.co
 		 */
 		siaOldURL?: string;

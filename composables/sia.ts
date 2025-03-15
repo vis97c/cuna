@@ -45,30 +45,30 @@ export async function useIndexCourse(
 		alternativeNames: arrayUnion(...alternativeNames),
 		indexes: triGram([course.name]),
 	};
+
+	// Prevent update if same data
+	if (
+		indexedCourse?.credits === course.credits &&
+		indexedCourse?.programs?.every((p) => programs.includes(p)) &&
+		indexedCourse?.typologies?.every((t) => typologies.includes(t)) &&
+		indexedCourse?.alternativeNames?.every((p) => alternativeNames.includes(p))
+	) {
+		return;
+	}
+
 	const minutes = APP.instance?.config?.coursesRefreshRate || 5;
 	const nowMilis = new Date().getTime();
 	const updatedAtMilis = new Date(updatedAt || "").getTime();
 	const updatedDiffMilis = nowMilis - updatedAtMilis;
 
-	// Same programs & typologies
-	if (
-		indexedCourse?.programs?.every((p) => programs.includes(p)) &&
-		indexedCourse?.typologies?.every((t) => typologies.includes(t)) &&
-		indexedCourse?.alternativeNames?.every((p) => alternativeNames.includes(p))
-	) {
-		// Do not update if updated less than threshold
-		if (updatedDiffMilis <= useMinMilis(minutes)) return;
-	}
+	// Do not update if updated less than threshold
+	if (updatedDiffMilis <= useMinMilis(minutes)) return;
 
-	// Do not override SIA scraping, unless too old or rescraped
-	if (!scrapedAt && indexedCourse?.scrapedAt) {
-		const scrapedAtMilis = new Date(indexedCourse.scrapedAt).getTime();
-		const scrapedDiffMilis = nowMilis - scrapedAtMilis;
-
-		// if minutes = 2, then 3 hours
-		if (scrapedDiffMilis < useMinMilis(minutes * 30 * 3)) {
-			courseToIndex.groups = indexedCourse?.groups || [];
-		}
+	// Do not override SIA scraping
+	if (indexedCourse?.scrapedAt) {
+		delete courseToIndex.groups;
+		delete courseToIndex.groupCount;
+		delete courseToIndex.spotsCount;
 	}
 
 	// creates or updates course
