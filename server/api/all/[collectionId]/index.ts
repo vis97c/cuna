@@ -54,7 +54,9 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 		if (page) return getEdgesPage({ event, instance, auth }, query);
 		else return getQueryAsEdges({ event, instance, auth }, query);
 	} catch (err) {
-		if (isError(err)) serverLogger("api:all:[collectionId]", err.message, err);
+		if (isError(err)) {
+			serverLogger("api:all:[collectionId]", err.message, { path: event.path, err });
+		}
 
 		throw err;
 	}

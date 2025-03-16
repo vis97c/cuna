@@ -251,10 +251,12 @@
 		`api:all:courses:${routeId.value}`,
 		async () => {
 			const nuxtCourse = await useFetchQuery<Course>(`/api/all/courses/${routeId.value}`);
-			const { name } = nuxtCourse;
+			const { name, description, alternativeNames = [name] } = nuxtCourse;
 
 			// Update meta
 			route.meta.title = name;
+			route.meta.description = description;
+			route.meta.keywords = alternativeNames.join(", ");
 
 			return nuxtCourse;
 		}
@@ -486,7 +488,7 @@
 	onDeactivated(() => (deactivated.value = true));
 	onBeforeUnmount(unsub);
 	onMounted(() => {
-		if (import.meta.server || !SESSION.user) return;
+		if (import.meta.server || !SESSION.user || !$clientFirestore) return;
 
 		const courseId = <string>route.params.courseId;
 		const courseRef = doc($clientFirestore, "courses", courseId);
@@ -506,11 +508,16 @@
 
 			const { createdByRef, updatedByRef, scrapedAt, ...firebaseCourse }: CourseRef =
 				resolveSnapshotDefaults(snapshot.ref.path, snapshot.data());
-			const { name, updatedAt } = firebaseCourse;
+			const { name, description, alternativeNames = [name], updatedAt } = firebaseCourse;
 
 			// Update with hydration conditionally
 			if (course.value?.updatedAt !== updatedAt) {
-				route.meta.title = name; // Update meta
+				// Update meta
+				route.meta.title = name;
+				route.meta.description = description;
+				route.meta.keywords = alternativeNames.join(", ");
+
+				// Update course
 				course.value = { ...course.value, ...firebaseCourse };
 			}
 

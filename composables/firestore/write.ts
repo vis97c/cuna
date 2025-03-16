@@ -23,10 +23,11 @@ export async function useDocumentCreate<
 	{ id, ...middleRef }: Vgr & { id?: string },
 	createdCallback?: (ref: DocumentReference<Vgr>) => Promise<void> | void
 ): Promise<DocumentReference<Vgr> | undefined> {
-	if (process.server) return;
-
 	const SESSION = useSessionStore();
 	const { $clientFirestore } = useNuxtApp();
+
+	if (import.meta.server || !$clientFirestore) return;
+
 	// get collection ref
 	const collectionRef = <CollectionReference<Vgr>>collection($clientFirestore, collectionId);
 	const partialRef = <Vgr>middleRef;
@@ -83,10 +84,11 @@ export async function useDocumentUpdate<
 	V extends Record<string, any>,
 	Vgr extends GetRef<V> = GetRef<V>,
 >(node: SharedDocument, middleRef: Partial<Vgr> = {}): Promise<boolean> {
-	if (process.server) return false;
-
 	const SESSION = useSessionStore();
 	const { $clientFirestore } = useNuxtApp();
+
+	if (import.meta.server || !$clientFirestore) return false;
+
 	const docRef = <DocumentReference<Vgr>>doc($clientFirestore, node.id || ""); // get node ref
 	const partialRef = <Vgr>middleRef;
 	const lastUpdatedAt = node.updatedAt ? new Date(node.updatedAt).getTime() : 0;
@@ -125,10 +127,11 @@ export async function useDocumentClone<
 	V extends Record<string, any>,
 	Vgr extends GetRef<V> = GetRef<V>,
 >(node: SharedDocument, middleRef: Partial<Vgr> = {}): Promise<boolean> {
-	if (process.server) return false;
-
 	const { $clientFirestore } = useNuxtApp();
 	const SESSION = useSessionStore();
+
+	if (import.meta.server || !$clientFirestore) return false;
+
 	const path = node.id || "";
 	const docRef = <DocumentReference<Vgr>>doc($clientFirestore, path);
 	const data = (await getDoc(docRef)).data();
@@ -167,9 +170,10 @@ export async function useDocumentClone<
 
 /** Deletes given document */
 export async function useDocumentDelete(node: SharedDocument): Promise<boolean> {
-	if (process.server) return false;
-
 	const { $clientFirestore } = useNuxtApp();
+
+	if (import.meta.server || !$clientFirestore) return false;
+
 	const path = node.id || "";
 	const docRef = doc($clientFirestore, path);
 

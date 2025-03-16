@@ -24,5 +24,8 @@ export const useAppStore = defineStore("app", {
 
 			this.instance = instance;
 		},
+		unsetInstance() {
+			this.instance = undefined;
+		},
 	},
 });

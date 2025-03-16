@@ -67,6 +67,12 @@ export interface User extends FirebaseDocument, FromData<UserData> {}
  * App instance
  */
 export interface Instance extends SharedDocument, FromData<InstanceData> {}
+/**
+ * This one goes to the database
+ *
+ * Omit automation
+ */
+export interface InstanceRef extends GetRef<Instance> {}
 
 /**
  * SIA Teacher

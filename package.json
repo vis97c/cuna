@@ -46,7 +46,7 @@
   },
   "packageManager": "yarn@4.1.0",
   "engines": {
-    "node": "18"
+    "node": ">=20"
   },
   "workspaces": [
     "functions"
@@ -61,8 +61,8 @@
     "@pinia/nuxt": "^0.10.1",
     "@vueuse/core": "^10.7.2",
     "firebase": "^11.0.2",
-    "firebase-admin": "^12.7.0",
-    "firebase-functions": "^6.1.0",
+    "firebase-admin": "^13.2.0",
+    "firebase-functions": "^6.3.2",
     "lodash-es": "^4.17.21",
     "nuxt": "^3.14.159",
     "pinia": "^2.2.6",

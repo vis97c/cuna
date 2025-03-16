@@ -36,7 +36,12 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 
 		return resolveSnapshotRefs(snapshot, { level, omit, canModerate: (auth?.role ?? 3) < 3 });
 	} catch (err) {
-		if (isError(err)) serverLogger("api:all:[collectionId]:[documentId]", err.message, err);
+		if (isError(err)) {
+			serverLogger("api:all:[collectionId]:[documentId]", err.message, {
+				path: event.path,
+				err,
+			});
+		}
 
 		throw err;
 	}

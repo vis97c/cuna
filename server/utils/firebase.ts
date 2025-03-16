@@ -36,7 +36,7 @@ export function debugFirebaseServer<T extends EventHandlerRequest>(
 ) {
 	const { debugFirebase } = useRuntimeConfig().public;
 
-	if (debugFirebase && process.server) {
+	if (debugFirebase && import.meta.server) {
 		const url = getRequestURL(event);
 
 		console.group("\x1b[34m%s\x1b[0m", url);

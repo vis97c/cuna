@@ -10,10 +10,10 @@ export async function useFilesUpload(
 	type = "images"
 ): Promise<string[]> {
 	const SESSION = useSessionStore();
-
-	if (!SESSION.canEdit) return [];
-
 	const { $clientFirestore } = useNuxtApp();
+
+	if (!SESSION.canEdit || !$clientFirestore) return [];
+
 	const storage = getStorage();
 	// keep count
 	const countersCollectionRef = collection($clientFirestore, "counters");

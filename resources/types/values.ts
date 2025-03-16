@@ -28,3 +28,13 @@ export type CourseValuesWithProgram = PartialCourseValues & { program: uSIAProgr
  * Code or Program
  */
 export type CourseValues = CourseValuesWithCode | CourseValuesWithProgram;
+
+export interface InstanceValues {
+	description?: string;
+	keywords?: string;
+}
+
+export interface InstanceBannerValues {
+	message: string;
+	url: string;
+}

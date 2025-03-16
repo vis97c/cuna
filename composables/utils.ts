@@ -75,3 +75,35 @@ export const useLogger: tLogger = async (...args): Promise<void> => {
 		console.error("Error logging to db", err);
 	}
 };
+
+/**
+ * Return object with differing properties if any
+ */
+export function getValuesDiff<V extends Record<string, any>>(
+	values: V,
+	expectedValues: Partial<V>
+) {
+	const keysWithDifference: Array<keyof V> = [];
+	const differentValues: Partial<V> = {};
+
+	for (const k in expectedValues) {
+		if (!Object.hasOwn(expectedValues, k)) continue;
+
+		const expected = ![null, undefined, ""].includes(expectedValues[k]);
+		const provided = values[k] || values[k] === 0;
+
+		// If provided or expected
+		if (k in values || (expected && !provided)) {
+			const equal = isEqual(values[k], expectedValues[k]);
+
+			if (equal) continue;
+
+			keysWithDifference.push(k);
+			differentValues[k] = <V[keyof V]>(values[k] ?? "");
+		}
+	}
+
+	if (!keysWithDifference.length) return;
+
+	return differentValues;
+}

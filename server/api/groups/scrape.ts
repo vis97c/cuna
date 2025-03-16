@@ -643,7 +643,12 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 
 			return true;
 		} catch (err) {
-			if (isError(err)) serverLogger("api:groups:scrape", err.message, err);
+			if (isError(err)) {
+				serverLogger("api:groups:scrape", err.message, {
+					path: event.path,
+					err,
+				});
+			}
 
 			return false;
 		}
@@ -659,7 +664,9 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 			} catch (err) {
 				puppet.close();
 
-				if (isError(err)) serverLogger("api:groups:scrape", err.message, err);
+				if (isError(err)) {
+					serverLogger("api:groups:scrape", err.message, { path: event.path, err });
+				}
 
 				reject(err);
 			}

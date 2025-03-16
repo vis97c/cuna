@@ -98,7 +98,9 @@ export default defineConditionallyCachedEventHandler(async function (event, inst
 		if (page) return getEdgesPage({ event, instance, auth }, query);
 		else return getQueryAsEdges({ event, instance, auth }, query);
 	} catch (err) {
-		if (isError(err)) serverLogger("api:courses:search", err.message, err);
+		if (isError(err)) {
+			serverLogger("api:courses:search", err.message, { path: event.path, err });
+		}
 
 		throw err;
 	}

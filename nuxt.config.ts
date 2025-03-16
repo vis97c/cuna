@@ -35,10 +35,6 @@ const stylesheets: string[] = [
 	"https://unpkg.com/@fortawesome/fontawesome-free@^6/css/all.min.css",
 	"https://unpkg.com/sweetalert2@^11/dist/sweetalert2.min.css",
 ];
-const keywords =
-	"Visor de cupos UNAL, Cursos disponibles UNAL, Matrícula UNAL, Herramienta de búsqueda de cursos, Seguimiento de cupos UNAL, Estudiantes Universidad Nacional, Disponibilidad de cursos UNAL, Cuna UNAL, Plataforma de matrícula UNAL";
-const description =
-	"Cuna es una herramienta para que busques los cursos de la UNAL fácilmente. Consulta la disponibilidad de materias y los cupos disponibles durante la matrícula. ¡No te quedes sin cupo!";
 
 // compile on runtime when debuggin CSS
 debugCSS ? css.push("@/assets/scss/vendor.scss") : stylesheets.push("/dist/vendor.min.css?k=1");
@@ -46,8 +42,13 @@ debugCSS ? css.push("@/assets/scss/vendor.scss") : stylesheets.push("/dist/vendo
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
 	compatibilityDate: "2025-03-02",
-	devtools: { enabled: debugNuxt, timeline: { enabled: debugNuxt } },
-	experimental: { viewTransition: true },
+	devtools: {
+		enabled: debugNuxt,
+		timeline: { enabled: debugNuxt },
+	},
+	experimental: {
+		viewTransition: true,
+	},
 	app: {
 		keepalive: true,
 		pageTransition: { name: "page", mode: "out-in" },
@@ -57,23 +58,10 @@ export default defineNuxtConfig({
 			meta: [
 				{ charset: "utf-8" },
 				{ name: "viewport", content: "width=device-width, initial-scale=1" },
-				{ name: "description", content: description },
-				{ name: "keywords", content: keywords },
-				{ property: "og:title", content: "Cuna ⋅ Visor de cupos UNAL." },
-				{ property: "og:description", content: description },
-				{ property: "og:image", content: "/images/seo.jpg" },
-				{ property: "og:type", content: "website" },
-				{ property: "og:url", content: "https://cuna.com.co/" },
-				{ property: "og:site_name", content: "Cuna" },
-				{ name: "twitter:card", content: "summary_large_image" },
-				{ name: "twitter:title", content: "Cuna ⋅ Visor de cupos UNAL." },
-				{ name: "twitter:description", content: description },
-				{ name: "twitter:image", content: "/images/seo.jpg" },
 				{ name: "msvalidate.01", content: "BBF99508118DB02449397517DA5EAE5C" },
 			],
 			link: [
 				{ rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
-				{ rel: "canonical", href: "https://cuna.com.co/" },
 				{
 					rel: "preconnect",
 					href: "https://fonts.googleapis.com/",
@@ -84,8 +72,8 @@ export default defineNuxtConfig({
 				{ rel: "dns-prefetch", href: "https://unpkg.com/" },
 				...stylesheets.map(getStyleSheetPreload),
 			],
-			style: [{ children: loaderCss }],
-			noscript: [{ children: "This app requires javascript to work" }],
+			style: [{ innerHTML: loaderCss }],
+			noscript: [{ innerHTML: "This app requires javascript to work" }],
 		},
 	},
 	devServer: { https: debugHTTPS && { key: "server.key", cert: "server.crt" } },
