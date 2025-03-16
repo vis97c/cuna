@@ -1,6 +1,5 @@
 import { onCreated, onUpdated } from "./utils/event";
 
-export * from "./storage";
 export * from "./users";
 export * from "./courses";
 export * from "./teachers";

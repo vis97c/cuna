@@ -96,7 +96,7 @@ export default defineNuxtConfig({
 			gen: 2,
 			httpsOptions: {
 				region: "us-east1",
-				maxInstances: 3,
+				maxInstances: 100,
 				memory: "2GiB",
 				timeoutSeconds: 300,
 			},

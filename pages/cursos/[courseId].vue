@@ -265,7 +265,7 @@
 		pending: teachersPending,
 		refresh: refreshTeachers,
 	} = useAsyncData(
-		`api:teachers:course:${routeId.value}`,
+		`api:teachers:course:${indexedCourse.value?.code}`,
 		async () => {
 			const code = indexedCourse.value?.code;
 
@@ -278,7 +278,7 @@
 
 			return teachersEdges.map(({ node }) => node);
 		},
-		{ watch: [() => indexedCourse.value?.updatedAt] }
+		{ watch: [() => indexedCourse.value?.updatedAt, () => indexedCourse.value?.code] }
 	);
 
 	const course = computed({
@@ -486,7 +486,7 @@
 	onDeactivated(() => (deactivated.value = true));
 	onBeforeUnmount(unsub);
 	onMounted(() => {
-		if (import.meta.server) return;
+		if (import.meta.server || !SESSION.user) return;
 
 		const courseId = <string>route.params.courseId;
 		const courseRef = doc($clientFirestore, "courses", courseId);
@@ -513,9 +513,6 @@
 				route.meta.title = name; // Update meta
 				course.value = { ...course.value, ...firebaseCourse };
 			}
-
-			// Read only mode
-			if (!SESSION.user) return;
 
 			const minutes = APP.instance?.config?.coursesScrapeRate || 5;
 			const nowMilis = new Date().getTime();
