@@ -2,16 +2,15 @@ import type { iSelectOption } from "@open-xamu-co/ui-common-types";
 import { isEqual } from "lodash-es";
 
 import {
-	eSIABogotaFaculty,
-	eSIALaPazProgram,
-	eSIALaPazFaculty,
-	eSIALevel,
-	eSIAPlace,
-	eSIAPregradoLaPazProgram,
-	eSIAScienceBogotaProgram,
 	type uSIAFaculty,
 	type uSIAProgram,
+	eSIALevel,
+	eSIAPlace,
+	eSIATypology,
+	// Bogota
+	eSIABogotaFaculty,
 	eSIABogotaProgram,
+	eSIAScienceBogotaProgram,
 	eSIAMedicineBogotaProgram,
 	eSIAVetMedicineBogotaProgram,
 	eSIAEnfermeryBogotaProgram,
@@ -22,7 +21,11 @@ import {
 	eSIAHumanScienceBogotaProgram,
 	eSIAEconomicalScienceBogotaProgram,
 	eSIAAgrarianScienceBogotaProgram,
-	eSIATypology,
+	// La Paz
+	eSIAPregradoLaPazProgram,
+	eSIALaPazProgram,
+	eSIALaPazFaculty,
+	// Medellin
 	eSIAMedellinFaculty,
 	eSIAMedellinProgram,
 	eSIAMinesMedellinProgram,
@@ -30,11 +33,43 @@ import {
 	eSIAScienceMedellinProgram,
 	eSIAAgrarianSciencesMedellinProgram,
 	eSIAHumanSciencesAMedellinProgram,
+	// Manizales
 	eSIAManizalesFaculty,
 	eSIAManizalesProgram,
 	eSIAEngineeringAndArchitectureManizalesProgram,
 	eSIAExactSciencesManizalesProgram,
 	eSIAManagementManizalesProgram,
+	// Palmira
+	eSIAPalmiraFaculty,
+	eSIAPalmiraProgram,
+	eSIAgronomicalSciencesPalmiraProgram,
+	eSIAEngineeringAndAdministrationPalmiraProgram,
+	eSIAVeterinarialMedicineAndZootechnyPalmiraProgram,
+	// Tumaco
+	eSIATumacoFaculty,
+	eSIATumacoProgram,
+	eSIAAdministrationTumacoProgram,
+	eSIALawAndSocialPoliticsTumacoProgram,
+	eSIANursingTumacoProgram,
+	// Amazonia
+	eSIAAmazoniaFaculty,
+	eSIAAmazoniaProgram,
+	eSIAArchitectureAmazoniaProgram,
+	eSIANaturalSciencesAmazoniaProgram,
+	eSIAHumanSciencesAmazoniaProgram,
+	eSIAMiningAmazoniaProgram,
+	// Caribe
+	eSIACaribeFaculty,
+	eSIACaribeProgram,
+	eSIAMiningCaribeProgram,
+	eSIANursingCaribeProgram,
+	// Orinoquia
+	eSIAOrinoquiaFaculty,
+	eSIAOrinoquiaProgram,
+	eSIAHumanSciencesOrinoquiaProgram,
+	eSIAMiningOrinoquiaProgram,
+	eSIANaturalSciencesOrinoquiaProgram,
+	eSIANursingOrinoquiaProgram,
 } from "~/functions/src/types/SIA";
 
 function toOptions(enumLike: object): iSelectOption[] {
@@ -74,6 +109,14 @@ export function useCourseProgramOptions(
 				return toOptions(eSIAMedellinFaculty);
 			case eSIAPlace.MANIZALES:
 				return toOptions(eSIAManizalesFaculty);
+			case eSIAPlace.PALMIRA:
+				return toOptions(eSIAPalmiraFaculty);
+			case eSIAPlace.TUMACO:
+				return toOptions(eSIATumacoFaculty);
+			case eSIAPlace.CARIBE:
+				return toOptions(eSIACaribeFaculty);
+			case eSIAPlace.AMAZONÍA:
+				return toOptions(eSIAAmazoniaFaculty);
 		}
 
 		return [];
@@ -149,6 +192,78 @@ export function useCourseProgramOptions(
 						return toOptions(eSIAExactSciencesManizalesProgram);
 					case eSIAManizalesFaculty.FACULTAD_DE_ADMINISTRACIÓN:
 						return toOptions(eSIAManagementManizalesProgram);
+				}
+
+				break;
+			case eSIAPlace.PALMIRA:
+				switch (selectedFaculty.value) {
+					// programas sede Palmira
+					case eSIAPalmiraFaculty.SEDE_PALMIRA:
+						return toOptions(eSIAPalmiraProgram);
+					case eSIAPalmiraFaculty.FACULTAD_DE_CIENCIAS_AGROPECUARIAS:
+						return toOptions(eSIAgronomicalSciencesPalmiraProgram);
+					case eSIAPalmiraFaculty.FACULTAD_DE_INGENIERIA_Y_ADMINISTRACIÓN:
+						return toOptions(eSIAEngineeringAndAdministrationPalmiraProgram);
+					case eSIAPalmiraFaculty.FACULTAD_DE_MEDICINA_VETERINARIA_Y_DE_ZOOTECNIA_PAET:
+						return toOptions(eSIAVeterinarialMedicineAndZootechnyPalmiraProgram);
+				}
+
+				break;
+			case eSIAPlace.TUMACO:
+				switch (selectedFaculty.value) {
+					// programas sede Tumaco
+					case eSIATumacoFaculty.SEDE_TUMACO:
+						return toOptions(eSIATumacoProgram);
+					case eSIATumacoFaculty.FACULTAD_DE_ADMINISTRACION:
+						return toOptions(eSIAAdministrationTumacoProgram);
+					case eSIATumacoFaculty.FACULTAD_DE_DERECHO_CIENCIAS_POLITICAS_Y_SOCIALES:
+						return toOptions(eSIALawAndSocialPoliticsTumacoProgram);
+					case eSIATumacoFaculty.FACULTAD_DE_ENFERMERIA:
+						return toOptions(eSIANursingTumacoProgram);
+				}
+
+				break;
+			case eSIAPlace.AMAZONÍA:
+				switch (selectedFaculty.value) {
+					// programas sede Amazonía
+					case eSIAAmazoniaFaculty.SEDE_AMAZONIA:
+						return toOptions(eSIAAmazoniaProgram);
+					case eSIAAmazoniaFaculty.FACULTAD_DE_ARQUITECTURA:
+						return toOptions(eSIAArchitectureAmazoniaProgram);
+					case eSIAAmazoniaFaculty.FACULTAD_DE_CIENCIAS_EXACTAS_Y_NATURALES:
+						return toOptions(eSIANaturalSciencesAmazoniaProgram);
+					case eSIAAmazoniaFaculty.FACULTAD_DE_CIENCIAS_HUMANAS:
+						return toOptions(eSIAHumanSciencesAmazoniaProgram);
+					case eSIAAmazoniaFaculty.FACULTAD_DE_MINAS:
+						return toOptions(eSIAMiningAmazoniaProgram);
+				}
+
+				break;
+			case eSIAPlace.CARIBE:
+				switch (selectedFaculty.value) {
+					// programas sede Caribe
+					case eSIACaribeFaculty.SEDE_CARIBE:
+						return toOptions(eSIACaribeProgram);
+					case eSIACaribeFaculty.FACULTAD_DE_ENFERMERÍA:
+						return toOptions(eSIANursingCaribeProgram);
+					case eSIACaribeFaculty.FACULTAD_DE_MINAS:
+						return toOptions(eSIAMiningCaribeProgram);
+				}
+
+				break;
+			case eSIAPlace.ORINOQUÍA:
+				switch (selectedFaculty.value) {
+					// programas sede Orinoquia
+					case eSIAOrinoquiaFaculty.SEDE_ORINOQUIA:
+						return toOptions(eSIAOrinoquiaProgram);
+					case eSIAOrinoquiaFaculty.FACULTAD_DE_ENFERMERÍA:
+						return toOptions(eSIANursingOrinoquiaProgram);
+					case eSIAOrinoquiaFaculty.FACULTAD_DE_CIENCIAS_EXACTAS_Y_NATURALES:
+						return toOptions(eSIANaturalSciencesOrinoquiaProgram);
+					case eSIAOrinoquiaFaculty.FACULTAD_DE_CIENCIAS_HUMANAS:
+						return toOptions(eSIAHumanSciencesOrinoquiaProgram);
+					case eSIAOrinoquiaFaculty.FACULTAD_DE_MINAS:
+						return toOptions(eSIAMiningOrinoquiaProgram);
 				}
 
 				break;

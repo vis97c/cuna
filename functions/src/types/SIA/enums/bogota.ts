@@ -158,6 +158,21 @@ export enum eSIAAgrarianScienceBogotaProgram {
 	INGENIERÍA_AGRONÓMICA = "2505 INGENIERÍA AGRONÓMICA",
 }
 
+export const eSIABogotaPrograms = {
+	// ...eSIABogotaProgram,
+	...eSIAMedicineBogotaProgram,
+	...eSIAVetMedicineBogotaProgram,
+	...eSIAEnfermeryBogotaProgram,
+	...eSIAArtsBogotaProgram,
+	...eSIAEngineeringBogotaProgram,
+	...eSIAOdontologyBogotaProgram,
+	...eSIALawBogotaProgram,
+	...eSIAScienceBogotaProgram,
+	...eSIAEconomicalScienceBogotaProgram,
+	...eSIAHumanScienceBogotaProgram,
+	...eSIAAgrarianScienceBogotaProgram,
+} as const;
+
 export type uSIABogotaProgram =
 	| eSIABogotaProgram
 	| eSIAMedicineBogotaProgram

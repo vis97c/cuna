@@ -5,10 +5,14 @@ import type { Course, Group, User } from "~/resources/types/entities";
 import {
 	eSIAAgrarianScienceBogotaProgram,
 	eSIAAgrarianSciencesMedellinProgram,
+	eSIAAmazoniaFaculty,
+	eSIAAmazoniaProgram,
 	eSIAArchitectureMedellinProgram,
 	eSIAArtsBogotaProgram,
 	eSIABogotaFaculty,
 	eSIABogotaProgram,
+	eSIACaribeFaculty,
+	eSIACaribeProgram,
 	eSIAEconomicalScienceBogotaProgram,
 	eSIAEnfermeryBogotaProgram,
 	eSIAEngineeringAndArchitectureManizalesProgram,
@@ -27,10 +31,16 @@ import {
 	eSIAMedicineBogotaProgram,
 	eSIAMinesMedellinProgram,
 	eSIAOdontologyBogotaProgram,
+	eSIAOrinoquiaFaculty,
+	eSIAOrinoquiaProgram,
+	eSIAPalmiraFaculty,
+	eSIAPalmiraProgram,
 	eSIAPlace,
 	eSIAPregradoLaPazProgram,
 	eSIAScienceBogotaProgram,
 	eSIAScienceMedellinProgram,
+	eSIATumacoFaculty,
+	eSIATumacoProgram,
 	eSIATypology,
 	eSIAVetMedicineBogotaProgram,
 } from "~/functions/src/types/SIA/enums";
@@ -145,6 +155,36 @@ const UNAL: Record<eSIAPlace, UNALItem[]> = {
 		{
 			faculty: eSIAManizalesFaculty.FACULTAD_DE_ADMINISTRACIÓN,
 			programs: Object.values(eSIAManagementManizalesProgram),
+		},
+	],
+	[eSIAPlace.PALMIRA]: [
+		{
+			faculty: eSIAPalmiraFaculty.SEDE_PALMIRA,
+			programs: Object.values(eSIAPalmiraProgram),
+		},
+	],
+	[eSIAPlace.AMAZONÍA]: [
+		{
+			faculty: eSIAAmazoniaFaculty.SEDE_AMAZONIA,
+			programs: Object.values(eSIAAmazoniaProgram),
+		},
+	],
+	[eSIAPlace.CARIBE]: [
+		{
+			faculty: eSIACaribeFaculty.SEDE_CARIBE,
+			programs: Object.values(eSIACaribeProgram),
+		},
+	],
+	[eSIAPlace.ORINOQUÍA]: [
+		{
+			faculty: eSIAOrinoquiaFaculty.SEDE_ORINOQUIA,
+			programs: Object.values(eSIAOrinoquiaProgram),
+		},
+	],
+	[eSIAPlace.TUMACO]: [
+		{
+			faculty: eSIATumacoFaculty.SEDE_TUMACO,
+			programs: Object.values(eSIATumacoProgram),
 		},
 	],
 };

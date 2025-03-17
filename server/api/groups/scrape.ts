@@ -15,14 +15,33 @@ import {
 import type { Group } from "~/resources/types/entities";
 import type { ScrapedCourse } from "~/resources/types/scraping";
 import {
+	// Amazonía
+	eSIAAmazoniaFaculty,
+	eSIAAmazoniaProgram,
+	// Bogotá
 	eSIABogotaFaculty,
 	eSIABogotaProgram,
+	// Caribe
+	eSIACaribeFaculty,
+	eSIACaribeProgram,
+	// La Paz
 	eSIALaPazFaculty,
 	eSIALaPazProgram,
+	// Manizales
 	eSIAManizalesFaculty,
 	eSIAManizalesProgram,
+	// Medellín
 	eSIAMedellinFaculty,
 	eSIAMedellinProgram,
+	// Orinoquia
+	eSIAOrinoquiaFaculty,
+	eSIAOrinoquiaProgram,
+	// Palmira
+	eSIAPalmiraFaculty,
+	eSIAPalmiraProgram,
+	// Tumaco
+	eSIATumacoFaculty,
+	eSIATumacoProgram,
 } from "~/functions/src/types/SIA/enums";
 import { TimedPromise } from "~/resources/utils/promises";
 import { Cyrb53, triGram } from "~/resources/utils/firestore";
@@ -61,15 +80,15 @@ export const eSIALevelOld: Record<eSIALevel, `${number}`> = {
 };
 
 export const eSIAPlaceOld: Record<eSIAPlace, `${number}`> = {
-	// [eSIAPlace.AMAZONIA]: "1",
+	[eSIAPlace.AMAZONÍA]: "1",
 	[eSIAPlace.BOGOTÁ]: "2",
-	// [eSIAPlace.CARIBE]: "3",
+	[eSIAPlace.CARIBE]: "3",
 	[eSIAPlace.LA_PAZ]: "4",
 	[eSIAPlace.MANIZALES]: "5",
 	[eSIAPlace.MEDELLÍN]: "6",
-	// [eSIAPlace.ORINOQUIA]: "7",
-	// [eSIAPlace.PALMIRA]: "8",
-	// [eSIAPlace.TUMACO]: "9",
+	[eSIAPlace.ORINOQUÍA]: "7",
+	[eSIAPlace.PALMIRA]: "8",
+	[eSIAPlace.TUMACO]: "9",
 };
 
 export const eSIATypologyOld: Record<eSIATypology, `${number}`> = {
@@ -221,6 +240,31 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 			case eSIAPlace.MANIZALES:
 				if (LEByFaculty) faculties = [eSIAManizalesFaculty.SEDE_MANIZALES];
 				if (LEByProgram) programs = [eSIAManizalesProgram.COMPONENTE_DE_LIBRE_ELECCIÓN];
+
+				break;
+			case eSIAPlace.PALMIRA:
+				if (LEByFaculty) faculties = [eSIAPalmiraFaculty.SEDE_PALMIRA];
+				if (LEByProgram) programs = [eSIAPalmiraProgram.COMPONENTE_DE_LIBRE_ELECCIÓN];
+
+				break;
+			case eSIAPlace.TUMACO:
+				if (LEByFaculty) faculties = [eSIATumacoFaculty.SEDE_TUMACO];
+				if (LEByProgram) programs = [eSIATumacoProgram.COMPONENTE_DE_LIBRE_ELECCIÓN];
+
+				break;
+			case eSIAPlace.AMAZONÍA:
+				if (LEByFaculty) faculties = [eSIAAmazoniaFaculty.SEDE_AMAZONIA];
+				if (LEByProgram) programs = [eSIAAmazoniaProgram.COMPONENTE_DE_LIBRE_ELECCIÓN];
+
+				break;
+			case eSIAPlace.CARIBE:
+				if (LEByFaculty) faculties = [eSIACaribeFaculty.SEDE_CARIBE];
+				if (LEByProgram) programs = [eSIACaribeProgram.COMPONENTE_DE_LIBRE_ELECCIÓN];
+
+				break;
+			case eSIAPlace.ORINOQUÍA:
+				if (LEByFaculty) faculties = [eSIAOrinoquiaFaculty.SEDE_ORINOQUIA];
+				if (LEByProgram) programs = [eSIAOrinoquiaProgram.COMPONENTE_DE_LIBRE_ELECCIÓN];
 
 				break;
 		}

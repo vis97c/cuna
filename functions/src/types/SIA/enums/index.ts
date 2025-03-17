@@ -1,12 +1,22 @@
+import type { eSIAAmazoniaFaculty, uSIAAmazoniaProgram } from "./amazonia";
 import type { eSIABogotaFaculty, uSIABogotaProgram } from "./bogota";
+import type { eSIACaribeFaculty, uSIACaribeProgram } from "./caribe";
 import type { eSIALaPazFaculty, uSIALaPazProgram } from "./la-paz";
 import type { eSIAManizalesFaculty, uSIAManizalesProgram } from "./manizales";
 import type { eSIAMedellinFaculty, uSIAMedellinProgram } from "./medellin";
+import type { eSIAOrinoquiaFaculty, uSIAOrinoquiaProgram } from "./orinoquia";
+import type { eSIAPalmiraFaculty, uSIAPalmiraProgram } from "./palmira";
+import type { eSIATumacoFaculty, uSIATumacoProgram } from "./tumaco";
 
 export * from "./bogota";
 export * from "./la-paz";
 export * from "./medellin";
 export * from "./manizales";
+export * from "./amazonia";
+export * from "./caribe";
+export * from "./orinoquia";
+export * from "./palmira";
+export * from "./tumaco";
 
 export enum eSIALevel {
 	PREGRADO = "PREGRADO",
@@ -27,25 +37,35 @@ export enum eSIATypology {
  * All UNAL places
  */
 export enum eSIAPlace {
-	BOGOTÁ = "SEDE BOGOTÁ",
-	LA_PAZ = "SEDE DE LA PAZ",
-	MEDELLÍN = "SEDE MEDELLÍN",
-	MANIZALES = "SEDE MANIZALES",
-	// PALMIRA = "SEDE PALMIRA",
-	// TUMACO = "SEDE TUMACO",
-	// AMAZONÍA = "SEDE AMAZONÍA",
-	// CARIBE = "SEDE CARIBE",
-	// ORINOQUÍA = "SEDE ORINOQUÍA",
+	LA_PAZ = "SEDE DE LA PAZ", // L000
+	BOGOTÁ = "SEDE BOGOTÁ", // 2000
+	MEDELLÍN = "SEDE MEDELLÍN", // 3000
+	MANIZALES = "SEDE MANIZALES", // 4000
+	PALMIRA = "SEDE PALMIRA", // 5000
+	AMAZONÍA = "SEDE AMAZONÍA", // 6000
+	ORINOQUÍA = "SEDE ORINOQUÍA", // 7000
+	CARIBE = "SEDE CARIBE", // 8000
+	TUMACO = "SEDE TUMACO", // 9000
 }
 
 export type uSIAFaculty =
 	| eSIABogotaFaculty
 	| eSIALaPazFaculty
 	| eSIAMedellinFaculty
-	| eSIAManizalesFaculty;
+	| eSIAManizalesFaculty
+	| eSIAPalmiraFaculty
+	| eSIATumacoFaculty
+	| eSIAAmazoniaFaculty
+	| eSIACaribeFaculty
+	| eSIAOrinoquiaFaculty;
 
 export type uSIAProgram =
 	| uSIABogotaProgram
 	| uSIALaPazProgram
 	| uSIAMedellinProgram
-	| uSIAManizalesProgram;
+	| uSIAManizalesProgram
+	| uSIAPalmiraProgram
+	| uSIATumacoProgram
+	| uSIAAmazoniaProgram
+	| uSIACaribeProgram
+	| uSIAOrinoquiaProgram;
