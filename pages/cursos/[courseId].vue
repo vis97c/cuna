@@ -208,16 +208,11 @@
 	import type { iInvalidInput, iPageEdge } from "@open-xamu-co/ui-common-types";
 	import { eColors, eSizes } from "@open-xamu-co/ui-common-enums";
 
-	import type {
-		Course,
-		CourseRef,
-		EnrolledGroup,
-		Group,
-		Teacher,
-	} from "~/resources/types/entities";
+	import type { Course, CourseRef, Group, Teacher } from "~/resources/types/entities";
 	import { resolveSnapshotDefaults } from "~/resources/utils/firestore";
 	import { eSIALevel, eSIAPlace } from "~/functions/src/types/SIA";
 	import { TableTeachersList, TableEnroll, TableWeek } from "#components";
+	import type { EnrolledGroup } from "~/functions/src/types/entities";
 
 	/**
 	 * Course page

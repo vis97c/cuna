@@ -24,6 +24,12 @@ export interface LogData extends FirebaseData {
 	error?: string;
 }
 
+export interface EnrolledGroup extends Pick<GroupData, "name" | "schedule" | "teachers"> {
+	courseId: string;
+	courseCode: string;
+	courseName: string;
+}
+
 /**
  * Firebase user
  */
@@ -34,6 +40,10 @@ export interface UserData extends FirebaseData {
 	photoURL?: string | null;
 	role?: number;
 	isAnonymous?: boolean | null;
+	/**
+	 * Enrolled courses (codes)
+	 */
+	enrolled?: Record<string, EnrolledGroup>;
 }
 
 interface InstanceConfig {

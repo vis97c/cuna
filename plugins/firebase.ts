@@ -3,17 +3,19 @@ import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-ch
 import { getAuth, onIdTokenChanged, type Auth } from "firebase/auth";
 import {
 	doc,
+	DocumentReference,
 	Firestore,
-	getDoc,
 	getFirestore,
 	initializeFirestore,
 	onSnapshot,
 	setDoc,
+	type Unsubscribe,
 } from "firebase/firestore";
 import { getAnalytics } from "firebase/analytics";
 import { getPerformance } from "firebase/performance";
 
 import { resolveSnapshotDefaults } from "../resources/utils/firestore";
+import type { User } from "~/resources/types/entities";
 
 declare global {
 	interface Window {
@@ -39,24 +41,24 @@ async function setAppState(provide?: ClientProvide) {
 		if (import.meta.server || !provide) return;
 
 		const { clientAuth, clientFirestore } = provide;
-
 		// set app instance
 		const instanceRef = doc(clientFirestore, "instances", provide.instance);
+		let unsubUser: Unsubscribe;
 
 		onSnapshot(instanceRef, (snapshot) => {
 			APP.setInstance(resolveSnapshotDefaults(snapshot.id, snapshot.data()));
 		});
 
-		onIdTokenChanged(
-			clientAuth,
-			async (authUser) => {
-				if (!authUser) return SESSION.unsetSession();
+		onIdTokenChanged(clientAuth, async (authUser) => {
+			unsubUser?.();
 
-				const { uid, displayName: name, email, photoURL, isAnonymous } = authUser;
-				const token = await authUser.getIdToken(true);
-				const userRef = doc(clientFirestore, "users", uid);
-				const snapshot = await getDoc(userRef);
+			if (!authUser) return SESSION.unsetSession();
 
+			const { uid, displayName: name, email, photoURL, isAnonymous } = authUser;
+			const token = await authUser.getIdToken(true);
+			const userRef: DocumentReference<User> = doc(clientFirestore, "users", uid);
+
+			unsubUser = onSnapshot(userRef, (snapshot) => {
 				// Create user on firestore.
 				if (!snapshot.exists()) {
 					const user = { uid, name, email, photoURL, isAnonymous, role: 3 };
@@ -83,9 +85,8 @@ async function setAppState(provide?: ClientProvide) {
 				// redirect
 				if (rdr && route.path !== rdr) router.replace(rdr);
 				else if (route.path === "/") router.replace("/cursos");
-			},
-			(err) => useLogger("plugins:firebase:setAppState:onIdTokenChanged", err)
-		);
+			});
+		});
 	} catch (err) {
 		APP.unsetInstance();
 		useLogger("plugins:firebase:setAppState:setInstance", err);

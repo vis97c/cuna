@@ -1,5 +1,5 @@
 export default defineNuxtRouteMiddleware((to) => {
-	if (!process.client || !document.startViewTransition) return;
+	if (import.meta.server || !document.startViewTransition) return;
 
 	// Disable built-in Vue transitions
 	to.meta.pageTransition = false;

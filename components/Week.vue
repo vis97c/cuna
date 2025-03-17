@@ -62,15 +62,13 @@
 										:el="XamuBaseAction"
 										class="x-class --flx-center --flx --p-5 --gap-5 --txtSize-xs"
 										:to="`/cursos/${getDocumentId(group.courseId)}`"
+										:title="`${getHour(schedule.startsAt)} a ${getHour(schedule.startsAt + group.duration)}`"
 										button
 									>
 										<span class="--txtWrap --txtWeight">
 											{{ group.courseName }}
 										</span>
-										<span class="">
-											{{ getHour(schedule.startsAt) }} a
-											{{ getHour(schedule.startsAt + group.duration) }}
-										</span>
+										<span class="">{{ group.name }}</span>
 									</XamuBaseBox>
 								</div>
 							</li>
@@ -85,9 +83,10 @@
 <script setup lang="ts">
 	import { eColors, eThemeColors } from "@open-xamu-co/ui-common-enums";
 
-	import type { EnrolledGroup } from "~/resources/types/entities";
-	import { getDocumentId } from "~/resources/utils/firestore";
 	import { XamuBaseAction } from "#components";
+
+	import { getDocumentId } from "~/resources/utils/firestore";
+	import type { EnrolledGroup } from "~/functions/src/types/entities";
 
 	interface ScheduledGroup {
 		groups: (EnrolledGroup & { duration: number; theme: eThemeColors })[];
@@ -103,8 +102,9 @@
 		eColors.PRIMARY,
 		eColors.SECONDARY,
 		eColors.SUCCESS,
-		eColors.PRIMARY_COMPLEMENT,
 		eColors.DANGER,
+		eColors.SECONDARY_COMPLEMENT,
+		"estudiantes" as any,
 	];
 	const week = computed(() => {
 		const enrolled: ScheduledGroup[][] = [[], [], [], [], [], [], []];

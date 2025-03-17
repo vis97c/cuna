@@ -200,7 +200,11 @@ export async function getQueryAsEdges<T extends EventHandlerRequest>(
 	debugFirebaseServer(event, "getQueryAsEdges", params);
 
 	// Prevent abusive callings (>100)
-	if (!page) query = query.limit(100);
+	if (!page) {
+		const first = Math.min(Number(params.first) || 10, 100); // Page limit
+
+		query = query.limit(first);
+	}
 
 	const snapshot = await query.get();
 

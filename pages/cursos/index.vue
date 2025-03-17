@@ -198,7 +198,7 @@
 <script setup lang="ts">
 	import { debounce } from "lodash-es";
 	import { eSizes } from "@open-xamu-co/ui-common-enums";
-	import type { iPage } from "@open-xamu-co/ui-common-types";
+	import type { iPageEdge } from "@open-xamu-co/ui-common-types";
 
 	import type { Course } from "~/resources/types/entities";
 	import type {
@@ -285,15 +285,14 @@
 	async function fetchCourses(
 		{ faculty, ...query }: Partial<CourseValues> = values.value
 	): Promise<Course[]> {
-		const page = await useFetchQuery<iPage<Course, string>>("/api/courses/search", {
+		const edges = await useFetchQuery<iPageEdge<Course>[]>("/api/courses/search", {
 			...query,
 			first: 6,
-			page: true,
 		});
 		const courses: Course[] = [];
 
-		for (let index = 0; index < page.edges.length; index++) {
-			const { node } = page.edges[index];
+		for (let index = 0; index < edges.length; index++) {
+			const { node } = edges[index];
 
 			// Remove courses with no groups, do not await
 			if (!node.groups?.length) useDocumentDelete(node);

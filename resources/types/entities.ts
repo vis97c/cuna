@@ -95,11 +95,6 @@ export interface Group extends SharedDocument, FromData<GroupData> {}
  * Omit automation
  */
 export interface GroupRef extends GetRef<Group> {}
-export interface EnrolledGroup extends Pick<Group, "name" | "schedule" | "teachers"> {
-	courseId: string;
-	courseCode: string;
-	courseName: string;
-}
 
 /**
  * SIA Course

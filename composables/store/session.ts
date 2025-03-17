@@ -1,7 +1,8 @@
 import { defineStore } from "pinia";
 import { deleteUser, getAuth } from "firebase/auth";
+import { doc, deleteField, updateDoc, DocumentReference } from "firebase/firestore";
 
-import type { Course, EnrolledGroup, User } from "~/resources/types/entities";
+import type { Course, User } from "~/resources/types/entities";
 import {
 	eSIABogotaFaculty,
 	eSIALevel,
@@ -10,6 +11,7 @@ import {
 	type uSIAFaculty,
 	type uSIAProgram,
 } from "~/functions/src/types/SIA";
+import type { EnrolledGroup } from "~/functions/src/types/entities";
 
 export interface iStateSession {
 	user?: User;
@@ -28,10 +30,6 @@ export interface iStateSession {
 	 * PAES, PEAMA
 	 */
 	withNonRegular: boolean;
-	/**
-	 * Enrolled courses (codes)
-	 */
-	enrolled: Record<string, EnrolledGroup>;
 }
 
 /**
@@ -52,10 +50,10 @@ export const useSessionStore = defineStore("session", {
 			lastFacultySearch: eSIABogotaFaculty.CIENCIAS,
 			lastProgramSearch: eSIAScienceBogotaProgram.CC,
 			withNonRegular: false,
-			enrolled: {},
 		};
 	},
 	getters: {
+		/** users/uid */
 		id({ user }) {
 			return user ? `users/${user?.uid}` : "";
 		},
@@ -64,6 +62,9 @@ export const useSessionStore = defineStore("session", {
 			const [firstName = "Sin Nombre", secondName = "", firstLastName = ""] = fullName;
 
 			return `${firstName} ${firstLastName || secondName}`.trim();
+		},
+		enrolled({ user }) {
+			return user?.enrolled || {};
 		},
 		canModerate({ user }) {
 			const role = user?.role ?? 3;
@@ -103,10 +104,9 @@ export const useSessionStore = defineStore("session", {
 			this.lastFacultySearch = eSIABogotaFaculty.CIENCIAS;
 			this.lastProgramSearch = eSIAScienceBogotaProgram.CC;
 			this.withNonRegular = false;
-			this.enrolled = {};
 		},
 		async logout() {
-			if (!process.client) return;
+			if (import.meta.server) return;
 
 			const { $clientFirebaseApp } = useNuxtApp();
 			const router = useRouter();
@@ -123,7 +123,7 @@ export const useSessionStore = defineStore("session", {
 			}
 		},
 		async remove() {
-			if (!process.client) return;
+			if (import.meta.server) return;
 
 			const { $clientFirebaseApp } = useNuxtApp();
 			const router = useRouter();
@@ -165,11 +165,26 @@ export const useSessionStore = defineStore("session", {
 		toggleNonRegular(this, newValue = !this.withNonRegular) {
 			this.withNonRegular = newValue;
 		},
-		enroll(group: EnrolledGroup) {
-			this.enrolled[group.courseCode] = group;
+		enroll({ name, schedule, teachers, courseId, courseCode, courseName }: EnrolledGroup) {
+			const { $clientFirestore } = useNuxtApp();
+
+			if (import.meta.server || !$clientFirestore) return;
+
+			const userRef: DocumentReference<User> = doc($clientFirestore, this.id);
+			const enroll = { name, schedule, teachers, courseId, courseCode, courseName };
+
+			// Update enrolled, do not await
+			updateDoc(userRef, { [`enrolled.${courseCode}`]: enroll });
 		},
-		unenroll(group: EnrolledGroup) {
-			delete this.enrolled[group.courseCode];
+		unenroll(courseCode: string) {
+			const { $clientFirestore } = useNuxtApp();
+
+			if (import.meta.server || !$clientFirestore) return;
+
+			const userRef: DocumentReference<User> = doc($clientFirestore, this.id);
+
+			// Update enrolled, do not await
+			updateDoc(userRef, { [`enrolled.${courseCode}`]: deleteField() });
 		},
 	},
 });

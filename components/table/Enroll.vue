@@ -3,7 +3,7 @@
 		v-if="props.value.schedule?.some((day) => day)"
 		:key="props.value.name"
 		:theme="enrolled ? eColors.SUCCESS : eColors.SECONDARY"
-		:tooltip="enrolled ? 'En mi horario' : 'Añadir al horario'"
+		:tooltip="enrolled ? 'Quitar del horario' : 'Añadir al horario'"
 		:active="enrolled"
 		round
 		@click="enrolled = !enrolled"
@@ -15,7 +15,8 @@
 </template>
 <script setup lang="ts">
 	import { eColors } from "@open-xamu-co/ui-common-enums";
-	import type { EnrolledGroup } from "~/resources/types/entities";
+
+	import type { EnrolledGroup } from "~/functions/src/types/entities";
 
 	/**
 	 * Enroll group
@@ -38,7 +39,7 @@
 		set(enroll) {
 			if (enroll) return SESSION.enroll(props.value);
 
-			SESSION.unenroll(props.value);
+			SESSION.unenroll(props.value.courseCode);
 		},
 	});
 </script>
