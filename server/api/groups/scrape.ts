@@ -73,34 +73,6 @@ interface CourseLink {
 	description: string;
 }
 
-export const eSIALevelOld: Record<eSIALevel, `${number}`> = {
-	[eSIALevel.PREGRADO]: "0",
-	// [eSIALevel.DOCTORADO]: "1",
-	[eSIALevel.POSGRADO]: "2",
-};
-
-export const eSIAPlaceOld: Record<eSIAPlace, `${number}`> = {
-	[eSIAPlace.AMAZONÍA]: "1",
-	[eSIAPlace.BOGOTÁ]: "2",
-	[eSIAPlace.CARIBE]: "3",
-	[eSIAPlace.LA_PAZ]: "4",
-	[eSIAPlace.MANIZALES]: "5",
-	[eSIAPlace.MEDELLÍN]: "6",
-	[eSIAPlace.ORINOQUÍA]: "7",
-	[eSIAPlace.PALMIRA]: "8",
-	[eSIAPlace.TUMACO]: "9",
-};
-
-export const eSIATypologyOld: Record<eSIATypology, `${number}`> = {
-	[eSIATypology.DISC_OBLIGATORIA]: "1",
-	[eSIATypology.NIVELACIÓN]: "2",
-	[eSIATypology.TRABAJO_DE_GRADO]: "3",
-	[eSIATypology.FUND_OBLIGATORIA]: "4",
-	[eSIATypology.DISC_OPTATIVA]: "5",
-	[eSIATypology.FUND_OPTATIVA]: "6",
-	[eSIATypology.LIBRE_ELECCIÓN]: "7",
-};
-
 /**
  * Await por page changes after selection
  *
@@ -172,8 +144,16 @@ const puppetConfig = {
  * @see https://github.com/pablomancera/sia_scrapper
  */
 export default defineConditionallyCachedEventHandler(async (event, instance, auth) => {
+	const { serverFirestore } = getServerFirebase();
 	const { debugScrapper } = useRuntimeConfig().public;
-	const { siaOldURL = "", siaOldPath = "", siaOldQuery = "" } = instance?.config || {};
+	const {
+		siaOldURL = "",
+		siaOldPath = "",
+		siaOldQuery = "",
+		siaOldLevel,
+		siaOldPlace,
+		siaOldTypology,
+	} = instance?.config || {};
 	const siaOldEnpoint = siaOldURL + siaOldPath + siaOldQuery;
 
 	// Require auth
@@ -290,14 +270,18 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 			}
 		});
 
+		if (!siaOldLevel?.[level] || !siaOldPlace?.[place]) {
+			throw createError({ statusCode: 500, statusMessage: "Missing place or level lists" });
+		}
+
 		// Select level
 		await puppetPage.click(useId(eIds.LEVEL));
-		await puppetPage.select(useId(eIds.LEVEL), eSIALevelOld[level]);
+		await puppetPage.select(useId(eIds.LEVEL), siaOldLevel[level]);
 		await waitForSelect(puppetPage, eIds.PLACE);
 
 		// Select Place
 		await puppetPage.click(useId(eIds.PLACE));
-		await puppetPage.select(useId(eIds.PLACE), eSIAPlaceOld[place]);
+		await puppetPage.select(useId(eIds.PLACE), siaOldPlace[place]);
 		await waitForSelect(puppetPage, eIds.FACULTY);
 
 		// Select Faculty
@@ -377,11 +361,18 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 							);
 
 							try {
+								if (!siaOldTypology?.[typology]) {
+									throw createError({
+										statusCode: 500,
+										statusMessage: "Missing typology list",
+									});
+								}
+
 								// Select typology, by default the system will return all but LE
 								await puppetPage.click(useId(eIds.TYPOLOGY));
 								await puppetPage.select(
 									useId(eIds.TYPOLOGY),
-									eSIATypologyOld[typology]
+									siaOldTypology[typology]
 								);
 
 								// Additional actions for LE
@@ -639,8 +630,6 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 	 * Update firebase course
 	 */
 	async function updateCourse(): Promise<boolean> {
-		const { serverFirestore } = getServerFirebase();
-
 		try {
 			const SIAScraps = await scraper();
 
@@ -706,14 +695,14 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 
 				resolve(scraped);
 			} catch (err) {
-				puppet.close();
-
 				if (isError(err)) {
 					serverLogger("api:groups:scrape", err.message, { path: event.path, err });
 				}
 
 				reject(err);
 			}
+
+			puppet.close();
 		},
 		false,
 		120

@@ -36,6 +36,58 @@ export interface UserData extends FirebaseData {
 	isAnonymous?: boolean | null;
 }
 
+interface InstanceConfig {
+	/** Cuna version */
+	version?: string;
+	/**
+	 * Bloquear la navegacion con un mensaje
+	 */
+	maintenanceMessage?: string;
+	/**
+	 * @example https://bobt42d1b3.execute-api.us-east-1.amazonaws.com/api/v1
+	 */
+	siaCoursesURL?: string;
+	/**
+	 * @example /buscadorcursos/busqueda/primernivel2
+	 */
+	siaCoursesPath?: string;
+	/**
+	 * Number of minutes before refreshing a course
+	 */
+	coursesRefreshRate?: number;
+	/**
+	 * Number of minutes before scraping a course
+	 */
+	coursesScrapeRate?: number;
+	/**
+	 * @example https://sia.unal.edu.co
+	 */
+	siaOldURL?: string;
+	/**
+	 * @example /Catalogo/facespublico/public/servicioPublico.jsf
+	 */
+	siaOldPath?: string;
+	/**
+	 * @example ?taskflowId=task-flow-AC_CatalogoAsignaturas
+	 */
+	siaOldQuery?: string;
+	/**
+	 * @example https://losestudiantes.com
+	 */
+	losEstudiantesUrl?: string;
+	/**
+	 * @example /universidad-nacional/courses
+	 */
+	losEstudiantesCoursesPath?: string;
+	/**
+	 * @example /universidad-nacional/professors
+	 */
+	losEstudiantesProfessorsPath?: string;
+	siaOldLevel?: Record<eSIALevel, `${number}`>;
+	siaOldPlace?: Record<eSIAPlace, `${number}`>;
+	siaOldTypology?: Record<eSIATypology, `${number}`>;
+}
+
 /**
  * App instance
  */
@@ -55,54 +107,7 @@ export interface InstanceData extends FirebaseData {
 	/**
 	 * Api, flexible if endpoints do change
 	 */
-	config?: {
-		/** Cuna version */
-		version?: string;
-		/**
-		 * Bloquear la navegacion con un mensaje
-		 */
-		maintenanceMessage?: string;
-		/**
-		 * @example https://bobt42d1b3.execute-api.us-east-1.amazonaws.com/api/v1
-		 */
-		siaCoursesURL?: string;
-		/**
-		 * @example /buscadorcursos/busqueda/primernivel2
-		 */
-		siaCoursesPath?: string;
-		/**
-		 * Number of minutes before refreshing a course
-		 */
-		coursesRefreshRate?: number;
-		/**
-		 * Number of minutes before scraping a course
-		 */
-		coursesScrapeRate?: number;
-		/**
-		 * @example https://sia.unal.edu.co
-		 */
-		siaOldURL?: string;
-		/**
-		 * @example /Catalogo/facespublico/public/servicioPublico.jsf
-		 */
-		siaOldPath?: string;
-		/**
-		 * @example ?taskflowId=task-flow-AC_CatalogoAsignaturas
-		 */
-		siaOldQuery?: string;
-		/**
-		 * @example https://losestudiantes.com
-		 */
-		losEstudiantesUrl?: string;
-		/**
-		 * @example /universidad-nacional/courses
-		 */
-		losEstudiantesCoursesPath?: string;
-		/**
-		 * @example /universidad-nacional/professors
-		 */
-		losEstudiantesProfessorsPath?: string;
-	};
+	config?: InstanceConfig;
 	/**
 	 * Feature flags
 	 */

@@ -9,6 +9,32 @@ export function getQueryParam<T>(name: string, e: H3Event): T {
 }
 
 /**
+ * Get current auth
+ *
+ * @cache 2 minutes
+ */
+export const getInstance = defineCachedFunction(
+	async function () {
+		const { serverFirestore } = getServerFirebase();
+		const { instance: instanceId } = useRuntimeConfig().public;
+		const instanceRef = serverFirestore.collection("instances").doc(instanceId);
+		const instanceSnapshot = await instanceRef.get();
+		const instance: Instance | undefined = instanceSnapshot.data();
+
+		return instance;
+	},
+	{
+		name: "getInstance",
+		maxAge: 120, // 2 minutes
+		getKey() {
+			const { instance: instanceId } = useRuntimeConfig().public;
+
+			return instanceId;
+		},
+	}
+);
+
+/**
  * Conditionally cache event data.
  * Bypasses cache for admin purposes
  *
@@ -23,11 +49,7 @@ export function defineConditionallyCachedEventHandler<T extends EventHandlerRequ
 	) => D
 ): EventHandler<T, D> {
 	return defineEventHandler<T>(async function (event) {
-		const { serverFirestore } = getServerFirebase();
-		const { instance: instanceId } = useRuntimeConfig().public;
-		const instanceRef = serverFirestore.collection("instances").doc(instanceId);
-		const instanceSnapshot = await instanceRef.get();
-		const instance: Instance | undefined = instanceSnapshot.data();
+		const instance = await getInstance();
 
 		if (!instance) throw new Error("Missing instance");
 
