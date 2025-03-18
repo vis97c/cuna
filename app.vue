@@ -1,7 +1,15 @@
 <template>
 	<div class="x-layout">
 		<NuxtLoadingIndicator class="x-layout-loader" :duration="5000" color="#0f47af" />
-		<div class="flx --flxColumn --flx-start-stretch --gap-0">
+		<div v-if="APP.instance?.config?.maintenanceMessage && !SESSION.canDevelop" class="view">
+			<div class="view-item --flx-center --minHeightVh-100 --pY-30">
+				<div class="txt --txtAlign-center --width-100">
+					<h2>Disculpa las molestias :(</h2>
+					<p>{{ APP.instance.config.maintenanceMessage }}</p>
+				</div>
+			</div>
+		</div>
+		<div v-else class="flx --flxColumn --flx-start-stretch --gap-0">
 			<div
 				v-if="!isAdmin && SESSION.user && APP.instance?.banner?.message"
 				class="x-banner flx --flxColumn --flx-center --gap-0 --width-100 --maxWidth --mX"
@@ -364,14 +372,7 @@
 									class="x-renderer flx --flxColumn --flx-center --width-100"
 									:class="{ 'is--admin': isAdmin }"
 								>
-									<div
-										v-if="APP.instance?.config?.maintenanceMessage"
-										class="txt --txtAlign-center"
-									>
-										<h2>Disculpa las molestias :(</h2>
-										<p>{{ APP.instance.config.maintenanceMessage }}</p>
-									</div>
-									<NuxtPage v-else />
+									<NuxtPage />
 								</div>
 							</div>
 						</div>
