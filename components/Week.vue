@@ -1,12 +1,8 @@
 <template>
 	<div class="scroll --horizontal --always --maxWidthVw-70:md">
-		<slot></slot>
 		<div class="flx --flxRow --flx-start-strecth --gap-5 --pTop-5 --width-100">
-			<div class="flx --flxColumn --flx-start-stretch --gap-5 --flx --height-100">
-				<div
-					class="flx --flxRow --flx-start-strecth --gap-5 --pTop-5 --width-100"
-					:class="{ '--opacity-0': front }"
-				>
+			<div class="flx --flxColumn --flx-start-stretch --flx --height-100">
+				<div class="flx --flxRow --flx-start-strecth --gap-5 --pTop-5 --width-100">
 					<span class="--txtSize-xs --txtColor-light" style="width: 2.4rem">Franja</span>
 					<ul class="grd --grdColumns-6 --gap-5">
 						<li
@@ -18,27 +14,27 @@
 						</li>
 					</ul>
 				</div>
-				<div class="flx --flxRow --flx-start-strecth --gap-5 --width-100">
-					<div v-if="!front" class="back --opacity-02">
+				<div class="flx --flxRow --flx-start-strecth --gap-5 --width-100 --height-100">
+					<div class="back --opacity-02 --overflow-visible">
 						<ul class="grd --grdRows-14 --gap-5 --width-100 --height-100">
 							<li
-								v-for="span in 13"
+								v-for="span in 14"
 								:key="`back-${span}`"
-								class="grd-item flx --flxRow --flx-center-end"
+								class="grd-item flx --flxRow --flx-center-start"
 							>
 								<!-- 1h span -->
 								<div class="--width-100 --pTop-5">
-									<div class="back flx --flxRow --flx-center" style="top: 100%">
+									<div
+										class="back flx --flxRow --flx-center"
+										style="transform: translateY(-100%)"
+									>
 										<hr class="--solid" />
 									</div>
 								</div>
 							</li>
 						</ul>
 					</div>
-					<ul
-						class="grd --grdRows-14 --gap-5 --width-100 --height-100"
-						:class="{ '--opacity-0': front }"
-					>
+					<ul class="grd --grdRows-14 --gap-5 --width-100 --minHeight-100">
 						<li
 							v-for="span in 14"
 							:key="`morning-${span}`"
@@ -70,15 +66,15 @@
 											:theme="group.theme"
 											:el="XamuBaseAction"
 											class="x-class --flx-center --flx --p-5 --gap-5 --txtSize-xs"
-											:class="{ '--opacity-05': back }"
+											:disabled="highlight && highlight !== group.courseCode"
 											:to="`/cursos/${getDocumentId(group.courseId)}`"
 											:title="`${getHour(schedule.startsAt)} a ${getHour(schedule.startsAt + group.duration)}`"
 											button
 										>
-											<span class="--txtWrap --txtWeight">
+											<span class="--txtWrap --txtWeight --txtAlign-center">
 												{{ group.courseName }}
 											</span>
-											<span class="">{{ group.name }}</span>
+											<span class="--txtAlign-center">{{ group.name }}</span>
 										</XamuBaseBox>
 									</div>
 								</li>
@@ -107,8 +103,10 @@
 
 	const props = defineProps<{
 		enrolledGroups: EnrolledGroup[];
-		front?: boolean;
-		back?: boolean;
+		/**
+		 * Course code to highlight
+		 */
+		highlight?: string;
 	}>();
 
 	const themes = [

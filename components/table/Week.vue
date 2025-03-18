@@ -13,11 +13,7 @@
 			</XamuActionButton>
 		</template>
 		<template #default>
-			<Week :enrolled-groups="[value]" front>
-				<div v-if="enrolledGroups.length" class="back">
-					<Week :enrolled-groups="enrolledGroups" back />
-				</div>
-			</Week>
+			<Week :enrolled-groups="[value, ...enrolledGroups]" :highlight="value.courseCode" />
 		</template>
 	</XamuModal>
 	<span v-else>-</span>
@@ -39,7 +35,7 @@
 
 	const SESSION = useSessionStore();
 
-	const enrolledGroups = computed(() => Object.values(SESSION.enrolled));
+	const enrolledGroups = computed<EnrolledGroup[]>(() => Object.values(SESSION.enrolled));
 	const enrolled = computed({
 		get() {
 			const { courseCode, name } = props.value;

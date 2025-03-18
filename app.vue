@@ -65,7 +65,9 @@
 														<p class="--txtSize-xs">Cursos inscritos</p>
 														<h4>Mi horario académico</h4>
 													</div>
-													<hr />
+													<div class="--pX-5 --width-100">
+														<hr />
+													</div>
 													<Week
 														:enrolled-groups="
 															Object.values(SESSION.enrolled)
