@@ -70,7 +70,7 @@ async function setAppState(provide?: ClientProvide) {
 					const { role = 3, ...user } = snapshot.data();
 
 					// Repopulate user data (Manually created), do not await
-					if (user?.email !== email) {
+					if (user?.email !== email || user?.photoURL !== photoURL) {
 						setDoc(userRef, { email, photoURL, role }, { merge: true });
 					}
 
