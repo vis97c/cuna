@@ -9,6 +9,9 @@
 		<PaginatedTable
 			:page="logsPage"
 			url="api:all:logs"
+			:defaults="{
+				level: 1,
+			}"
 			:table-props="{
 				deleteNode: useDocumentDelete,
 				properties: [

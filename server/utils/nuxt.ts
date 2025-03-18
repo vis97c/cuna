@@ -1,4 +1,5 @@
 import type { EventHandler, EventHandlerRequest, H3Event } from "h3";
+import { FirebaseAuthError } from "firebase-admin/auth";
 
 import type { Instance } from "~/resources/types/entities";
 
@@ -51,20 +52,31 @@ export function defineConditionallyCachedEventHandler<T extends EventHandlerRequ
 	return defineEventHandler<T>(async function (event) {
 		const instance = await getInstance();
 
-		if (!instance) throw new Error("Missing instance");
+		if (!instance) throw createError({ statusMessage: "Missing instance", statusCode: 503 });
 
-		const auth = await getAuth(event);
-		const maxAge = (instance?.config?.coursesRefreshRate || 5) * 60;
-		const cachedData = defineCachedEventHandler(
-			function (e) {
-				return handler(e, instance, auth);
-			},
-			{ maxAge }
-		);
+		try {
+			const auth = await getAuth(event);
+			const maxAge = (instance?.config?.coursesRefreshRate || 5) * 60;
+			const cachedData = defineCachedEventHandler(
+				function (e) {
+					return handler(e, instance, auth);
+				},
+				{ maxAge }
+			);
 
-		// Omit cache for moderators and above
-		if ((auth?.role ?? 3) < 3) return handler(event, instance, auth);
+			// Omit cache for moderators and above
+			if ((auth?.role ?? 3) < 3) return handler(event, instance, auth);
 
-		return cachedData(event);
+			return cachedData(event);
+		} catch (error) {
+			if (error instanceof FirebaseAuthError) {
+				if (error.code === "auth/id-token-expired") return handler(event, instance);
+			}
+
+			// Unknown error
+			serverLogger("server:utils:nuxt", "Unknown error", error);
+
+			return handler(event, instance);
+		}
 	});
 }

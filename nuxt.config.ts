@@ -109,13 +109,17 @@ export default defineNuxtConfig({
 	/** Global CSS */
 	css,
 	modules: [
-		"@nuxt/scripts",
 		"@pinia/nuxt",
 		"@pinia-plugin-persistedstate/nuxt",
 		"@open-xamu-co/ui-nuxt",
+		"@nuxt/scripts",
 	],
 	piniaPersistedstate: {
-		cookieOptions: { sameSite: "strict", maxAge: 365 * 24 * 60 * 60, secure: production },
+		cookieOptions: {
+			sameSite: "strict",
+			maxAge: 365 * 24 * 60 * 60,
+			secure: production,
+		},
 		storage: "cookies",
 	},
 	xamu: {

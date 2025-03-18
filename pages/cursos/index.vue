@@ -163,6 +163,7 @@
 			<ul class="x-items flx --flxRow --flx-center">
 				<li>
 					<XamuBoxAction
+						:theme="calculadoraTheme"
 						to="https://calc-unal.vercel.app?from=cuna.com.co"
 						icon="calculator"
 						label="Calculadora de PAPPI"
@@ -181,16 +182,16 @@
 			</ul>
 		</section>
 		<section class="txt --txtAlign-center --txtSize-xs --txtColor-dark5 --minWidth-100">
-			<div class="flx --flxColumn --flx-start --gap-5">
-				<p>
-					*Usamos el buscador del SIA (Beta) para listar los cursos, su frecuencia de
-					actualización es baja.
-				</p>
+			<div class="">
 				<p>
 					Visita cada pagina de curso para obtener los cupos en tiempo real (Antiguo SIA).
 				</p>
+				<p>
+					Usamos el buscador del SIA (Beta) para listar los cursos, su frecuencia de
+					actualización es baja.
+				</p>
 			</div>
-			<p>No dudes en reportar cualquier problema o sugerencia a nuestro instagram</p>
+			<p>No dudes en reportar cualquier problema o sugerencia a nuestro instagram.</p>
 		</section>
 	</section>
 </template>
@@ -223,6 +224,7 @@
 
 	const SESSION = useSessionStore();
 
+	const calculadoraTheme = "calculadora" as any;
 	const estudiantesTheme = "estudiantes" as any;
 
 	const selectedLevel = computed({

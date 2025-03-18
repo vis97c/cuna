@@ -2,77 +2,88 @@
 	<div class="scroll --horizontal --always --maxWidthVw-70:md">
 		<slot></slot>
 		<div class="flx --flxRow --flx-start-strecth --gap-5 --pTop-5 --width-100">
-			<div class="gdr-item flx --flxColumn --flx-start --gap-5">
-				<div class="">
-					<span class="--txtSize-xs --txtColor-light">Franja</span>
-				</div>
-				<ul class="grd --grdRows-14 --gap-5 --width-100 --height-100">
-					<li
-						v-for="span in 14"
-						:key="`morning-${span}`"
-						class="grd-item flx --flxRow --flx-start-center"
-					>
-						<!-- 1h span -->
-						<span class="--txtSize-xs">
-							{{ getHour(span) }}
-						</span>
-					</li>
-				</ul>
-			</div>
 			<div class="flx --flxColumn --flx-start-stretch --gap-5 --flx --height-100">
-				<ul class="grd --grdColumns-6 --gap-5">
-					<li
-						v-for="{ day } in week"
-						:key="day"
-						class="grd-item flx --flxRow --flx-center"
-					>
-						<span class="--txtSize-xs">{{ day }}</span>
-					</li>
-				</ul>
-				<div class="grd --grdColumns-6 --gap-5">
-					<div class="back --opacity-01">
+				<div
+					class="flx --flxRow --flx-start-strecth --gap-5 --pTop-5 --width-100"
+					:class="{ '--opacity-0': front }"
+				>
+					<span class="--txtSize-xs --txtColor-light" style="width: 2.4rem">Franja</span>
+					<ul class="grd --grdColumns-6 --gap-5">
+						<li
+							v-for="{ day } in week"
+							:key="day"
+							class="grd-item flx --flxRow --flx-center"
+						>
+							<span class="--txtSize-xs">{{ day }}</span>
+						</li>
+					</ul>
+				</div>
+				<div class="flx --flxRow --flx-start-strecth --gap-5 --width-100">
+					<div v-if="!front" class="back --opacity-02">
 						<ul class="grd --grdRows-14 --gap-5 --width-100 --height-100">
 							<li
-								v-for="span in 14"
+								v-for="span in 13"
 								:key="`back-${span}`"
-								class="grd-item flx --flxRow --flx-center"
+								class="grd-item flx --flxRow --flx-center-end"
 							>
 								<!-- 1h span -->
-								<hr class="--tm-dark --solid" />
-							</li>
-						</ul>
-					</div>
-					<div v-for="{ day, schedules } in week" :key="day" class="gdr-item">
-						<ul class="grd --grdRows-14 --gap-5 --width-100 --height-100">
-							<li
-								v-for="(schedule, scheduleIndex) in schedules"
-								:key="scheduleIndex"
-								:style="{
-									gridRow: `${schedule.startsAt} / span ${schedule.duration}`,
-								}"
-								class="grd-item scroll --vertical --always x-scroll"
-							>
-								<div
-									class="flx --flxColumn --flx-start-stretch --gap-5 --minHeight-100"
-								>
-									<XamuBaseBox
-										v-for="group in schedule.groups"
-										:key="group.name"
-										:theme="group.theme"
-										:el="XamuBaseAction"
-										class="x-class --flx-center --flx --p-5 --gap-5 --txtSize-xs"
-										:to="`/cursos/${getDocumentId(group.courseId)}`"
-										:title="`${getHour(schedule.startsAt)} a ${getHour(schedule.startsAt + group.duration)}`"
-										button
-									>
-										<span class="--txtWrap --txtWeight">
-											{{ group.courseName }}
-										</span>
-										<span class="">{{ group.name }}</span>
-									</XamuBaseBox>
+								<div class="--width-100 --pTop-5">
+									<div class="back flx --flxRow --flx-center" style="top: 100%">
+										<hr class="--solid" />
+									</div>
 								</div>
 							</li>
 						</ul>
+					</div>
+					<ul
+						class="grd --grdRows-14 --gap-5 --width-100 --height-100"
+						:class="{ '--opacity-0': front }"
+					>
+						<li
+							v-for="span in 14"
+							:key="`morning-${span}`"
+							class="grd-item flx --flxRow --flx-start-center"
+						>
+							<!-- 1h span -->
+							<span class="--txtSize-xs" style="width: 2.4rem">
+								{{ getHour(span) }}
+							</span>
+						</li>
+					</ul>
+					<div class="grd --grdColumns-6 --gap-5">
+						<div v-for="{ day, schedules } in week" :key="day" class="gdr-item">
+							<ul class="grd --grdRows-14 --gap-5 --width-100 --height-100">
+								<li
+									v-for="(schedule, scheduleIndex) in schedules"
+									:key="scheduleIndex"
+									:style="{
+										gridRow: `${schedule.startsAt} / span ${schedule.duration}`,
+									}"
+									class="grd-item scroll --vertical --always x-scroll"
+								>
+									<div
+										class="flx --flxColumn --flx-start-stretch --gap-5 --minHeight-100 --bgColor-light"
+									>
+										<XamuBaseBox
+											v-for="group in schedule.groups"
+											:key="group.name"
+											:theme="group.theme"
+											:el="XamuBaseAction"
+											class="x-class --flx-center --flx --p-5 --gap-5 --txtSize-xs"
+											:class="{ '--opacity-05': back }"
+											:to="`/cursos/${getDocumentId(group.courseId)}`"
+											:title="`${getHour(schedule.startsAt)} a ${getHour(schedule.startsAt + group.duration)}`"
+											button
+										>
+											<span class="--txtWrap --txtWeight">
+												{{ group.courseName }}
+											</span>
+											<span class="">{{ group.name }}</span>
+										</XamuBaseBox>
+									</div>
+								</li>
+							</ul>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -96,12 +107,15 @@
 
 	const props = defineProps<{
 		enrolledGroups: EnrolledGroup[];
+		front?: boolean;
+		back?: boolean;
 	}>();
 
 	const themes = [
 		eColors.PRIMARY,
 		eColors.SECONDARY,
 		eColors.SUCCESS,
+		"calculadora" as any,
 		eColors.DANGER,
 		eColors.SECONDARY_COMPLEMENT,
 		"estudiantes" as any,

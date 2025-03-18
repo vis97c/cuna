@@ -70,6 +70,9 @@
 		page: iGetPage<Ti>;
 		defaults?: Record<string, any>;
 		mapNode?: (node: Ti) => TMi;
+		/**
+		 * Additional refresh function
+		 */
 		refresh?: () => void;
 		noContentMessage?: string;
 		tableProps?: Omit<iTableProps<TMi>, "nodes" | "refresh">;

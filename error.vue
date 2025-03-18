@@ -11,7 +11,7 @@
 							<div class="flx --flxRow-wrap --flx-center">
 								<XamuActionLink
 									aria-label="Reintentar"
-									:href="route.fullPath"
+									:href="`/?restricted=${encodeURI(route.fullPath)}`"
 									rel="noopener"
 									target="_self"
 								>

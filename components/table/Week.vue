@@ -13,9 +13,9 @@
 			</XamuActionButton>
 		</template>
 		<template #default>
-			<Week :enrolled-groups="[value]">
-				<div v-if="enrolledGroups.length" class="back --opacity-05">
-					<Week :enrolled-groups="enrolledGroups" />
+			<Week :enrolled-groups="[value]" front>
+				<div v-if="enrolledGroups.length" class="back">
+					<Week :enrolled-groups="enrolledGroups" back />
 				</div>
 			</Week>
 		</template>
