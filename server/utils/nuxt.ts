@@ -1,7 +1,7 @@
 import type { EventHandler, EventHandlerRequest, H3Event } from "h3";
 import { FirebaseAuthError } from "firebase-admin/auth";
 
-import type { Instance } from "~/resources/types/entities";
+import type { InstanceData } from "~/functions/src/types/entities";
 
 export function getQueryParam<T>(name: string, e: H3Event): T {
 	const params = getQuery(e);
@@ -20,7 +20,7 @@ export const getInstance = defineCachedFunction(
 		const { instance: instanceId } = useRuntimeConfig().public;
 		const instanceRef = serverFirestore.collection("instances").doc(instanceId);
 		const instanceSnapshot = await instanceRef.get();
-		const instance: Instance | undefined = instanceSnapshot.data();
+		const instance: InstanceData | undefined = instanceSnapshot.data();
 
 		return instance;
 	},
@@ -45,7 +45,7 @@ export const getInstance = defineCachedFunction(
 export function defineConditionallyCachedEventHandler<T extends EventHandlerRequest, D>(
 	handler: (
 		event: H3Event<T>,
-		instance?: Instance,
+		instance?: InstanceData,
 		auth?: { role: number; uid: string; id: string }
 	) => D
 ): EventHandler<T, D> {
@@ -53,6 +53,24 @@ export function defineConditionallyCachedEventHandler<T extends EventHandlerRequ
 		const instance = await getInstance();
 
 		if (!instance) throw createError({ statusMessage: "Missing instance", statusCode: 503 });
+
+		const siaMaintenanceTillAt = instance.config?.siaMaintenanceTillAt;
+		const now = new Date();
+		let seconds = siaMaintenanceTillAt?.seconds || 0;
+
+		if (siaMaintenanceTillAt && "_seconds" in siaMaintenanceTillAt) {
+			if (typeof siaMaintenanceTillAt._seconds === "number") {
+				seconds = siaMaintenanceTillAt._seconds;
+			}
+		}
+
+		const SIAMaintenance = now < new Date(seconds * 1000);
+
+		// Remove maintenance if expired
+		if (!SIAMaintenance && instance.config?.siaMaintenanceTillAt) {
+			instance.config.siaMaintenanceTillAt = undefined;
+			delete instance.config.siaMaintenanceTillAt;
+		}
 
 		try {
 			const auth = await getAuth(event);

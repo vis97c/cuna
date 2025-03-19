@@ -15,7 +15,7 @@ import { getAnalytics } from "firebase/analytics";
 import { getPerformance } from "firebase/performance";
 
 import { resolveSnapshotDefaults } from "../resources/utils/firestore";
-import type { User } from "~/resources/types/entities";
+import type { Instance, InstanceRef, User } from "~/resources/types/entities";
 
 declare global {
 	interface Window {
@@ -46,7 +46,18 @@ async function setAppState(provide?: ClientProvide) {
 		let unsubUser: Unsubscribe;
 
 		onSnapshot(instanceRef, (snapshot) => {
-			APP.setInstance(resolveSnapshotDefaults(snapshot.id, snapshot.data()));
+			const instance: InstanceRef = resolveSnapshotDefaults(snapshot.id, snapshot.data());
+
+			const updatedInstance: Instance = {
+				...instance,
+				config: {
+					...instance.config,
+					// Parse Timestamp to Date
+					siaMaintenanceTillAt: instance.config?.siaMaintenanceTillAt?.toDate(),
+				},
+			};
+
+			APP.setInstance(updatedInstance);
 		});
 
 		onIdTokenChanged(clientAuth, async (authUser) => {

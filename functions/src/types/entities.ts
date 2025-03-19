@@ -46,13 +46,17 @@ export interface UserData extends FirebaseData {
 	enrolled?: Record<string, EnrolledGroup>;
 }
 
-interface InstanceConfig {
+export interface InstanceConfig<T> {
 	/** Cuna version */
 	version?: string;
 	/**
 	 * Bloquear la navegacion con un mensaje
 	 */
 	maintenanceMessage?: string;
+	/**
+	 * SIA under maintenance till
+	 */
+	siaMaintenanceTillAt?: T;
 	/**
 	 * @example https://bobt42d1b3.execute-api.us-east-1.amazonaws.com/api/v1
 	 */
@@ -117,7 +121,7 @@ export interface InstanceData extends FirebaseData {
 	/**
 	 * Api, flexible if endpoints do change
 	 */
-	config?: InstanceConfig;
+	config?: InstanceConfig<Timestamp>;
 	/**
 	 * Feature flags
 	 */

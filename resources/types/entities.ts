@@ -3,6 +3,7 @@ import { DocumentReference, FieldValue, Timestamp } from "firebase/firestore";
 import type {
 	CourseData,
 	GroupData,
+	InstanceConfig,
 	InstanceData,
 	LogData,
 	TeacherData,
@@ -66,13 +67,17 @@ export interface User extends FirebaseDocument, FromData<UserData> {}
 /**
  * App instance
  */
-export interface Instance extends SharedDocument, FromData<InstanceData> {}
+export interface Instance extends SharedDocument, FromData<Omit<InstanceData, "config">> {
+	config?: InstanceConfig<Date>;
+}
 /**
  * This one goes to the database
  *
  * Omit automation
  */
-export interface InstanceRef extends GetRef<Instance> {}
+export interface InstanceRef extends GetRef<Instance> {
+	config?: InstanceConfig<Timestamp>;
+}
 
 /**
  * SIA Teacher

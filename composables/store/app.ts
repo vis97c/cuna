@@ -18,6 +18,22 @@ export const useAppStore = defineStore("app", {
 			instance: undefined,
 		};
 	},
+	getters: {
+		maintenance({ instance = {} }): string {
+			const SESSION = useSessionStore();
+
+			if (!instance?.config?.maintenanceMessage || SESSION.canDevelop) return "";
+
+			return instance?.config?.maintenanceMessage;
+		},
+		SIAMaintenance({ instance = {} }) {
+			const till = instance?.config?.siaMaintenanceTillAt;
+
+			if (!till) return false;
+
+			return till > new Date();
+		},
+	},
 	actions: {
 		async setInstance(instance?: Instance) {
 			if (!instance) return;

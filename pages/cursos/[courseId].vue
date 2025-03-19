@@ -19,7 +19,9 @@
 						>
 							Inicia sesión para buscar cursos y obtener información actualizada.
 						</p>
-						<p class="--txtSize-xs">Actualizado {{ courseUpdatedAt }}</p>
+						<p class="--txtSize-xs --txtColor-dark5">
+							Actualizado {{ courseUpdatedAt }}
+						</p>
 					</div>
 					<p v-if="course.description" class="--txtLineHeight-xl">
 						{{ course.description }}
@@ -449,6 +451,8 @@
 	 * Do not remove PEAMA & PAES from indexing
 	 */
 	async function scrapeCourse(firebaseCourse: Course) {
+		if (APP.SIAMaintenance) return;
+
 		refetching.value = true;
 
 		const {
@@ -538,10 +542,15 @@
 	@use "@/assets/scss/overrides" as utils;
 
 	@media only screen {
-		.x-values [title^="Cantidad"] {
-			&,
-			.flx {
-				flex-wrap: wrap;
+		.x-values {
+			span.--txtSize-xs[title] {
+				color: utils.color(dark, 0.5);
+			}
+			[title^="Cantidad"] {
+				&,
+				.flx {
+					flex-wrap: wrap;
+				}
 			}
 		}
 

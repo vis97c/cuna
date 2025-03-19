@@ -35,7 +35,7 @@
 					</div>
 					<XamuActionButton
 						:size="eSizes.LG"
-						:disabled="(search && search.length < 5) || searching"
+						:disabled="APP.SIAMaintenance || (search && search.length < 5) || searching"
 						type="submit"
 						:tooltip="search ? 'Buscar curso' : 'Descubrir cursos disponibles'"
 						round
@@ -222,6 +222,7 @@
 		middleware: ["auth-only"],
 	});
 
+	const APP = useAppStore();
 	const SESSION = useSessionStore();
 
 	const calculadoraTheme = "calculadora" as any;

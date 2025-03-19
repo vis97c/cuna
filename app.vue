@@ -1,11 +1,11 @@
 <template>
 	<div class="x-layout">
 		<NuxtLoadingIndicator class="x-layout-loader" :duration="5000" color="#0f47af" />
-		<div v-if="APP.instance?.config?.maintenanceMessage && !SESSION.canDevelop" class="view">
+		<div v-if="APP.maintenance" class="view">
 			<div class="view-item --flx-center --minHeightVh-100 --pY-30">
 				<div class="txt --txtAlign-center --width-100">
 					<h2>Disculpa las molestias :(</h2>
-					<p>{{ APP.instance.config.maintenanceMessage }}</p>
+					<p>{{ APP.maintenance }}</p>
 				</div>
 			</div>
 		</div>
@@ -331,40 +331,66 @@
 										</li>
 									</ul>
 								</div>
-								<div v-if="!isAdmin" class="txt --txtAlign-center --gap-0">
-									<h1 class="--txtSize-mx:md --txtLineHeight-sm">
-										<XamuActionLink to="/" class="no--override no--route --gap">
-											<XamuIconFa name="chess-knight" :size="10" />
-											<span>Cuna</span>
-										</XamuActionLink>
-									</h1>
-									<div class="flx --flxColumn --flx-center --gap-5">
-										<div class="flx --flxRow --flx-center --gap-10">
-											<p class="--txtColor-dark5">Visor de cursos UNAL</p>
+								<div
+									v-if="!isAdmin"
+									class="flx --flxColumn --flx-start-center --gap-20"
+								>
+									<div class="txt --txtAlign-center --txtColor-dark5 --gap-none">
+										<h1 class="--txtSize-mx:md --txtLineHeight-sm">
 											<XamuActionLink
-												class="x-info"
-												:theme="eColors.DARK"
-												tooltip="Cuna no esta afiliada a la UNAL"
-												tooltip-as-text
+												to="/"
+												class="no--override no--route --gap"
 											>
-												<XamuIconFa name="circle-info" />
+												<XamuIconFa name="chess-knight" :size="10" />
+												<span>Cuna</span>
 											</XamuActionLink>
+										</h1>
+										<div class="flx --flxColumn --flx-center --gap-5">
+											<div class="flx --flxRow --flx-center --gap-10">
+												<p>Visor de cursos UNAL</p>
+												<XamuActionLink
+													class="x-info"
+													:theme="eColors.DARK"
+													tooltip="Cuna no esta afiliada a la UNAL"
+													tooltip-as-text
+												>
+													<XamuIconFa name="circle-info" />
+												</XamuActionLink>
+											</div>
+											<div
+												class="flx --flxRow --flx-center --gap-10 --txtSize-xs"
+											>
+												<template v-if="APP.instance?.config?.version">
+													<span>{{ APP.instance.config.version }}</span>
+													⋅
+												</template>
+												<XamuActionLink
+													href="https://github.com/vis97c/cuna"
+													tooltip="Código fuente. GNU GPL v3"
+												>
+													<XamuIconFa name="github" brand />
+												</XamuActionLink>
+											</div>
 										</div>
-
-										<div
-											class="flx --flxRow --flx-center --gap-10 --txtSize-xs --txtColor-dark5"
+									</div>
+									<div
+										v-if="APP.SIAMaintenance"
+										class="txt --txtAlign-center --gap-10"
+									>
+										<h4>El SIA se encuentra en mantenimiento.</h4>
+										<p class="--txtSize-sm --txtColor-dark5">
+											Puedes explorar los cursos previamente guardados, pero
+											el buscador estará inactivo y los cursos no se
+											actualizarán hasta que el mantenimiento termine.
+										</p>
+										<p
+											class="--txtSize-xs --txtColor-dark5"
+											:title="
+												APP.instance?.config?.siaMaintenanceTillAt?.toString()
+											"
 										>
-											<template v-if="APP.instance?.config?.version">
-												<span>{{ APP.instance.config.version }}</span>
-												⋅
-											</template>
-											<XamuActionLink
-												href="https://github.com/vis97c/cuna"
-												tooltip="Código fuente. GNU GPL v3"
-											>
-												<XamuIconFa name="github" brand />
-											</XamuActionLink>
-										</div>
+											Volveremos a la normalidad {{ SIAMaintenanceTillAt }}.
+										</p>
 									</div>
 								</div>
 								<div
@@ -415,6 +441,11 @@
 	});
 	const enrolledCount = computed(() => Object.keys(SESSION.enrolled).length);
 	const isAdmin = computed(() => route.path.startsWith("/administrar"));
+	const SIAMaintenanceTillAt = computed(() => {
+		const date = new Date(APP.instance?.config?.siaMaintenanceTillAt || new Date());
+
+		return useTimeAgo(date);
+	});
 
 	function toggleLoadedClass() {
 		document.body.classList.remove("is--loaded");

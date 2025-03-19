@@ -3,7 +3,7 @@
 		<div class="txt">
 			<div class="">
 				<h2>Registros</h2>
-				<p class="--txtSize-lg">Supervisa los registros de vanano</p>
+				<p class="--txtSize-lg">Supervisa los registros de cuna</p>
 			</div>
 		</div>
 		<PaginatedTable

@@ -54,7 +54,7 @@
   "dependencies": {
     "@nuxt/scripts": "^0.9.5",
     "@open-xamu-co/ui-common-enums": "^3.0.0-next.7",
-    "@open-xamu-co/ui-common-helpers": "^3.0.0-next.18",
+    "@open-xamu-co/ui-common-helpers": "^3.0.0-next.19",
     "@open-xamu-co/ui-components-vue": "^3.0.0-next.67",
     "@open-xamu-co/ui-nuxt": "^3.0.0-next.11",
     "@pinia-plugin-persistedstate/nuxt": "^1.2.1",

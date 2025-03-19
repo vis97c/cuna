@@ -2660,15 +2660,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@open-xamu-co/ui-common-helpers@npm:^3.0.0-next.17, @open-xamu-co/ui-common-helpers@npm:^3.0.0-next.18":
-  version: 3.0.0-next.18
-  resolution: "@open-xamu-co/ui-common-helpers@npm:3.0.0-next.18"
+"@open-xamu-co/ui-common-helpers@npm:^3.0.0-next.17, @open-xamu-co/ui-common-helpers@npm:^3.0.0-next.18, @open-xamu-co/ui-common-helpers@npm:^3.0.0-next.19":
+  version: 3.0.0-next.19
+  resolution: "@open-xamu-co/ui-common-helpers@npm:3.0.0-next.19"
   dependencies:
     "@open-xamu-co/ui-common-enums": "npm:^3.0.0-next.6"
     lodash-es: "npm:^4.17.21"
     sweetalert2: "npm:^11.11.1"
     validator: "npm:^13.11.0"
-  checksum: 10c0/d4b30a95772471ac9aa340e974b4b432888d36a1b927e0648fc8e89e49a126e9c852bbbc10e1fdcbde2198199e2e4312bad01e2e0cc73931abba958100022488
+  checksum: 10c0/ac065d23088833e5dd59e34b3845b96646a0abc4f962912ab08ad5f0dfac66c3e9be64953b21719a8e817ca32e45dd0cce52c5d42d68bec32fda717d0582f03e
   languageName: node
   linkType: hard
 
@@ -6521,7 +6521,7 @@ __metadata:
     "@nuxt/scripts": "npm:^0.9.5"
     "@open-xamu-co/eslint-config": "npm:^3.0.1"
     "@open-xamu-co/ui-common-enums": "npm:^3.0.0-next.7"
-    "@open-xamu-co/ui-common-helpers": "npm:^3.0.0-next.18"
+    "@open-xamu-co/ui-common-helpers": "npm:^3.0.0-next.19"
     "@open-xamu-co/ui-common-types": "npm:^3.0.0-next.23"
     "@open-xamu-co/ui-components-vue": "npm:^3.0.0-next.67"
     "@open-xamu-co/ui-nuxt": "npm:^3.0.0-next.11"

@@ -144,6 +144,10 @@ const puppetConfig = {
  * @see https://github.com/pablomancera/sia_scrapper
  */
 export default defineConditionallyCachedEventHandler(async (event, instance, auth) => {
+	if (instance?.config?.siaMaintenanceTillAt) {
+		throw createError({ statusCode: 503, statusMessage: `SIA under maintenance` });
+	}
+
 	const { serverFirestore } = getServerFirebase();
 	const { debugScrapper } = useRuntimeConfig().public;
 	const {

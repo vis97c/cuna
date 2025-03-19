@@ -23,7 +23,7 @@ jobs:
                   echo "F_MESSAGING_SENDER_ID=${{vars.F_MESSAGING_SENDER_ID}}" >> .env
                   echo "F_APP_ID=${{vars.F_APP_ID}}" >> .env
                   echo "F_MEASUREMENT_ID=${{vars.F_MEASUREMENT_ID}}" >> .env
-                  echo "F_PRIVATE_KEY=${{secrets.F_PRIVATE_KEY}}" >> .env
+                  echo "F_PRIVATE_KEY=\"${{secrets.F_PRIVATE_KEY}}\"" | awk '{gsub(/\\n/,"\n")}1' >> .env
                   echo "F_CLIENT_EMAIL=${{secrets.F_CLIENT_EMAIL}}" >> .env
                   echo "RECAPTCHA_ENTERPRISE_SITE_KEY=${{vars.RECAPTCHA_ENTERPRISE_SITE_KEY}}" >> .env
                   echo "COUNTRIES_API=${{vars.COUNTRIES_API}}" >> .env
