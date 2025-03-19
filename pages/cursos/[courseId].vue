@@ -138,7 +138,7 @@
 					:loading="coursePending || teachersPending || refetching"
 					:content="!!groups.length || !!unreportedGroups.length"
 					label="Actualizando desde el antiguo SIA..."
-					no-content-message="No hay grupos disponibles."
+					no-content-message="No hay grupos disponibles en este momento."
 					class="--width-100"
 				>
 					<div v-if="groups.length" class="flx --flxColumn --flx-start --width-100">

@@ -375,7 +375,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 								if (!typologyValue) {
 									throw createError({
 										statusCode: 400,
-										statusMessage: "No typologys matched",
+										statusMessage: "No typologies matched",
 									});
 								}
 
@@ -416,6 +416,12 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 									await puppetPage.select(
 										useId(eIds.PROGRAM_LE),
 										programLeValue.value
+									);
+
+									debugFirebaseServer(
+										event,
+										"api:groups:scrape:scraper:typology:LE",
+										programLeValue
 									);
 								}
 
@@ -475,7 +481,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 		debugFirebaseServer(
 			event,
 			"api:groups:scrape:getResponse:start",
-			`Attemp ${currentAttemp}`
+			`${code}, Attemp ${currentAttemp}`
 		);
 
 		attemp++;
@@ -608,7 +614,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 			debugFirebaseServer(
 				event,
 				"api:groups:scrape:getResponse:end",
-				`Attemp ${currentAttemp} with ${groups.length} groups`
+				`${code}, Attemp ${currentAttemp}, ${courseLink.name} with ${groups.length} groups`
 			);
 
 			return {
@@ -621,7 +627,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 			debugFirebaseServer(
 				event,
 				"api:groups:scrape:getResponse:end",
-				`Attemp ${currentAttemp} with errors`,
+				`${code}, Attemp ${currentAttemp} with errors`,
 				err
 			);
 
@@ -684,11 +690,12 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 
 			return true;
 		} catch (err) {
-			if (isError(err)) {
-				serverLogger("api:groups:scrape", err.message, {
-					path: event.path,
-					err,
-				});
+			if (err && typeof err === "object" && "message" in err) {
+				serverLogger(
+					"api:groups:scrape",
+					err.message,
+					JSON.stringify({ path: event.path, err })
+				);
 			}
 
 			return false;
