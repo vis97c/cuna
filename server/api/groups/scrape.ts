@@ -353,6 +353,8 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 							continue;
 						}
 
+						const typologyOptions = await getOptions(puppetPage, eIds.TYPOLOGY);
+
 						// Iterate over associated typologies
 						for (const typology of typologies) {
 							if (response.code) break;
@@ -365,19 +367,21 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 							);
 
 							try {
-								if (!siaOldTypology?.[typology]) {
+								// Select Typology
+								const typologyValue = typologyOptions.find(({ alias }) => {
+									return alias && alias === siaOldTypology?.[typology];
+								});
+
+								if (!typologyValue) {
 									throw createError({
-										statusCode: 500,
-										statusMessage: "Missing typology list",
+										statusCode: 400,
+										statusMessage: "No typologys matched",
 									});
 								}
 
 								// Select typology, by default the system will return all but LE
 								await puppetPage.click(useId(eIds.TYPOLOGY));
-								await puppetPage.select(
-									useId(eIds.TYPOLOGY),
-									siaOldTypology[typology]
-								);
+								await puppetPage.select(useId(eIds.TYPOLOGY), typologyValue.value);
 
 								// Additional actions for LE
 								if (typology === eSIATypology.LIBRE_ELECCIÓN) {

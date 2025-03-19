@@ -99,7 +99,10 @@ export interface InstanceConfig<T> {
 	losEstudiantesProfessorsPath?: string;
 	siaOldLevel?: Record<eSIALevel, `${number}`>;
 	siaOldPlace?: Record<eSIAPlace, `${number}`>;
-	siaOldTypology?: Record<eSIATypology, `${number}`>;
+	/**
+	 * Strings because numbers are being rotated daily
+	 */
+	siaOldTypology?: Record<eSIATypology, string>;
 }
 
 /**
