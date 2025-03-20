@@ -1,4 +1,4 @@
-import { type Browser, Page, launch } from "puppeteer";
+import { type Browser, type LaunchOptions, Page, launch } from "puppeteer";
 import _ from "lodash";
 import { DocumentReference, FieldValue, Timestamp } from "firebase-admin/firestore";
 
@@ -125,8 +125,9 @@ function useId(id: string): string {
 	return `#${id.replace(/:/g, "\\:")}`;
 }
 
-const puppetConfig = {
+const puppetConfig: LaunchOptions = {
 	headless: true,
+	protocolTimeout: 240000,
 	args: [
 		"--no-sandbox",
 		"--disable-setuid-sandbox",
@@ -148,6 +149,9 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 		throw createError({ statusCode: 503, statusMessage: `SIA under maintenance` });
 	}
 
+	// Require auth
+	if (!auth) throw createError({ statusCode: 401, statusMessage: `Missing auth` });
+
 	const { serverFirestore } = getServerFirebase();
 	const { debugScrapper } = useRuntimeConfig().public;
 	const {
@@ -160,11 +164,12 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 	} = instance?.config || {};
 	const siaOldEnpoint = siaOldURL + siaOldPath + siaOldQuery;
 
-	// Require auth
-	if (!auth) throw createError({ statusCode: 401, statusMessage: `Missing auth` });
+	if (!siaOldURL || !siaOldPath) {
+		throw createError({ statusCode: 500, statusMessage: "Missing endpoints" });
+	}
 
-	const puppet: Browser = await launch(puppetConfig);
-	const puppetPage: Page = await puppet.newPage();
+	const puppetBrowser: Browser = await launch(puppetConfig);
+	const puppetPage: Page = await puppetBrowser.newPage();
 
 	/**
 	 * Show puppet page logs
@@ -261,213 +266,237 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 		typologies,
 	});
 
-	async function scraper(): Promise<ScrapedCourse> {
-		if (!siaOldURL || !siaOldPath) {
-			throw createError({ statusCode: 500, statusMessage: "Missing endpoint" });
-		}
+	// Where, when & who
+	const courseId = `courses/${Cyrb53([code])}`;
+	const courseRef: DocumentReference<CourseData> = serverFirestore.doc(courseId);
+	const scrapedAt = Timestamp.fromDate(new Date());
+	const updatedByRef = serverFirestore.collection("users").doc(auth.id);
 
-		await puppetPage.goto(siaOldEnpoint);
-		await puppetPage.evaluate(() => {
-			// #d1 es un div que tiene altura 1 cuando la página se carga incorrectamente
-			if (document.querySelector("#d1")?.clientHeight === 1) {
-				throw new Error("There was an error loading the page");
-			}
-		});
-
-		if (!siaOldLevel?.[level] || !siaOldPlace?.[place]) {
-			throw createError({ statusCode: 500, statusMessage: "Missing place or level lists" });
-		}
-
-		// Select level
-		await puppetPage.click(useId(eIds.LEVEL));
-		await puppetPage.select(useId(eIds.LEVEL), siaOldLevel[level]);
-		await waitForSelect(puppetPage, eIds.PLACE);
-
-		// Select Place
-		await puppetPage.click(useId(eIds.PLACE));
-		await puppetPage.select(useId(eIds.PLACE), siaOldPlace[place]);
-		await waitForSelect(puppetPage, eIds.FACULTY);
-
-		// Select Faculty
-		const facultyOptions = await getOptions(puppetPage, eIds.FACULTY);
-		const facultyValues = facultyOptions.filter(({ alias }) => {
-			return alias && faculties.includes(<uSIAFaculty>alias);
-		});
-
-		if (!facultyValues.length) {
-			throw createError({ statusCode: 400, statusMessage: "No faculties matched" });
-		}
-
-		const errors: any[] = [];
-		let response: ScrapedCourse = { groups: [], code: "", name: "", description: "" };
-
-		for (const facultyValue of facultyValues) {
-			if (response.code) break;
-
-			debugFirebaseServer(
-				event,
-				"api:groups:scrape:scraper:faculty",
-				[facultyValue.alias],
-				response.groups?.length
-			);
-
-			try {
-				// Attempt to get groups from this faculty
-				await puppetPage.click(useId(eIds.FACULTY));
-				await puppetPage.select(useId(eIds.FACULTY), facultyValue.value);
-				await waitForSelect(puppetPage, eIds.PROGRAM);
-
-				// Select Program
-				const programOptions = await getOptions(puppetPage, eIds.PROGRAM);
-				const programValues = programOptions.filter(({ alias }) => {
-					if (LEByProgram) return true;
-
-					return alias && programs.includes(<uSIAProgram>alias);
+	function scraper(): Promise<ScrapedCourse> {
+		return TimedPromise<ScrapedCourse>(
+			async (resolve, reject) => {
+				await puppetPage.goto(siaOldEnpoint);
+				await puppetPage.evaluate(() => {
+					// #d1 es un div que tiene altura 1 cuando la página se carga incorrectamente
+					if (document.querySelector("#d1")?.clientHeight === 1) {
+						throw new Error("There was an error loading the page");
+					}
 				});
 
-				if (!programValues.length) {
-					throw createError({ statusCode: 400, statusMessage: "No programs matched" });
+				if (!siaOldLevel?.[level] || !siaOldPlace?.[place]) {
+					throw reject({
+						statusCode: 500,
+						statusMessage: "Missing place or level lists",
+					});
 				}
 
-				// Iterate over associated programs
-				for (const programValue of programValues) {
+				// Select level
+				await puppetPage.click(useId(eIds.LEVEL));
+				await puppetPage.select(useId(eIds.LEVEL), siaOldLevel[level]);
+				await waitForSelect(puppetPage, eIds.PLACE);
+
+				// Select Place
+				await puppetPage.click(useId(eIds.PLACE));
+				await puppetPage.select(useId(eIds.PLACE), siaOldPlace[place]);
+				await waitForSelect(puppetPage, eIds.FACULTY);
+
+				// Select Faculty
+				const facultyOptions = await getOptions(puppetPage, eIds.FACULTY);
+				const facultyValues = facultyOptions.filter(({ alias }) => {
+					return alias && faculties.includes(<uSIAFaculty>alias);
+				});
+
+				if (!facultyValues.length) {
+					throw reject({ statusCode: 400, statusMessage: "No faculties matched" });
+				}
+
+				const errors: any[] = [];
+				let response: ScrapedCourse = { groups: [], code: "", name: "", description: "" };
+
+				for (const facultyValue of facultyValues) {
 					if (response.code) break;
 
 					debugFirebaseServer(
 						event,
-						"api:groups:scrape:scraper:program",
-						[facultyValue.alias, programValue.alias],
+						"api:groups:scrape:scraper:faculty",
+						[facultyValue.alias],
 						response.groups?.length
 					);
 
 					try {
+						// Attempt to get groups from this faculty
+						await puppetPage.click(useId(eIds.FACULTY));
+						await puppetPage.select(useId(eIds.FACULTY), facultyValue.value);
+						await waitForSelect(puppetPage, eIds.PROGRAM);
+
 						// Select Program
-						await puppetPage.click(useId(eIds.PROGRAM));
-						await puppetPage.select(useId(eIds.PROGRAM), programValue.value);
-						await waitForSelect(puppetPage, eIds.TYPOLOGY);
+						const programOptions = await getOptions(puppetPage, eIds.PROGRAM);
+						const programValues = programOptions.filter(({ alias }) => {
+							if (LEByProgram) return true;
 
-						// Attempt to get groups from this program
-						if (!typologies.length) {
-							response = await getResponse();
+							return alias && programs.includes(<uSIAProgram>alias);
+						});
 
-							continue;
+						if (!programValues.length) {
+							throw reject({
+								statusCode: 400,
+								statusMessage: "No programs matched",
+							});
 						}
 
-						const typologyOptions = await getOptions(puppetPage, eIds.TYPOLOGY);
-
-						// Iterate over associated typologies
-						for (const typology of typologies) {
+						// Iterate over associated programs
+						for (const programValue of programValues) {
 							if (response.code) break;
 
 							debugFirebaseServer(
 								event,
-								"api:groups:scrape:scraper:typology",
-								[facultyValue.alias, programValue.alias, typology],
+								"api:groups:scrape:scraper:program",
+								[facultyValue.alias, programValue.alias],
 								response.groups?.length
 							);
 
 							try {
-								// Select Typology
-								const typologyValue = typologyOptions.find(({ alias }) => {
-									return alias && alias === siaOldTypology?.[typology];
-								});
+								// Select Program
+								await puppetPage.click(useId(eIds.PROGRAM));
+								await puppetPage.select(useId(eIds.PROGRAM), programValue.value);
+								await waitForSelect(puppetPage, eIds.TYPOLOGY);
 
-								if (!typologyValue) {
-									throw createError({
-										statusCode: 400,
-										statusMessage: "No typologies matched",
-									});
+								// Attempt to get groups from this program
+								if (!typologies.length) {
+									response = await getResponse();
+
+									continue;
 								}
 
-								// Select typology, by default the system will return all but LE
-								await puppetPage.click(useId(eIds.TYPOLOGY));
-								await puppetPage.select(useId(eIds.TYPOLOGY), typologyValue.value);
+								const typologyOptions = await getOptions(puppetPage, eIds.TYPOLOGY);
 
-								// Additional actions for LE
-								if (typology === eSIATypology.LIBRE_ELECCIÓN) {
-									await puppetPage.waitForSelector(useId(eIds.SEARCH_LE), {
-										visible: true,
-									});
-
-									// Select search mode, search by program
-									await puppetPage.click(useId(eIds.SEARCH_LE));
-									await puppetPage.select(useId(eIds.SEARCH_LE), "1");
-									await puppetPage.waitForSelector(useId(eIds.PROGRAM_LE), {
-										visible: true,
-									});
-
-									// Select LE Program
-									const programOptionsLE = await getOptions(
-										puppetPage,
-										eIds.PROGRAM_LE
-									);
-									const programLeValue = programOptionsLE.find(({ alias }) => {
-										return alias && programs.includes(<uSIAProgram>alias);
-									});
-
-									if (!programLeValue) {
-										throw createError({
-											statusCode: 400,
-											statusMessage: "LE program not found",
-										});
-									}
-
-									await puppetPage.click(useId(eIds.PROGRAM_LE));
-									await puppetPage.select(
-										useId(eIds.PROGRAM_LE),
-										programLeValue.value
-									);
+								// Iterate over associated typologies
+								for (const typology of typologies) {
+									if (response.code) break;
 
 									debugFirebaseServer(
 										event,
-										"api:groups:scrape:scraper:typology:LE",
-										programLeValue
+										"api:groups:scrape:scraper:typology",
+										[facultyValue.alias, programValue.alias, typology],
+										response.groups?.length
 									);
+
+									try {
+										// Select Typology
+										const typologyValue = typologyOptions.find(({ alias }) => {
+											return alias && alias === siaOldTypology?.[typology];
+										});
+
+										if (!typologyValue) {
+											throw reject({
+												statusCode: 400,
+												statusMessage: "No typologies matched",
+											});
+										}
+
+										// Select typology, by default the system will return all but LE
+										await puppetPage.click(useId(eIds.TYPOLOGY));
+										await puppetPage.select(
+											useId(eIds.TYPOLOGY),
+											typologyValue.value
+										);
+
+										// Additional actions for LE
+										if (typology === eSIATypology.LIBRE_ELECCIÓN) {
+											await puppetPage.waitForSelector(
+												useId(eIds.SEARCH_LE),
+												{ visible: true }
+											);
+
+											// Select search mode, search by program
+											await puppetPage.click(useId(eIds.SEARCH_LE));
+											await puppetPage.select(useId(eIds.SEARCH_LE), "1");
+											await puppetPage.waitForSelector(
+												useId(eIds.PROGRAM_LE),
+												{ visible: true }
+											);
+
+											// Select LE Program
+											const programOptionsLE = await getOptions(
+												puppetPage,
+												eIds.PROGRAM_LE
+											);
+											const programLeValue = programOptionsLE.find(
+												({ alias }) => {
+													return (
+														alias &&
+														programs.includes(<uSIAProgram>alias)
+													);
+												}
+											);
+
+											if (!programLeValue) {
+												throw reject({
+													statusCode: 400,
+													statusMessage: "LE program not found",
+												});
+											}
+
+											await puppetPage.click(useId(eIds.PROGRAM_LE));
+											await puppetPage.select(
+												useId(eIds.PROGRAM_LE),
+												programLeValue.value
+											);
+
+											debugFirebaseServer(
+												event,
+												"api:groups:scrape:scraper:typology:LE",
+												programLeValue
+											);
+										}
+
+										// Necessary for switching between typologies
+										await puppetPage.waitForNetworkIdle();
+
+										// Attempt to get groups from this typology
+										response = await getResponse();
+									} catch (err) {
+										errors.push(err); // save typologies errors
+
+										debugFirebaseServer(
+											event,
+											"api:groups:scrape:scraper:typologyError",
+											[facultyValue.alias, programValue.alias, typology],
+											err
+										);
+									}
 								}
-
-								// Necessary for switching between typologies
-								await puppetPage.waitForNetworkIdle();
-
-								// Attempt to get groups from this typology
-								response = await getResponse();
 							} catch (err) {
-								errors.push(err); // save typologies errors
+								errors.push(err); // save programs errors
 
 								debugFirebaseServer(
 									event,
-									"api:groups:scrape:scraper:typologyError",
-									[facultyValue.alias, programValue.alias, typology],
+									"api:groups:scrape:scraper:programError",
+									[facultyValue.alias, programValue.alias],
 									err
 								);
 							}
 						}
 					} catch (err) {
-						errors.push(err); // save programs errors
+						errors.push(err); // save faculties errors
 
 						debugFirebaseServer(
 							event,
-							"api:groups:scrape:scraper:programError",
-							[facultyValue.alias, programValue.alias],
+							"api:groups:scrape:scraper:facultyError",
+							[facultyValue.alias],
 							err
 						);
 					}
 				}
-			} catch (err) {
-				errors.push(err); // save faculties errors
 
-				debugFirebaseServer(
-					event,
-					"api:groups:scrape:scraper:facultyError",
-					[facultyValue.alias],
-					err
-				);
-			}
-		}
+				// If no groups found, throw errors if any
+				if (!response.groups?.length && errors.length) throw reject(errors.pop());
 
-		// If no groups found, throw errors if any
-		if (!response.groups?.length && errors.length) throw createError(errors.pop());
-
-		return response;
+				resolve(response);
+			},
+			undefined,
+			120
+		);
 	}
 
 	let attemp = 0;
@@ -626,12 +655,14 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 		} catch (err) {
 			debugFirebaseServer(
 				event,
-				"api:groups:scrape:getResponse:end",
+				"api:groups:scrape:getResponse:endFail",
 				`${code}, Attemp ${currentAttemp} with errors`,
 				err
 			);
 
 			// Prevent further scraping
+			await puppetBrowser.close();
+
 			return {
 				code,
 				name: courseLink.name,
@@ -643,83 +674,72 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 	/**
 	 * Update firebase course
 	 */
-	async function updateCourse(): Promise<boolean> {
+	async function updateCourse() {
 		try {
 			const SIAScraps = await scraper();
 
 			// Prevent updating if missing groups
-			if (!SIAScraps.groups) return false;
+			if (SIAScraps.groups) {
+				// Index teachers
+				SIAScraps.groups = SIAScraps.groups?.map(({ teachers, ...group }) => {
+					teachers = teachers?.map((teacher) => {
+						// Generate deduped teacher UID
+						const teacherId = `teachers/${Cyrb53([_.deburr(teacher)])}`;
+						const teacherRef: DocumentReference<TeacherData> =
+							serverFirestore.doc(teacherId);
+						const name = _.startCase(teacher.toLowerCase());
 
-			const courseId = `courses/${Cyrb53([code])}`;
-			const courseRef: DocumentReference<CourseData> = serverFirestore.doc(courseId);
+						// Set teacher, do not await
+						teacherRef.set(
+							{
+								name,
+								indexes: triGram([teacher]),
+								courses: FieldValue.arrayUnion(SIAScraps.code),
+							},
+							{ merge: true }
+						);
 
-			// Index teachers
-			SIAScraps.groups = SIAScraps.groups?.map(({ teachers, ...group }) => {
-				teachers = teachers?.map((teacher) => {
-					// Generate deduped teacher UID
-					const teacherId = `teachers/${Cyrb53([_.deburr(teacher)])}`;
-					const teacherRef: DocumentReference<TeacherData> =
-						serverFirestore.doc(teacherId);
-					const name = _.startCase(teacher.toLowerCase());
+						return name;
+					});
 
-					// Set teacher, do not await
-					teacherRef.set(
-						{
-							name,
-							indexes: triGram([teacher]),
-							courses: FieldValue.arrayUnion(SIAScraps.code),
-						},
-						{ merge: true }
-					);
-
-					return name;
+					return { ...group, teachers };
 				});
 
-				return { ...group, teachers };
-			});
-
-			// Update course, do not await
-			courseRef.set(
-				{
-					description: SIAScraps.description,
-					groups: SIAScraps.groups,
-					scrapedAt: Timestamp.fromDate(new Date()),
-				},
-				{ merge: true }
-			);
-
-			return true;
-		} catch (err) {
-			if (err && typeof err === "object" && "message" in err) {
-				serverLogger(
-					"api:groups:scrape",
-					err.message,
-					JSON.stringify({ path: event.path, err })
+				// Update course, do not await
+				courseRef.set(
+					{
+						description: SIAScraps.description,
+						groups: SIAScraps.groups,
+						scrapedAt,
+						updatedAt: scrapedAt,
+						updatedByRef,
+					},
+					{ merge: true }
 				);
 			}
+		} catch (err) {
+			const serializedError: Record<string, unknown> = JSON.parse(
+				JSON.stringify(err, Object.getOwnPropertyNames(err))
+			);
 
-			return false;
+			const logsRef: DocumentReference<CourseData> = serverFirestore.collection("logs").doc();
+
+			// Custom error log, do not await
+			logsRef.set({
+				at: "api:groups:scrape:updateCourse",
+				message: serializedError.message,
+				courseRef,
+				error: { ...serializedError, url: event.path },
+				updatedAt: scrapedAt,
+				createdAt: scrapedAt,
+				createdByRef: updatedByRef,
+				updatedByRef,
+			});
 		}
 	}
 
-	// Time out after 2 minutes
-	return TimedPromise<boolean>(
-		async (resolve, reject) => {
-			try {
-				const scraped = await updateCourse();
+	// Scrape in the background, do not await
+	updateCourse();
 
-				resolve(scraped);
-			} catch (err) {
-				if (isError(err)) {
-					serverLogger("api:groups:scrape", err.message, { path: event.path, err });
-				}
-
-				reject(err);
-			}
-
-			puppet.close();
-		},
-		false,
-		120
-	);
+	return true;
 });
