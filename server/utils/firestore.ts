@@ -9,13 +9,14 @@ import { QuerySnapshot } from "@google-cloud/firestore";
 
 import type { iPage, iPageEdge, tOrderBy } from "@open-xamu-co/ui-common-types";
 
+import type { InstanceData } from "~/functions/src/types/entities";
 import type {
 	iSnapshotConfig,
 	PseudoDocumentReference,
 	PseudoDocumentSnapshot,
 	PseudoNode,
 } from "~/resources/types/firestore";
-import type { FirebaseDocument, Instance } from "~/resources/types/entities";
+import type { FirebaseDocument } from "~/resources/types/entities";
 import { isNumberOrString } from "~/resources/utils/guards";
 import { resolveSnapshotDefaults } from "~/resources/utils/firestore";
 import { getBoolean } from "~/resources/utils/node";
@@ -180,7 +181,7 @@ export function getOrderedQuery<T extends EventHandlerRequest>(
 
 interface EventData<T extends EventHandlerRequest> {
 	event: H3Event<T>;
-	instance?: Instance;
+	instance?: InstanceData;
 	auth?: { role: number; uid: string; id: string };
 }
 
