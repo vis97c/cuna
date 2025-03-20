@@ -95,7 +95,7 @@ async function setAppState(provide?: ClientProvide) {
 
 				// redirect
 				if (rdr && route.path !== rdr) router.replace(rdr);
-				else if (route.path === "/") router.replace("/cursos");
+				else if (route.path === "/ingresar") router.replace("/");
 			});
 		});
 	} catch (err) {

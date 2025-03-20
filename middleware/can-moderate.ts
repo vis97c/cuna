@@ -10,5 +10,5 @@ export default defineNuxtRouteMiddleware(() => {
 	if (SESSION.expiredToken) return;
 
 	// User cannot moderate
-	if (!SESSION.canModerate) return navigateTo({ path: "/" });
+	if (!SESSION.canModerate) return navigateTo({ path: "/ingresar" });
 });

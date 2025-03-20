@@ -12,13 +12,6 @@
 						<p v-if="course.alternativeNames?.length" title="Otros nombres">
 							{{ course.alternativeNames.join(", ") }}.
 						</p>
-						<p
-							v-if="!SESSION.user"
-							class="--txtSize-xs --txtColor-dark5"
-							title="Modo lectura"
-						>
-							Inicia sesión para buscar cursos y obtener información actualizada.
-						</p>
 						<p class="--txtSize-xs --txtColor-dark5">
 							Actualizado {{ courseUpdatedAt }}
 						</p>

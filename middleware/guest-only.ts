@@ -9,5 +9,5 @@ export default defineNuxtRouteMiddleware(async () => {
 	if (!SESSION.user) return;
 
 	// User is authenticated
-	return navigateTo("/cursos", { redirectCode: 302 });
+	return navigateTo("/", { redirectCode: 302 });
 });

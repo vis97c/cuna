@@ -9,5 +9,5 @@ export default defineNuxtRouteMiddleware(({ fullPath }) => {
 	if (SESSION.token || SESSION.expiredToken) return;
 
 	// User is not authenticated
-	return navigateTo({ path: "/", query: { restricted: encodeURI(fullPath) } });
+	return navigateTo({ path: "/ingresar", query: { restricted: encodeURI(fullPath) } });
 });

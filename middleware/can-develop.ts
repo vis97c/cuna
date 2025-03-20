@@ -13,6 +13,6 @@ export default defineNuxtRouteMiddleware(() => {
 	if (!SESSION.canDevelop) {
 		if (SESSION.canEdit) return navigateTo({ path: "/administrar" });
 
-		return navigateTo({ path: "/" });
+		return navigateTo({ path: "/ingresar" });
 	}
 });
