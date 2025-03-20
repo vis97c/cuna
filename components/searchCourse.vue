@@ -138,10 +138,9 @@
 	 * @component
 	 */
 
-	const props = defineProps<{ values: CourseValues }>();
+	const props = defineProps<{ values: CourseValues; disabled?: boolean }>();
 
 	const Swal = useSwal();
-	const APP = useAppStore();
 
 	const searchUntrackedRef = ref<HTMLElement>();
 	const searching = ref(false);
@@ -173,7 +172,7 @@
 
 	async function searchCourse() {
 		// prevent same search
-		if (APP.SIAMaintenance || isEqual(lastSearch.value, props.values)) return;
+		if (props.disabled || isEqual(lastSearch.value, props.values)) return;
 
 		searching.value = true;
 		errors.value = undefined;

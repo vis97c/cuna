@@ -106,6 +106,11 @@ export default defineNuxtConfig({
 			scrollBehaviorType: "smooth",
 		},
 	},
+	routeRules: {
+		"/cursos": {
+			redirect: "/",
+		},
+	},
 	/** Global CSS */
 	css,
 	modules: [

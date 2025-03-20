@@ -28,9 +28,6 @@ export default defineConditionallyCachedEventHandler(async function (event, inst
 		const typology: eSIATypology | undefined = getQueryParam("typology", event);
 		const page = getBoolean(getQueryParam("page", event) || "");
 
-		// Require auth
-		if (!auth) throw createError({ statusCode: 401, statusMessage: `Missing auth` });
-
 		let query: CollectionReference | Query = serverFirestore.collection("courses");
 		let indexes: string[] = [];
 

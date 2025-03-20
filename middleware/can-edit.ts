@@ -10,5 +10,5 @@ export default defineNuxtRouteMiddleware(() => {
 	if (SESSION.expiredToken) return;
 
 	// User cannot edit
-	if (!SESSION.canEdit) return navigateTo({ path: "/" });
+	if (!SESSION.canEdit) return navigateTo({ path: "/ingresar" });
 });

@@ -30,13 +30,6 @@
 							</div>
 						</template>
 						<XamuActionLink
-							v-else-if="SESSION.user"
-							rel="noopener"
-							@click="clearError({ redirect: '/cursos' })"
-						>
-							Volver al los cursos
-						</XamuActionLink>
-						<XamuActionLink
 							v-else
 							rel="noopener"
 							@click="clearError({ redirect: '/' })"

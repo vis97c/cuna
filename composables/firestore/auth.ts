@@ -35,7 +35,7 @@ export function useGoogleAuth() {
 			await signInWithPopup(auth, provider);
 
 			// rdr, Restricted rdr handled by plugin
-			if (!restricted && route.path !== "/cursos") router.push("/");
+			if (!restricted && route.path !== "/") router.push("/ingresar");
 		} catch (err: FirebaseError | unknown) {
 			useLogger("composables:useGoogleAuth:loginWithGoogle", err);
 
