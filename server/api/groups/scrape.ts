@@ -127,7 +127,6 @@ function useId(id: string): string {
 
 const puppetConfig: LaunchOptions = {
 	headless: true,
-	protocolTimeout: 240000,
 	args: [
 		"--no-sandbox",
 		"--disable-setuid-sandbox",
@@ -270,7 +269,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 	const courseId = `courses/${Cyrb53([code])}`;
 	const courseRef: DocumentReference<CourseData> = serverFirestore.doc(courseId);
 	const scrapedAt = Timestamp.fromDate(new Date());
-	const updatedByRef = serverFirestore.collection("users").doc(auth.id);
+	const updatedByRef = serverFirestore.doc(auth.id);
 
 	function scraper(): Promise<ScrapedCourse> {
 		return TimedPromise<ScrapedCourse>(
@@ -739,7 +738,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 	}
 
 	// Scrape in the background, do not await
-	updateCourse();
+	await updateCourse();
 
 	return true;
 });
