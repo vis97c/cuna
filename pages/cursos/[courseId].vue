@@ -451,7 +451,7 @@
 	 * Do not remove PEAMA & PAES from indexing
 	 */
 	async function scrapeCourse(firebaseCourse: Course) {
-		if (APP.SIAMaintenance) return;
+		if (APP.SIAMaintenance || !$clientFirestore) return;
 
 		refetching.value = true;
 
@@ -476,7 +476,19 @@
 				code,
 			});
 		} catch (err) {
-			useLogger("pages:cursos:[courseId]:onMounted", err);
+			const courseId = <string>route.params.courseId;
+			const courseRef = doc($clientFirestore, "courses", courseId);
+			const serializedError: Record<string, unknown> = JSON.parse(
+				JSON.stringify(err, Object.getOwnPropertyNames(err))
+			);
+
+			// Custom error log, do not await
+			useDocumentCreate("logs", {
+				at: "pages:cursos:[courseId]:onMounted",
+				message: serializedError.message,
+				courseRef,
+				error: serializedError,
+			});
 		}
 
 		refetching.value = false;

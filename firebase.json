@@ -27,9 +27,6 @@
     "rules": "firestore.rules",
     "indexes": "firestore.indexes.json"
   },
-  "storage": {
-    "rules": "storage.rules"
-  },
   "hosting": [
     {
       "site": "cuna-2980b9",
