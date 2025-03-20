@@ -52,14 +52,15 @@
     "functions"
   ],
   "dependencies": {
-    "@nuxt/scripts": "^0.9.5",
+    "@nuxt/scripts": "^0.11.2",
     "@open-xamu-co/ui-common-enums": "^3.0.0-next.7",
     "@open-xamu-co/ui-common-helpers": "^3.0.0-next.19",
     "@open-xamu-co/ui-components-vue": "^3.0.0-next.67",
     "@open-xamu-co/ui-nuxt": "^3.0.0-next.11",
     "@pinia-plugin-persistedstate/nuxt": "^1.2.1",
     "@pinia/nuxt": "^0.10.1",
-    "@vueuse/core": "^10.7.2",
+    "@unhead/vue": "^2.0.0-rc.13",
+    "@vueuse/core": "^13.0.0",
     "firebase": "^11.0.2",
     "firebase-admin": "^13.2.0",
     "firebase-functions": "^6.3.2",
@@ -72,7 +73,7 @@
   },
   "devDependencies": {
     "@firebase/app-types": "^0.9.0",
-    "@nuxt/devtools": "^1.0.8",
+    "@nuxt/devtools": "^2.3.1",
     "@open-xamu-co/eslint-config": "^3.0.1",
     "@open-xamu-co/ui-common-types": "^3.0.0-next.23",
     "@open-xamu-co/ui-styles": "^3.0.0-next.36",
