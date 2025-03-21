@@ -9,12 +9,15 @@ export function resolveSnapshotDefaults<T extends PseudoNode>(
 	id: string,
 	node?: T
 ): FirebaseDocument {
-	return Object.assign({}, node, {
-		id,
-		updatedAt: node?.updatedAt?.toDate(),
-		createdAt: node?.createdAt?.toDate(),
-		scrapedAt: node?.scrapedAt?.toDate(),
-	});
+	const dateFields: Record<string, Date> = {};
+
+	for (const key in node) {
+		if (key.endsWith("At")) {
+			dateFields[key] = node[key]?.toDate();
+		}
+	}
+
+	return Object.assign({}, node, { id, ...dateFields });
 }
 export function getDocumentId(path?: string): string {
 	if (!path) return "";

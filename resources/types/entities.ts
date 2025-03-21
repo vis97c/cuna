@@ -2,6 +2,7 @@ import { DocumentReference, FieldValue, Timestamp } from "firebase/firestore";
 
 import type {
 	CourseData,
+	CourseLogData,
 	GroupData,
 	InstanceConfig,
 	InstanceData,
@@ -17,14 +18,6 @@ export interface FirebaseDocument {
 	createdAt?: string | Date;
 	/** @automated Last update date */
 	updatedAt?: string | Date;
-}
-
-/**
- * Document can be modified by any user
- *
- * This data is used to keep track of the changes
- */
-export interface SharedDocument extends FirebaseDocument {
 	createdBy?: User;
 	updatedBy?: User;
 }
@@ -43,7 +36,7 @@ export type FromData<Data extends Record<string, any>> = {
  * Ref are used to create and modify firebase document
  * Removed properties are not required or part of automation
  */
-export type GetRef<T extends SharedDocument, O extends keyof T = never> = {
+export type GetRef<T extends FirebaseDocument, O extends keyof T = never> = {
 	[K in keyof FromData<Omit<T, "id" | O>> as K extends `${string}At` ? never : K]: FromData<
 		Omit<T, "id" | O>
 	>[K];
@@ -60,6 +53,17 @@ export interface Log extends FirebaseDocument, FromData<LogData> {}
 export interface LogRef extends GetRef<Log> {}
 
 /**
+ * Firebase course log
+ */
+export interface CourseLog extends FirebaseDocument, FromData<CourseLogData> {
+	course?: Course;
+}
+/** This one goes to the database */
+export interface CourseLogRef extends GetRef<CourseLog> {
+	courseRef?: DocumentReference | FieldValue;
+}
+
+/**
  * Firebase user
  */
 export interface User extends FirebaseDocument, FromData<UserData> {}
@@ -67,7 +71,7 @@ export interface User extends FirebaseDocument, FromData<UserData> {}
 /**
  * App instance
  */
-export interface Instance extends SharedDocument, FromData<Omit<InstanceData, "config">> {
+export interface Instance extends FirebaseDocument, FromData<Omit<InstanceData, "config">> {
 	config?: InstanceConfig<Date>;
 }
 /**
@@ -82,7 +86,7 @@ export interface InstanceRef extends GetRef<Instance> {
 /**
  * SIA Teacher
  */
-export interface Teacher extends SharedDocument, FromData<TeacherData> {}
+export interface Teacher extends FirebaseDocument, FromData<TeacherData> {}
 /**
  * This one goes to the database
  *
@@ -93,7 +97,7 @@ export interface TeacherRef extends GetRef<Teacher> {}
 /**
  * SIA Group
  */
-export interface Group extends SharedDocument, FromData<GroupData> {}
+export interface Group extends FirebaseDocument, FromData<GroupData> {}
 /**
  * This one goes to the database
  *
@@ -104,7 +108,7 @@ export interface GroupRef extends GetRef<Group> {}
 /**
  * SIA Course
  */
-export interface Course extends SharedDocument, FromData<CourseData> {
+export interface Course extends FirebaseDocument, FromData<CourseData> {
 	groups?: Group[];
 	unreported?: Group[];
 	/** @automated Last scrape date */

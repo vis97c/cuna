@@ -32,11 +32,16 @@
 							icon="clock-rotate-left"
 							label="Registros"
 						/>
+						<XamuBoxAction
+							to="/administrar/cursos"
+							icon="clock-rotate-left"
+							label="Cursos"
+						/>
 						<XamuBoxAction to="/administrar/ajustes" icon="cog" label="Ajustes" />
 					</div>
 				</div>
 			</div>
-			<hr class="--vertical:md" />
+			<!-- <hr class="--vertical:md" />
 			<div class="flx --flxColumn --flx-start">
 				<div class="flx --flxColumn --flx-start --gap-none --txtColor">
 					<h4>Primeros pasos</h4>
@@ -51,7 +56,7 @@
 						/>
 					</div>
 				</div>
-			</div>
+			</div> -->
 		</div>
 	</section>
 </template>

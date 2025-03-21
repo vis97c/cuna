@@ -46,6 +46,12 @@
 						</XamuActionLink>
 					</li>
 					<li>
+						<XamuActionLink :theme="invertedTheme" to="/administrar/cursos">
+							<XamuIconFa name="book" />
+							<span>Cursos</span>
+						</XamuActionLink>
+					</li>
+					<li>
 						<XamuActionLink :theme="invertedTheme" to="/administrar/ajustes">
 							<XamuIconFa name="cog" />
 							<span>Ajustes</span>

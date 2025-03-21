@@ -3,7 +3,7 @@
 		<XamuLoaderContent
 			class="x-course flx --flxColumn --flx-start --gap-30"
 			:content="!!course"
-			:loading="coursePending || teachersPending"
+			:loading="coursePending"
 		>
 			<template v-if="course">
 				<div class="flx --flxColumn --flx-start">
@@ -12,19 +12,33 @@
 						<p v-if="course.alternativeNames?.length" title="Otros nombres">
 							{{ course.alternativeNames.join(", ") }}.
 						</p>
-						<p class="--txtSize-xs --txtColor-dark5">
-							Actualizado {{ courseUpdatedAt }}
+						<p v-if="course.updatedAt" class="--txtSize-xs --txtColor-dark5">
+							<span>Actualizado {{ useTimeAgo(new Date(course.updatedAt)) }}</span>
+							<span v-if="SESSION.canDevelop && course.scrapedAt">
+								⋅ SIA {{ useTimeAgo(new Date(course.scrapedAt)) }}
+							</span>
 						</p>
 					</div>
 					<p v-if="course.description" class="--txtLineHeight-xl">
 						{{ course.description }}
 					</p>
 				</div>
+				<div v-if="withScrapingErrors" class="flx --flxColumn --flx-center --width-100">
+					<XamuBoxMessage :theme="eColors.DANGER">
+						<div class="txt --txtAlign-center">
+							<p>Nos ha sido imposible obtener datos de este curso.</p>
+							<p class="--txtSize-sm">
+								Aunque el curso esta reportado, su información parece ser inadecuada
+								y no nos permite encontrarlo en el SIA.
+							</p>
+						</div>
+					</XamuBoxMessage>
+				</div>
 				<div v-if="SESSION.user" class="flx --flxColumn --flx-start --width-100">
 					<div class="txt">
 						<h4 class="">Herramientas:</h4>
-						<p v-if="SESSION.canDevelop && fromSIA === false" class="">
-							Parece que este curso contiene datos erroneos, considera eliminarlo
+						<p v-if="SESSION.canDevelop && withScrapingErrors" class="">
+							Parece que este curso contiene datos erróneos, considera eliminarlo
 						</p>
 					</div>
 					<div class="flx --flxRow-wrap --flx-between-center --width-100">
@@ -39,17 +53,59 @@
 							>
 								<XamuIconFa name="hand-fist" :size="20" />
 							</XamuActionButton>
-							<XamuActionButtonToggle
-								v-if="SESSION.user"
-								tooltip="Notificarme"
-								:disabled="!APP.instance?.flags?.trackCourses"
-								:size="eSizes.LG"
-								round
-								@click="trackCourse"
-							>
-								<XamuIconFa name="bell" :size="20" regular />
-								<XamuIconFa name="bell" :size="20" />
-							</XamuActionButtonToggle>
+							<template v-if="SESSION.user">
+								<XamuActionButtonToggle
+									tooltip="Notificarme"
+									:disabled="!APP.instance?.flags?.trackCourses"
+									:size="eSizes.LG"
+									round
+									@click="trackCourse"
+								>
+									<XamuIconFa name="bell" :size="20" regular />
+									<XamuIconFa name="bell" :size="20" />
+								</XamuActionButtonToggle>
+								<XamuModal
+									v-if="withScrapingErrors"
+									key="fix-course"
+									class="--txtColor"
+									title="Corregir curso mal indexado"
+									:save-button="{ title: 'Corregir curso' }"
+									invert-theme
+									@close="closeFixCourse"
+									@save="fixCourse"
+								>
+									<template #toggle="{ toggleModal }">
+										<XamuActionButton
+											:size="eSizes.LG"
+											:theme="eColors.DANGER"
+											:disabled="coursePending || scraping"
+											tooltip="¿El curso contiene datos erróneos?"
+											tooltip-as-text
+											@click="toggleModal"
+										>
+											Corregir datos
+										</XamuActionButton>
+									</template>
+									<template #default>
+										<div
+											class="flx --flxColumn --flx-start-stretch --maxWidth-440"
+										>
+											<div class="txt">
+												<p>
+													*Idealmente, los datos deben coincidir con los
+													mismos pasos que seguirías para buscar el curso
+													en el SIA.
+												</p>
+											</div>
+											<XamuForm
+												v-model="fixCourseInputs"
+												v-model:invalid="invalidFixCourse"
+												title="Corregir curso"
+											/>
+										</div>
+									</template>
+								</XamuModal>
+							</template>
 						</div>
 						<div
 							v-if="SESSION.canModerate"
@@ -62,6 +118,7 @@
 								<XamuIconFa name="refresh" />
 							</XamuActionButton>
 							<XamuModal
+								key="add-group"
 								class="--txtColor"
 								title="Añadir grupo no reportado"
 								:save-button="{ title: 'Añadir grupo' }"
@@ -128,7 +185,7 @@
 					</div>
 				</div>
 				<XamuLoaderContent
-					:loading="coursePending || teachersPending || refetching"
+					:loading="scraping"
 					:content="!!groups.length || !!unreportedGroups.length"
 					label="Actualizando desde el antiguo SIA..."
 					no-content-message="No hay grupos disponibles en este momento."
@@ -200,14 +257,18 @@
 	import { debounce } from "lodash-es";
 	import { arrayUnion, doc, onSnapshot, type Unsubscribe } from "firebase/firestore";
 	import { FirebaseError } from "firebase/app";
+
 	import type { iInvalidInput, iPageEdge } from "@open-xamu-co/ui-common-types";
+	import type { FormInput } from "@open-xamu-co/ui-common-helpers";
 	import { eColors, eSizes } from "@open-xamu-co/ui-common-enums";
 
-	import type { Course, CourseRef, Group, Teacher } from "~/resources/types/entities";
+	import type { Course, Group, Teacher } from "~/resources/types/entities";
+	import type { EnrolledGroup } from "~/functions/src/types/entities";
+	import type { CourseValues } from "~/resources/types/values";
 	import { resolveSnapshotDefaults } from "~/resources/utils/firestore";
 	import { eSIALevel, eSIAPlace } from "~/functions/src/types/SIA";
+
 	import { TableTeachersList, TableEnroll, TableWeek } from "#components";
-	import type { EnrolledGroup } from "~/functions/src/types/entities";
 
 	/**
 	 * Course page
@@ -228,11 +289,14 @@
 	const estudiantesTheme = "estudiantes" as any;
 	const { losEstudiantesUrl = "", losEstudiantesCoursesPath = "" } = APP.instance?.config || {};
 	const losEstudiantesCourses = `${losEstudiantesUrl}${losEstudiantesCoursesPath}`;
-	const refetching = ref(false);
+	const scraping = ref(false);
 	const deactivated = ref(false);
-	const fromSIA = ref<boolean>();
+	// Add group
 	const addGroupInputs = ref(markRaw(useGroupInputs()));
 	const invalidAddGroup = ref<iInvalidInput[]>([]);
+	// Fix course
+	const fixCourseInputs = ref<FormInput[]>();
+	const invalidFixCourse = ref<iInvalidInput[]>([]);
 	let unsub: Unsubscribe = () => undefined;
 
 	const routeId = computed(() => <string>route.params.courseId);
@@ -247,6 +311,12 @@
 			route.meta.title = name;
 			route.meta.description = description;
 			route.meta.keywords = alternativeNames.join(", ");
+			// Update fix course inputs
+			fixCourseInputs.value = useCourseInputs({
+				faculty: nuxtCourse.faculty,
+				scrapedAt: nuxtCourse.scrapedAt,
+				scrapedWithErrorsAt: nuxtCourse.scrapedWithErrorsAt,
+			});
 
 			return nuxtCourse;
 		}
@@ -285,12 +355,6 @@
 			indexedCourse.value = newCourse;
 		},
 	});
-
-	const courseUpdatedAt = computed(() => {
-		const date = new Date(course.value?.updatedAt || new Date());
-
-		return useTimeAgo(date);
-	});
 	const groups = computed(() => {
 		if (!Array.isArray(course.value?.groups)) return [];
 
@@ -301,6 +365,9 @@
 		if (!Array.isArray(course.value?.unreported)) return [];
 
 		return (course.value?.unreported || []).map(mapGroupLike);
+	});
+	const withScrapingErrors = computed(() => {
+		return course.value?.scrapedWithErrorsAt;
 	});
 
 	function mapGroupLike({
@@ -383,6 +450,7 @@
 		});
 	});
 
+	// Add group
 	function closeAddGroup() {
 		addGroupInputs.value = useGroupInputs();
 		invalidAddGroup.value = [];
@@ -399,7 +467,7 @@
 				if (!course.value) return { data: null };
 
 				try {
-					// update category
+					// update course groups
 					const data = await useDocumentUpdate<Course>(course.value, {
 						unreported: arrayUnion(newGroup),
 					});
@@ -438,15 +506,90 @@
 		}
 	}
 
+	// Fix course
+	function closeFixCourse() {
+		fixCourseInputs.value = useCourseInputs({
+			faculty: course.value?.faculty,
+			scrapedAt: course.value?.scrapedAt,
+			scrapedWithErrorsAt: course.value?.scrapedWithErrorsAt,
+		});
+		invalidFixCourse.value = [];
+	}
+	async function fixCourse(willOpen: () => void, event: Event) {
+		const { invalidInputs, withErrors, validationHadErrors, errors } = await getResponse<
+			boolean | null,
+			CourseValues
+		>(
+			async ({ faculty, program, typology }) => {
+				if (!course.value) return { data: null };
+
+				try {
+					// update course
+					const data = await useDocumentUpdate<Course>(course.value, {
+						typologies: [typology],
+						faculty,
+						faculties: [faculty],
+						programs: [program],
+					});
+
+					if (!data) return { data: null };
+
+					const minutes = APP.instance?.config?.coursesScrapeRate || 5;
+					const nowMilis = new Date().getTime();
+					const scrapedAtMilis = new Date(course.value.scrapedAt || "").getTime();
+					const scrapedDiffMilis = nowMilis - scrapedAtMilis;
+
+					// Do once & update if updated more than threshold
+					if (scrapedDiffMilis < useMinMilis(minutes)) {
+						if (course.value.description) return { data };
+					}
+
+					// Atemp course scraping
+					await scrapeCourse(course.value);
+
+					return { data };
+				} catch (errors: FirebaseError | unknown) {
+					return { errors };
+				}
+			},
+			fixCourseInputs.value,
+			event
+		);
+
+		invalidFixCourse.value = invalidInputs;
+
+		if (!withErrors) {
+			// Succesful request, notify user of the success
+			Swal.fire({
+				title: "Curso modificado exitosamente",
+				text: "En breve intentaremos actualizar el curso",
+				icon: "success",
+				willOpen,
+			});
+		} else {
+			if (!validationHadErrors) {
+				Swal.fire({
+					title: "¡Algo sucedió!",
+					text: "Ocurrió un error mientras modificábamos el curso",
+					icon: "error",
+					target: <HTMLElement>event.target,
+				});
+
+				if (errors instanceof FirebaseError) console.debug(errors.code, errors);
+				else console.error(errors);
+			}
+		}
+	}
+
 	/**
 	 * Scrape course & update
 	 *
 	 * Do not remove PEAMA & PAES from indexing
 	 */
 	async function scrapeCourse(firebaseCourse: Course) {
-		if (APP.SIAMaintenance || !$clientFirestore) return;
+		if (scraping.value || APP.SIAMaintenance || !$clientFirestore) return;
 
-		refetching.value = true;
+		scraping.value = true;
 
 		const {
 			code = "",
@@ -460,7 +603,7 @@
 
 		try {
 			// Scrape from old SIA. Do not refetch from hydration
-			fromSIA.value = await useFetchQuery<boolean>("/api/groups/scrape", {
+			await useFetchQuery<boolean>("/api/groups/scrape", {
 				level,
 				place,
 				faculties,
@@ -484,15 +627,16 @@
 			});
 		}
 
-		refetching.value = false;
+		scraping.value = false;
 	}
 
 	// lifecycle
-	onActivated(() => (deactivated.value = false));
-	onDeactivated(() => (deactivated.value = true));
 	onBeforeUnmount(unsub);
 	onMounted(() => {
 		if (import.meta.server || !SESSION.user || !$clientFirestore) return;
+
+		onActivated(() => (deactivated.value = false));
+		onDeactivated(() => (deactivated.value = true));
 
 		const courseId = <string>route.params.courseId;
 		const courseRef = doc($clientFirestore, "courses", courseId);
@@ -510,8 +654,13 @@
 				});
 			}
 
-			const { createdByRef, updatedByRef, scrapedAt, ...firebaseCourse }: CourseRef =
-				resolveSnapshotDefaults(snapshot.ref.path, snapshot.data());
+			const {
+				createdByRef,
+				updatedByRef,
+				scrapedAt,
+				scrapedWithErrorsAt,
+				...firebaseCourse
+			}: Course = resolveSnapshotDefaults(snapshot.ref.path, snapshot.data());
 			const { name, description, alternativeNames = [name], updatedAt } = firebaseCourse;
 
 			// Update with hydration conditionally
@@ -520,25 +669,30 @@
 				route.meta.title = name;
 				route.meta.description = description;
 				route.meta.keywords = alternativeNames.join(", ");
-
+				// Update fix course inputs
+				fixCourseInputs.value = useCourseInputs({
+					faculty: firebaseCourse.faculty,
+					scrapedAt: scrapedAt,
+					scrapedWithErrorsAt: scrapedWithErrorsAt,
+				});
 				// Update course
 				course.value = { ...course.value, ...firebaseCourse };
 			}
 
 			const minutes = APP.instance?.config?.coursesScrapeRate || 5;
 			const nowMilis = new Date().getTime();
-			const updatedAtMilis = new Date(updatedAt || "").getTime();
-			const updatedDiffMilis = nowMilis - updatedAtMilis;
+			const scrapedAtMilis = new Date(scrapedAt || "").getTime();
+			const scrapedDiffMilis = nowMilis - scrapedAtMilis;
+
+			// Prevent scraping until fixed
+			if (scrapedWithErrorsAt) return;
 
 			// Do once & update if updated more than threshold
-			if (
-				fromSIA.value !== undefined ||
-				(scrapedAt && updatedDiffMilis < useMinMilis(minutes))
-			) {
+			if (scrapedAt && scrapedDiffMilis < useMinMilis(minutes)) {
 				if (firebaseCourse.description) return;
 			}
 
-			if (!refetching.value) scrapeCourse(firebaseCourse);
+			scrapeCourse(firebaseCourse);
 		});
 	});
 </script>
