@@ -196,13 +196,13 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 	let faculties: uSIAFaculty[] = Array.isArray(params.faculties)
 		? params.faculties
 		: [params.faculties];
-	let programs: uSIAProgram[] = Array.isArray(params.programs)
+	const programs: uSIAProgram[] = Array.isArray(params.programs)
 		? params.programs
 		: [params.programs];
 	let typologies: eSIATypology[] = Array.isArray(params.typologies)
 		? params.typologies
 		: [params.typologies];
-	const LEByProgram = !programs[0];
+	const LEByProgram = !programs[0] || typologies.includes(eSIATypology.LIBRE_ELECCIÓN);
 	const LEByFaculty = !faculties[0];
 
 	// Override data if missing, assume LE
@@ -212,47 +212,47 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 		switch (place) {
 			case eSIAPlace.BOGOTÁ:
 				if (LEByFaculty) faculties = [eSIABogotaFaculty.SEDE_BOGOTÁ];
-				if (LEByProgram) programs = [eSIABogotaProgram.COMPONENTE_DE_LIBRE_ELECCIÓN];
+				if (LEByProgram) programs.push(eSIABogotaProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
 
 				break;
 			case eSIAPlace.LA_PAZ:
 				if (LEByFaculty) faculties = [eSIALaPazFaculty.SEDE_LA_PAZ];
-				if (LEByProgram) programs = [eSIALaPazProgram.COMPONENTE_DE_LIBRE_ELECCIÓN];
+				if (LEByProgram) programs.push(eSIALaPazProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
 
 				break;
 			case eSIAPlace.MEDELLÍN:
 				if (LEByFaculty) faculties = [eSIAMedellinFaculty.SEDE_MEDELLÍN];
-				if (LEByProgram) programs = [eSIAMedellinProgram.COMPONENTE_DE_LIBRE_ELECCIÓN];
+				if (LEByProgram) programs.push(eSIAMedellinProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
 
 				break;
 			case eSIAPlace.MANIZALES:
 				if (LEByFaculty) faculties = [eSIAManizalesFaculty.SEDE_MANIZALES];
-				if (LEByProgram) programs = [eSIAManizalesProgram.COMPONENTE_DE_LIBRE_ELECCIÓN];
+				if (LEByProgram) programs.push(eSIAManizalesProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
 
 				break;
 			case eSIAPlace.PALMIRA:
 				if (LEByFaculty) faculties = [eSIAPalmiraFaculty.SEDE_PALMIRA];
-				if (LEByProgram) programs = [eSIAPalmiraProgram.COMPONENTE_DE_LIBRE_ELECCIÓN];
+				if (LEByProgram) programs.push(eSIAPalmiraProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
 
 				break;
 			case eSIAPlace.TUMACO:
 				if (LEByFaculty) faculties = [eSIATumacoFaculty.SEDE_TUMACO];
-				if (LEByProgram) programs = [eSIATumacoProgram.COMPONENTE_DE_LIBRE_ELECCIÓN];
+				if (LEByProgram) programs.push(eSIATumacoProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
 
 				break;
 			case eSIAPlace.AMAZONÍA:
 				if (LEByFaculty) faculties = [eSIAAmazoniaFaculty.SEDE_AMAZONIA];
-				if (LEByProgram) programs = [eSIAAmazoniaProgram.COMPONENTE_DE_LIBRE_ELECCIÓN];
+				if (LEByProgram) programs.push(eSIAAmazoniaProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
 
 				break;
 			case eSIAPlace.CARIBE:
 				if (LEByFaculty) faculties = [eSIACaribeFaculty.SEDE_CARIBE];
-				if (LEByProgram) programs = [eSIACaribeProgram.COMPONENTE_DE_LIBRE_ELECCIÓN];
+				if (LEByProgram) programs.push(eSIACaribeProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
 
 				break;
 			case eSIAPlace.ORINOQUÍA:
 				if (LEByFaculty) faculties = [eSIAOrinoquiaFaculty.SEDE_ORINOQUIA];
-				if (LEByProgram) programs = [eSIAOrinoquiaProgram.COMPONENTE_DE_LIBRE_ELECCIÓN];
+				if (LEByProgram) programs.push(eSIAOrinoquiaProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
 
 				break;
 		}

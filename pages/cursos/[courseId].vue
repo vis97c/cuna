@@ -31,6 +31,9 @@
 								Aunque el curso esta reportado, su información parece ser inadecuada
 								y no nos permite encontrarlo en el SIA.
 							</p>
+							<p class="--txtSize-sm">
+								Es posible que no sea ofertada este semestre.
+							</p>
 						</div>
 					</XamuBoxMessage>
 				</div>
@@ -255,7 +258,7 @@
 
 <script setup lang="ts">
 	import { debounce } from "lodash-es";
-	import { arrayUnion, doc, onSnapshot, type Unsubscribe } from "firebase/firestore";
+	import { arrayUnion, deleteField, doc, onSnapshot, type Unsubscribe } from "firebase/firestore";
 	import { FirebaseError } from "firebase/app";
 
 	import type { iInvalidInput, iPageEdge } from "@open-xamu-co/ui-common-types";
@@ -524,15 +527,13 @@
 				if (!course.value) return { data: null };
 
 				try {
-					// update course
-					const data = await useDocumentUpdate<Course>(course.value, {
-						typologies: [typology],
+					// Update course, do not await
+					useDocumentUpdate<Course>(course.value, {
+						typologies: typology ? [typology] : deleteField(),
 						faculty,
 						faculties: [faculty],
 						programs: [program],
 					});
-
-					if (!data) return { data: null };
 
 					const minutes = APP.instance?.config?.coursesScrapeRate || 5;
 					const nowMilis = new Date().getTime();
@@ -541,13 +542,13 @@
 
 					// Do once & update if updated more than threshold
 					if (scrapedDiffMilis < useMinMilis(minutes)) {
-						if (course.value.description) return { data };
+						if (course.value.description) return { data: false };
 					}
 
 					// Atemp course scraping
 					await scrapeCourse(course.value);
 
-					return { data };
+					return { data: true };
 				} catch (errors: FirebaseError | unknown) {
 					return { errors };
 				}

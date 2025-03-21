@@ -16,7 +16,11 @@ export function useCourseInputs(course: Course = {}): FormInput[] {
 	const { typologies } = useCourseTypeOptions();
 	const facultyInput = new FormInput(
 		{
-			values: [course?.faculty || fixCourse ? <uSIAFaculty>"" : SESSION.lastFacultySearch],
+			values: [
+				course?.faculty || fixCourse
+					? <uSIAFaculty>faculties.value[0].value
+					: SESSION.lastFacultySearch,
+			],
 			name: "faculty",
 			required: true,
 			title: "Facultad del curso (Sede Bogotá)",
@@ -42,13 +46,18 @@ export function useCourseInputs(course: Course = {}): FormInput[] {
 		}
 	);
 	const programInput = new FormInput({
-		values: [course?.program || fixCourse ? <uSIAProgram>"" : SESSION.lastProgramSearch],
+		values: [
+			course?.program || fixCourse
+				? <uSIAProgram>programs.value[0].value
+				: SESSION.lastProgramSearch,
+		],
 		name: "program",
 		title: "Programa del curso (Sede Bogotá)",
 		placeholder: "Ej: Ciencias de la computación",
 		options: programs.value,
 		type: eFormType.SELECT,
 		icon: "chess-rook",
+		required: fixCourse,
 	});
 
 	const inputs: FormInput[] = [
