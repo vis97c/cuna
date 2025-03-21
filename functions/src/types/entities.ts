@@ -1,4 +1,4 @@
-import type { Timestamp } from "firebase-admin/firestore";
+import type { DocumentReference, Timestamp } from "firebase-admin/firestore";
 
 import type { eSIATypology, eSIALevel, eSIAPlace, uSIAFaculty, uSIAProgram } from "./SIA";
 
@@ -10,6 +10,10 @@ export interface FirebaseData extends Record<string, any> {
 	createdAt?: Timestamp;
 	/** @automated Last update date */
 	updatedAt?: Timestamp;
+	/** @automated Created by */
+	createdByRef?: DocumentReference<UserData>;
+	/** @automated Updated by */
+	updatedByRef?: DocumentReference<UserData>;
 }
 
 /**
@@ -22,6 +26,15 @@ export interface LogData extends FirebaseData {
 	code?: string;
 	message?: string;
 	error?: string;
+}
+
+/**
+ * Firebase course log
+ *
+ * @collection
+ */
+export interface CourseLogData extends LogData {
+	courseRef?: DocumentReference<CourseData>;
 }
 
 export interface EnrolledGroup extends Pick<GroupData, "name" | "schedule" | "teachers"> {
@@ -230,4 +243,6 @@ export interface CourseData extends FirebaseData {
 	spotsCount?: number;
 	/** @automated Last scrape date */
 	scrapedAt?: Timestamp;
+	/** @automated Last scrape date with errors */
+	scrapedWithErrorsAt?: Timestamp;
 }

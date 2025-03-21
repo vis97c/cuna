@@ -10,7 +10,7 @@ import {
 	CollectionReference,
 } from "firebase/firestore";
 
-import type { SharedDocument, GetRef } from "~/resources/types/entities";
+import type { FirebaseDocument, GetRef } from "~/resources/types/entities";
 import { getDocumentId } from "~/resources/utils/firestore";
 import { TimedPromise } from "~/resources/utils/promises";
 
@@ -83,7 +83,7 @@ export async function useDocumentCreate<
 export async function useDocumentUpdate<
 	V extends Record<string, any>,
 	Vgr extends GetRef<V> = GetRef<V>,
->(node: SharedDocument, middleRef: Partial<Vgr> = {}): Promise<boolean> {
+>(node: FirebaseDocument, middleRef: Partial<Vgr> = {}): Promise<boolean> {
 	const SESSION = useSessionStore();
 	const { $clientFirestore } = useNuxtApp();
 
@@ -126,7 +126,7 @@ export async function useDocumentUpdate<
 export async function useDocumentClone<
 	V extends Record<string, any>,
 	Vgr extends GetRef<V> = GetRef<V>,
->(node: SharedDocument, middleRef: Partial<Vgr> = {}): Promise<boolean> {
+>(node: FirebaseDocument, middleRef: Partial<Vgr> = {}): Promise<boolean> {
 	const { $clientFirestore } = useNuxtApp();
 	const SESSION = useSessionStore();
 
@@ -169,7 +169,7 @@ export async function useDocumentClone<
 }
 
 /** Deletes given document */
-export async function useDocumentDelete(node: SharedDocument): Promise<boolean> {
+export async function useDocumentDelete(node: FirebaseDocument): Promise<boolean> {
 	const { $clientFirestore } = useNuxtApp();
 
 	if (import.meta.server || !$clientFirestore) return false;

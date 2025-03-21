@@ -49,7 +49,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 				include = include.slice(0, Math.min(30, include.length));
 				query = query.orderBy(documentId).where(documentId, "in", include);
 			} else return []; // empty query
-		} else query = getOrderedQuery(event, collectionId);
+		} else query = getOrderedQuery(event, query);
 
 		if (page) return getEdgesPage({ event, instance, auth }, query);
 		else return getQueryAsEdges({ event, instance, auth }, query);

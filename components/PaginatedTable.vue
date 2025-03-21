@@ -10,12 +10,9 @@
 			</div>
 			<XamuPaginationContent
 				v-slot="{ content }"
-				v-bind="{ page, url, noContentMessage, theme }"
+				v-bind="{ page, url, noContentMessage, preventAutoload, theme }"
 				with-route
-				:defaults="{
-					page: true,
-					...defaults,
-				}"
+				:defaults="{ page: true, ...defaults }"
 				class="flx --flxColumn --flx-start-end"
 				@refresh="emittedRefresh = $event"
 				@has-content="hasContent = $event"
@@ -24,6 +21,7 @@
 					<XamuTable
 						:nodes="mapNodes(content)"
 						:refresh="refreshData"
+						class="--txtColor"
 						v-bind="{
 							...tableProps,
 							theme,
@@ -70,6 +68,7 @@
 		page: iGetPage<Ti>;
 		defaults?: Record<string, any>;
 		mapNode?: (node: Ti) => TMi;
+		preventAutoload?: boolean;
 		/**
 		 * Additional refresh function
 		 */

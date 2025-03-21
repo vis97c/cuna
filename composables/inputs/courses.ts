@@ -2,10 +2,11 @@ import { FormInput } from "@open-xamu-co/ui-common-helpers";
 import { eFormType } from "@open-xamu-co/ui-common-enums";
 
 import type { Course } from "~/resources/types/entities";
-import { eSIALevel } from "~/functions/src/types/SIA";
+import { eSIALevel, type uSIAFaculty, type uSIAProgram } from "~/functions/src/types/SIA";
 
 export function useCourseInputs(course: Course = {}): FormInput[] {
 	const SESSION = useSessionStore();
+	const fixCourse = !!course?.scrapedWithErrorsAt;
 	const { selectedFaculty, faculties, programs } = useCourseProgramOptions([
 		eSIALevel.PREGRADO,
 		SESSION.place,
@@ -15,7 +16,7 @@ export function useCourseInputs(course: Course = {}): FormInput[] {
 	const { typologies } = useCourseTypeOptions();
 	const facultyInput = new FormInput(
 		{
-			values: [course?.faculty || SESSION.lastFacultySearch],
+			values: [course?.faculty || fixCourse ? <uSIAFaculty>"" : SESSION.lastFacultySearch],
 			name: "faculty",
 			required: true,
 			title: "Facultad del curso (Sede Bogotá)",
@@ -41,7 +42,7 @@ export function useCourseInputs(course: Course = {}): FormInput[] {
 		}
 	);
 	const programInput = new FormInput({
-		values: [course?.program || SESSION.lastProgramSearch],
+		values: [course?.program || fixCourse ? <uSIAProgram>"" : SESSION.lastProgramSearch],
 		name: "program",
 		title: "Programa del curso (Sede Bogotá)",
 		placeholder: "Ej: Ciencias de la computación",
@@ -50,18 +51,25 @@ export function useCourseInputs(course: Course = {}): FormInput[] {
 		icon: "chess-rook",
 	});
 
-	return [
+	const inputs: FormInput[] = [
 		facultyInput,
 		programInput,
 		new FormInput({
-			values: [course?.typology || ""],
+			values: [course?.typologies?.[0] || ""],
 			name: "typology",
 			title: "Tipología del curso ",
 			placeholder: "Ej: Libre elección",
 			options: typologies,
-			type: eFormType.SELECT_FILTER,
+			type: eFormType.SELECT,
 			icon: "chess-bishop",
 		}),
+	];
+
+	// Fix course
+	if (fixCourse) return inputs;
+
+	return [
+		...inputs,
 		new FormInput({
 			values: [course?.name || ""],
 			name: "name",

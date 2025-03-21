@@ -709,6 +709,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 					{
 						description: SIAScraps.description,
 						groups: SIAScraps.groups,
+						scrapedWithErrorsAt: FieldValue.delete(),
 						scrapedAt,
 						updatedAt: scrapedAt,
 						updatedByRef,
@@ -720,8 +721,18 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 			const serializedError: Record<string, unknown> = JSON.parse(
 				JSON.stringify(err, Object.getOwnPropertyNames(err))
 			);
-
 			const logsRef: DocumentReference<CourseData> = serverFirestore.collection("logs").doc();
+
+			// Update course, do not await
+			courseRef.set(
+				{
+					scrapedAt,
+					scrapedWithErrorsAt: scrapedAt,
+					updatedAt: scrapedAt,
+					updatedByRef,
+				},
+				{ merge: true }
+			);
 
 			// Custom error log, do not await
 			logsRef.set({
@@ -734,6 +745,11 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 				createdByRef: updatedByRef,
 				updatedByRef,
 			});
+		} finally {
+			if (puppetBrowser?.connected) {
+				// Close browser
+				await puppetBrowser.close();
+			}
 		}
 	}
 
