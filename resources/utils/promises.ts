@@ -16,10 +16,10 @@ export function TimedPromise<T>(executor: tPromiseExecutor<T>, fallback?: T, tim
 				if (fallback) {
 					console.warn("Timed out with fallback");
 
-					return resolve(fallback);
+					resolve(fallback);
+				} else {
+					reject("Timed out");
 				}
-
-				reject("Timed out");
 			}, timeoutSeconds * 1000);
 		}),
 	]);

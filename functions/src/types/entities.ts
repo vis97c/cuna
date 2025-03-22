@@ -17,6 +17,11 @@ export interface FirebaseData extends Record<string, any> {
 }
 
 /**
+ * Scraped with info
+ */
+export type ScrapedWith = [eSIALevel, eSIAPlace, uSIAFaculty?, uSIAProgram?, eSIATypology?];
+
+/**
  * Firebase log
  *
  * @collection
@@ -245,4 +250,9 @@ export interface CourseData extends FirebaseData {
 	scrapedAt?: Timestamp;
 	/** @automated Last scrape date with errors */
 	scrapedWithErrorsAt?: Timestamp;
+	/**
+	 * Scrapper was able to get the course with this info
+	 * @automation
+	 */
+	lastScrapedWith?: ScrapedWith;
 }

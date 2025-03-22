@@ -26,7 +26,7 @@
 				<div v-if="withScrapingErrors" class="flx --flxColumn --flx-center --width-100">
 					<XamuBoxMessage :theme="eColors.DANGER">
 						<div class="txt --txtAlign-center">
-							<p>Nos ha sido imposible obtener datos de este curso.</p>
+							<p>Lo sentimos, nos ha sido imposible obtener datos de este curso.</p>
 							<p class="--txtSize-sm">
 								Aunque el curso esta reportado, su información parece ser inadecuada
 								y no nos permite encontrarlo en el SIA.
@@ -94,7 +94,8 @@
 											class="flx --flxColumn --flx-start-stretch --maxWidth-440"
 										>
 											<div class="txt">
-												<p>
+												<p>¡Gracias por ayudarnos a mejorar!</p>
+												<p class="--txtSize-sm">
 													*Idealmente, los datos deben coincidir con los
 													mismos pasos que seguirías para buscar el curso
 													en el SIA.
@@ -269,7 +270,6 @@
 	import type { EnrolledGroup } from "~/functions/src/types/entities";
 	import type { CourseValues } from "~/resources/types/values";
 	import { resolveSnapshotDefaults } from "~/resources/utils/firestore";
-	import { eSIALevel, eSIAPlace } from "~/functions/src/types/SIA";
 
 	import { TableTeachersList, TableEnroll, TableWeek } from "#components";
 
@@ -592,24 +592,11 @@
 
 		scraping.value = true;
 
-		const {
-			code = "",
-			level = eSIALevel.PREGRADO,
-			place = eSIAPlace.BOGOTÁ,
-			faculty,
-			faculties = [faculty],
-			programs = [],
-			typologies = [],
-		} = firebaseCourse;
+		const { code = "" } = firebaseCourse;
 
 		try {
 			// Scrape from old SIA. Do not refetch from hydration
 			await useFetchQuery<boolean>("/api/groups/scrape", {
-				level,
-				place,
-				faculties,
-				programs,
-				typologies,
 				code,
 			});
 		} catch (err) {
@@ -655,14 +642,18 @@
 				});
 			}
 
+			const firebaseCourse: Course = resolveSnapshotDefaults(
+				snapshot.ref.path,
+				snapshot.data()
+			);
 			const {
-				createdByRef,
-				updatedByRef,
+				name,
+				description,
+				alternativeNames = [name],
+				updatedAt,
 				scrapedAt,
 				scrapedWithErrorsAt,
-				...firebaseCourse
-			}: Course = resolveSnapshotDefaults(snapshot.ref.path, snapshot.data());
-			const { name, description, alternativeNames = [name], updatedAt } = firebaseCourse;
+			} = firebaseCourse;
 
 			// Update with hydration conditionally
 			if (course.value?.updatedAt !== updatedAt) {
