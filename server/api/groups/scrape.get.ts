@@ -231,7 +231,8 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 		const courseLinks: CourseLink[] = await tableHandle.evaluate(async (table) => {
 			const tbody = table?.querySelector("tbody");
 
-			if (tbody?.tagName !== "TBODY") throw new Error("No courses found");
+			// No courses found
+			if (tbody?.tagName !== "TBODY") return [];
 
 			const rows = tbody?.children;
 
@@ -262,12 +263,14 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 
 		try {
 			// Get groups
-			const groups: Group[] = await puppetPage.evaluate(() => {
+			const { groups, errors } = await puppetPage.evaluate(() => {
 				const trimHTML = (el?: Element | null) => (el ? el.innerHTML.trim() : "");
 				const activityH3 = document.querySelector("span[id$=w-titulo] h3");
 				const activity = trimHTML(activityH3) || "Desconocida";
-
-				return Array.from(document.querySelectorAll("span[id$=pgl14]")).map((root) => {
+				const errors: Error[] = [];
+				// Map group
+				const groupElements = document.querySelectorAll("span[id$=pgl14]");
+				const parsedGroups: Group[] = Array.from(groupElements).map((root) => {
 					const teacherSpan = root.querySelector("span[id$=ot8]");
 					const spotsSpan = root.querySelector("span[id$=ot24]");
 					const spots: number = Number(trimHTML(spotsSpan)) || 0;
@@ -277,6 +280,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 					const schedule: tWeeklySchedule = ["", "", "", "", "", "", ""];
 					let classrooms: string[] = [];
 
+					// Map schedule & classrooms
 					Array.from(root.querySelectorAll("span[id$=pgl10]")).forEach(
 						(scheduledSpace) => {
 							const classroomSpan = scheduledSpace.lastElementChild?.children[1];
@@ -286,7 +290,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 								.split(" de ");
 
 							if (!day || !unparsedSpan) {
-								throw new Error("Non supported schedule format");
+								return errors.push(new Error("Non supported schedule format"));
 							}
 
 							const span = unparsedSpan.replaceAll(".", "").split(" a ").join("|");
@@ -338,7 +342,19 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 						teachers: [teacher || "No Informado"],
 					};
 				});
+
+				return { groups: parsedGroups, errors };
 			});
+
+			// Prevent indexing if invalid data
+			if (errors.length) {
+				return {
+					code,
+					name: courseLink.name,
+					description: courseLink.description,
+					errors,
+				};
+			}
 
 			debugFirebaseServer(
 				event,
@@ -493,13 +509,13 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 					throw reject({ statusCode: 400, statusMessage: "No faculties matched" });
 				}
 
-				const errors: any[] = [];
 				let response: ScrapedCourse = {
 					groups: [],
 					code: "", // Valid response would replace this
 					name: "",
 					description: "",
 					lastScrapedWith: [level, place],
+					errors: [],
 				};
 
 				for (const facultyValue of facultyValues) {
@@ -549,8 +565,9 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 
 								// Attempt to get groups from this program
 								if (!typologies.length) {
-									const partialResponse = await getResponse();
+									const { errors = [], ...partialResponse } = await getResponse();
 
+									response.errors?.push(...errors);
 									response = {
 										...partialResponse,
 										lastScrapedWith: [
@@ -559,6 +576,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 											<uSIAFaculty>facultyValue.alias,
 											<uSIAProgram>programValue.alias,
 										],
+										errors,
 									};
 
 									continue;
@@ -644,10 +662,11 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 										await puppetPage.waitForNetworkIdle();
 
 										// Attempt to get groups from this typology
-										const partialResponse = await getResponse();
+										const { errors = [], ...partial } = await getResponse();
 
+										response.errors?.push(...errors);
 										response = {
-											...partialResponse,
+											...partial,
 											lastScrapedWith: [
 												level,
 												place,
@@ -657,7 +676,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 											],
 										};
 									} catch (err) {
-										errors.push(err); // save typologies errors
+										response.errors?.push(err); // save typologies errors
 
 										debugFirebaseServer(
 											event,
@@ -668,7 +687,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 									}
 								}
 							} catch (err) {
-								errors.push(err); // save programs errors
+								response.errors?.push(err); // save programs errors
 
 								debugFirebaseServer(
 									event,
@@ -679,7 +698,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 							}
 						}
 					} catch (err) {
-						errors.push(err); // save faculties errors
+						response.errors?.push(err); // save faculties errors
 
 						debugFirebaseServer(
 							event,
@@ -691,7 +710,9 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 				}
 
 				// If no groups found, throw errors if any
-				if (!response.groups?.length && errors.length) throw reject(errors.pop());
+				if (!response.groups?.length && response.errors?.length) {
+					throw reject(response.errors.pop());
+				}
 
 				resolve(response);
 			},
