@@ -290,8 +290,6 @@
 	const { getResponse } = useFormInput();
 
 	const estudiantesTheme = "estudiantes" as any;
-	const { losEstudiantesUrl = "", losEstudiantesCoursesPath = "" } = APP.instance?.config || {};
-	const losEstudiantesCourses = `${losEstudiantesUrl}${losEstudiantesCoursesPath}`;
 	const scraping = ref(false);
 	const deactivated = ref(false);
 	// Add group
@@ -303,6 +301,12 @@
 	let unsub: Unsubscribe = () => undefined;
 
 	const routeId = computed(() => <string>route.params.courseId);
+	const losEstudiantesCourses = computed(() => {
+		const config = APP.instance?.config || {};
+		const { losEstudiantesUrl = "", losEstudiantesCoursesPath = "" } = config;
+
+		return `${losEstudiantesUrl}${losEstudiantesCoursesPath}`;
+	});
 
 	const { data: indexedCourse, pending: coursePending } = useAsyncData(
 		`api:all:courses:${routeId.value}`,
@@ -642,7 +646,7 @@
 				});
 			}
 
-			const firebaseCourse: Course = resolveSnapshotDefaults(
+			const { scrapedWithErrorsAt, ...firebaseCourse }: Course = resolveSnapshotDefaults(
 				snapshot.ref.path,
 				snapshot.data()
 			);
@@ -652,7 +656,6 @@
 				alternativeNames = [name],
 				updatedAt,
 				scrapedAt,
-				scrapedWithErrorsAt,
 			} = firebaseCourse;
 
 			// Update with hydration conditionally
@@ -668,7 +671,7 @@
 					scrapedWithErrorsAt: scrapedWithErrorsAt,
 				});
 				// Update course
-				course.value = { ...course.value, ...firebaseCourse };
+				course.value = { ...course.value, ...firebaseCourse, scrapedWithErrorsAt };
 			}
 
 			const minutes = APP.instance?.config?.coursesScrapeRate || 5;

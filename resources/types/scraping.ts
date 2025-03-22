@@ -7,4 +7,5 @@ export interface ScrapedCourse {
 	code: string;
 	description: string;
 	lastScrapedWith: ScrapedWith;
+	errors?: unknown[];
 }

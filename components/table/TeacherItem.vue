@@ -67,10 +67,13 @@
 	const SESSION = useSessionStore();
 	const { getResponse } = useFormInput();
 	const Swal = useSwal();
-	const { losEstudiantesUrl = "", losEstudiantesProfessorsPath = "" } =
-		APP.instance?.config || {};
 
-	const losEstudiantesProfessors = `${losEstudiantesUrl}${losEstudiantesProfessorsPath}`;
+	const losEstudiantesProfessors = computed(() => {
+		const config = APP.instance?.config || {};
+		const { losEstudiantesUrl = "", losEstudiantesProfessorsPath = "" } = config;
+
+		return `${losEstudiantesUrl}${losEstudiantesProfessorsPath}`;
+	});
 	const estudiantesTheme = "estudiantes" as any;
 
 	const updatedSlug = ref("");
