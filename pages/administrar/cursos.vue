@@ -74,20 +74,12 @@
 		middleware: ["can-develop"],
 	});
 
-	function mapCourse({
-		updatedAt,
-		createdAt,
-		scrapedAt,
-		scrapedWithErrorsAt,
-		updatedBy,
-		createdBy,
-		...course
-	}: Course) {
+	function mapCourse(course: Course) {
 		return {
+			id: course.id,
 			code: course.code,
-			updatedAt,
-			scrapedAt,
-			updatedBy,
+			scrapedAt: course.scrapedAt,
+			updatedBy: course.updatedBy,
 			course,
 			logs: 1,
 		};

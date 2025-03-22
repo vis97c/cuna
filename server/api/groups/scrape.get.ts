@@ -1,5 +1,5 @@
-import { type Browser, type LaunchOptions, Page, launch } from "puppeteer";
 import _ from "lodash";
+import { type Browser, type LaunchOptions, Page, launch } from "puppeteer";
 import { DocumentReference, FieldValue, Timestamp } from "firebase-admin/firestore";
 
 import type { iSelectOption } from "@open-xamu-co/ui-common-types";
@@ -167,6 +167,21 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 		throw createError({ statusCode: 500, statusMessage: "Missing endpoints" });
 	}
 
+	// event data
+	const code: string = getQueryParam("code", event) || "";
+
+	if (!code) throw createError({ statusCode: 400, statusMessage: `Missing course code` });
+
+	debugFirebaseServer(event, "api:groups:scrape", { siaOldEnpoint, scrape: code });
+
+	// Where, when & who
+	const courseId = `courses/${Cyrb53([code])}`;
+	const courseRef: DocumentReference<CourseData> = serverFirestore.doc(courseId);
+	const scrapedAt = Timestamp.fromDate(new Date());
+	const updatedByRef = serverFirestore.doc(auth.id);
+	let attemp = 0;
+
+	// Setup puppeteer
 	const puppetBrowser: Browser = await launch(puppetConfig);
 	const puppetPage: Page = await puppetBrowser.newPage();
 
@@ -186,324 +201,10 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 			);
 	}
 
-	// event data
-	const params = getQuery(event);
-	const name: string = getQueryParam("name", event) || "";
-	const code: string = getQueryParam("code", event) || "";
-	const level: eSIALevel = getQueryParam("level", event);
-	const place: eSIAPlace = getQueryParam("place", event);
-	// Compare against multiple sources before giving up
-	let faculties: uSIAFaculty[] = Array.isArray(params.faculties)
-		? params.faculties
-		: [params.faculties];
-	const programs: uSIAProgram[] = Array.isArray(params.programs)
-		? params.programs
-		: [params.programs];
-	let typologies: eSIATypology[] = Array.isArray(params.typologies)
-		? params.typologies
-		: [params.typologies];
-	const LEByProgram = !programs[0] || typologies.includes(eSIATypology.LIBRE_ELECCIÓN);
-	const LEByFaculty = !faculties[0];
-
-	// Override data if missing, assume LE
-	if (LEByProgram || LEByFaculty) {
-		typologies = [eSIATypology.LIBRE_ELECCIÓN];
-
-		switch (place) {
-			case eSIAPlace.BOGOTÁ:
-				if (LEByFaculty) faculties = [eSIABogotaFaculty.SEDE_BOGOTÁ];
-				if (LEByProgram) programs.push(eSIABogotaProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
-
-				break;
-			case eSIAPlace.LA_PAZ:
-				if (LEByFaculty) faculties = [eSIALaPazFaculty.SEDE_LA_PAZ];
-				if (LEByProgram) programs.push(eSIALaPazProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
-
-				break;
-			case eSIAPlace.MEDELLÍN:
-				if (LEByFaculty) faculties = [eSIAMedellinFaculty.SEDE_MEDELLÍN];
-				if (LEByProgram) programs.push(eSIAMedellinProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
-
-				break;
-			case eSIAPlace.MANIZALES:
-				if (LEByFaculty) faculties = [eSIAManizalesFaculty.SEDE_MANIZALES];
-				if (LEByProgram) programs.push(eSIAManizalesProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
-
-				break;
-			case eSIAPlace.PALMIRA:
-				if (LEByFaculty) faculties = [eSIAPalmiraFaculty.SEDE_PALMIRA];
-				if (LEByProgram) programs.push(eSIAPalmiraProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
-
-				break;
-			case eSIAPlace.TUMACO:
-				if (LEByFaculty) faculties = [eSIATumacoFaculty.SEDE_TUMACO];
-				if (LEByProgram) programs.push(eSIATumacoProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
-
-				break;
-			case eSIAPlace.AMAZONÍA:
-				if (LEByFaculty) faculties = [eSIAAmazoniaFaculty.SEDE_AMAZONIA];
-				if (LEByProgram) programs.push(eSIAAmazoniaProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
-
-				break;
-			case eSIAPlace.CARIBE:
-				if (LEByFaculty) faculties = [eSIACaribeFaculty.SEDE_CARIBE];
-				if (LEByProgram) programs.push(eSIACaribeProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
-
-				break;
-			case eSIAPlace.ORINOQUÍA:
-				if (LEByFaculty) faculties = [eSIAOrinoquiaFaculty.SEDE_ORINOQUIA];
-				if (LEByProgram) programs.push(eSIAOrinoquiaProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
-
-				break;
-		}
-	}
-
-	debugFirebaseServer(event, "api:groups:scrape", {
-		siaOldEnpoint,
-		scrape: code || name,
-		programs,
-		typologies,
-	});
-
-	// Where, when & who
-	const courseId = `courses/${Cyrb53([code])}`;
-	const courseRef: DocumentReference<CourseData> = serverFirestore.doc(courseId);
-	const scrapedAt = Timestamp.fromDate(new Date());
-	const updatedByRef = serverFirestore.doc(auth.id);
-
-	function scraper(): Promise<ScrapedCourse> {
-		return TimedPromise<ScrapedCourse>(
-			async (resolve, reject) => {
-				await puppetPage.goto(siaOldEnpoint);
-				await puppetPage.evaluate(() => {
-					// #d1 es un div que tiene altura 1 cuando la página se carga incorrectamente
-					if (document.querySelector("#d1")?.clientHeight === 1) {
-						throw new Error("There was an error loading the page");
-					}
-				});
-
-				if (!siaOldLevel?.[level] || !siaOldPlace?.[place]) {
-					throw reject({
-						statusCode: 500,
-						statusMessage: "Missing place or level lists",
-					});
-				}
-
-				// Select level
-				await puppetPage.click(useId(eIds.LEVEL));
-				await puppetPage.select(useId(eIds.LEVEL), siaOldLevel[level]);
-				await waitForSelect(puppetPage, eIds.PLACE);
-
-				// Select Place
-				await puppetPage.click(useId(eIds.PLACE));
-				await puppetPage.select(useId(eIds.PLACE), siaOldPlace[place]);
-				await waitForSelect(puppetPage, eIds.FACULTY);
-
-				// Select Faculty
-				const facultyOptions = await getOptions(puppetPage, eIds.FACULTY);
-				const facultyValues = facultyOptions.filter(({ alias }) => {
-					return alias && faculties.includes(<uSIAFaculty>alias);
-				});
-
-				if (!facultyValues.length) {
-					throw reject({ statusCode: 400, statusMessage: "No faculties matched" });
-				}
-
-				const errors: any[] = [];
-				let response: ScrapedCourse = { groups: [], code: "", name: "", description: "" };
-
-				for (const facultyValue of facultyValues) {
-					if (response.code) break;
-
-					debugFirebaseServer(
-						event,
-						"api:groups:scrape:scraper:faculty",
-						[facultyValue.alias],
-						response.groups?.length
-					);
-
-					try {
-						// Attempt to get groups from this faculty
-						await puppetPage.click(useId(eIds.FACULTY));
-						await puppetPage.select(useId(eIds.FACULTY), facultyValue.value);
-						await waitForSelect(puppetPage, eIds.PROGRAM);
-
-						// Select Program
-						const programOptions = await getOptions(puppetPage, eIds.PROGRAM);
-						const programValues = programOptions.filter(({ alias }) => {
-							if (LEByProgram) return true;
-
-							return alias && programs.includes(<uSIAProgram>alias);
-						});
-
-						if (!programValues.length) {
-							throw reject({
-								statusCode: 400,
-								statusMessage: "No programs matched",
-							});
-						}
-
-						// Iterate over associated programs
-						for (const programValue of programValues) {
-							if (response.code) break;
-
-							debugFirebaseServer(
-								event,
-								"api:groups:scrape:scraper:program",
-								[facultyValue.alias, programValue.alias],
-								response.groups?.length
-							);
-
-							try {
-								// Select Program
-								await puppetPage.click(useId(eIds.PROGRAM));
-								await puppetPage.select(useId(eIds.PROGRAM), programValue.value);
-								await waitForSelect(puppetPage, eIds.TYPOLOGY);
-
-								// Attempt to get groups from this program
-								if (!typologies.length) {
-									response = await getResponse();
-
-									continue;
-								}
-
-								const typologyOptions = await getOptions(puppetPage, eIds.TYPOLOGY);
-
-								// Iterate over associated typologies
-								for (const typology of typologies) {
-									if (response.code) break;
-
-									debugFirebaseServer(
-										event,
-										"api:groups:scrape:scraper:typology",
-										[facultyValue.alias, programValue.alias, typology],
-										response.groups?.length
-									);
-
-									try {
-										// Select Typology
-										const typologyValue = typologyOptions.find(({ alias }) => {
-											return alias && alias === siaOldTypology?.[typology];
-										});
-
-										if (!typologyValue) {
-											throw reject({
-												statusCode: 400,
-												statusMessage: "No typologies matched",
-											});
-										}
-
-										// Select typology, by default the system will return all but LE
-										await puppetPage.click(useId(eIds.TYPOLOGY));
-										await puppetPage.select(
-											useId(eIds.TYPOLOGY),
-											typologyValue.value
-										);
-
-										// Additional actions for LE
-										if (typology === eSIATypology.LIBRE_ELECCIÓN) {
-											await puppetPage.waitForSelector(
-												useId(eIds.SEARCH_LE),
-												{ visible: true }
-											);
-
-											// Select search mode, search by program
-											await puppetPage.click(useId(eIds.SEARCH_LE));
-											await puppetPage.select(useId(eIds.SEARCH_LE), "1");
-											await puppetPage.waitForSelector(
-												useId(eIds.PROGRAM_LE),
-												{ visible: true }
-											);
-
-											// Select LE Program
-											const programOptionsLE = await getOptions(
-												puppetPage,
-												eIds.PROGRAM_LE
-											);
-											const programLeValue = programOptionsLE.find(
-												({ alias }) => {
-													return (
-														alias &&
-														programs.includes(<uSIAProgram>alias)
-													);
-												}
-											);
-
-											if (!programLeValue) {
-												throw reject({
-													statusCode: 400,
-													statusMessage: "LE program not found",
-												});
-											}
-
-											await puppetPage.click(useId(eIds.PROGRAM_LE));
-											await puppetPage.select(
-												useId(eIds.PROGRAM_LE),
-												programLeValue.value
-											);
-
-											debugFirebaseServer(
-												event,
-												"api:groups:scrape:scraper:typology:LE",
-												programLeValue
-											);
-										}
-
-										// Necessary for switching between typologies
-										await puppetPage.waitForNetworkIdle();
-
-										// Attempt to get groups from this typology
-										response = await getResponse();
-									} catch (err) {
-										errors.push(err); // save typologies errors
-
-										debugFirebaseServer(
-											event,
-											"api:groups:scrape:scraper:typologyError",
-											[facultyValue.alias, programValue.alias, typology],
-											err
-										);
-									}
-								}
-							} catch (err) {
-								errors.push(err); // save programs errors
-
-								debugFirebaseServer(
-									event,
-									"api:groups:scrape:scraper:programError",
-									[facultyValue.alias, programValue.alias],
-									err
-								);
-							}
-						}
-					} catch (err) {
-						errors.push(err); // save faculties errors
-
-						debugFirebaseServer(
-							event,
-							"api:groups:scrape:scraper:facultyError",
-							[facultyValue.alias],
-							err
-						);
-					}
-				}
-
-				// If no groups found, throw errors if any
-				if (!response.groups?.length && errors.length) throw reject(errors.pop());
-
-				resolve(response);
-			},
-			undefined,
-			120
-		);
-	}
-
-	let attemp = 0;
-
 	/**
 	 * Get course groups from a given program
 	 */
-	async function getResponse(): Promise<ScrapedCourse> {
+	async function getResponse(): Promise<Omit<ScrapedCourse, "lastScrapedWith">> {
 		const currentAttemp = attemp;
 
 		debugFirebaseServer(
@@ -515,7 +216,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 		attemp++;
 
 		// Search by name
-		if (name) await puppetPage.type(useId(eIds.NAME), name);
+		// if (name) await puppetPage.type(useId(eIds.NAME), name);
 
 		// Load courses
 		await puppetPage.waitForSelector(`${useId(eIds.SHOW)}:not(.p_AFDisabled)`);
@@ -659,9 +360,6 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 				err
 			);
 
-			// Prevent further scraping
-			await puppetBrowser.close();
-
 			return {
 				code,
 				name: courseLink.name,
@@ -671,11 +369,378 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 	}
 
 	/**
+	 * Recursively scrape a course
+	 */
+	function scraper(
+		level: eSIALevel,
+		place: eSIAPlace,
+		faculties: uSIAFaculty[] = [],
+		programs: uSIAProgram[] = [],
+		typologies: eSIATypology[] = []
+	): Promise<ScrapedCourse> {
+		// Compare against multiple sources before giving up
+		const LE = typologies.includes(eSIATypology.LIBRE_ELECCIÓN);
+		const LEByProgram = !programs[0];
+		const LEByFaculty = !faculties[0];
+
+		// Override data if missing, assume LE
+		if (LEByProgram || LE || LEByFaculty) {
+			if (!typologies.includes(eSIATypology.LIBRE_ELECCIÓN)) {
+				typologies.push(eSIATypology.LIBRE_ELECCIÓN);
+			}
+
+			switch (place) {
+				case eSIAPlace.BOGOTÁ:
+					if (LEByFaculty) faculties.push(eSIABogotaFaculty.SEDE_BOGOTÁ);
+					if (LEByProgram || LE) {
+						programs.push(eSIABogotaProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
+					}
+
+					break;
+				case eSIAPlace.LA_PAZ:
+					if (LEByFaculty) faculties.push(eSIALaPazFaculty.SEDE_LA_PAZ);
+					if (LEByProgram || LE) {
+						programs.push(eSIALaPazProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
+					}
+
+					break;
+				case eSIAPlace.MEDELLÍN:
+					if (LEByFaculty) faculties.push(eSIAMedellinFaculty.SEDE_MEDELLÍN);
+					if (LEByProgram) {
+						programs.push(eSIAMedellinProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
+					}
+
+					break;
+				case eSIAPlace.MANIZALES:
+					if (LEByFaculty) faculties.push(eSIAManizalesFaculty.SEDE_MANIZALES);
+					if (LEByProgram) {
+						programs.push(eSIAManizalesProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
+					}
+
+					break;
+				case eSIAPlace.PALMIRA:
+					if (LEByFaculty) faculties.push(eSIAPalmiraFaculty.SEDE_PALMIRA);
+					if (LEByProgram || LE) {
+						programs.push(eSIAPalmiraProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
+					}
+
+					break;
+				case eSIAPlace.TUMACO:
+					if (LEByFaculty) faculties.push(eSIATumacoFaculty.SEDE_TUMACO);
+					if (LEByProgram || LE) {
+						programs.push(eSIATumacoProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
+					}
+
+					break;
+				case eSIAPlace.AMAZONÍA:
+					if (LEByFaculty) faculties.push(eSIAAmazoniaFaculty.SEDE_AMAZONIA);
+					if (LEByProgram) {
+						programs.push(eSIAAmazoniaProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
+					}
+
+					break;
+				case eSIAPlace.CARIBE:
+					if (LEByFaculty) faculties.push(eSIACaribeFaculty.SEDE_CARIBE);
+					if (LEByProgram || LE) {
+						programs.push(eSIACaribeProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
+					}
+
+					break;
+				case eSIAPlace.ORINOQUÍA:
+					if (LEByFaculty) faculties.push(eSIAOrinoquiaFaculty.SEDE_ORINOQUIA);
+					if (LEByProgram) {
+						programs.push(eSIAOrinoquiaProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
+					}
+
+					break;
+			}
+		}
+
+		return TimedPromise<ScrapedCourse>(
+			async function (resolve, reject) {
+				await puppetPage.goto(siaOldEnpoint);
+				await puppetPage.evaluate(() => {
+					// #d1 es un div que tiene altura 1 cuando la página se carga incorrectamente
+					if (document.querySelector("#d1")?.clientHeight === 1) {
+						throw new Error("There was an error loading the page");
+					}
+				});
+
+				if (!siaOldLevel?.[level] || !siaOldPlace?.[place]) {
+					throw reject({
+						statusCode: 500,
+						statusMessage: "Missing place or level lists",
+					});
+				}
+
+				// Select level
+				await puppetPage.click(useId(eIds.LEVEL));
+				await puppetPage.select(useId(eIds.LEVEL), siaOldLevel[level]);
+				await waitForSelect(puppetPage, eIds.PLACE);
+
+				// Select Place
+				await puppetPage.click(useId(eIds.PLACE));
+				await puppetPage.select(useId(eIds.PLACE), siaOldPlace[place]);
+				await waitForSelect(puppetPage, eIds.FACULTY);
+
+				// Select Faculty
+				const facultyOptions = await getOptions(puppetPage, eIds.FACULTY);
+				const facultyValues = facultyOptions.filter(({ alias }) => {
+					return alias && faculties.includes(<uSIAFaculty>alias);
+				});
+
+				if (!facultyValues.length) {
+					throw reject({ statusCode: 400, statusMessage: "No faculties matched" });
+				}
+
+				const errors: any[] = [];
+				let response: ScrapedCourse = {
+					groups: [],
+					code: "", // Valid response would replace this
+					name: "",
+					description: "",
+					lastScrapedWith: [level, place],
+				};
+
+				for (const facultyValue of facultyValues) {
+					if (response.code) break;
+
+					debugFirebaseServer(
+						event,
+						"api:groups:scrape:scraper:faculty",
+						[facultyValue.alias],
+						response.groups?.length
+					);
+
+					try {
+						// Attempt to get groups from this faculty
+						await puppetPage.click(useId(eIds.FACULTY));
+						await puppetPage.select(useId(eIds.FACULTY), facultyValue.value);
+						await waitForSelect(puppetPage, eIds.PROGRAM);
+
+						// Select Program
+						const programOptions = await getOptions(puppetPage, eIds.PROGRAM);
+						const programValues = programOptions.filter(({ alias }) => {
+							if (LEByProgram) return true;
+
+							return alias && programs.includes(<uSIAProgram>alias);
+						});
+
+						if (!programValues.length) {
+							throw new Error("No programs matched");
+						}
+
+						// Iterate over associated programs
+						for (const programValue of programValues) {
+							if (response.code) break;
+
+							debugFirebaseServer(
+								event,
+								"api:groups:scrape:scraper:program",
+								[facultyValue.alias, programValue.alias],
+								response.groups?.length
+							);
+
+							try {
+								// Select Program
+								await puppetPage.click(useId(eIds.PROGRAM));
+								await puppetPage.select(useId(eIds.PROGRAM), programValue.value);
+								await waitForSelect(puppetPage, eIds.TYPOLOGY);
+
+								// Attempt to get groups from this program
+								if (!typologies.length) {
+									const partialResponse = await getResponse();
+
+									response = {
+										...partialResponse,
+										lastScrapedWith: [
+											level,
+											place,
+											<uSIAFaculty>facultyValue.alias,
+											<uSIAProgram>programValue.alias,
+										],
+									};
+
+									continue;
+								}
+
+								const typologyOptions = await getOptions(puppetPage, eIds.TYPOLOGY);
+
+								// Iterate over associated typologies
+								for (const typology of typologies) {
+									if (response.code) break;
+
+									debugFirebaseServer(
+										event,
+										"api:groups:scrape:scraper:typology",
+										[facultyValue.alias, programValue.alias, typology],
+										response.groups?.length
+									);
+
+									try {
+										// Select Typology
+										const typologyValue = typologyOptions.find(({ alias }) => {
+											return alias && alias === siaOldTypology?.[typology];
+										});
+
+										if (!typologyValue) {
+											throw new Error("No typologies matched");
+										}
+
+										// Select typology, by default the system will return all but LE
+										await puppetPage.click(useId(eIds.TYPOLOGY));
+										await puppetPage.select(
+											useId(eIds.TYPOLOGY),
+											typologyValue.value
+										);
+
+										// Additional actions for LE
+										if (typology === eSIATypology.LIBRE_ELECCIÓN) {
+											await puppetPage.waitForSelector(
+												useId(eIds.SEARCH_LE),
+												{ visible: true }
+											);
+
+											// Select search mode, search by program
+											await puppetPage.click(useId(eIds.SEARCH_LE));
+											await puppetPage.select(useId(eIds.SEARCH_LE), "1");
+											await puppetPage.waitForSelector(
+												useId(eIds.PROGRAM_LE),
+												{ visible: true }
+											);
+
+											// Select LE Program
+											const programOptionsLE = await getOptions(
+												puppetPage,
+												eIds.PROGRAM_LE
+											);
+											const programLeValue = programOptionsLE.find(
+												({ alias }) => {
+													return (
+														alias &&
+														programs.includes(<uSIAProgram>alias)
+													);
+												}
+											);
+
+											if (!programLeValue) {
+												throw new Error("LE program not found");
+											}
+
+											await puppetPage.click(useId(eIds.PROGRAM_LE));
+											await puppetPage.select(
+												useId(eIds.PROGRAM_LE),
+												programLeValue.value
+											);
+
+											debugFirebaseServer(
+												event,
+												"api:groups:scrape:scraper:typology:LE",
+												programLeValue
+											);
+										}
+
+										// Necessary for switching between typologies
+										await puppetPage.waitForNetworkIdle();
+
+										// Attempt to get groups from this typology
+										const partialResponse = await getResponse();
+
+										response = {
+											...partialResponse,
+											lastScrapedWith: [
+												level,
+												place,
+												<uSIAFaculty>facultyValue.alias,
+												<uSIAProgram>programValue.alias,
+												typology,
+											],
+										};
+									} catch (err) {
+										errors.push(err); // save typologies errors
+
+										debugFirebaseServer(
+											event,
+											"api:groups:scrape:scraper:typologyError",
+											[facultyValue.alias, programValue.alias, typology],
+											err
+										);
+									}
+								}
+							} catch (err) {
+								errors.push(err); // save programs errors
+
+								debugFirebaseServer(
+									event,
+									"api:groups:scrape:scraper:programError",
+									[facultyValue.alias, programValue.alias],
+									err
+								);
+							}
+						}
+					} catch (err) {
+						errors.push(err); // save faculties errors
+
+						debugFirebaseServer(
+							event,
+							"api:groups:scrape:scraper:facultyError",
+							[facultyValue.alias],
+							err
+						);
+					}
+				}
+
+				// If no groups found, throw errors if any
+				if (!response.groups?.length && errors.length) throw reject(errors.pop());
+
+				resolve(response);
+			},
+			undefined,
+			120
+		);
+	}
+
+	/**
 	 * Update firebase course
 	 */
-	async function updateCourse() {
+	async function updateCourse(): Promise<boolean> {
 		try {
-			const SIAScraps = await scraper();
+			let SIAScraps: ScrapedCourse;
+			const courseSnapshot = await courseRef.get();
+
+			if (!courseSnapshot.exists) {
+				throw createError({
+					statusCode: 404,
+					statusMessage: `Course with code ${code} doesn't exist`,
+				});
+			}
+
+			const { lastScrapedWith, ...course } = courseSnapshot.data() || {};
+
+			try {
+				if (!lastScrapedWith) throw new Error("LastScrapedWith is not defined");
+
+				// Try last scraped with
+				const [level, place, faculty, program, typology] = lastScrapedWith;
+				const faculties = faculty ? [faculty] : [];
+				const programs = program ? [program] : [];
+				const typologies = typology ? [typology] : [];
+
+				SIAScraps = await scraper(level, place, faculties, programs, typologies);
+			} catch (err) {
+				const {
+					level = eSIALevel.PREGRADO,
+					place = eSIAPlace.BOGOTÁ,
+					faculties = [],
+					programs = [],
+					typologies = [],
+				} = course;
+
+				// Fallback to default behavior
+				SIAScraps = await scraper(level, place, faculties, programs, typologies);
+			}
+
+			await puppetBrowser.close(); // Close browser
 
 			// Prevent updating if missing groups
 			if (SIAScraps.groups) {
@@ -707,6 +772,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 				// Update course, do not await
 				courseRef.set(
 					{
+						lastScrapedWith: SIAScraps.lastScrapedWith,
 						description: SIAScraps.description,
 						groups: SIAScraps.groups,
 						scrapedWithErrorsAt: FieldValue.delete(),
@@ -717,17 +783,24 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 					{ merge: true }
 				);
 			}
+
+			return true;
 		} catch (err) {
+			debugFirebaseServer(event, "api:groups:scrape:updateCourse:err", err);
+
 			const serializedError: Record<string, unknown> = JSON.parse(
 				JSON.stringify(err, Object.getOwnPropertyNames(err))
 			);
 			const logsRef: DocumentReference<CourseData> = serverFirestore.collection("logs").doc();
 
+			await puppetBrowser.close(); // Close browser
+
 			// Update course, do not await
 			courseRef.set(
 				{
-					scrapedAt,
+					lastScrapedWith: FieldValue.delete(),
 					scrapedWithErrorsAt: scrapedAt,
+					scrapedAt,
 					updatedAt: scrapedAt,
 					updatedByRef,
 				},
@@ -745,16 +818,10 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 				createdByRef: updatedByRef,
 				updatedByRef,
 			});
-		} finally {
-			if (puppetBrowser?.connected) {
-				// Close browser
-				await puppetBrowser.close();
-			}
+
+			return false;
 		}
 	}
 
-	// Scrape in the background, do not await
-	await updateCourse();
-
-	return true;
+	return updateCourse();
 });
