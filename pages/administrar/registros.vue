@@ -9,9 +9,8 @@
 		<PaginatedTable
 			:page="logsPage"
 			url="api:all:logs"
-			:defaults="{
-				level: 1,
-			}"
+			:map-node="mapLog"
+			:defaults="{ level: 1 }"
 			:table-props="{
 				deleteNode: useDocumentDelete,
 				properties: [
@@ -21,6 +20,7 @@
 					},
 				],
 			}"
+			client
 		>
 			<template #headActions="{ refreshData }">
 				<XamuActionButtonToggle
@@ -51,6 +51,13 @@
 		title: "Registros",
 		middleware: ["can-develop"],
 	});
+
+	function mapLog({ createdBy, updatedBy, ...log }: Log) {
+		return {
+			...log,
+			createdBy,
+		};
+	}
 
 	const logsPage: iGetPage<Log> = (pagination) => {
 		return useFetchQuery<iPage<Log> | undefined>("/api/all/logs", pagination);

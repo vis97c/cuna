@@ -17,6 +17,7 @@
 				deleteNode: useDocumentDelete,
 				properties: [{ value: 'createdBy', alias: 'Creado por' }],
 			}"
+			client
 		>
 			<template #headActions="{ refreshData }">
 				<XamuActionButtonToggle
@@ -40,6 +41,7 @@
 						deleteNode: useDocumentDelete,
 						properties: [{ value: 'createdBy', alias: 'Creado por' }],
 					}"
+					client
 				>
 					<template #headActions="{ refreshData }">
 						<XamuActionButtonToggle

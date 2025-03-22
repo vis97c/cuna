@@ -742,6 +742,12 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 
 			await puppetBrowser.close(); // Close browser
 
+			debugFirebaseServer(
+				event,
+				"api:groups:scrape:updateCourse",
+				`Success scraping: ${code}, ${SIAScraps.name}`
+			);
+
 			// Prevent updating if missing groups
 			if (SIAScraps.groups) {
 				// Index teachers

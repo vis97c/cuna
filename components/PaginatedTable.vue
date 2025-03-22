@@ -10,7 +10,7 @@
 			</div>
 			<XamuPaginationContent
 				v-slot="{ content }"
-				v-bind="{ page, url, noContentMessage, preventAutoload, theme }"
+				v-bind="{ page, url, noContentMessage, preventAutoload, theme, client }"
 				with-route
 				:defaults="{ page: true, ...defaults }"
 				class="flx --flxColumn --flx-start-end"
@@ -76,6 +76,7 @@
 		noContentMessage?: string;
 		tableProps?: Omit<iTableProps<TMi>, "nodes" | "refresh">;
 		theme?: tThemeModifier | tThemeTuple;
+		client?: boolean;
 	}
 
 	/**

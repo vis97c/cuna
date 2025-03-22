@@ -11,7 +11,7 @@
 		</div>
 		<div v-else class="flx --flxColumn --flx-start-stretch --gap-0">
 			<div
-				v-if="SESSION.user && !isAdmin && APP.instance?.banner?.message"
+				v-if="SESSION.token && !isAdmin && APP.instance?.banner?.message"
 				class="x-banner flx --flxColumn --flx-center --gap-0 --width-100 --maxWidth --mX"
 			>
 				<div
@@ -61,7 +61,7 @@
 										</li>
 										<DropdownUser />
 										<DropdownAdmin />
-										<li v-if="!SESSION.user && route.path != '/ingresar'">
+										<li v-if="!SESSION.token && route.path != '/ingresar'">
 											<XamuActionLink to="/ingresar">
 												<XamuIconFa
 													name="circle-user"
@@ -135,7 +135,7 @@
 										</p>
 									</div>
 									<div
-										v-else-if="!SESSION.user && route.path != '/ingresar'"
+										v-else-if="!SESSION.token && route.path != '/ingresar'"
 										class="txt --txtAlign-center --gap-10"
 									>
 										<h4>Modo lectura</h4>

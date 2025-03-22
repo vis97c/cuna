@@ -2654,9 +2654,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@open-xamu-co/ui-components-vue@npm:^3.0.0-next.53, @open-xamu-co/ui-components-vue@npm:^3.0.0-next.67":
-  version: 3.0.0-next.67
-  resolution: "@open-xamu-co/ui-components-vue@npm:3.0.0-next.67"
+"@open-xamu-co/ui-components-vue@npm:^3.0.0-next.53, @open-xamu-co/ui-components-vue@npm:^3.0.0-next.68":
+  version: 3.0.0-next.68
+  resolution: "@open-xamu-co/ui-components-vue@npm:3.0.0-next.68"
   dependencies:
     "@fortawesome/fontawesome-common-types": "npm:^6.4.0"
     "@open-xamu-co/ui-common-enums": "npm:^3.0.0-next.7"
@@ -2669,7 +2669,7 @@ __metadata:
   peerDependenciesMeta:
     vue-router:
       optional: true
-  checksum: 10c0/430e127e3b741568faff629a7447c25bf5730c9ceef289c5077bc2ee8c5e20d80cb12d168e55409387e01cf66df2d7b04ab85f3d998a8515f8cd2771485a20b5
+  checksum: 10c0/d09e4962ffad58288019e7b64b5bc78096f6944eeec37e70d659bb2bf956efc8330957ea0ebaf930cbeccf62ed2574c20560bd6297879dd0a5dc24fae3dbf381
   languageName: node
   linkType: hard
 
@@ -6167,7 +6167,7 @@ __metadata:
     "@open-xamu-co/ui-common-enums": "npm:^3.0.0-next.7"
     "@open-xamu-co/ui-common-helpers": "npm:^3.0.0-next.19"
     "@open-xamu-co/ui-common-types": "npm:^3.0.0-next.23"
-    "@open-xamu-co/ui-components-vue": "npm:^3.0.0-next.67"
+    "@open-xamu-co/ui-components-vue": "npm:^3.0.0-next.68"
     "@open-xamu-co/ui-nuxt": "npm:^3.0.0-next.11"
     "@open-xamu-co/ui-styles": "npm:^3.0.0-next.36"
     "@pinia-plugin-persistedstate/nuxt": "npm:^1.2.1"
