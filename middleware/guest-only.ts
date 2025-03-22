@@ -6,7 +6,7 @@
 export default defineNuxtRouteMiddleware(async () => {
 	const SESSION = useSessionStore();
 
-	if (!SESSION.user) return;
+	if (!SESSION.token) return;
 
 	// User is authenticated
 	return navigateTo("/", { redirectCode: 302 });

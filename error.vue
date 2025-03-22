@@ -18,7 +18,7 @@
 									<span>Reintentar</span>
 								</XamuActionLink>
 								<XamuActionLink
-									v-if="SESSION.user"
+									v-if="SESSION.token"
 									aria-label="Cerrar sesion y reintentar"
 									@click="
 										clearError();

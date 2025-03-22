@@ -7,7 +7,7 @@
 		<SearchCourse
 			v-slot="{ searchCourse, searching }"
 			:values="values"
-			:disabled="!SESSION.user || disabledSIASearch"
+			:disabled="!SESSION.token || disabledSIASearch"
 		>
 			<XamuBaseBox
 				class="x-box flx --flxColumn --flx-start-stretch --width-100 --p-20:md"
@@ -39,7 +39,7 @@
 					</div>
 					<XamuActionButton
 						:size="eSizes.LG"
-						:disabled="!SESSION.user || disabledSIASearch || searching"
+						:disabled="!SESSION.token || disabledSIASearch || searching"
 						type="submit"
 						:tooltip="search ? 'Buscar curso' : 'Descubrir cursos disponibles'"
 						hydrate-never
@@ -161,7 +161,7 @@
 				</XamuLoaderContent>
 			</XamuBaseBox>
 		</SearchCourse>
-		<section v-if="SESSION.user" class="flx --flxColumn --flx-center --width-100">
+		<section v-if="SESSION.token" class="flx --flxColumn --flx-center --width-100">
 			<div class="txt">
 				<h3 class="--txtColor-dark5">Otros recursos</h3>
 			</div>
@@ -188,7 +188,7 @@
 		</section>
 		<section class="txt --txtAlign-center --txtSize-xs --txtColor-dark5 --minWidth-100">
 			<div class="">
-				<template v-if="SESSION.user">
+				<template v-if="SESSION.token">
 					<p>
 						Visita cada pagina de curso para obtener los cupos en tiempo real (Antiguo
 						SIA).

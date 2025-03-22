@@ -1,6 +1,6 @@
 <template>
 	<XamuDropdown
-		v-if="SESSION.user && SESSION.canAdmin"
+		v-if="SESSION.token && SESSION.canAdmin"
 		:position="['bottom', 'right']"
 		invert-theme
 	>
@@ -22,7 +22,7 @@
 		</template>
 		<template #default="{ invertedTheme }">
 			<nav
-				v-if="SESSION.canDevelop || SESSION.user"
+				v-if="SESSION.canDevelop || SESSION.token"
 				class="list flx --flxColumn --gap-20 --minWidth-180 --maxWidth-100 --txtColor"
 			>
 				<ul v-if="SESSION.canDevelop" class="list-group --gap-5">

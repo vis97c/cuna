@@ -54,5 +54,16 @@ export const runtimeConfig = {
 		debugScrapper,
 		instance,
 		countriesUrl,
+		cache: {
+			none: "no-cache, must-revalidate",
+			/** Cache for a few minutes */
+			frequent: "public, max-age=120, stale-while-revalidate=60",
+			/** Cache for an hour */
+			normal: "public, max-age=3600, must-revalidate",
+			/** Cache for a month */
+			midterm: "public, max-age=2592000, must-revalidate",
+			/** Cache for a year */
+			longterm: "public, max-age=31536000, must-revalidate",
+		},
 	},
 };

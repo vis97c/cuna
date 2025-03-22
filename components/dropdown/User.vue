@@ -1,5 +1,5 @@
 <template>
-	<XamuDropdown v-if="SESSION.user" :position="['bottom', 'right']" invert-theme>
+	<XamuDropdown v-if="SESSION.token" :position="['bottom', 'right']" invert-theme>
 		<template #toggle="{ setModel, model }">
 			<li>
 				<XamuActionLink

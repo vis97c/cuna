@@ -46,7 +46,13 @@ export function useMinMilis(minutes: number) {
 	return minutes * 60 * 1000;
 }
 
-export function useFetchQuery<R>(
+/**
+ * Fetch wrapper
+ *
+ * Refresh auth token before each request
+ * @see https://stackoverflow.com/questions/47803495/error-firebase-id-token-has-expired
+ */
+export async function useFetchQuery<R>(
 	url: string,
 	{
 		options,
@@ -54,13 +60,24 @@ export function useFetchQuery<R>(
 	}: Record<string, any> & { options?: Omit<NitroFetchOptions<NitroFetchRequest>, "query"> } = {}
 ) {
 	const SESSION = useSessionStore();
+	const { $clientAuth } = useNuxtApp();
+	const { cache } = useRuntimeConfig().public;
+	let authorization = SESSION.token || "";
+
+	// Refresh token, before server request
+	if (import.meta.client && SESSION.user) {
+		const newToken = await $clientAuth?.currentUser?.getIdToken();
+
+		authorization = newToken || authorization;
+
+		SESSION.setUser(SESSION.user, authorization);
+	}
 
 	return $fetch<R>(url, {
-		cache: "no-cache",
 		credentials: "same-origin",
 		...options,
 		query,
-		headers: { authorization: SESSION.token || "", ...options?.headers },
+		headers: { authorization, "Cache-Control": cache.frequent, ...options?.headers },
 	});
 }
 
@@ -70,6 +87,8 @@ export const useLogger: tLogger = async (...args): Promise<void> => {
 	if (!logData) return;
 
 	try {
+		const { useDocumentCreate } = await import("~/composables/firestore");
+
 		useDocumentCreate<LogRef>("logs", logData);
 	} catch (err) {
 		console.error("Error logging to db", err);

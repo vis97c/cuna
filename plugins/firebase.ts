@@ -66,10 +66,10 @@ async function setAppState(provide?: ClientProvide) {
 			if (!authUser) return SESSION.unsetSession();
 
 			const { uid, displayName: name, email, photoURL, isAnonymous } = authUser;
-			const token = await authUser.getIdToken(true);
+			const token = await authUser.getIdToken();
 			const userRef: DocumentReference<User> = doc(clientFirestore, "users", uid);
 
-			unsubUser = onSnapshot(userRef, (snapshot) => {
+			unsubUser = onSnapshot(userRef, async (snapshot) => {
 				// Create user on firestore.
 				if (!snapshot.exists()) {
 					const user = { uid, name, email, photoURL, isAnonymous, role: 3 };

@@ -3,6 +3,7 @@ import path from "node:path";
 
 import locale from "@open-xamu-co/ui-common-helpers/es";
 
+import packageJson from "./package.json" assert { type: "json" };
 import {
 	debugCSS,
 	debugNuxt,
@@ -92,6 +93,7 @@ export default defineNuxtConfig({
 		compressPublicAssets: true,
 	},
 	vite: {
+		server: { fs: { strict: "resolutions" in packageJson && !debugNuxt } },
 		resolve: { preserveSymlinks: true },
 		css: {
 			postcss: require("@open-xamu-co/ui-styles/postcss")[

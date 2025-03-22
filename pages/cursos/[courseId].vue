@@ -37,7 +37,7 @@
 						</div>
 					</XamuBoxMessage>
 				</div>
-				<div v-if="SESSION.user" class="flx --flxColumn --flx-start --width-100">
+				<div v-if="SESSION.token" class="flx --flxColumn --flx-start --width-100">
 					<div class="txt">
 						<h4 class="">Herramientas:</h4>
 						<p v-if="SESSION.canDevelop && withScrapingErrors" class="">
@@ -56,7 +56,7 @@
 							>
 								<XamuIconFa name="hand-fist" :size="20" />
 							</XamuActionButton>
-							<template v-if="SESSION.user">
+							<template v-if="SESSION.token">
 								<XamuActionButtonToggle
 									tooltip="Notificarme"
 									:disabled="!APP.instance?.flags?.trackCourses"
@@ -215,7 +215,7 @@
 								{
 									value: 'inscrito',
 									component: TableEnroll,
-									hidden: !SESSION.user,
+									hidden: !SESSION.token,
 								},
 								{ value: 'profesores', component: TableTeachersList },
 								{ value: 'horarios', component: TableWeek },
@@ -243,7 +243,7 @@
 								{
 									value: 'inscrito',
 									component: TableEnroll,
-									hidden: !SESSION.user,
+									hidden: !SESSION.token,
 								},
 								{ value: 'profesores', component: TableTeachersList },
 								{ value: 'horarios', component: TableWeek },
@@ -334,7 +334,7 @@
 		async () => {
 			const code = indexedCourse.value?.code;
 
-			if (!code || !SESSION.user) return [];
+			if (!code || !SESSION.token) return [];
 
 			const teachersEdges = await useFetchQuery<iPageEdge<Teacher, string>[]>(
 				"/api/teachers/search",
@@ -621,7 +621,7 @@
 	// lifecycle
 	onBeforeUnmount(unsub);
 	onMounted(() => {
-		if (import.meta.server || !SESSION.user || !$clientFirestore) return;
+		if (import.meta.server || !SESSION.token || !$clientFirestore) return;
 
 		onActivated(() => (deactivated.value = false));
 		onDeactivated(() => (deactivated.value = true));
@@ -677,7 +677,7 @@
 			const scrapedDiffMilis = nowMilis - scrapedAtMilis;
 
 			// Prevent scraping until fixed
-			if (scrapedWithErrorsAt) return;
+			if (scrapedWithErrorsAt || !SESSION.token) return;
 
 			// Do once & update if updated more than threshold
 			if (scrapedAt && scrapedDiffMilis < useMinMilis(minutes)) {
