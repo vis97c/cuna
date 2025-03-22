@@ -7,7 +7,7 @@
 		<SearchCourse
 			v-slot="{ searchCourse, searching }"
 			:values="values"
-			:disabled="disabledSIASearch"
+			:disabled="!SESSION.user || disabledSIASearch"
 		>
 			<XamuBaseBox
 				class="x-box flx --flxColumn --flx-start-stretch --width-100 --p-20:md"
@@ -39,9 +39,10 @@
 					</div>
 					<XamuActionButton
 						:size="eSizes.LG"
-						:disabled="disabledSIASearch || searching"
+						:disabled="!SESSION.user || disabledSIASearch || searching"
 						type="submit"
 						:tooltip="search ? 'Buscar curso' : 'Descubrir cursos disponibles'"
+						hydrate-never
 						round
 					>
 						<XamuIconFa v-if="search" name="magnifying-glass" :size="20" />
@@ -278,7 +279,7 @@
 	 * Disable SIA search
 	 */
 	const disabledSIASearch = computed(() => {
-		return !SESSION.user || APP.SIAMaintenance || (!!search.value && search.value.length < 5);
+		return APP.SIAMaintenance || (!!search.value && search.value.length < 5);
 	});
 
 	const {
