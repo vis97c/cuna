@@ -74,6 +74,7 @@ export async function useFetchQuery<R>(
 	}
 
 	return $fetch<R>(url, {
+		cache: "no-cache",
 		credentials: "same-origin",
 		...options,
 		query,
