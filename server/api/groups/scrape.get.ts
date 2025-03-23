@@ -125,19 +125,6 @@ function useId(id: string): string {
 	return `#${id.replace(/:/g, "\\:")}`;
 }
 
-const puppetConfig: LaunchOptions = {
-	headless: true,
-	args: [
-		"--no-sandbox",
-		"--disable-setuid-sandbox",
-		"--disable-dev-shm-usage",
-		"--disable-accelerated-2d-canvas",
-		"--no-first-run",
-		"--no-zygote",
-		"--disable-gpu",
-	],
-};
-
 /**
  * Scrape course from old SIA
  *
@@ -180,6 +167,19 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 	const scrapedAt = Timestamp.fromDate(new Date());
 	const updatedByRef = serverFirestore.doc(auth.id);
 	let attemp = 0;
+
+	const puppetConfig: LaunchOptions = {
+		headless: !debugScrapper,
+		args: [
+			"--no-sandbox",
+			"--disable-setuid-sandbox",
+			"--disable-dev-shm-usage",
+			"--disable-accelerated-2d-canvas",
+			"--no-first-run",
+			"--no-zygote",
+			"--disable-gpu",
+		],
+	};
 
 	// Setup puppeteer
 	const puppetBrowser: Browser = await launch(puppetConfig);
@@ -392,15 +392,16 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 		place: eSIAPlace,
 		faculties: uSIAFaculty[] = [],
 		programs: uSIAProgram[] = [],
-		typologies: eSIATypology[] = []
+		typologies: eSIATypology[] = [],
+		programsLE: uSIAProgram[] = [...programs]
 	): Promise<ScrapedCourse> {
 		// Compare against multiple sources before giving up
-		const LE = typologies.includes(eSIATypology.LIBRE_ELECCIÓN);
-		const LEByProgram = !programs[0];
 		const LEByFaculty = !faculties[0];
+		const LEByProgram = !programs[0];
+		const LEByTypology = typologies.includes(eSIATypology.LIBRE_ELECCIÓN);
 
 		// Override data if missing, assume LE
-		if (LEByProgram || LE || LEByFaculty) {
+		if (LEByProgram || LEByFaculty || LEByTypology) {
 			if (!typologies.includes(eSIATypology.LIBRE_ELECCIÓN)) {
 				typologies.push(eSIATypology.LIBRE_ELECCIÓN);
 			}
@@ -408,64 +409,106 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 			switch (place) {
 				case eSIAPlace.BOGOTÁ:
 					if (LEByFaculty) faculties.push(eSIABogotaFaculty.SEDE_BOGOTÁ);
-					if (LEByProgram || LE) {
+					if (LEByProgram) {
+						// Try LE last
 						programs.push(eSIABogotaProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
+					}
+					if (LEByTypology) {
+						// Try LE first
+						programsLE.unshift(eSIABogotaProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
 					}
 
 					break;
 				case eSIAPlace.LA_PAZ:
 					if (LEByFaculty) faculties.push(eSIALaPazFaculty.SEDE_LA_PAZ);
-					if (LEByProgram || LE) {
+					if (LEByProgram) {
+						// Try LE last
 						programs.push(eSIALaPazProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
+					}
+					if (LEByTypology) {
+						// Try LE first
+						programsLE.unshift(eSIALaPazProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
 					}
 
 					break;
 				case eSIAPlace.MEDELLÍN:
 					if (LEByFaculty) faculties.push(eSIAMedellinFaculty.SEDE_MEDELLÍN);
 					if (LEByProgram) {
+						// Try LE last
 						programs.push(eSIAMedellinProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
+					}
+					if (LEByTypology) {
+						// Try LE first
+						programsLE.unshift(eSIAMedellinProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
 					}
 
 					break;
 				case eSIAPlace.MANIZALES:
 					if (LEByFaculty) faculties.push(eSIAManizalesFaculty.SEDE_MANIZALES);
 					if (LEByProgram) {
+						// Try LE last
 						programs.push(eSIAManizalesProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
+					}
+					if (LEByTypology) {
+						// Try LE first
+						programsLE.unshift(eSIAManizalesProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
 					}
 
 					break;
 				case eSIAPlace.PALMIRA:
 					if (LEByFaculty) faculties.push(eSIAPalmiraFaculty.SEDE_PALMIRA);
-					if (LEByProgram || LE) {
-						programs.push(eSIAPalmiraProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
+					if (LEByProgram) programs.push(eSIAPalmiraProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
+					if (LEByTypology) {
+						// Try LE first
+						programsLE.unshift(eSIAPalmiraProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
 					}
 
 					break;
 				case eSIAPlace.TUMACO:
 					if (LEByFaculty) faculties.push(eSIATumacoFaculty.SEDE_TUMACO);
-					if (LEByProgram || LE) {
+					if (LEByProgram) {
+						// Try LE last
 						programs.push(eSIATumacoProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
+					}
+					if (LEByTypology) {
+						// Try LE first
+						programsLE.unshift(eSIATumacoProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
 					}
 
 					break;
 				case eSIAPlace.AMAZONÍA:
 					if (LEByFaculty) faculties.push(eSIAAmazoniaFaculty.SEDE_AMAZONIA);
 					if (LEByProgram) {
+						// Try LE last
 						programs.push(eSIAAmazoniaProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
+					}
+					if (LEByTypology) {
+						// Try LE first
+						programsLE.unshift(eSIAAmazoniaProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
 					}
 
 					break;
 				case eSIAPlace.CARIBE:
 					if (LEByFaculty) faculties.push(eSIACaribeFaculty.SEDE_CARIBE);
-					if (LEByProgram || LE) {
+					if (LEByProgram) {
+						// Try LE last
 						programs.push(eSIACaribeProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
+					}
+					if (LEByTypology) {
+						// Try LE first
+						programsLE.unshift(eSIACaribeProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
 					}
 
 					break;
 				case eSIAPlace.ORINOQUÍA:
 					if (LEByFaculty) faculties.push(eSIAOrinoquiaFaculty.SEDE_ORINOQUIA);
 					if (LEByProgram) {
+						// Try LE last
 						programs.push(eSIAOrinoquiaProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
+					}
+					if (LEByTypology) {
+						// Try LE first
+						programsLE.unshift(eSIAOrinoquiaProgram.COMPONENTE_DE_LIBRE_ELECCIÓN);
 					}
 
 					break;
@@ -565,11 +608,12 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 
 								// Attempt to get groups from this program
 								if (!typologies.length) {
-									const { errors = [], ...partialResponse } = await getResponse();
+									const results = await getResponse();
+									const { errors = [], ...partial } = results;
 
 									response.errors?.push(...errors);
 									response = {
-										...partialResponse,
+										...partial,
 										lastScrapedWith: [
 											level,
 											place,
@@ -612,6 +656,9 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 											typologyValue.value
 										);
 
+										// Necessary for switching between typologies
+										await puppetPage.waitForNetworkIdle();
+
 										// Additional actions for LE
 										if (typology === eSIATypology.LIBRE_ELECCIÓN) {
 											await puppetPage.waitForSelector(
@@ -632,49 +679,95 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 												puppetPage,
 												eIds.PROGRAM_LE
 											);
-											const programLeValue = programOptionsLE.find(
+											const programLeValues = programOptionsLE.filter(
 												({ alias }) => {
 													return (
 														alias &&
-														programs.includes(<uSIAProgram>alias)
+														programsLE.includes(<uSIAProgram>alias)
 													);
 												}
 											);
 
-											if (!programLeValue) {
-												throw new Error("LE program not found");
+											if (!programLeValues.length) {
+												throw new Error("LE programs not found");
 											}
 
-											await puppetPage.click(useId(eIds.PROGRAM_LE));
-											await puppetPage.select(
-												useId(eIds.PROGRAM_LE),
-												programLeValue.value
-											);
+											// Iterate over associated LE programs
+											for (const programLeValue of programLeValues) {
+												if (response.code) break;
 
-											debugFirebaseServer(
-												event,
-												"api:groups:scrape:scraper:typology:LE",
-												programLeValue
-											);
+												debugFirebaseServer(
+													event,
+													"api:groups:scrape:scraper:typology:LE",
+													[
+														facultyValue.alias,
+														programValue.alias,
+														typology,
+														programLeValue.alias,
+													],
+													response.groups?.length
+												);
+
+												try {
+													// Search by LE program
+													await puppetPage.click(useId(eIds.PROGRAM_LE));
+													await puppetPage.select(
+														useId(eIds.PROGRAM_LE),
+														programLeValue.value
+													);
+
+													// Necessary for switching between LE programs
+													await puppetPage.waitForNetworkIdle();
+
+													// Attempt to get groups from this LE program
+													const results = await getResponse();
+													const { errors = [], ...partial } = results;
+
+													response.errors?.push(...errors);
+													response = {
+														...partial,
+														lastScrapedWith: [
+															level,
+															place,
+															<uSIAFaculty>facultyValue.alias,
+															<uSIAProgram>programValue.alias,
+															typology,
+															<uSIAProgram>programLeValue.alias,
+														],
+													};
+												} catch (err) {
+													response.errors?.push(err); // save LE programs errors
+
+													debugFirebaseServer(
+														event,
+														"api:groups:scrape:scraper:typology:LEError",
+														[
+															facultyValue.alias,
+															programValue.alias,
+															typology,
+															programLeValue.alias,
+														],
+														err
+													);
+												}
+											}
+										} else {
+											// Attempt to get groups from this typology
+											const results = await getResponse();
+											const { errors = [], ...partial } = results;
+
+											response.errors?.push(...errors);
+											response = {
+												...partial,
+												lastScrapedWith: [
+													level,
+													place,
+													<uSIAFaculty>facultyValue.alias,
+													<uSIAProgram>programValue.alias,
+													typology,
+												],
+											};
 										}
-
-										// Necessary for switching between typologies
-										await puppetPage.waitForNetworkIdle();
-
-										// Attempt to get groups from this typology
-										const { errors = [], ...partial } = await getResponse();
-
-										response.errors?.push(...errors);
-										response = {
-											...partial,
-											lastScrapedWith: [
-												level,
-												place,
-												<uSIAFaculty>facultyValue.alias,
-												<uSIAProgram>programValue.alias,
-												typology,
-											],
-										};
 									} catch (err) {
 										response.errors?.push(err); // save typologies errors
 
@@ -742,12 +835,20 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 				if (!lastScrapedWith) throw new Error("LastScrapedWith is not defined");
 
 				// Try last scraped with
-				const [level, place, faculty, program, typology] = lastScrapedWith;
+				const [level, place, faculty, program, typology, programLE] = lastScrapedWith;
 				const faculties = faculty ? [faculty] : [];
 				const programs = program ? [program] : [];
 				const typologies = typology ? [typology] : [];
+				const programsLE = programLE ? [programLE] : [];
 
-				SIAScraps = await scraper(level, place, faculties, programs, typologies);
+				SIAScraps = await scraper(
+					level,
+					place,
+					faculties,
+					programs,
+					typologies,
+					programsLE
+				);
 			} catch (err) {
 				const {
 					level = eSIALevel.PREGRADO,
@@ -766,7 +867,8 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 			debugFirebaseServer(
 				event,
 				"api:groups:scrape:updateCourse",
-				`Success scraping: ${code}, ${SIAScraps.name}`
+				`Success scraping: ${code}, ${SIAScraps.name}`,
+				SIAScraps.groups
 			);
 
 			// Prevent updating if missing groups

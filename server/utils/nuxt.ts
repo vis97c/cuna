@@ -73,7 +73,8 @@ export function defineConditionallyCachedEventHandler<T extends EventHandlerRequ
 		}
 
 		try {
-			const auth = await getAuth(event);
+			const authorization = getRequestHeader(event, "authorization");
+			const auth = await getAuth(event, authorization);
 			const maxAge = (instance?.config?.coursesRefreshRate || 5) * 60;
 			const cachedData = defineCachedEventHandler(
 				function (e) {
@@ -87,14 +88,14 @@ export function defineConditionallyCachedEventHandler<T extends EventHandlerRequ
 
 			return cachedData(event);
 		} catch (error) {
-			if (error instanceof FirebaseAuthError) {
-				if (error.code === "auth/id-token-expired") return handler(event, instance);
+			if (error instanceof FirebaseAuthError && error.code !== "auth/id-token-expired") {
+				return handler(event, instance);
 			}
 
 			// Unknown error
 			serverLogger("server:utils:nuxt", "Unknown error", error);
-
-			return handler(event, instance);
 		}
+
+		return handler(event, instance);
 	});
 }

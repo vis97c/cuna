@@ -11,9 +11,8 @@ import type { User } from "~/resources/types/entities";
  * @cache 2 minutes
  */
 export const getAuth = defineCachedFunction(
-	async function (event: H3Event) {
+	async function (event: H3Event, authorization?: string) {
 		const { serverAuth, serverFirestore } = getServerFirebase();
-		const authorization = getRequestHeader(event, "authorization");
 
 		if (!authorization) return;
 
@@ -29,9 +28,7 @@ export const getAuth = defineCachedFunction(
 	{
 		name: "getAuth",
 		maxAge: 120, // 2 minutes
-		getKey(event) {
-			const authorization = getRequestHeader(event, "authorization");
-
+		getKey(event, authorization) {
 			if (!authorization) return "guest";
 
 			return createHash("sha256").update(authorization).digest("hex");
