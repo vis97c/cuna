@@ -83,8 +83,9 @@ export const useSessionStore = defineStore("session", {
 		},
 		canDevelop({ user }) {
 			const role = user?.role ?? 3;
+			const { production } = useRuntimeConfig().public;
 
-			return role < 0;
+			return role < 0 || !production;
 		},
 	},
 	actions: {

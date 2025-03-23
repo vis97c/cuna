@@ -2,7 +2,7 @@ import { FormInput } from "@open-xamu-co/ui-common-helpers";
 import { eFormType } from "@open-xamu-co/ui-common-enums";
 
 import type { Course } from "~/resources/types/entities";
-import { eSIALevel, type uSIAFaculty, type uSIAProgram } from "~/functions/src/types/SIA";
+import { eSIALevel, type uSIAFaculty } from "~/functions/src/types/SIA";
 
 export function useCourseInputs(course: Course = {}): FormInput[] {
 	const SESSION = useSessionStore();
@@ -33,6 +33,10 @@ export function useCourseInputs(course: Course = {}): FormInput[] {
 			const unwatch = watch(
 				programs,
 				(newPrograms) => {
+					if (fixCourse) {
+						newPrograms.unshift({ value: "", alias: "CUALQUIERA" });
+					}
+
 					// set first program as value
 					programInput.options = newPrograms;
 					programInput.values = [newPrograms[0].value as any];
@@ -45,19 +49,19 @@ export function useCourseInputs(course: Course = {}): FormInput[] {
 			selectedFaculty.value = newFaculty;
 		}
 	);
+
+	if (fixCourse) {
+		programs.value.unshift({ value: "", alias: "CUALQUIERA" });
+	}
+
 	const programInput = new FormInput({
-		values: [
-			course?.program || fixCourse
-				? <uSIAProgram>programs.value[0].value
-				: SESSION.lastProgramSearch,
-		],
+		values: [fixCourse ? "" : course?.program || SESSION.lastProgramSearch],
 		name: "program",
 		title: "Programa del curso (Sede Bogotá)",
 		placeholder: "Ej: Ciencias de la computación",
 		options: programs.value,
 		type: eFormType.SELECT,
 		icon: "chess-rook",
-		required: fixCourse,
 	});
 
 	const inputs: FormInput[] = [

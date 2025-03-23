@@ -40,7 +40,7 @@
 <script setup lang="ts">
 	import type { iGetPage, iPage } from "@open-xamu-co/ui-common-types";
 
-	import type { Log } from "~/resources/types/entities";
+	import type { CourseLog } from "~/resources/types/entities";
 
 	/**
 	 * Developer logs page
@@ -52,14 +52,11 @@
 		middleware: ["can-develop"],
 	});
 
-	function mapLog({ createdBy, updatedBy, ...log }: Log) {
-		return {
-			...log,
-			createdBy,
-		};
+	function mapLog({ createdBy, updatedBy, course, ...log }: CourseLog) {
+		return { ...log, course, createdBy };
 	}
 
-	const logsPage: iGetPage<Log> = (pagination) => {
-		return useFetchQuery<iPage<Log> | undefined>("/api/all/logs", pagination);
+	const logsPage: iGetPage<CourseLog> = (pagination) => {
+		return useFetchQuery<iPage<CourseLog> | undefined>("/api/all/logs", pagination);
 	};
 </script>
