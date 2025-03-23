@@ -19,7 +19,14 @@ export interface FirebaseData extends Record<string, any> {
 /**
  * Scraped with info
  */
-export type ScrapedWith = [eSIALevel, eSIAPlace, uSIAFaculty?, uSIAProgram?, eSIATypology?];
+export type ScrapedWith = [
+	eSIALevel,
+	eSIAPlace,
+	uSIAFaculty?,
+	uSIAProgram?,
+	eSIATypology?,
+	uSIAProgram?, // LE program
+];
 
 /**
  * Firebase log

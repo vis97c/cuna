@@ -602,6 +602,7 @@
 			// Scrape from old SIA. Do not refetch from hydration
 			await useFetchQuery<boolean>("/api/groups/scrape", {
 				code,
+				options: { credentials: "include" },
 			});
 		} catch (err) {
 			const courseId = <string>route.params.courseId;
