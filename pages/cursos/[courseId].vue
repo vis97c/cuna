@@ -68,7 +68,7 @@
 									<XamuIconFa name="bell" :size="20" />
 								</XamuActionButtonToggle>
 								<XamuModal
-									v-if="withScrapingErrors"
+									v-if="withScrapingErrors || SESSION.canDevelop"
 									key="fix-course"
 									class="--txtColor"
 									title="Corregir curso mal indexado"
@@ -288,6 +288,7 @@
 	const Swal = useSwal();
 	const { $clientFirestore } = useNuxtApp();
 	const { getResponse } = useFormInput();
+	const { debugScrapper } = useRuntimeConfig().public;
 
 	const estudiantesTheme = "estudiantes" as any;
 	const scraping = ref(false);
@@ -531,26 +532,21 @@
 				if (!course.value) return { data: null };
 
 				try {
-					// Update course, do not await
-					useDocumentUpdate<Course>(course.value, {
+					const updatedCourse = {
 						typologies: typology ? [typology] : deleteField(),
 						faculty,
 						faculties: [faculty],
-						programs: [program],
-					});
+						programs: program ? [program] : deleteField(),
+					};
 
-					const minutes = APP.instance?.config?.coursesScrapeRate || 5;
-					const nowMilis = new Date().getTime();
-					const scrapedAtMilis = new Date(course.value.scrapedAt || "").getTime();
-					const scrapedDiffMilis = nowMilis - scrapedAtMilis;
+					if (debugScrapper) console.debug("Updated course", updatedCourse);
 
-					// Do once & update if updated more than threshold
-					if (scrapedDiffMilis < useMinMilis(minutes)) {
-						if (course.value.description) return { data: false };
-					}
-
-					// Atemp course scraping
-					await scrapeCourse(course.value);
+					// Update course, do not await
+					useDocumentUpdate<Course>(course.value, updatedCourse);
+					setTimeout(() => {
+						// Atemp course scraping, do not await
+						scrapeCourse(course.value!);
+					}, 30 * 1000);
 
 					return { data: true };
 				} catch (errors: FirebaseError | unknown) {
