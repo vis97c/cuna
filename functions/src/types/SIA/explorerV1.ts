@@ -1,9 +1,10 @@
+import type { CoursesResponse } from "./";
 import type { eSIALevel, eSIAPlace, eSIATypology, uSIAFaculty, uSIAProgram } from "./enums";
 
 /**
  * Interface representing a SIA Faculty data.
  */
-export interface SIAFaculty {
+export interface ExplorerV1Faculty {
 	/**
 	 * Unique identifier for the faculty.
 	 * @example 921
@@ -24,7 +25,7 @@ export interface SIAFaculty {
 /**
  * Interface representing a SIA Place data.
  */
-export interface SIAPlace {
+export interface ExplorerV1Place {
 	/**
 	 * Unique identifier for the place.
 	 * @example 12
@@ -43,13 +44,13 @@ export interface SIAPlace {
 	/**
 	 * List of faculties associated with the place.
 	 */
-	Facultades: SIAFaculty[];
+	Facultades: ExplorerV1Faculty[];
 }
 
 /**
  * Interface representing a SIA Group data.
  */
-export interface SIAGroup {
+export interface ExplorerV1Group {
 	/**
 	 * Unique identifier for the group.
 	 * @example 1109123
@@ -169,7 +170,7 @@ export interface SIAGroup {
 /**
  * Interface representing a SIA Course data.
  */
-export interface SIACourse {
+export interface ExplorerV1Course {
 	/**
 	 * Course searcher ID.
 	 * @example 28130
@@ -265,5 +266,40 @@ export interface SIACourse {
 	/** Methodology. */
 	METODOLOGIA?: unknown;
 	/** Detailed course-subject information. */
-	DETALLECURSOASIGNATURA: SIAGroup[];
+	DETALLECURSOASIGNATURA: ExplorerV1Group[];
 }
+
+/**
+ * Payload expected by the courses endpoint
+ */
+export interface ExplorerV1CoursesPayload {
+	planEstudio?: uSIAProgram;
+	// optional fields
+	nivel?: eSIALevel;
+	sede?: eSIAPlace;
+	facultad?: uSIAFaculty;
+	tipologia?: eSIATypology;
+	numcreditos?: number;
+	/**
+	 * Comma separated list of week days
+	 * @example Lunes,Martes
+	 */
+	dias?: string;
+	/**
+	 * Hour block
+	 * @example 9:00,10:00
+	 */
+	franja_horaria?: string;
+	codigo_asignatura?: string;
+	/**
+	 * This one behaves like a search
+	 */
+	nombre_asignatura?: string;
+	numgrupos?: number;
+	numcupos?: number;
+	// pagination
+	page?: number;
+	limit?: number;
+}
+
+export type ExplorerV1CoursesResponse = CoursesResponse<ExplorerV1Course>;

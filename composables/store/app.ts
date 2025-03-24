@@ -1,4 +1,5 @@
 import { defineStore } from "pinia";
+import type { InstanceConfig } from "~/functions/src/types/entities";
 
 import type { Instance } from "~/resources/types/entities";
 
@@ -19,6 +20,9 @@ export const useAppStore = defineStore("app", {
 		};
 	},
 	getters: {
+		config({ instance = {} }): InstanceConfig<Date> {
+			return { ...instance?.config };
+		},
 		maintenance({ instance = {} }): string {
 			const SESSION = useSessionStore();
 

@@ -102,7 +102,7 @@
 											<div
 												class="flx --flxRow --flx-center --gap-10 --txtSize-xs"
 											>
-												<template v-if="APP.instance?.config?.version">
+												<template v-if="APP.config?.version">
 													<span>{{ APP.instance.config.version }}</span>
 													⋅
 												</template>
@@ -127,9 +127,7 @@
 										</p>
 										<p
 											class="--txtSize-xs --txtColor-dark5"
-											:title="
-												APP.instance?.config?.siaMaintenanceTillAt?.toString()
-											"
+											:title="APP.config?.siaMaintenanceTillAt?.toString()"
 										>
 											Volveremos a la normalidad {{ SIAMaintenanceTillAt }}.
 										</p>
@@ -194,17 +192,17 @@
 
 	const isAdmin = computed(() => route.path.startsWith("/administrar"));
 	const SIAMaintenanceTillAt = computed(() => {
-		const date = new Date(APP.instance?.config?.siaMaintenanceTillAt || new Date());
+		const date = new Date(APP.config?.siaMaintenanceTillAt || new Date());
 
 		return useTimeAgo(date);
 	});
 	const ExplorerV1MaintenanceTillAt = computed(() => {
-		const date = new Date(APP.instance?.config?.explorerV1MaintenanceTillAt || new Date());
+		const date = new Date(APP.config?.explorerV1MaintenanceTillAt || new Date());
 
 		return useTimeAgo(date);
 	});
 	const ExplorerV2MaintenanceTillAt = computed(() => {
-		const date = new Date(APP.instance?.config?.explorerV2MaintenanceTillAt || new Date());
+		const date = new Date(APP.config?.explorerV2MaintenanceTillAt || new Date());
 
 		return useTimeAgo(date);
 	});

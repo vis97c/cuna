@@ -84,7 +84,10 @@
 									/>
 								</div>
 							</template>
-							<div class="flx --flxColumn --flx-start --flx --gap-5">
+							<div
+								v-if="!APP.config?.explorerV2MaintenanceTillAt"
+								class="flx --flxColumn --flx-start --flx --gap-5"
+							>
 								<p class="">Tipología</p>
 								<XamuSelect
 									id="typology"
@@ -199,8 +202,8 @@
 						SIA).
 					</p>
 					<p>
-						Usamos el buscador del SIA (Beta) para listar los cursos, su frecuencia de
-						actualización es baja.
+						Usamos el explorador de cursos para listar los cursos, de momento este no
+						algunos cursos como los de libre elección.
 					</p>
 				</template>
 			</div>
@@ -284,7 +287,7 @@
 	 * Disable Explorer search
 	 */
 	const disabledExplorerSearch = computed(() => {
-		return APP.ExplorerV1Maintenance || (!!search.value && search.value.length < 5);
+		return APP.ExplorerV2Maintenance || (!!search.value && search.value.length < 5);
 	});
 
 	const {

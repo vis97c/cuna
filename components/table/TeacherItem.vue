@@ -69,7 +69,7 @@
 	const Swal = useSwal();
 
 	const losEstudiantesProfessors = computed(() => {
-		const config = APP.instance?.config || {};
+		const config = APP.config || {};
 		const { losEstudiantesUrl = "", losEstudiantesProfessorsPath = "" } = config;
 
 		return `${losEstudiantesUrl}${losEstudiantesProfessorsPath}`;

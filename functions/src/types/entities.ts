@@ -84,20 +84,38 @@ export interface InstanceConfig<T> {
 	siaMaintenanceTillAt?: T;
 	/**
 	 * Explorer V1 under maintenance till
+	 *
+	 * @deprecated No longer active, use v2
+	 * @since 23/03/2025
 	 */
 	explorerV1MaintenanceTillAt?: T;
 	/**
+	 * @example https://bobt42d1b3.execute-api.us-east-1.amazonaws.com/api/v1
+	 *
+	 * @deprecated No longer active, use v2
+	 * @since 23/03/2025
+	 */
+	explorerV1CoursesURL?: string;
+	/**
+	 * @example /buscadorcursos/busqueda/primernivel2
+	 *
+	 * @deprecated No longer active, use v2
+	 * @since 23/03/2025
+	 */
+	explorerV1CoursesPath?: string;
+	/**
 	 * Explorer V2 under maintenance till
+	 *
+	 * @since 23/03/2025
 	 */
 	explorerV2MaintenanceTillAt?: T;
 	/**
-	 * @example https://bobt42d1b3.execute-api.us-east-1.amazonaws.com/api/v1
+	 * Explorador de cursos
+	 *
+	 * @since 23/03/2025
+	 * @example https://n0n0ftmy9b.execute-api.us-east-1.amazonaws.com
 	 */
-	siaCoursesURL?: string;
-	/**
-	 * @example /buscadorcursos/busqueda/primernivel2
-	 */
-	siaCoursesPath?: string;
+	explorerV2CoursesURL?: string;
 	/**
 	 * Number of minutes before refreshing a course
 	 */
@@ -184,8 +202,16 @@ export type tWeeklySchedule = [string?, string?, string?, string?, string?, stri
  * Interface representing a SIA Group data.
  */
 export interface GroupData {
-	/** Unique SIA id */
+	/**
+	 * Unique SIA id
+	 *
+	 * @deprecated
+	 */
 	SIA?: number;
+	/** Explorer V1 unique id */
+	ExplorerV1Id?: number;
+	/** Explorer V2 unique id */
+	ExplorerV2Id?: string;
 	name?: string;
 	/** Total number of available spots. */
 	spots?: number;
@@ -214,8 +240,16 @@ export interface GroupData {
  * @see https://stackoverflow.com/a/52969138
  */
 export interface CourseData extends FirebaseData {
-	/** Unique SIA id */
+	/**
+	 * Unique SIA id
+	 *
+	 * @deprecated
+	 */
 	SIA?: number;
+	/** Explorer V1 unique id */
+	ExplorerV1Id?: number;
+	/** Explorer V2 unique id */
+	ExplorerV2Id?: string;
 	name?: string;
 	description?: string;
 	alternativeNames?: string[];
