@@ -33,6 +33,20 @@ export const useAppStore = defineStore("app", {
 
 			return till > new Date();
 		},
+		ExplorerV1Maintenance({ instance = {} }) {
+			const till = instance?.config?.explorerV1MaintenanceTillAt;
+
+			if (!till) return false;
+
+			return till > new Date();
+		},
+		ExplorerV2Maintenance({ instance = {} }) {
+			const till = instance?.config?.explorerV2MaintenanceTillAt;
+
+			if (!till) return false;
+
+			return till > new Date();
+		},
 	},
 	actions: {
 		async setInstance(instance?: Instance) {

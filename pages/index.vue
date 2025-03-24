@@ -7,158 +7,163 @@
 		<SearchCourse
 			v-slot="{ searchCourse, searching }"
 			:values="values"
-			:disabled="!SESSION.token || disabledSIASearch"
+			:disabled="!SESSION.token || disabledExplorerSearch"
 		>
 			<XamuBaseBox
 				class="x-box flx --flxColumn --flx-start-stretch --width-100 --p-20:md"
 				transparent
 			>
-				<form
-					action="#"
-					method="post"
-					class="flx --flxRow --flx-start-center --gap-5 --width-100"
-					@submit.prevent="searchCourse"
-				>
-					<div class="--flx">
-						<XamuInputText
-							id="search"
-							v-model="search"
-							placeholder="Nombre o codigo del curso..."
-							autocomplete="off"
-							icon="magnifying-glass"
-							:size="eSizes.LG"
-							class="--minWidth-100"
-						/>
-						<XamuActionLink
-							v-if="search"
-							class="x-search-reset"
-							@click="() => (search = '')"
-						>
-							<XamuIconFa name="xmark" :size="20" />
-						</XamuActionLink>
-					</div>
-					<XamuActionButton
-						:size="eSizes.LG"
-						:disabled="!SESSION.token || disabledSIASearch || searching"
-						type="submit"
-						:tooltip="search ? 'Buscar curso' : 'Descubrir cursos disponibles'"
-						hydrate-never
-						round
+				<ClientOnly>
+					<form
+						action="#"
+						method="post"
+						class="flx --flxRow --flx-start-center --gap-5 --width-100"
+						@submit.prevent="searchCourse"
 					>
-						<XamuIconFa v-if="search" name="magnifying-glass" :size="20" />
-						<XamuIconFa v-else name="wand-magic-sparkles" :size="20" />
-					</XamuActionButton>
-				</form>
-				<XamuLoaderContent
-					class="flx --flxColumn --flx-start-center --width-100"
-					:loading="loading"
-					:errors="error"
-					:refresh="refresh"
-					content
-				>
-					<div
-						class="flx --flxRow-wrap --flx-start-center --gap-5 --txtSize-xs --width-100"
-					>
-						<template v-if="!isCodeSearch">
-							<div class="flx --flxColumn --flx-start --flx --gap-5">
-								<p class="">Facultad</p>
-								<XamuSelect
-									id="faculty"
-									v-model="selectedFaculty"
-									class="--width-180 --minWidth-100"
-									:options="faculties"
-									:size="eSizes.XS"
-									required
-								/>
-							</div>
-							<div class="flx --flxColumn --flx-start --flx --gap-5">
-								<p class="">Programa</p>
-								<XamuSelect
-									id="program"
-									v-model="selectedProgram"
-									class="--width-180 --minWidth-100"
-									:options="programs"
-									:size="eSizes.XS"
-									:disabled="!selectedFaculty || !programs.length"
-									required
-								/>
-							</div>
-						</template>
-						<div class="flx --flxColumn --flx-start --flx --gap-5">
-							<p class="">Tipología</p>
-							<XamuSelect
-								id="typology"
-								v-model="selectedTypology"
-								class="--width-180 --minWidth-100"
-								:options="typologies"
-								:size="eSizes.XS"
+						<div class="--flx">
+							<XamuInputText
+								id="search"
+								v-model="search"
+								placeholder="Nombre o codigo del curso..."
+								autocomplete="off"
+								icon="magnifying-glass"
+								:size="eSizes.LG"
+								class="--minWidth-100"
 							/>
+							<XamuActionLink
+								v-if="search"
+								class="x-search-reset"
+								@click="() => (search = '')"
+							>
+								<XamuIconFa name="xmark" :size="20" />
+							</XamuActionLink>
 						</div>
-					</div>
-					<template v-if="search">
+						<XamuActionButton
+							:size="eSizes.LG"
+							:disabled="!SESSION.token || disabledExplorerSearch || searching"
+							type="submit"
+							:tooltip="search ? 'Buscar curso' : 'Descubrir cursos disponibles'"
+							round
+						>
+							<XamuIconFa v-if="search" name="magnifying-glass" :size="20" />
+							<XamuIconFa v-else name="wand-magic-sparkles" :size="20" />
+						</XamuActionButton>
+					</form>
+					<XamuLoaderContent
+						class="flx --flxColumn --flx-start-center --width-100"
+						:loading="loading"
+						:errors="error"
+						:refresh="refresh"
+						content
+					>
 						<div
-							v-if="matches?.length"
-							class="flx --flxColumn --flx-start-stretch --gap-10 --width-100"
+							class="flx --flxRow-wrap --flx-start-center --gap-5 --txtSize-xs --width-100"
 						>
-							<h4 class="--txtSize-xs">Sugerencias de búsquedas (otros usuarios):</h4>
-							<ul class="grd --grdColumns-auto3 --gap">
-								<li
-									v-for="match in matches"
-									:key="match.code"
-									class="txt --gap-0 --txtColor-dark5 --width-100"
-								>
-									<XamuActionLink
-										class="--maxWidth-100"
-										:tooltip="`Ver: ${match.name}`"
-										tooltip-as-text
-										:to="`/cursos/${getDocumentId(match.id)}`"
-									>
-										<XamuIconFa name="chess-knight" />
-										<span class="--width-440 ellipsis">
-											{{ match.name }}
-										</span>
-									</XamuActionLink>
-									<div class="txt --txtSize-sm --gap-0 --width-100 --pLeft-20">
-										<div
-											class="flx --flxRow-wrap --flx-between-center --gap-5 --width-100"
-										>
-											<p>
-												<b title="Código">{{ match.code }}</b>
-												⋅
-												<span title="Créditos">
-													{{ useTCredits(match.credits) }}
-												</span>
-												<template v-if="match.groups?.length">
-													⋅
-													<span title="Grupos">
-														{{ useTGroup(match.groups?.length) }}
-													</span>
-												</template>
-											</p>
-											<p>
-												<b>{{ useTSpot(match.spotsCount) }}</b>
-												⋅
-												<span
-													:title="`Ultima actualizacion ${match.updatedAt}`"
-												>
-													{{ match.updatedAt }}
-												</span>
-											</p>
-										</div>
-									</div>
-								</li>
-							</ul>
+							<template v-if="!isCodeSearch">
+								<div class="flx --flxColumn --flx-start --flx --gap-5">
+									<p class="">Facultad</p>
+									<XamuSelect
+										id="faculty"
+										v-model="selectedFaculty"
+										class="--width-180 --minWidth-100"
+										:options="faculties"
+										:size="eSizes.XS"
+										required
+									/>
+								</div>
+								<div class="flx --flxColumn --flx-start --flx --gap-5">
+									<p class="">Programa</p>
+									<XamuSelect
+										id="program"
+										v-model="selectedProgram"
+										class="--width-180 --minWidth-100"
+										:options="programs"
+										:size="eSizes.XS"
+										:disabled="!selectedFaculty || !programs.length"
+										required
+									/>
+								</div>
+							</template>
+							<div class="flx --flxColumn --flx-start --flx --gap-5">
+								<p class="">Tipología</p>
+								<XamuSelect
+									id="typology"
+									v-model="selectedTypology"
+									class="--width-180 --minWidth-100"
+									:options="typologies"
+									:size="eSizes.XS"
+								/>
+							</div>
 						</div>
-						<p
-							v-else-if="search.length >= 5 && !loading"
-							class="--txtSize-xs --txtColor-dark5"
-						>
-							Sin sugerencias para
-							<b>"{{ search }}"</b>
-							.
-						</p>
-					</template>
-				</XamuLoaderContent>
+						<template v-if="search">
+							<div
+								v-if="matches?.length"
+								class="flx --flxColumn --flx-start-stretch --gap-10 --width-100"
+							>
+								<h4 class="--txtSize-xs">
+									Sugerencias de búsquedas (otros usuarios):
+								</h4>
+								<ul class="grd --grdColumns-auto3 --gap">
+									<li
+										v-for="match in matches"
+										:key="match.code"
+										class="txt --gap-0 --txtColor-dark5 --width-100"
+									>
+										<XamuActionLink
+											class="--maxWidth-100"
+											:tooltip="`Ver: ${match.name}`"
+											tooltip-as-text
+											:to="`/cursos/${getDocumentId(match.id)}`"
+										>
+											<XamuIconFa name="chess-knight" />
+											<span class="--width-440 ellipsis">
+												{{ match.name }}
+											</span>
+										</XamuActionLink>
+										<div
+											class="txt --txtSize-sm --gap-0 --width-100 --pLeft-20"
+										>
+											<div
+												class="flx --flxRow-wrap --flx-between-center --gap-5 --width-100"
+											>
+												<p>
+													<b title="Código">{{ match.code }}</b>
+													⋅
+													<span title="Créditos">
+														{{ useTCredits(match.credits) }}
+													</span>
+													<template v-if="match.groups?.length">
+														⋅
+														<span title="Grupos">
+															{{ useTGroup(match.groups?.length) }}
+														</span>
+													</template>
+												</p>
+												<p>
+													<b>{{ useTSpot(match.spotsCount) }}</b>
+													⋅
+													<span
+														:title="`Ultima actualizacion ${match.updatedAt}`"
+													>
+														{{ match.updatedAt }}
+													</span>
+												</p>
+											</div>
+										</div>
+									</li>
+								</ul>
+							</div>
+							<p
+								v-else-if="search.length >= 5 && !loading"
+								class="--txtSize-xs --txtColor-dark5"
+							>
+								Sin sugerencias para
+								<b>"{{ search }}"</b>
+								.
+							</p>
+						</template>
+					</XamuLoaderContent>
+				</ClientOnly>
 			</XamuBaseBox>
 		</SearchCourse>
 		<section v-if="SESSION.token" class="flx --flxColumn --flx-center --width-100">
@@ -276,10 +281,10 @@
 	});
 
 	/**
-	 * Disable SIA search
+	 * Disable Explorer search
 	 */
-	const disabledSIASearch = computed(() => {
-		return APP.SIAMaintenance || (!!search.value && search.value.length < 5);
+	const disabledExplorerSearch = computed(() => {
+		return APP.ExplorerV1Maintenance || (!!search.value && search.value.length < 5);
 	});
 
 	const {

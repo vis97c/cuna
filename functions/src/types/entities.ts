@@ -79,9 +79,17 @@ export interface InstanceConfig<T> {
 	 */
 	maintenanceMessage?: string;
 	/**
-	 * SIA under maintenance till
+	 * Old SIA under maintenance till
 	 */
 	siaMaintenanceTillAt?: T;
+	/**
+	 * Explorer V1 under maintenance till
+	 */
+	explorerV1MaintenanceTillAt?: T;
+	/**
+	 * Explorer V2 under maintenance till
+	 */
+	explorerV2MaintenanceTillAt?: T;
 	/**
 	 * @example https://bobt42d1b3.execute-api.us-east-1.amazonaws.com/api/v1
 	 */

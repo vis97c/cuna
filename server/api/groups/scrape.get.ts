@@ -131,12 +131,12 @@ function useId(id: string): string {
  * @see https://github.com/pablomancera/sia_scrapper
  */
 export default defineConditionallyCachedEventHandler(async (event, instance, auth) => {
+	// Require auth
+	if (!auth) throw createError({ statusCode: 401, statusMessage: `Missing auth` });
+
 	if (instance?.config?.siaMaintenanceTillAt) {
 		throw createError({ statusCode: 503, statusMessage: `SIA under maintenance` });
 	}
-
-	// Require auth
-	if (!auth) throw createError({ statusCode: 401, statusMessage: `Missing auth` });
 
 	const { serverFirestore } = getServerFirebase();
 	const { debugScrapper } = useRuntimeConfig().public;

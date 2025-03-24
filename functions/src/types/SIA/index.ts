@@ -37,8 +37,8 @@ export interface SIACoursesPayload {
 	limit?: number;
 }
 
-export interface SIACoursesResponse {
-	data: SIACourse[];
+export interface CoursesResponse<T> {
+	data: T[];
 	totalRecords: number;
 	totalPages: number;
 	currentPage: number;
@@ -47,3 +47,5 @@ export interface SIACoursesResponse {
 	 */
 	limit: number;
 }
+
+export type ExplorerV1CoursesResponse = CoursesResponse<SIACourse>;
