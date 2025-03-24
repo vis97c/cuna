@@ -1,16 +1,19 @@
 import { arrayUnion } from "firebase/firestore";
 
-import type { SIACoursesResponse } from "~/functions/src/types/SIA";
+import type { CoursesResponse, ExplorerV1CoursesResponse } from "~/functions/src/types/SIA";
 import type { Course, CourseRef } from "~/resources/types/entities";
 import type { CourseValues } from "~/resources/types/values";
 import { triGram } from "~/resources/utils/firestore";
 
-export function useSIACourses(values: CourseValues, page = 1) {
+export async function useExplorerV1Courses(
+	values: CourseValues,
+	page = 1
+): Promise<CoursesResponse<Course>> {
 	const APP = useAppStore();
 	const { siaCoursesURL = "", siaCoursesPath = "" } = APP.instance?.config || {};
 	const coursesEndpoint = `${siaCoursesURL}${siaCoursesPath}`;
 
-	return useFetchQuery<SIACoursesResponse>(coursesEndpoint, {
+	const response = await useFetchQuery<ExplorerV1CoursesResponse>(coursesEndpoint, {
 		nivel: values.level,
 		sede: values.place,
 		planEstudio: values.program || undefined,
@@ -20,6 +23,8 @@ export function useSIACourses(values: CourseValues, page = 1) {
 		limit: 30, // firebase compound limit
 		page,
 	});
+
+	return { ...response, data: response.data.map(useMapCourseFromExplorerV1) };
 }
 
 export async function useIndexCourse(

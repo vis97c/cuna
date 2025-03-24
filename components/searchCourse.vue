@@ -127,7 +127,7 @@
 	import type { CourseValues } from "~/resources/types/values";
 	import {
 		eSIATypology,
-		type SIACoursesResponse,
+		type CoursesResponse,
 		type uSIAProgram,
 	} from "~/functions/src/types/SIA";
 	import { getDocumentId } from "~/resources/utils/firestore";
@@ -145,7 +145,7 @@
 	const searchUntrackedRef = ref<HTMLElement>();
 	const searching = ref(false);
 	const errors = ref();
-	const untrackedCurrentPage = ref<SIACoursesResponse>();
+	const untrackedCurrentPage = ref<CoursesResponse<Course>>();
 	const untrackedCourses = ref<Course[]>();
 	const savedUntrackedCourses = ref<Record<number, Course[]>>({});
 	const lastSearch = ref<CourseValues & { page?: number }>();
@@ -178,7 +178,7 @@
 		errors.value = undefined;
 
 		try {
-			const coursesPage = await useSIACourses(
+			const coursesPage = await useExplorerV1Courses(
 				props.values,
 				untrackedCurrentPage.value?.currentPage
 			);
@@ -189,9 +189,7 @@
 			 * Remove duplicates & omit courses without groups
 			 * The system return entities with the same data but differing in the internal id
 			 */
-			coursesPage.data.forEach((SIAcourse) => {
-				const { faculties = [], ...course } = useMapCourseFromBETA(SIAcourse);
-
+			coursesPage.data.forEach(({ faculties = [], ...course }) => {
 				if (!course.code || !course.groups?.length) return;
 
 				const dedupedCourseIndex = dedupedCourses.findIndex(({ id }) => id === course.id);
@@ -247,7 +245,7 @@
 	/**
 	 * Index unindexed courses
 	 */
-	async function indexCourses(courses: Course[], page: SIACoursesResponse) {
+	async function indexCourses(courses: Course[], page: CoursesResponse<Course>) {
 		try {
 			const include = courses.map(({ id }) => id);
 			const indexedCoursesEdges = await useFetchQuery<iPageEdge<Course, string>[]>(

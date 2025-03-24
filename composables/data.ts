@@ -231,7 +231,7 @@ export function useMapGroupFromBETA(source: SIAGroup): Group {
 /**
  * Map course from SIA beta
  */
-export function useMapCourseFromBETA(source: SIACourse): Course {
+export function useMapCourseFromExplorerV1(source: SIACourse): Course {
 	// Generate deduped course UID
 	const id = `courses/${Cyrb53([source.CODIGO_ASIGNATURA])}`;
 	const groups: Group[] = [];

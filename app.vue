@@ -135,6 +135,28 @@
 										</p>
 									</div>
 									<div
+										v-else-if="
+											APP.ExplorerV1Maintenance || APP.ExplorerV2Maintenance
+										"
+										class="txt --txtAlign-center --gap-10"
+									>
+										<h4>El buscador se encuentra en mantenimiento</h4>
+										<p class="--txtSize-sm --txtColor-dark5">
+											Puedes explorar los cursos previamente guardados.
+										</p>
+										<p
+											v-if="APP.ExplorerV1Maintenance"
+											class="--txtSize-xs --txtColor-dark5"
+										>
+											Volveremos a la normalidad
+											{{ ExplorerV1MaintenanceTillAt }}.
+										</p>
+										<p v-else class="--txtSize-xs --txtColor-dark5">
+											Volveremos a la normalidad
+											{{ ExplorerV2MaintenanceTillAt }}.
+										</p>
+									</div>
+									<div
 										v-else-if="!SESSION.token && route.path != '/ingresar'"
 										class="txt --txtAlign-center --gap-10"
 									>
@@ -173,6 +195,16 @@
 	const isAdmin = computed(() => route.path.startsWith("/administrar"));
 	const SIAMaintenanceTillAt = computed(() => {
 		const date = new Date(APP.instance?.config?.siaMaintenanceTillAt || new Date());
+
+		return useTimeAgo(date);
+	});
+	const ExplorerV1MaintenanceTillAt = computed(() => {
+		const date = new Date(APP.instance?.config?.explorerV1MaintenanceTillAt || new Date());
+
+		return useTimeAgo(date);
+	});
+	const ExplorerV2MaintenanceTillAt = computed(() => {
+		const date = new Date(APP.instance?.config?.explorerV2MaintenanceTillAt || new Date());
 
 		return useTimeAgo(date);
 	});
