@@ -84,20 +84,44 @@ export interface InstanceConfig<T> {
 	siaMaintenanceTillAt?: T;
 	/**
 	 * Explorer V1 under maintenance till
+	 *
+	 * @deprecated No longer active, use v2
+	 * @since 23/03/2025
 	 */
 	explorerV1MaintenanceTillAt?: T;
 	/**
+	 * @example https://bobt42d1b3.execute-api.us-east-1.amazonaws.com/api/v1
+	 *
+	 * @deprecated No longer active, use v2
+	 * @since 23/03/2025
+	 */
+	explorerV1CoursesURL?: string;
+	/**
+	 * @example /buscadorcursos/busqueda/primernivel2
+	 *
+	 * @deprecated No longer active, use v2
+	 * @since 23/03/2025
+	 */
+	explorerV1CoursesPath?: string;
+	/**
 	 * Explorer V2 under maintenance till
+	 *
+	 * @since 23/03/2025
 	 */
 	explorerV2MaintenanceTillAt?: T;
 	/**
-	 * @example https://bobt42d1b3.execute-api.us-east-1.amazonaws.com/api/v1
+	 * Explorador de cursos
+	 *
+	 * @since 23/03/2025
+	 * @example https://n0n0ftmy9b.execute-api.us-east-1.amazonaws.com
 	 */
-	siaCoursesURL?: string;
+	explorerV2CoursesURL?: string;
 	/**
 	 * @example /buscadorcursos/busqueda/primernivel2
+	 *
+	 * @since 23/03/2025
 	 */
-	siaCoursesPath?: string;
+	explorerV2CoursesPath?: string;
 	/**
 	 * Number of minutes before refreshing a course
 	 */

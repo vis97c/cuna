@@ -47,13 +47,20 @@ async function setAppState(provide?: ClientProvide) {
 
 		onSnapshot(instanceRef, (snapshot) => {
 			const instance: InstanceRef = resolveSnapshotDefaults(snapshot.id, snapshot.data());
+			const {
+				siaMaintenanceTillAt,
+				explorerV1MaintenanceTillAt,
+				explorerV2MaintenanceTillAt,
+			} = instance.config || {};
 
 			const updatedInstance: Instance = {
 				...instance,
 				config: {
 					...instance.config,
 					// Parse Timestamp to Date
-					siaMaintenanceTillAt: instance.config?.siaMaintenanceTillAt?.toDate(),
+					siaMaintenanceTillAt: siaMaintenanceTillAt?.toDate(),
+					explorerV1MaintenanceTillAt: explorerV1MaintenanceTillAt?.toDate(),
+					explorerV2MaintenanceTillAt: explorerV2MaintenanceTillAt?.toDate(),
 				},
 			};
 
