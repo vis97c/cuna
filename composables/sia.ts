@@ -27,6 +27,14 @@ export async function useIndexCourse(
 		indexes: triGram([course.name]),
 	};
 
+	// Ensure arrays
+	if (indexedCourse) {
+		if (!Array.isArray(indexedCourse?.typologies)) indexedCourse.typologies = [];
+		if (!Array.isArray(indexedCourse?.faculties)) indexedCourse.faculties = [];
+		if (!Array.isArray(indexedCourse?.programs)) indexedCourse.programs = [];
+		if (!Array.isArray(indexedCourse?.alternativeNames)) indexedCourse.alternativeNames = [];
+	}
+
 	// Prevent update if same data
 	if (
 		indexedCourse?.credits === course.credits &&
@@ -37,7 +45,7 @@ export async function useIndexCourse(
 		return;
 	}
 
-	const minutes = APP.instance?.config?.coursesRefreshRate || 5;
+	const minutes = APP.config?.coursesRefreshRate || 5;
 	const nowMilis = new Date().getTime();
 	const updatedAtMilis = new Date(updatedAt || "").getTime();
 	const updatedDiffMilis = nowMilis - updatedAtMilis;

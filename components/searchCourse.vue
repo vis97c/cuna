@@ -14,13 +14,13 @@
 				<div class="txt">
 					<div>
 						<h3>
-							Resultados de la busqueda
+							Resultados de la búsqueda
 							<template v-if="lastSearch?.name || lastSearch?.code">
 								de "{{ lastSearch?.name || lastSearch?.code }}"
 							</template>
 							:
 						</h3>
-						<p class="--txtSize-xs">Datos obtenidos del buscador del SIA (Beta).</p>
+						<p class="--txtSize-xs">Datos obtenidos del explorador de cursos.</p>
 					</div>
 					<p>
 						{{ untrackedCurrentPage.totalRecords }} resultados. Pagina
@@ -125,11 +125,7 @@
 	import { XamuBaseAction } from "#components";
 	import type { Course } from "~/resources/types/entities";
 	import type { CourseValues } from "~/resources/types/values";
-	import {
-		eSIATypology,
-		type CoursesResponse,
-		type uSIAProgram,
-	} from "~/functions/src/types/SIA";
+	import { type CoursesResponse } from "~/functions/src/types/SIA";
 	import { getDocumentId } from "~/resources/utils/firestore";
 
 	/**
@@ -178,55 +174,16 @@
 		errors.value = undefined;
 
 		try {
-			const coursesPage = await useExplorerV1Courses(
-				props.values,
-				untrackedCurrentPage.value?.currentPage
-			);
-			const codes: string[] = [];
-			const dedupedCourses: Course[] = [];
-
-			/**
-			 * Remove duplicates & omit courses without groups
-			 * The system return entities with the same data but differing in the internal id
-			 */
-			coursesPage.data.forEach(({ faculties = [], ...course }) => {
-				if (!course.code || !course.groups?.length) return;
-
-				const dedupedCourseIndex = dedupedCourses.findIndex(({ id }) => id === course.id);
-
-				if (dedupedCourseIndex >= 0) {
-					// merge details
-					const dedupedCourse = dedupedCourses[dedupedCourseIndex];
-					const uniquePrograms = [
-						...new Set([dedupedCourse.programs, course.programs].flat()),
-					].filter((p: uSIAProgram | undefined): p is uSIAProgram => !!p);
-					const uniqueTypologies = [
-						...new Set([dedupedCourse.typologies, course.typologies].flat()),
-					].filter((p: eSIATypology | undefined): p is eSIATypology => !!p);
-
-					dedupedCourses[dedupedCourseIndex].programs = uniquePrograms;
-					dedupedCourses[dedupedCourseIndex].typologies = uniqueTypologies;
-
-					return;
-				}
-
-				// Inject faculty, that helped in search
-				if (props.values.faculty && !faculties.includes(props.values.faculty)) {
-					faculties.push(props.values.faculty);
-				}
-
-				codes.push(course.code);
-				dedupedCourses.push({ ...course, faculties });
-			});
+			const coursesPage = await useExplorerV2Courses(props.values);
 
 			// Refresh UI
 			lastSearch.value = { ...props.values, page: coursesPage.currentPage };
-			untrackedCourses.value = dedupedCourses;
+			untrackedCourses.value = coursesPage.data;
 			untrackedCurrentPage.value = coursesPage;
-			savedUntrackedCourses.value[coursesPage.currentPage] = dedupedCourses;
+			savedUntrackedCourses.value[coursesPage.currentPage] = coursesPage.data;
 
 			// Index course, do not await
-			indexCourses(dedupedCourses, coursesPage);
+			indexCourses(coursesPage.data, coursesPage);
 		} catch (err) {
 			useLogger("components:SearchCourse", err);
 			errors.value = err;

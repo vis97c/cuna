@@ -303,7 +303,7 @@
 
 	const routeId = computed(() => <string>route.params.courseId);
 	const losEstudiantesCourses = computed(() => {
-		const config = APP.instance?.config || {};
+		const config = APP.config || {};
 		const { losEstudiantesUrl = "", losEstudiantesCoursesPath = "" } = config;
 
 		return `${losEstudiantesUrl}${losEstudiantesCoursesPath}`;
@@ -671,7 +671,7 @@
 				course.value = { ...course.value, ...firebaseCourse, scrapedWithErrorsAt };
 			}
 
-			const minutes = APP.instance?.config?.coursesScrapeRate || 5;
+			const minutes = APP.config?.coursesScrapeRate || 5;
 			const nowMilis = new Date().getTime();
 			const scrapedAtMilis = new Date(scrapedAt || "").getTime();
 			const scrapedDiffMilis = nowMilis - scrapedAtMilis;

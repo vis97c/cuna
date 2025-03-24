@@ -67,7 +67,7 @@
 	const invalidBanner = ref<iInvalidInput[]>([]);
 	const bannerInputs = ref(markRaw(useInstanceBannerInputs(APP.instance)));
 
-	// const instanceConfig = computed(() => APP.instance?.config || {});
+	// const instanceConfig = computed(() => APP.config || {});
 
 	const setInstance = debounce(async () => {
 		const mergeInputs = instanceSEOInputs.value;

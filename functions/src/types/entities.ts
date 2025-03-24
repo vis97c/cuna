@@ -117,12 +117,6 @@ export interface InstanceConfig<T> {
 	 */
 	explorerV2CoursesURL?: string;
 	/**
-	 * @example /buscadorcursos/busqueda/primernivel2
-	 *
-	 * @since 23/03/2025
-	 */
-	explorerV2CoursesPath?: string;
-	/**
 	 * Number of minutes before refreshing a course
 	 */
 	coursesRefreshRate?: number;
@@ -208,8 +202,16 @@ export type tWeeklySchedule = [string?, string?, string?, string?, string?, stri
  * Interface representing a SIA Group data.
  */
 export interface GroupData {
-	/** Unique SIA id */
+	/**
+	 * Unique SIA id
+	 *
+	 * @deprecated
+	 */
 	SIA?: number;
+	/** Explorer V1 unique id */
+	ExplorerV1Id?: number;
+	/** Explorer V2 unique id */
+	ExplorerV2Id?: string;
 	name?: string;
 	/** Total number of available spots. */
 	spots?: number;
@@ -238,8 +240,16 @@ export interface GroupData {
  * @see https://stackoverflow.com/a/52969138
  */
 export interface CourseData extends FirebaseData {
-	/** Unique SIA id */
+	/**
+	 * Unique SIA id
+	 *
+	 * @deprecated
+	 */
 	SIA?: number;
+	/** Explorer V1 unique id */
+	ExplorerV1Id?: number;
+	/** Explorer V2 unique id */
+	ExplorerV2Id?: string;
 	name?: string;
 	description?: string;
 	alternativeNames?: string[];
