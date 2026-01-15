@@ -1,0 +1,99 @@
+# Javascript Node CircleCI 2.1 configuration file
+#
+# Check https://circleci.com/docs/language-javascript/ for more details
+
+# Extras
+# Yarn 1.22.22 issue: https://github.com/yarnpkg/yarn/issues/9015#issuecomment-2141841791
+
+version: 2.1
+defaults: &defaults
+    working_directory: ~/repo
+    docker:
+        - image: cimg/node:20.19.3
+    environment:
+        HUSKY: 0
+
+jobs:
+    setup:
+        <<: *defaults
+        steps:
+            - checkout
+            - attach_workspace:
+                  at: ~/repo
+            - run: yarn set version berry
+            # Download and cache dependencies
+            - restore_cache:
+                  name: Restore Yarn Package Cache
+                  key: yarn-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
+            - run:
+                  name: Install dependencies
+                  command: yarn
+            - save_cache:
+                  name: Save Yarn packages cache
+                  key: yarn-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
+                  paths:
+                      - node_modules
+            - run:
+                  name: Prepare Nuxt
+                  command: yarn nuxi prepare
+            - persist_to_workspace:
+                  root: ~/repo
+                  paths:
+                      - node_modules
+                      - .nuxt
+                      - .yarn
+
+    check_code:
+        <<: *defaults
+        steps:
+            - checkout
+            - attach_workspace:
+                  at: ~/repo
+            - run:
+                  name: Remove .yarnrc.yml
+                  command: rm -rf .yarnrc.yml
+            - run:
+                  name: Run linter & code formatting check
+                  command: yarn lint
+
+    test_nuxt_build:
+        <<: *defaults
+        steps:
+            - checkout
+            - attach_workspace:
+                  at: ~/repo
+            - run:
+                  name: Run typecheck
+                  command: yarn typecheck
+
+workflows:
+    check_workflow:
+        jobs:
+            - setup:
+                  context: github-deploy
+                  filters:
+                      branches:
+                          only:
+                              - dev
+                              - /feature\/.*/
+                              - /hotfix\/.*/
+            - check_code:
+                  context: github-deploy
+                  requires:
+                      - setup
+            - test_nuxt_build:
+                  context: github-deploy
+                  requires:
+                      - setup
+    release_workflow:
+        jobs:
+            - setup:
+                  context: github-deploy
+                  filters:
+                      branches:
+                          only:
+                              - master
+            - check_code:
+                  context: github-deploy
+                  requires:
+                      - setup

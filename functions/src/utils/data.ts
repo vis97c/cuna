@@ -1,13 +1,16 @@
-import { kebabCase } from "lodash";
-import type { InstanceData } from "../types/entities";
-import { functionsFirestore } from "./initialize";
+import kebabCase from "lodash-es/kebabCase.js";
+
+import { getFirebase } from "@open-xamu-co/firebase-nuxt/functions/firebase";
+
+import type { ExtendedInstanceData } from "../types/entities/index.js";
 
 export async function getLESlug(
 	value = "",
-	buildPath: (c: InstanceData) => string
+	buildPath: (c: ExtendedInstanceData) => string
 ): Promise<string> {
-	const instanceRef = functionsFirestore.collection("instances").doc("live");
-	const instance = <InstanceData>(await instanceRef.get()).data() || {};
+	const { firebaseFirestore } = getFirebase("getLESlug");
+	const instanceRef = firebaseFirestore.collection("instances").doc("live");
+	const instance = <ExtendedInstanceData>(await instanceRef.get()).data() || {};
 	const pathLE = buildPath(instance);
 	const slugValues = kebabCase(value).split("-");
 	let isValidUrl = false;

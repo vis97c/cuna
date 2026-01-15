@@ -1,5 +1,5 @@
-const { writeFile } = require("fs/promises");
-const { join } = require("path");
+const { writeFile } = require("node:fs/promises");
+const { join } = require("node:path");
 
 /**
  * Puppeteer requirements

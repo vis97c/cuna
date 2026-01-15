@@ -1,0 +1,46 @@
+User-agent: *
+Disallow: /
+
+# Allow known search engines & bots to crawl the whole site
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: Applebot
+Allow: /
+
+User-agent: Meta Agent
+Allow: /
+
+User-agent: X / Twitterbot
+Allow: /
+
+User-agent: YouBot
+Allow: /
+
+User-agent: DuckDuckGo Bot
+Allow: /
+
+# Explicitly disallow AI bots (TODO: Evaluate if we want to allow ai bots)
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: GeminiBot
+Disallow: /
+
+User-agent: PerplexityBot
+Disallow: /
+
+User-agent: AllenAI Bot
+Disallow: /

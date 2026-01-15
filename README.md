@@ -33,13 +33,23 @@ F_MEASUREMENT_ID="G-X7H48BMMRK"
 F_PRIVATE_KEY=""
 F_CLIENT_EMAIL=""
 # App check, clave del sitio, público
-RECAPTCHA_ENTERPRISE_SITE_KEY=""
+RECAPTCHA_ENTERPRISE_SITE_KEY="6Lf24mwqAAAAAI0jHdUu8AcmYcyqjkCwRhquwtDr"
+
+# CSRF protection (32 bytes)
+# By default csurf uses `crypto.randomBytes(22).toString("base64")`
+CSURF_SECRET=
 
 # Proyecto
-INSTANCE="localhost"
+ORIGIN="https://cuna.com.co"
 COUNTRIES_API="https://cuna.com.co/_countries"
 # Permitir que los motores de búsqueda indexen el sitio
 INDEXABLE=false
+# ROOT instance ID
+ROOT_INSTANCE="localhost"
+# Forzar instancia
+INSTANCE="localhost"
+# App name, this will override the site name on the head
+APP_NAME="Cuna"
 
 # Depuración
 DEBUG_APP_CHECK=false
@@ -48,6 +58,9 @@ DEBUG_FIREBASE=false
 DEBUG_CSS=false
 # Habilitar herramientas de desarrollo de Nuxt
 DEBUG_NUXT=false
+# Desabilitar cache del servidor
+DEBUG_NITRO=false
+
 # Preferir servidor de desarrollo HTTPS
 DEBUG_HTTPS=false
 # Depuración de scrapper del SIA
