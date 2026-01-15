@@ -2,9 +2,9 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  	// function isAuth() {
-    // 	return request.auth != null && request.auth.uid != null;
-    // }
+  	function isAuth() {
+    	return request.auth != null && request.auth.uid != null;
+    }
     
     // rol 4: Invitado (0% acceso)
     // rol 3: Usuario (25% acceso)
@@ -12,33 +12,33 @@ service cloud.firestore {
     // rol 1: Editor/Asistente (70% acceso)
     // rol 0: Manager (99% acceso)
     // rol -1: Desarrollador (Acceso total)
-  	function getRole(uid) {
-    	return uid is string ? get(/databases/$(database)/documents/users/$(uid)).data.role : 4;
-    }
-    
-    // user.role = 3
-    function canUse() {
-    	return getRole(request.auth.uid) < 4
-    }
-    
-    // moderator.role = 2
-    function canModerate() {
-    	return getRole(request.auth.uid) < 3
-    }
-    
-    // editor.role = 1
-    function canEdit() {
-    	return getRole(request.auth.uid) < 2
-    }
-    
-    // admin.role = 0
-    function canAdmin() {
-    	return getRole(request.auth.uid) < 1
+  	function getRole(instanceId, uid) {
+    	return uid is string ? get(/databases/$(database)/documents/instances/$(instanceId)/members/$(uid)).data.role : 3;
     }
     
     // developer.role = -1
     function canDevelop() {
-    	return getRole(request.auth.uid) < 0
+    	return getRole("live", request.auth.uid) < 0
+    }
+    
+    // admin.role = 0
+    function canAdmin(instanceId) {
+      return canDevelop() || getRole(instanceId, request.auth.uid) < 1
+    }
+    
+    // editor.role = 1
+    function canEdit(instanceId) {
+      return canAdmin(instanceId) || getRole(instanceId, request.auth.uid) < 2
+    }
+
+    // moderator.role = 2
+    function canModerate(instanceId) {
+      return canEdit(instanceId) || getRole(instanceId, request.auth.uid) < 3
+    }
+    
+    // user.role = 3
+    function canUse(instanceId) {
+    	return canModerate(instanceId) || getRole(instanceId, request.auth.uid) < 4
     }
 
     function isOwnUser(uid) {
@@ -61,53 +61,88 @@ service cloud.firestore {
       allow create: if true;
       // modificacion granular, desarrolladores hacia arriba
       allow update: if canDevelop();
-      allow delete: if canDevelop();
-    }
-
-    match /counters/{id} {
-    	// lectura explicita, cualquiera
-      allow read: if true;
-      // modificacion granular, editores hacia arriba
-      allow create: if canEdit();
-      allow update: if canEdit();
-      allow delete: if canDevelop();
+      allow delete: if canDevelop() && resource.data.lock == false;
     }
     
-    match /instances/{id} {
-    	// lectura explicita, cualquiera
-      allow read: if true;
-      // modificacion granular, administradores hacia arriba
-      allow create: if canDevelop();
-      allow update: if canAdmin();
-      allow delete: if canDevelop();
+    match /offenders/{id} {
+    	// lectura explicita, desarrolladores
+      allow read: if canDevelop();
+    	// creacion explicita, cualquiera
+      allow create: if true;
+      // modificacion granular, desarrolladores hacia arriba
+      allow update: if canDevelop();
+      allow delete: if canDevelop() && resource.data.lock == false;
     }
     
     match /users/{id} {
-    	// lectura explicita, moderadores hacia arriba
-      allow read: if canModerate() || isOwnUser(id);
+    	// lectura unica, cualquiera
+      allow get: if isAuth();
+    	// lectura multiple, desarrolladores hacia arriba
+      allow list: if canDevelop();
+      // creacion granular, cualquiera
+      allow create: if isAuth();
+      // modificacion granular, desarrolladores o propietarios
+      allow update: if canDevelop() || isOwnUser(id);
+      allow delete: if (canDevelop() || isOwnUser(id)) && resource.data.lock == false;
+    }
+    
+    match /instances/{instanceId} {
+    	// lectura explicita, cualquiera
+      allow read: if true;
+      // creacion granular, administradores hacia arriba
+      allow create: if canDevelop();
       // modificacion granular, administradores hacia arriba
-      allow create: if canAdmin() || isOwnUser(id);
-      // administradores no puede modificar desarrolladores
-      allow update: if canAdmin() || isOwnUser(id);
-      allow delete: if canAdmin() || isOwnUser(id);
-    }
-    
-    match /teachers/{id} {
-    	// lectura explicita, cualquiera
-      allow read: if true;
-      // modificacion granular, usuarios hacia arriba
-      allow create: if canUse();
-      allow update: if canUse();
-      allow delete: if canModerate();
-    }
-    
-    match /courses/{id} {
-    	// lectura explicita, cualquiera
-      allow read: if true;
-      // modificacion granular, usuarios hacia arriba
-      allow create: if canUse();
-      allow update: if canUse();
-      allow delete: if canModerate();
+      allow update: if canAdmin(instanceId);
+      allow delete: if canDevelop() && resource.data.lock == false;
+
+      match /members/{id} {
+        // lectura explicita, moderadores hacia arriba
+        allow read: if canModerate(instanceId) || isOwnUser(id);
+        // modificacion granular, administradores hacia arriba
+        allow create: if canAdmin(instanceId) || isOwnUser(id);
+        // administradores no puede modificar desarrolladores
+        allow update: if canAdmin(instanceId) || isOwnUser(id);
+        allow delete: if (canAdmin(instanceId) || isOwnUser(id)) && resource.data.lock == false;
+      }
+      
+      match /logs/{id} {
+        // lectura explicita, desarrolladores
+        allow read: if canDevelop();
+        // creacion explicita, cualquiera
+        allow create: if true;
+        // modificacion granular, desarrolladores hacia arriba
+        allow update: if canDevelop();
+        allow delete: if canDevelop() && resource.data.lock == false;
+      }
+      
+      match /counters/{id} {
+        // lectura explicita, cualquiera
+        allow read: if true;
+        // modificacion granular, editores hacia arriba
+        allow create: if canEdit(instanceId);
+        allow update: if canEdit(instanceId);
+        allow delete: if canDevelop() && resource.data.lock == false;
+      }
+      
+      match /teachers/{id} {
+        // lectura explicita, cualquiera
+        allow read: if true;
+        // modificacion granular, usuarios hacia arriba
+        allow create: if canUse(instanceId);
+        allow update: if canUse(instanceId);
+        allow delete: if canModerate(instanceId);
+      }
+      
+      match /courses/{id} {
+        // lectura explicita, cualquiera
+        allow read: if true;
+        // modificacion granular, usuarios hacia arriba
+        allow create: if canUse(instanceId);
+        allow update: if canUse(instanceId);
+        allow delete: if canModerate(instanceId);
+      }
+
+      // Add more instance subcollecion rules here
     }
   }
 }

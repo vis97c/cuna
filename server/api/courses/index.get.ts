@@ -1,36 +1,73 @@
 import { CollectionReference, Query } from "firebase-admin/firestore";
-import type { CourseData } from "~/functions/src/types/entities";
 
-import { getBoolean } from "~/resources/utils/node";
+import { defineConditionallyCachedEventHandler } from "@open-xamu-co/firebase-nuxt/server/cache";
+import { apiLogger, getServerFirebase } from "@open-xamu-co/firebase-nuxt/server/firebase";
+import {
+	debugFirebaseServer,
+	getEdgesPage,
+	getOrderedQuery,
+	getQueryAsEdges,
+} from "@open-xamu-co/firebase-nuxt/server/firestore";
+import { getBoolean } from "@open-xamu-co/firebase-nuxt/server/guards";
+
+import type { CourseData } from "~~/functions/src/types/entities";
 
 /**
  * Get the edges from the courses collection
  */
-export default defineConditionallyCachedEventHandler(async (event, instance, auth) => {
-	const { serverFirestore } = getServerFirebase();
+export default defineConditionallyCachedEventHandler(async (event) => {
+	const { currentAuth } = event.context;
+	const { firebaseFirestore } = getServerFirebase();
+	const Allow = "GET,HEAD";
 
 	try {
+		// Override CORS headers
+		setResponseHeaders(event, {
+			Allow,
+			"Access-Control-Allow-Methods": Allow,
+			"Content-Type": "application/json",
+		});
+
+		// Only GET, HEAD & OPTIONS are allowed
+		if (!["GET", "HEAD", "OPTIONS"].includes(event.method?.toUpperCase())) {
+			throw createError({ statusCode: 405, statusMessage: "Unsupported method" });
+		} else if (event.method?.toUpperCase() === "OPTIONS") {
+			// Options only needs allow headers
+			return sendNoContent(event);
+		}
+
 		const params = getQuery(event);
 		const page = getBoolean(params.page);
 
 		debugFirebaseServer(event, "api:courses", params);
 
 		// Require admin auth
-		if (!auth || auth.role > 1) {
+		if (!currentAuth || currentAuth.role > 1) {
 			throw createError({ statusCode: 401, statusMessage: `Unauthorized` });
 		}
 
-		const coursesRef: CollectionReference<CourseData> = serverFirestore.collection("courses");
+		// Bypass body for HEAD requests
+		// Since we always return an array or an object, we can just return 200
+		if (event.method?.toUpperCase() === "HEAD") {
+			setResponseStatus(event, 200);
+
+			// Prevent no content status
+			return "Ok";
+		}
+
+		const coursesRef: CollectionReference<CourseData> = firebaseFirestore.collection("courses");
 
 		// Order at last
 		const query: Query = getOrderedQuery(event, coursesRef.orderBy("scrapedWithErrorsAt"));
 
-		if (page) return getEdgesPage({ event, instance, auth }, query);
-		else return getQueryAsEdges({ event, instance, auth }, query);
+		if (page) return getEdgesPage(event, query);
+
+		// Page limit. Prevent abusive callings (>100)
+		const first = Math.min(Number(params.first) || 10, 100);
+
+		return getQueryAsEdges(event, query.limit(first));
 	} catch (err) {
-		if (isError(err)) {
-			serverLogger("api:courses", err.message, { path: event.path, err });
-		}
+		apiLogger(event, "api:courses", err);
 
 		throw err;
 	}

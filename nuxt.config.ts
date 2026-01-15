@@ -1,57 +1,42 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import locale from "@open-xamu-co/ui-common-helpers/es";
-
-import packageJson from "./package.json" assert { type: "json" };
+import type { H3Context } from "@open-xamu-co/firebase-nuxt/server";
 import {
 	debugCSS,
 	debugNuxt,
-	debugHTTPS,
 	production,
-	runtimeConfig,
-	countriesUrl,
-} from "./resources/utils/enviroment";
+	firebaseConfig,
+} from "@open-xamu-co/firebase-nuxt/server/environment";
+import { type Stylesheet, getStyleSheetPreload } from "@open-xamu-co/ui-nuxt";
 
-/**
- * Preload stylesheet and once loaded call them
- * @param {string} href - Resource url
- * @returns {object} Link object
- */
-function getStyleSheetPreload(href: string) {
-	return {
-		rel: "preload",
-		as: "style" as const,
-		onload: "this.onload=null;this.rel='stylesheet'",
-		href,
-	};
-}
+import { debugHTTPS } from "./server/utils/enviroment";
+import packageJson from "./package.json" assert { type: "json" };
 
-const loaderCss = fs.readFileSync(path.resolve(__dirname, "assets/css/loader.css"), {
+const loaderCss = fs.readFileSync(path.resolve(__dirname, "app/assets/loader.css"), {
 	encoding: "utf8",
 });
-const css = ["@/assets/scss/base.scss"];
-const stylesheets: string[] = [
+const css = [];
+const stylesheets: Stylesheet[] = [
 	"https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500;1,600&display=swap",
 	"https://unpkg.com/@fortawesome/fontawesome-free@^6/css/all.min.css",
 	"https://unpkg.com/sweetalert2@^11/dist/sweetalert2.min.css",
 ];
 
 // compile on runtime when debuggin CSS
-debugCSS ? css.push("@/assets/scss/vendor.scss") : stylesheets.push("/dist/vendor.min.css?k=1");
+debugCSS.value() ? css.push("assets/vendor.scss") : stylesheets.push("/dist/vendor.min.css?k=1");
+
+// Metadata
+const withResolutions = "resolutions" in packageJson && debugNuxt.value();
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
 	compatibilityDate: "2025-03-02",
-	devtools: {
-		enabled: debugNuxt,
-		timeline: { enabled: debugNuxt },
-	},
-	experimental: {
-		viewTransition: true,
-	},
+	// Follow nuxt 4 directory structure
+	srcDir: "./app",
+	serverDir: "./server",
+	dir: { public: "../public" },
 	app: {
-		keepalive: true,
 		pageTransition: { name: "page", mode: "out-in" },
 		layoutTransition: { name: "layout", mode: "out-in" },
 		head: {
@@ -73,100 +58,86 @@ export default defineNuxtConfig({
 				{ rel: "dns-prefetch", href: "https://unpkg.com/" },
 				...stylesheets.map(getStyleSheetPreload),
 			],
-			style: [{ innerHTML: loaderCss }],
+			style: [{ innerHTML: loaderCss, tagPriority: 0 }],
 			noscript: [{ innerHTML: "This app requires javascript to work" }],
 		},
 	},
-	devServer: { https: debugHTTPS && { key: "server.key", cert: "server.crt" } },
-	runtimeConfig,
-	nitro: {
-		preset: "firebase",
-		firebase: {
-			gen: 2,
-			httpsOptions: {
-				region: "us-east1",
-				maxInstances: 100,
-				memory: "2GiB",
-				timeoutSeconds: 300,
-			},
+	devServer: { https: debugHTTPS.value() && { key: "server.key", cert: "server.crt" } },
+	runtimeConfig: {
+		public: {
+			debugHTTPS: debugHTTPS.value(),
 		},
-		compressPublicAssets: true,
 	},
 	vite: {
-		server: { fs: { strict: "resolutions" in packageJson && !debugNuxt } },
-		resolve: { preserveSymlinks: true },
 		css: {
 			postcss: require("@open-xamu-co/ui-styles/postcss")[
-				production ? "production" : "development"
+				production.value() ? "production" : "development"
 			],
+			preprocessorOptions: {
+				scss: {
+					additionalData: `
+						@use "assets/overrides";
+						@use "@open-xamu-co/ui-styles/src/utils/module" as xamu;`,
+				},
+			},
 		},
+		server: { fs: { strict: !withResolutions } },
 	},
-	router: {
-		options: {
-			linkActiveClass: "is--route",
-			linkExactActiveClass: "is--routeExact",
-			scrollBehaviorType: "smooth",
+	nitro: {
+		preset: "firebase_app_hosting",
+		routeRules: {
+			// Support firebase auth proxy for signing with redirect
+			"/__/**": {
+				proxy: `https://${firebaseConfig.value().projectId}.firebaseapp.com/__/**`,
+			},
+			// Delete instance cache
+			"/api/instance": {
+				csurf: { methodsToProtect: ["DELETE"] },
+			},
+			// Redirect cursos to / (Old landing page)
+			"/cursos": {
+				redirect: "/",
+			},
 		},
-	},
-	routeRules: {
-		"/cursos": {
-			redirect: "/",
+		rollupConfig: {
+			external: withResolutions
+				? [
+						"firebase-admin/app",
+						"firebase-admin/firestore",
+						"firebase-admin/auth",
+						"firebase-admin/storage",
+					]
+				: undefined,
 		},
 	},
 	/** Global CSS */
 	css,
-	modules: [
-		"@pinia/nuxt",
-		"@pinia-plugin-persistedstate/nuxt",
-		"@open-xamu-co/ui-nuxt",
-		"@nuxt/scripts",
-	],
-	piniaPersistedstate: {
-		cookieOptions: {
-			sameSite: "strict",
-			maxAge: 365 * 24 * 60 * 60,
-			secure: production,
-		},
-		storage: "cookies",
-	},
-	xamu: {
-		locale,
-		lang: "es",
-		country: "co",
-		countriesUrl,
-		swal: {
-			overrides: {
-				customClass: {
-					confirmButton: ["bttn"],
-					cancelButton: ["bttnToggle"],
-					denyButton: ["link"],
-				},
-			},
-			preventOverrides: {
-				customClass: {
-					confirmButton: ["bttn", "--tm-danger-light"],
-					cancelButton: ["bttnToggle"],
-					denyButton: ["link"],
-				},
-			},
-		},
-		image: {
-			provider: "bypass",
-			domains: ["firebasestorage.googleapis.com"],
-			alias: { firebase: "/api/media/images" },
-			presets: { avatar: { modifiers: {} } },
-			providers: { bypass: { provider: "~/providers/bypass.ts" } },
-		},
-		imageHosts: ["lh3.googleusercontent.com"],
-		async logger(...args) {
-			if (import.meta.server) {
-				const { serverLogger } = await import("./server/utils/firebase");
+	modules: ["@open-xamu-co/firebase-nuxt", "@nuxt/scripts"],
+	firebaseNuxt: {
+		readCollection: (collectionId: string, { currentAuth }: H3Context) => {
+			/** Freely listable collections */
+			const listableCollections = ["courses"];
 
-				return serverLogger(...args);
+			// Auth, Allow listing if admin or above
+			if (currentAuth && currentAuth.role <= -1) {
+				listableCollections.push("logs", "instances", "offenders");
 			}
 
-			useLogger(...args);
+			return listableCollections.includes(collectionId);
+		},
+		readInstanceCollection: (collectionId: string, { currentAuth }: H3Context) => {
+			/** Freely listable collections */
+			const listableCollections = [];
+
+			// Auth, allow listing if admin or above
+			if (currentAuth && currentAuth.role <= -1) {
+				listableCollections.push("logs");
+			}
+
+			return listableCollections.includes(collectionId);
 		},
 	},
-	scripts: { registry: { googleAnalytics: { id: "G-X7H48BMMRK" } } },
+	scripts: {
+		registry: { googleAnalytics: { id: firebaseConfig.value().measurementId } },
+	},
 });

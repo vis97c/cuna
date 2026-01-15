@@ -3,17 +3,21 @@ import { type Browser, type LaunchOptions, Page, launch } from "puppeteer";
 import { DocumentReference, FieldValue, Timestamp } from "firebase-admin/firestore";
 
 import type { iSelectOption } from "@open-xamu-co/ui-common-types";
+import { defineConditionallyCachedEventHandler } from "@open-xamu-co/firebase-nuxt/server/cache";
+import { getServerFirebase } from "@open-xamu-co/firebase-nuxt/server/firebase";
+import { debugFirebaseServer } from "@open-xamu-co/firebase-nuxt/server/firestore";
+import { TimedPromise } from "@open-xamu-co/firebase-nuxt/server/guards";
 
-import type { CourseData, TeacherData, tWeeklySchedule } from "~/functions/src/types/entities";
+import type { CourseData, TeacherData, tWeeklySchedule } from "~~/functions/src/types/entities";
 import {
 	eSIALevel,
 	eSIAPlace,
 	eSIATypology,
 	type uSIAFaculty,
 	type uSIAProgram,
-} from "~/functions/src/types/SIA";
-import type { Group } from "~/resources/types/entities";
-import type { ScrapedCourse } from "~/resources/types/scraping";
+} from "~~/functions/src/types/SIA";
+import type { Group } from "~/utils/types/entities";
+import type { ScrapedCourse } from "~/utils/types/scraping";
 import {
 	// Amazonía
 	eSIAAmazoniaFaculty,
@@ -42,9 +46,8 @@ import {
 	// Tumaco
 	eSIATumacoFaculty,
 	eSIATumacoProgram,
-} from "~/functions/src/types/SIA/enums";
-import { TimedPromise } from "~/resources/utils/promises";
-import { Cyrb53, triGram } from "~/resources/utils/firestore";
+} from "~~/functions/src/types/SIA/enums";
+import { Cyrb53, triGram } from "~/utils/firestore";
 
 /**
  * This scraper follows sia_scrapper implementation by https://github.com/pablomancera
@@ -130,15 +133,18 @@ function useId(id: string): string {
  *
  * @see https://github.com/pablomancera/sia_scrapper
  */
-export default defineConditionallyCachedEventHandler(async (event, instance, auth) => {
-	// Require auth
-	if (!auth) throw createError({ statusCode: 401, statusMessage: `Missing auth` });
+export default defineConditionallyCachedEventHandler(async (event) => {
+	const { currentAuth, currentInstance } = event.context;
+	const params = getQuery(event);
 
-	if (instance?.config?.siaMaintenanceTillAt) {
+	// Require auth
+	if (!currentAuth) throw createError({ statusCode: 401, statusMessage: `Missing auth` });
+
+	if (currentInstance?.config?.siaMaintenanceTillAt) {
 		throw createError({ statusCode: 503, statusMessage: `SIA under maintenance` });
 	}
 
-	const { serverFirestore } = getServerFirebase();
+	const { firebaseFirestore } = getServerFirebase();
 	const { debugScrapper } = useRuntimeConfig().public;
 	const {
 		siaOldURL = "",
@@ -147,7 +153,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 		siaOldLevel,
 		siaOldPlace,
 		siaOldTypology,
-	} = instance?.config || {};
+	} = currentInstance?.config || {};
 	const siaOldEnpoint = siaOldURL + siaOldPath + siaOldQuery;
 
 	if (!siaOldURL || !siaOldPath) {
@@ -155,7 +161,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 	}
 
 	// event data
-	const code: string = getQueryParam("code", event) || "";
+	const code: string = Array.isArray(params.code) ? params.code[0] : params.code;
 
 	if (!code) throw createError({ statusCode: 400, statusMessage: `Missing course code` });
 
@@ -163,9 +169,9 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 
 	// Where, when & who
 	const courseId = `courses/${Cyrb53([code])}`;
-	const courseRef: DocumentReference<CourseData> = serverFirestore.doc(courseId);
+	const courseRef: DocumentReference<CourseData> = firebaseFirestore.doc(courseId);
 	const scrapedAt = Timestamp.fromDate(new Date());
-	const updatedByRef = serverFirestore.doc(auth.id);
+	const updatedByRef = firebaseFirestore.doc(currentAuth.id);
 	let attemp = 0;
 
 	const puppetConfig: LaunchOptions = {
@@ -809,8 +815,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 
 				resolve(response);
 			},
-			undefined,
-			120
+			{ timeout: 120 }
 		);
 	}
 
@@ -879,7 +884,7 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 						// Generate deduped teacher UID
 						const teacherId = `teachers/${Cyrb53([_.deburr(teacher)])}`;
 						const teacherRef: DocumentReference<TeacherData> =
-							serverFirestore.doc(teacherId);
+							firebaseFirestore.doc(teacherId);
 						const name = _.startCase(teacher.toLowerCase());
 
 						// Set teacher, do not await
@@ -920,7 +925,9 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 			const serializedError: Record<string, unknown> = JSON.parse(
 				JSON.stringify(err, Object.getOwnPropertyNames(err))
 			);
-			const logsRef: DocumentReference<CourseData> = serverFirestore.collection("logs").doc();
+			const logsRef: DocumentReference<CourseData> = firebaseFirestore
+				.collection("logs")
+				.doc();
 
 			await puppetBrowser.close(); // Close browser
 

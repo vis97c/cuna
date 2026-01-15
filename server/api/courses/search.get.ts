@@ -1,37 +1,66 @@
 import { Filter, type CollectionReference, type Query } from "firebase-admin/firestore";
 
-import type {
-	eSIALevel,
-	eSIAPlace,
-	uSIAFaculty,
-	uSIAProgram,
-	eSIATypology,
-} from "~/functions/src/types/SIA";
-import { getBoolean } from "~/resources/utils/node";
-import { triGram } from "~/resources/utils/firestore";
+import { defineConditionallyCachedEventHandler } from "@open-xamu-co/firebase-nuxt/server/cache";
+import { apiLogger, getServerFirebase } from "@open-xamu-co/firebase-nuxt/server/firebase";
+import { getBoolean } from "@open-xamu-co/firebase-nuxt/server/guards";
+import {
+	debugFirebaseServer,
+	getEdgesPage,
+	getOrderedQuery,
+	getQueryAsEdges,
+} from "@open-xamu-co/firebase-nuxt/server/firestore";
+
+import { triGram } from "~/utils/firestore";
+import { getQueryString } from "~~/server/utils/params";
 
 /**
  * Search for courses by name
  *
  * @see https://es.stackoverflow.com/questions/316170/c%c3%b3mo-hacer-una-consulta-del-tipo-like-en-firebase
  */
-export default defineConditionallyCachedEventHandler(async function (event, instance, auth) {
-	const { serverFirestore } = getServerFirebase();
+export default defineConditionallyCachedEventHandler(async function (event) {
+	const { firebaseFirestore } = getServerFirebase();
+	const Allow = "GET,HEAD";
 
 	try {
-		const name: string = getQueryParam("name", event) || "";
-		const code: string = getQueryParam("code", event) || "";
-		const level: eSIALevel = getQueryParam("level", event);
-		const place: eSIAPlace = getQueryParam("place", event);
-		const faculty: uSIAFaculty = getQueryParam("faculty", event);
-		const program: uSIAProgram = getQueryParam("program", event);
-		const typology: eSIATypology | undefined = getQueryParam("typology", event);
-		const page = getBoolean(getQueryParam("page", event) || "");
+		// Override CORS headers
+		setResponseHeaders(event, {
+			Allow,
+			"Access-Control-Allow-Methods": Allow,
+			"Content-Type": "application/json",
+		});
 
-		let query: CollectionReference | Query = serverFirestore.collection("courses");
+		// Only GET, HEAD & OPTIONS are allowed
+		if (!["GET", "HEAD", "OPTIONS"].includes(event.method?.toUpperCase())) {
+			throw createError({ statusCode: 405, statusMessage: "Unsupported method" });
+		} else if (event.method?.toUpperCase() === "OPTIONS") {
+			// Options only needs allow headers
+			return sendNoContent(event);
+		}
+
+		const params = getQuery(event);
+		const page = getBoolean(params.page);
+		const name = getQueryString("name", params);
+		const code = getQueryString("code", params);
+		const level = getQueryString("level", params);
+		const place = getQueryString("place", params);
+		const faculty = getQueryString("faculty", params);
+		const program = getQueryString("program", params);
+		const typology = getQueryString("typology", params);
+
+		let query: CollectionReference | Query = firebaseFirestore.collection("courses");
 		let indexes: string[] = [];
 
 		debugFirebaseServer(event, "api:courses:search", { name, code, program, typology, page });
+
+		// Bypass body for HEAD requests
+		// Since we always return an array or an object, we can just return 200
+		if (event.method?.toUpperCase() === "HEAD") {
+			setResponseStatus(event, 200);
+
+			// Prevent no content status
+			return "Ok";
+		}
 
 		// where code equals
 		if (code) query = query.where("code", "==", code);
@@ -92,12 +121,14 @@ export default defineConditionallyCachedEventHandler(async function (event, inst
 		// order at last
 		query = getOrderedQuery(event, query);
 
-		if (page) return getEdgesPage({ event, instance, auth }, query);
-		else return getQueryAsEdges({ event, instance, auth }, query);
+		if (page) return getEdgesPage(event, query);
+
+		// Page limit. Prevent abusive callings (>100)
+		const first = Math.min(Number(params.first) || 10, 100);
+
+		return getQueryAsEdges(event, query.limit(first));
 	} catch (err) {
-		if (isError(err)) {
-			serverLogger("api:courses:search", err.message, { path: event.path, err });
-		}
+		apiLogger(event, "api:courses:search", err);
 
 		throw err;
 	}

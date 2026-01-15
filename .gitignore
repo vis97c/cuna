@@ -11,6 +11,7 @@ dist
 service_account.json
 public/dist
 .firebase/*.cache
+.apphosting/
 server.crt
 server.key
 

@@ -1,34 +1,45 @@
-import type { InstanceData, TeacherData } from "./types/entities";
-import { onCreated, onUpdated } from "./utils/event";
-import { getLESlug } from "./utils/data";
-import { functionLogger } from "./utils/initialize";
+import { onCreated, onUpdated } from "@open-xamu-co/firebase-nuxt/functions/event";
 
-function getLEPath({ config = {} }: InstanceData): string {
+import type { ExtendedInstanceData, TeacherData } from "./types/entities/index.js";
+import { getLESlug } from "./utils/data.js";
+
+function getLEPath({ config = {} }: ExtendedInstanceData): string {
 	const { losEstudiantesUrl = "", losEstudiantesProfessorsPath = "" } = config;
 
 	return `${losEstudiantesUrl}${losEstudiantesProfessorsPath}`;
 }
 
 // teachers timestamp
-export const onCreatedTeacher = onCreated<TeacherData>("teachers", async (snapshot) => {
-	try {
-		const { name } = snapshot.data();
+export const onCreatedTeacher = onCreated<TeacherData>(
+	"teachers",
+	async (snapshot, { logger }) => {
+		try {
+			const { name } = snapshot.data();
 
-		return { losEstudiantesSlug: await getLESlug(name, getLEPath) };
-	} catch (err) {
-		functionLogger("functions:teachers:onCreatedTeacher", err);
+			return { losEstudiantesSlug: await getLESlug(name, getLEPath) };
+		} catch (err) {
+			logger("functions:teachers:onCreatedTeacher", err);
 
-		throw err;
+			throw err;
+		}
+	},
+	{
+		defaults: {
+			lock: false,
+		},
 	}
-});
-export const onUpdatedTeacher = onUpdated<TeacherData>("teachers", async (snapshot) => {
-	try {
-		const { name, losEstudiantesSlug } = snapshot.data();
+);
+export const onUpdatedTeacher = onUpdated<TeacherData>(
+	"teachers",
+	async (snapshot, _oldSnapshot, { logger }) => {
+		try {
+			const { name, losEstudiantesSlug } = snapshot.data();
 
-		return { losEstudiantesSlug: losEstudiantesSlug || (await getLESlug(name, getLEPath)) };
-	} catch (err) {
-		functionLogger("functions:teachers:onUpdatedTeacher", err);
+			return { losEstudiantesSlug: losEstudiantesSlug || (await getLESlug(name, getLEPath)) };
+		} catch (err) {
+			logger("functions:teachers:onUpdatedTeacher", err);
 
-		throw err;
+			throw err;
+		}
 	}
-});
+);

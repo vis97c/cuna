@@ -1,27 +1,62 @@
 import type { CollectionReference, Query } from "firebase-admin/firestore";
 
-import { getBoolean } from "~/resources/utils/node";
-import { triGram } from "~/resources/utils/firestore";
+import { defineConditionallyCachedEventHandler } from "@open-xamu-co/firebase-nuxt/server/cache";
+import { apiLogger, getServerFirebase } from "@open-xamu-co/firebase-nuxt/server/firebase";
+import {
+	debugFirebaseServer,
+	getEdgesPage,
+	getOrderedQuery,
+	getQueryAsEdges,
+} from "@open-xamu-co/firebase-nuxt/server/firestore";
+import { getBoolean } from "@open-xamu-co/firebase-nuxt/server/guards";
+
+import { triGram } from "~/utils/firestore";
 
 /**
  * Search for teachers by name
  *
  * @see https://es.stackoverflow.com/questions/316170/c%c3%b3mo-hacer-una-consulta-del-tipo-like-en-firebase
  */
-export default defineConditionallyCachedEventHandler(async (event, instance, auth) => {
-	const { serverFirestore } = getServerFirebase();
+export default defineConditionallyCachedEventHandler(async (event) => {
+	const { currentAuth } = event.context;
+	const { firebaseFirestore } = getServerFirebase();
+	const Allow = "GET,HEAD";
 
 	try {
+		// Override CORS headers
+		setResponseHeaders(event, {
+			Allow,
+			"Access-Control-Allow-Methods": Allow,
+			"Content-Type": "application/json",
+		});
+
+		// Only GET, HEAD & OPTIONS are allowed
+		if (!["GET", "HEAD", "OPTIONS"].includes(event.method?.toUpperCase())) {
+			throw createError({ statusCode: 405, statusMessage: "Unsupported method" });
+		} else if (event.method?.toUpperCase() === "OPTIONS") {
+			// Options only needs allow headers
+			return sendNoContent(event);
+		}
+
 		const params = getQuery(event);
-		const name: string = Array.isArray(params.name) ? params.name[0] : params.name;
-		const courses = Array.isArray(params.courses) ? params.courses : [params.courses];
 		const page = getBoolean(params.page);
-		let query: CollectionReference | Query = serverFirestore.collection("teachers");
+		const name = getQueryString("name", params);
+		const courses = Array.isArray(params.courses) ? params.courses : [params.courses];
+		let query: CollectionReference | Query = firebaseFirestore.collection("teachers");
 
 		debugFirebaseServer(event, "api:teachers", params);
 
 		// Require auth
-		if (!auth) throw createError({ statusCode: 401, statusMessage: `Missing auth` });
+		if (!currentAuth) throw createError({ statusCode: 401, statusMessage: `Missing auth` });
+
+		// Bypass body for HEAD requests
+		// Since we always return an array or an object, we can just return 200
+		if (event.method?.toUpperCase() === "HEAD") {
+			setResponseStatus(event, 200);
+
+			// Prevent no content status
+			return "Ok";
+		}
 
 		if (name) {
 			// search by name
@@ -42,12 +77,14 @@ export default defineConditionallyCachedEventHandler(async (event, instance, aut
 		// order at last
 		query = getOrderedQuery(event, query);
 
-		if (page) return getEdgesPage({ event, instance, auth }, query);
-		else return getQueryAsEdges({ event, instance, auth }, query);
+		if (page) return getEdgesPage(event, query);
+
+		// Page limit. Prevent abusive callings (>100)
+		const first = Math.min(Number(params.first) || 10, 100);
+
+		return getQueryAsEdges(event, query.limit(first));
 	} catch (err) {
-		if (isError(err)) {
-			serverLogger("api:teachers", err.message, { path: event.path, err });
-		}
+		apiLogger(event, "api:teachers", err);
 
 		throw err;
 	}

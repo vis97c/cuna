@@ -26,89 +26,83 @@
   ],
   "author": "@vis97c <vis97c@outlook.com>",
   "license": "GPL-3.0-or-later",
+  "type": "module",
   "scripts": {
     "dev": "nuxt dev",
-    "build": "yarn vendor && nuxt build --preset=firebase",
-    "start": "node .output/server/index.mjs",
+    "gcp-build": "yarn build",
+    "build": "cross-env NODE_ENV=production yarn vendor && nuxt build && node scripts/postbuild.cjs",
+    "preview": "nuxt preview",
     "lint:eslint": "eslint --ext .ts,.js,.vue --ignore-path .prettierignore .",
-    "lint:stylelint": "node scripts/stylelint.cjs",
     "lint:prettier": "prettier . --check --ignore-unknown",
-    "lint": "yarn lint:eslint && yarn lint:stylelint && yarn lint:prettier",
-    "vendor:sass": "sass --load-path=node_modules assets/scss/vendor.scss public/dist/vendor.css",
+    "lint:stylelint": "node scripts/stylelint.cjs",
+    "lint": "yarn lint:eslint && yarn lint:prettier && yarn lint:stylelint",
+    "vendor:sass": "sass --load-path=node_modules app/assets/vendor.scss public/dist/vendor.css",
     "vendor:postcss": "postcss public/dist/vendor.css -o public/dist/vendor.min.css --no-map",
     "vendor": "yarn vendor:sass && yarn vendor:postcss --verbose",
-    "typecheck": "nuxi typecheck",
-    "fb:deploy": "firebase deploy",
-    "fb:functions": "firebase deploy --only functions",
-    "fb:server": "firebase deploy --only hosting",
-    "fb:start": "yarn build && firebase emulators:start",
-    "fb:indexes": "firebase firestore:indexes > firestore.indexes.json"
+    "typecheck": "nuxt typecheck",
+    "firebase:deploy": "firebase deploy",
+    "firebase:server": "firebase deploy --only hosting",
+    "firebase:start": "yarn build && firebase emulators:start",
+    "firebase:indexes": "firebase firestore:indexes > firestore.indexes.json",
+    "prepare": "node .husky/install.mjs && nuxt prepare",
+    "postinstall": "node scripts/sync-firebase-nuxt.cjs"
   },
-  "packageManager": "yarn@4.1.0",
+  "packageManager": "yarn@4.12.0",
   "engines": {
     "node": ">=20"
   },
   "workspaces": [
-    "functions"
+    "functions",
+    "legacy"
   ],
   "dependencies": {
     "@nuxt/scripts": "^0.11.2",
-    "@open-xamu-co/ui-common-enums": "^3.0.0-next.7",
-    "@open-xamu-co/ui-common-helpers": "^3.0.0-next.19",
-    "@open-xamu-co/ui-components-vue": "^3.0.0-next.68",
-    "@open-xamu-co/ui-nuxt": "^3.0.0-next.11",
-    "@pinia-plugin-persistedstate/nuxt": "^1.2.1",
-    "@pinia/nuxt": "^0.10.1",
+    "@open-xamu-co/firebase-nuxt": "^2.0.0-next.2",
     "@unhead/vue": "^2.0.0-rc.13",
     "@vueuse/core": "^13.0.0",
-    "firebase": "^11.0.2",
-    "firebase-admin": "^13.2.0",
-    "firebase-functions": "^6.3.2",
     "lodash-es": "^4.17.21",
-    "nuxt": "^3.16.1",
-    "pinia": "^2.2.6",
     "puppeteer": "^23.7.1",
-    "vue": "^3.5.12",
-    "vue-router": "^4.2.5"
+    "vue": "^3.5.26",
+    "vue-router": "^4.6.4"
   },
   "devDependencies": {
-    "@firebase/app-types": "^0.9.0",
-    "@nuxt/devtools": "^2.3.1",
     "@open-xamu-co/eslint-config": "^3.0.1",
-    "@open-xamu-co/ui-common-types": "^3.0.0-next.23",
-    "@open-xamu-co/ui-styles": "^3.0.0-next.36",
-    "@types/lodash": "^4.14.191",
-    "@types/lodash-es": "^4",
+    "@open-xamu-co/ui-common-types": "^4.0.0-next.3",
+    "@open-xamu-co/ui-styles": "^5.0.0-next.2",
+    "@types/accept-language-parser": "^1.5.8",
+    "@types/lodash-es": "^4.17.12",
+    "@types/node": "^20",
     "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@typescript-eslint/parser": "^6.15.0",
+    "cross-env": "^10.1.0",
     "cssnano": "^6.0.1",
     "cssnano-preset-advanced": "^6.0.1",
-    "eslint": "^8.45.0",
+    "eslint": "^8.56.0",
     "eslint-config-prettier": "^8.8.0",
     "eslint-import-resolver-typescript": "^3.5.5",
     "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-prettier": "^5.0.0",
-    "eslint-plugin-svelte": "^2.32.4",
     "eslint-plugin-vue": "^9.15.1",
-    "husky": "^4.2.5",
-    "lint-staged": "^10.2.11",
-    "postcss": "^8.2.10",
-    "postcss-cli": "^8.3.1",
-    "postcss-html": "^1.6.0",
-    "postcss-merge-at-rules": "^1.0.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.7",
+    "nuxt": "^3.20.2",
+    "postcss": "^8.5.6",
+    "postcss-cli": "^11.0.1",
+    "postcss-html": "^1.8.0",
+    "postcss-merge-at-rules": "vis97c/postcss-merge-at-rules",
     "postcss-precision": "vis97c/postcss-precision",
     "postcss-preset-env": "^8.4.1",
+    "postcss-scss": "^4.0.9",
     "postcss-sort-media-queries": "^5.2.0",
-    "prettier": "^3.0.0",
-    "sass": "^1.70.0",
-    "stylelint": "^16.1.0",
-    "stylelint-config-recommended-scss": "^14.1.0",
-    "stylelint-config-standard-scss": "^14.0.0",
-    "stylelint-config-standard-vue": "^1.0.0",
-    "stylelint-prettier": "^4.0.0",
-    "stylelint-scss": "^6.11.1",
-    "typescript": "5.6.3",
-    "vue-tsc": "^2.1.10"
+    "prettier": "^3.7.4",
+    "sass": "^1.97.0",
+    "stylelint": "^16.26.1",
+    "stylelint-config-recommended-scss": "^16.0.2",
+    "stylelint-config-recommended-vue": "^1.6.1",
+    "stylelint-config-standard-scss": "^16.0.0",
+    "stylelint-prettier": "^5.0.3",
+    "typescript": "^5.9.3",
+    "vue-tsc": "^3.1.8"
   },
   "lint-staged": {
     "*.{ts,js,vue}": [
@@ -119,55 +113,6 @@
       "stylelint --fix",
       "prettier --write"
     ]
-  },
-  "husky": {
-    "hooks": {
-      "pre-commit": "node scripts/require-unlink.cjs && lint-staged"
-    }
-  },
-  "stylelint": {
-    "extends": [
-      "stylelint-config-standard-scss",
-      "stylelint-config-standard-vue/scss",
-      "stylelint-config-recommended-vue/scss",
-      "stylelint-prettier/recommended"
-    ],
-    "plugins": [
-      "stylelint-scss",
-      "stylelint-prettier"
-    ],
-    "rules": {
-      "prettier/prettier": true,
-      "selector-type-no-unknown": null,
-      "selector-class-pattern": null,
-      "keyframes-name-pattern": null,
-      "no-descending-specificity": null,
-      "scss/operator-no-newline-after": null,
-      "scss/comment-no-empty": null,
-      "selector-id-pattern": null,
-      "rule-empty-line-before": "never-multi-line",
-      "at-rule-empty-line-before": [
-        "always",
-        {
-          "except": [
-            "after-same-name",
-            "first-nested"
-          ]
-        }
-      ],
-      "comment-empty-line-before": [
-        "always",
-        {
-          "except": [
-            "first-nested"
-          ],
-          "ignore": [
-            "after-comment"
-          ]
-        }
-      ],
-      "media-feature-range-notation": "prefix"
-    }
   },
   "browserslist": [
     "defaults"

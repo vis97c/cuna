@@ -1,0 +1,63 @@
+@layer resets, defaults, definitions, modifiers, presets;
+
+@media only screen {
+	@layer presets {
+		/* Loading animation
+		* Requires the ".is--loaded" class to be injected in the body via js to be finished
+		*/
+		html {
+			background-color: rgb(var(--rgb-light, (255, 255, 255)));
+		}
+		body {
+			background-color: rgb(var(--rgb-secondary, (15, 71, 175)), 0.15);
+		}
+		body:not(.is--loaded) {
+			height: 100%;
+		}
+		body::before {
+			z-index: -2;
+			content: "";
+			display: block;
+			height: 120%;
+			background-image: url("/svg/bg-shape-animated.svg");
+			background-size: calc(100vh + 25vw) auto;
+		}
+		body::after {
+			z-index: -1;
+			content: "";
+			display: flex;
+			justify-content: center;
+			align-items: center;
+			background-image: url("/favicon.svg");
+			background-position: 50% 50%;
+			background-size: auto 6rem;
+		}
+		body.is--loaded::after {
+			background-size: auto 12rem;
+		}
+		body::before,
+		body::after {
+			position: fixed;
+			top: 0;
+			left: 0;
+			width: 100%;
+			height: 100%;
+			background-repeat: no-repeat;
+			transition: all 0.3s ease;
+		}
+		body.is--loaded::before,
+		body.is--loaded::after,
+		body:not(.is--loaded) > * {
+			opacity: 0;
+			pointer-events: none;
+		}
+	}
+}
+@media only screen and (prefers-reduced-motion: reduce), (max-width: 576px) {
+	@layer presets {
+		/* Disable animated background for reduced motion & mobile devices (performace issue) */
+		body::before {
+			background-image: url("/svg/bg-shape.svg");
+		}
+	}
+}

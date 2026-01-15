@@ -1,0 +1,100 @@
+# Settings for Backend (on Cloud Run).
+# See https://firebase.google.com/docs/app-hosting/configure#cloud-run
+runConfig:
+    minInstances: 0
+    maxInstances: 100
+    memoryMiB: 2048
+    timeoutSeconds: 300
+
+# Environment variables and secrets.
+# Configure environment variables.
+# See https://firebase.google.com/docs/app-hosting/configure#user-defined-environment
+# Grant access to secrets in Cloud Secret Manager.
+# See https://firebase.google.com/docs/app-hosting/configure#secret-parameters
+env:
+    # Yarn
+    - variable: YARN_ENABLE_IMMUTABLE_INSTALLS
+      value: false
+      availability:
+          - BUILD
+          - RUNTIME
+    # Firebase
+    - variable: F_API_KEY
+      value: AIzaSyAQdNWMlI8-Pl5CAvpDxEoMEorwR_iYsH4
+      availability:
+          - BUILD
+          - RUNTIME
+    - variable: F_AUTH_DOMAIN
+      value: cuna.com.co
+      availability:
+          - BUILD
+          - RUNTIME
+    - variable: F_PROJECT_ID
+      value: cuna-2980b9
+      availability:
+          - BUILD
+          - RUNTIME
+    - variable: F_STORAGE_BUCKET
+      value: cuna-2980b9.firebasestorage.app
+      availability:
+          - BUILD
+          - RUNTIME
+    - variable: F_MESSAGING_SENDER_ID
+      value: 516433389242
+      availability:
+          - BUILD
+          - RUNTIME
+    - variable: F_APP_ID
+      value: 1:516433389242:web:eda757ac314d6dcf9ec483
+      availability:
+          - BUILD
+          - RUNTIME
+    - variable: F_MEASUREMENT_ID
+      value: G-X7H48BMMRK
+      availability:
+          - BUILD
+          - RUNTIME
+      # Service account
+    - variable: F_PRIVATE_KEY
+      secret: fPrivateKey
+      availability:
+          - BUILD
+          - RUNTIME
+    - variable: F_CLIENT_EMAIL
+      secret: fClientEmail
+      availability:
+          - BUILD
+          - RUNTIME
+    # App check, site key
+    - variable: RECAPTCHA_ENTERPRISE_SITE_KEY
+      value: 6Lf24mwqAAAAAI0jHdUu8AcmYcyqjkCwRhquwtDr
+      availability:
+          - BUILD
+          - RUNTIME
+    # CSRF protection
+    - variable: CSURF_SECRET
+      secret: csurfSecret
+      availability:
+          - BUILD
+          - RUNTIME
+    # Project
+    - variable: NODE_ENV
+      value: production
+      availability:
+          - BUILD
+          - RUNTIME
+    - variable: INSTANCE
+      value: live
+      availability:
+          - BUILD
+          - RUNTIME
+    - variable: ROOT_INSTANCE
+      value: live
+      availability:
+          - BUILD
+          - RUNTIME
+    - variable: INDEXABLE
+      value: true
+      availability:
+          - BUILD
+          - RUNTIME

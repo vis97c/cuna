@@ -1,17 +1,22 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
-    "noImplicitReturns": true,
+    "module": "ESNext",
+    "target": "ESNext",
+    "noImplicitReturns": false,
     "noUnusedLocals": true,
     "outDir": "lib",
     "sourceMap": true,
     "strict": true,
-    "target": "es2017",
     "esModuleInterop": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "moduleResolution": "Bundler",
+    "verbatimModuleSyntax": true,
   },
   "compileOnSave": true,
   "include": [
     "src"
+  ],
+  "exclude": [
+    "../node_modules",
   ]
 }

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1126.003" height="2195.204" viewBox="0 0 1126.003 2195.204">
+	<g transform="translate(-2840.003 -2125)">
+		<path d="M696.9,2427.57c165.589-683.5,589.044-1237.79,594.4-1531.18V885.3a248.053,248.053,0,0,0-3.061-35.172C1235.582,526.34,958.2,602.071,868.249,397.513c-25.188-57.282-34.9-113.659-35.838-165.139H165.3v2195.2Z" transform="translate(2674.706 1792.63)" fill="#0f47af" opacity="0.07">
+			<animateTransform attributeName="transform" attributeType="XML" type="translate" values="2674.706 1792.63; 2674.706 1892.63; 2674.706 1792.63" calcMode="spline" keyTimes="0; .5; 1" keySplines=".7 0 .7 1; .7 0 .7 1;" dur="25s" repeatCount="indefinite" />
+		</path>
+		<path d="M685.555,2452.54c178.3-391.529,482.147-970.888,435.669-1278.52-60.935-403.315-339.4-456.35-449.279-756.807-22.152-60.572-38.513-113.682-50.516-159.87H395.14v2195.2Z" transform="translate(2444.863 1867.659)" fill="#0f47af" opacity="0.07">
+			<animateTransform attributeName="transform" attributeType="XML" type="translate" values="2444.863 1867.659; 2444.863 1767.659; 2444.863 1867.659" calcMode="spline" keyTimes="0; .5; 1" keySplines=".7 0 .7 1; .7 0 .7 1;" dur="15s" begin="-15s" repeatCount="indefinite" />
+		</path>
+		<path d="M812.031,2278.43c-35.662-123-58.48-199.709-31.376-358.718,43.523-255.338,340.822-262.482,345.286-528.084S869.836,846.315,882.735,636.063s212.036-165.165,218.732-241.05-100.439-64.727-127.222-176.325c-11.734-48.892-4.658-96.925,7-135.46h-459.5v2195.2Z" transform="translate(2318.266 1941.773)" fill="#0f47af" opacity="0.07">
+			<animateTransform attributeName="transform" attributeType="XML" type="translate" values="2318.266 1941.773; 2318.266 2041.773; 2318.266 1941.773" calcMode="spline" keyTimes="0; .5; 1" keySplines=".7 0 .7 1; .7 0 .7 1;" dur="25s" begin="-20s" repeatCount="indefinite" />
+		</path>
+		<path d="M0,2195.2V.293S12.831,164.225,93.525,406.308s182.8,278.551,211.815,507.775S143.258,1265.338,75.905,1648.732C37.1,1869.608,17.817,2067.292,8.438,2195.2Z" transform="translate(2840.01 2125)" fill="#0f47af" opacity="0.07">
+			<animateTransform attributeName="transform" attributeType="XML" type="translate" values="2840.01 2125; 2840.01 2025; 2840.01 2125" calcMode="spline" keyTimes="0; .5; 1" keySplines=".7 0 .7 1; .7 0 .7 1;" dur="15s" begin="-25s" repeatCount="indefinite" />
+		</path>
+		<path d="M0,101.091l1.144-.293H360.523c-28.1,74-70.933,171.263-119.788,228.848C153.985,431.9,0,510.092,0,510.092Z" transform="translate(2840.01 1924.202)" fill="#0f47af" opacity="0.07">
+			<animateTransform attributeName="transform" attributeType="XML" type="translate" values="2840.01 1924.202; 2840.01 2024.202; 2840.01 1924.202" calcMode="spline" keyTimes="0; .5; 1" keySplines=".7 0 .7 1; .7 0 .7 1;" dur="25s" begin="-30s" repeatCount="indefinite" />
+		</path>
+	</g>
+</svg>
