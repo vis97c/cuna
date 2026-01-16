@@ -1,7 +1,7 @@
 import type { CollectionReference, Query } from "firebase-admin/firestore";
 
 import { defineConditionallyCachedEventHandler } from "@open-xamu-co/firebase-nuxt/server/cache";
-import { apiLogger, getServerFirebase } from "@open-xamu-co/firebase-nuxt/server/firebase";
+import { apiLogger } from "@open-xamu-co/firebase-nuxt/server/firebase";
 import {
 	debugFirebaseServer,
 	getEdgesPage,
@@ -18,8 +18,7 @@ import { triGram } from "~/utils/firestore";
  * @see https://es.stackoverflow.com/questions/316170/c%c3%b3mo-hacer-una-consulta-del-tipo-like-en-firebase
  */
 export default defineConditionallyCachedEventHandler(async (event) => {
-	const { currentAuth } = event.context;
-	const { firebaseFirestore } = getServerFirebase();
+	const { currentAuth, currentInstanceRef } = event.context;
 	const Allow = "GET,HEAD";
 
 	try {
@@ -38,11 +37,16 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			return sendNoContent(event);
 		}
 
+		// Instance is required
+		if (!currentInstanceRef) {
+			throw createError({ statusCode: 401, statusMessage: "Missing instance" });
+		}
+
 		const params = getQuery(event);
 		const page = getBoolean(params.page);
 		const name = getQueryString("name", params);
 		const courses = Array.isArray(params.courses) ? params.courses : [params.courses];
-		let query: CollectionReference | Query = firebaseFirestore.collection("teachers");
+		let query: CollectionReference | Query = currentInstanceRef.collection("teachers");
 
 		debugFirebaseServer(event, "api:teachers", params);
 

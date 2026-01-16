@@ -1,23 +1,23 @@
-import { CollectionReference, Query } from "firebase-admin/firestore";
+import { DocumentReference, Query } from "firebase-admin/firestore";
 
+import { apiLogger } from "@open-xamu-co/firebase-nuxt/server/firebase";
 import { defineConditionallyCachedEventHandler } from "@open-xamu-co/firebase-nuxt/server/cache";
-import { apiLogger, getServerFirebase } from "@open-xamu-co/firebase-nuxt/server/firebase";
+import { getBoolean } from "@open-xamu-co/firebase-nuxt/server/guards";
 import {
 	debugFirebaseServer,
 	getEdgesPage,
 	getOrderedQuery,
 	getQueryAsEdges,
 } from "@open-xamu-co/firebase-nuxt/server/firestore";
-import { getBoolean } from "@open-xamu-co/firebase-nuxt/server/guards";
+import type { LogData } from "@open-xamu-co/firebase-nuxt/functions";
 
 import type { CourseData } from "~~/functions/src/types/entities";
 
 /**
- * Get the edges from the courses collection
+ * Get the edges from the logs collection by courseRef
  */
 export default defineConditionallyCachedEventHandler(async (event) => {
-	const { currentAuth } = event.context;
-	const { firebaseFirestore } = getServerFirebase();
+	const { currentAuth, currentInstanceRef } = event.context;
 	const Allow = "GET,HEAD";
 
 	try {
@@ -36,10 +36,23 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			return sendNoContent(event);
 		}
 
+		// Instance is required
+		if (!currentInstanceRef) {
+			throw createError({ statusCode: 401, statusMessage: "Missing instance" });
+		}
+
+		const courseId = getRouterParam(event, "courseId");
 		const params = getQuery(event);
 		const page = getBoolean(params.page);
 
-		debugFirebaseServer(event, "api:courses", params);
+		debugFirebaseServer(event, "api:courses:logs:courseId", courseId, params);
+
+		if (!courseId) {
+			throw createError({
+				statusCode: 400,
+				statusMessage: `courseId is required`,
+			});
+		}
 
 		// Require admin auth
 		if (!currentAuth || currentAuth.role > 1) {
@@ -55,10 +68,15 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			return "Ok";
 		}
 
-		const coursesRef: CollectionReference<CourseData> = firebaseFirestore.collection("courses");
+		const courseRef: DocumentReference<CourseData> = currentInstanceRef
+			.collection("courses")
+			.doc(courseId);
+		let query: Query<LogData> = currentInstanceRef.collection("logs");
+
+		query = query.where("courseRef", "==", courseRef);
 
 		// Order at last
-		const query: Query = getOrderedQuery(event, coursesRef.orderBy("scrapedWithErrorsAt"));
+		query = getOrderedQuery(event, query);
 
 		if (page) return getEdgesPage(event, query);
 
@@ -67,7 +85,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 
 		return getQueryAsEdges(event, query.limit(first));
 	} catch (err) {
-		apiLogger(event, "api:courses", err);
+		apiLogger(event, "api:courses:logs:courseId", err);
 
 		throw err;
 	}

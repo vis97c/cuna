@@ -1,7 +1,7 @@
-import { Filter, type CollectionReference, type Query } from "firebase-admin/firestore";
+import { Filter, type Query } from "firebase-admin/firestore";
 
 import { defineConditionallyCachedEventHandler } from "@open-xamu-co/firebase-nuxt/server/cache";
-import { apiLogger, getServerFirebase } from "@open-xamu-co/firebase-nuxt/server/firebase";
+import { apiLogger } from "@open-xamu-co/firebase-nuxt/server/firebase";
 import { getBoolean } from "@open-xamu-co/firebase-nuxt/server/guards";
 import {
 	debugFirebaseServer,
@@ -10,6 +10,7 @@ import {
 	getQueryAsEdges,
 } from "@open-xamu-co/firebase-nuxt/server/firestore";
 
+import type { CourseData } from "~~/functions/src/types/entities";
 import { triGram } from "~/utils/firestore";
 import { getQueryString } from "~~/server/utils/params";
 
@@ -19,7 +20,7 @@ import { getQueryString } from "~~/server/utils/params";
  * @see https://es.stackoverflow.com/questions/316170/c%c3%b3mo-hacer-una-consulta-del-tipo-like-en-firebase
  */
 export default defineConditionallyCachedEventHandler(async function (event) {
-	const { firebaseFirestore } = getServerFirebase();
+	const { currentInstanceRef } = event.context;
 	const Allow = "GET,HEAD";
 
 	try {
@@ -38,6 +39,11 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 			return sendNoContent(event);
 		}
 
+		// Instance is required
+		if (!currentInstanceRef) {
+			throw createError({ statusCode: 401, statusMessage: "Missing instance" });
+		}
+
 		const params = getQuery(event);
 		const page = getBoolean(params.page);
 		const name = getQueryString("name", params);
@@ -48,7 +54,7 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 		const program = getQueryString("program", params);
 		const typology = getQueryString("typology", params);
 
-		let query: CollectionReference | Query = firebaseFirestore.collection("courses");
+		let query: Query<CourseData> = currentInstanceRef.collection("courses");
 		let indexes: string[] = [];
 
 		debugFirebaseServer(event, "api:courses:search", { name, code, program, typology, page });
