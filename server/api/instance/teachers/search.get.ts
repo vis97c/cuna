@@ -9,8 +9,7 @@ import {
 	getQueryAsEdges,
 } from "@open-xamu-co/firebase-nuxt/server/firestore";
 import { getBoolean } from "@open-xamu-co/firebase-nuxt/server/guards";
-
-import { triGram } from "~/utils/firestore";
+import { getWords, soundexEs } from "@open-xamu-co/firebase-nuxt/functions/search";
 
 /**
  * Search for teachers by name
@@ -64,9 +63,9 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 
 		if (name) {
 			// search by name
-			const indexes = triGram([name]);
+			const soundex = getWords(name).map(soundexEs).join(" ");
 
-			query = query.orderBy("name").where("indexes", "array-contains-any", indexes);
+			query = query.orderBy("name").where("indexes", "array-contains", soundex);
 		} else if (params.courses && courses.length) {
 			/**
 			 * limited subset of documents

@@ -3,7 +3,6 @@ import type { DocumentReference, Timestamp } from "firebase-admin/firestore";
 import type { FirebaseData, LogData } from "@open-xamu-co/firebase-nuxt/functions";
 
 import type { eSIALevel, eSIAPlace, eSIATypology, uSIAFaculty, uSIAProgram } from "../SIA";
-import type { GroupData } from "./group";
 
 /**
  * Scraped with info
@@ -59,12 +58,12 @@ export interface CourseData extends FirebaseData {
 	faculties?: uSIAFaculty[];
 	/** Multiple programs for the same course */
 	programs?: uSIAProgram[];
-	groups?: GroupData[];
+	// groups?: GroupData[];
 	/**
 	 * For non reported groups
 	 * SIA Beta update delay
 	 */
-	unreported?: GroupData[];
+	// unreported?: GroupData[];
 	/** @automation */
 	losEstudiantesCode?: string;
 	/** @search */

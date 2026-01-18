@@ -1,3 +1,5 @@
+import type { FirebaseData } from "@open-xamu-co/firebase-nuxt/functions";
+
 import type { uSIAProgram } from "../SIA";
 
 export interface EnrolledGroup extends Pick<GroupData, "name" | "schedule" | "teachers"> {
@@ -10,7 +12,7 @@ export type tWeeklySchedule = [string?, string?, string?, string?, string?, stri
 /**
  * Interface representing a SIA Group data.
  */
-export interface GroupData {
+export interface GroupData extends FirebaseData {
 	/**
 	 * Unique SIA id
 	 *

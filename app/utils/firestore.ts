@@ -1,36 +1,5 @@
-import deburr from "lodash-es/deburr";
-
 import { isNotUndefString } from "./guards";
 import type { ExtendedInstanceDataConfig } from "~~/functions/src/types/entities";
-
-/**
- * Custom firebase indexing
- *
- * Implementation details
- * @see https://levelup.gitconnected.com/firestore-full-text-search-at-no-extra-cost-ee148856685
- *
- * Firebase compound queries limitations
- * @see https://firebase.google.com/docs/firestore/query-data/queries?hl=es-419#limitations_2
- */
-export function triGram(strings: (string | undefined)[]) {
-	const string = strings
-		.filter(isNotUndefString)
-		.map(deburr)
-		.join(" ")
-		.slice(0, 500)
-		.toLowerCase();
-	const indexes = [];
-	const n = 5; // 5 letters words
-	let k = 0;
-
-	while (indexes.length <= 50 && k <= string.length - n) {
-		indexes.push(string.substring(k, k + n));
-
-		k += 2;
-	}
-
-	return indexes;
-}
 
 /**
  * Basic string to hash function

@@ -8,7 +8,12 @@ export * from "./courses.js";
 export * from "./teachers.js";
 export * from "./instances.js";
 
-// logs timestamp
+/**
+ * Create timestamp
+ *
+ * @docType log
+ * @event created
+ */
 export const onCreatedLog = onCreated<LogData>("logs", (createdDoc) => {
 	const { firebaseFirestore } = getFirebase("onCreatedLog");
 	const { internal, ...log } = createdDoc.data();
@@ -31,6 +36,12 @@ export const onCreatedLog = onCreated<LogData>("logs", (createdDoc) => {
 		});
 	}
 });
+/**
+ * Update timestamp
+ *
+ * @docType log
+ * @event updated
+ */
 export const onUpdatedLog = onUpdated("logs");
 
 /**
