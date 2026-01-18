@@ -9,13 +9,14 @@ import {
 	getOrderedQuery,
 	getQueryAsEdges,
 } from "@open-xamu-co/firebase-nuxt/server/firestore";
+import { getWords, soundexEs } from "@open-xamu-co/firebase-nuxt/functions/search";
 
 import type { CourseData } from "~~/functions/src/types/entities";
-import { triGram } from "~/utils/firestore";
 import { getQueryString } from "~~/server/utils/params";
 
 /**
- * Search for courses by name
+ * Search for courses by query params
+ * Scrape SIA in the background
  *
  * @see https://es.stackoverflow.com/questions/316170/c%c3%b3mo-hacer-una-consulta-del-tipo-like-en-firebase
  */
@@ -55,7 +56,6 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 		const typology = getQueryString("typology", params);
 
 		let query: Query<CourseData> = currentInstanceRef.collection("courses");
-		let indexes: string[] = [];
 
 		debugFirebaseServer(event, "api:courses:search", { name, code, program, typology, page });
 
@@ -70,58 +70,39 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 
 		// where code equals
 		if (code) query = query.where("code", "==", code);
-		else if (name && typeof name === "string") {
-			// search by name instead
-			indexes = triGram([name]);
+		else if (name) {
+			// Search by name instead
+			const soundex = getWords(name).map(soundexEs).join(" ");
 
-			/**
-			 * limited subset of documents
-			 *
-			 * According to firebase docs, queries are limited to 30 disjuntion operations
-			 * @see https://firebase.google.com/docs/firestore/query-data/queries#limits_on_or_queries
-			 */
-			indexes = indexes.slice(0, Math.min(10, indexes.length));
-
-			if (!indexes.length) return null;
+			if (!soundex) return null;
 			if (level) query = query.where("level", "==", level); // where level equals
 			if (place) query = query.where("place", "==", place); // where place equals
 			if (faculty) query = query.where("faculty", "==", faculty); // where faculty equals
 			if (program) {
-				// where program equals
-				if (indexes.length > 5 || typology) {
-					query = query.where(
-						Filter.or(
-							Filter.where("programsIndexes.0", "==", program),
-							Filter.where("programsIndexes.1", "==", program)
-						)
-					);
-				} else {
-					query = query.where(
-						Filter.or(
-							Filter.where("programsIndexes.0", "==", program),
-							Filter.where("programsIndexes.1", "==", program),
-							Filter.where("programsIndexes.2", "==", program),
-							Filter.where("programsIndexes.3", "==", program)
-						)
-					);
-				}
-			}
-
-			query = query.orderBy("name").where("indexes", "array-contains-any", indexes);
-		} else return null;
-
-		if (typology) {
-			// where typology equals
-			if (indexes.length > 5) {
-				query = query.where("typologiesIndexes.0", "==", typology);
-			} else {
+				// where program equals, 6 indexes
 				query = query.where(
 					Filter.or(
-						Filter.where("typologiesIndexes.0", "==", typology),
-						Filter.where("typologiesIndexes.1", "==", typology)
+						Filter.where("programsIndexes.0", "==", program),
+						Filter.where("programsIndexes.1", "==", program),
+						Filter.where("programsIndexes.2", "==", program),
+						Filter.where("programsIndexes.3", "==", program),
+						Filter.where("programsIndexes.4", "==", program)
 					)
 				);
 			}
+
+			query = query.orderBy("name").where("indexes", "array-contains", soundex);
+		} else return null;
+
+		if (typology) {
+			// where typology equals, 3 indexes
+			query = query.where(
+				Filter.or(
+					Filter.where("typologiesIndexes.0", "==", typology),
+					Filter.where("typologiesIndexes.1", "==", typology),
+					Filter.where("typologiesIndexes.2", "==", typology)
+				)
+			);
 		}
 
 		// order at last

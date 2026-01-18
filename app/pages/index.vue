@@ -2,37 +2,35 @@
 	<div id="landing" class="view">
 		<section class="view-item --minHeightVh-100 --bgColor-light">
 			<div class="holder flx --flxColumn --flx-center">
-				<div class="txt --txtAlign-center --txtColor-dark5 --gap-none">
+				<div class="txt --txtAlign-center --txtColor-dark5 --gap-5">
 					<h1 class="--txtLineHeight-sm">
 						<XamuActionLink to="/" class="no--override no--route --gap">
+							<span class="--txtLineHeight-sm">cuna</span>
 							<XamuIconFa name="chess-knight" :size="10" />
-							<span>Cuna</span>
 						</XamuActionLink>
 					</h1>
-					<div class="flx --flxColumn --flx-center --gap-5">
-						<div class="flx --flxRow --flx-center --gap-10">
-							<p>Visor de cursos UNAL</p>
-							<XamuActionLink
-								class="x-info"
-								:theme="eColors.DARK"
-								tooltip="Cuna no esta afiliada a la UNAL"
-								tooltip-as-text
-							>
-								<XamuIconFa name="circle-info" />
-							</XamuActionLink>
-						</div>
-						<div class="flx --flxRow --flx-center --gap-10 --txtSize-xs">
-							<XamuActionLink
-								href="https://github.com/vis97c/cuna"
-								tooltip="Código fuente. GNU GPL v3"
-							>
-								<XamuIconFa name="github" brand />
-							</XamuActionLink>
-							<span v-if="CUNA.config?.version">
-								{{ CUNA.config.version }} Powered by
-								<a href="https://xamu.com.co" target="_blank">Xamu.</a>
-							</span>
-						</div>
+					<div class="flx --flxRow --flx-center --gap-10">
+						<p>Visor de cursos UNAL</p>
+						<XamuActionLink
+							class="x-info"
+							:theme="eColors.DARK"
+							tooltip="Cuna no esta afiliada a la UNAL"
+							tooltip-as-text
+						>
+							<XamuIconFa name="circle-info" />
+						</XamuActionLink>
+					</div>
+					<div class="flx --flxRow --flx-center --gap-10 --txtSize-xs">
+						<XamuActionLink
+							href="https://github.com/vis97c/cuna"
+							tooltip="Código fuente. GNU GPL v3"
+						>
+							<XamuIconFa name="github" brand />
+						</XamuActionLink>
+						<span v-if="CUNA.config?.version">
+							{{ CUNA.config.version }} Powered by
+							<a href="https://xamu.com.co" target="_blank">Xamu.</a>
+						</span>
 					</div>
 				</div>
 				<div v-if="CUNA.SIAMaintenance" class="txt --txtAlign-center --gap-10">

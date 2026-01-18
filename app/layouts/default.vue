@@ -3,11 +3,9 @@
 		<div class="x-main --bgColor-light">
 			<header
 				v-if="INSTANCE.current?.banner?.message"
-				class="x-main-banner flx --flxColumn --flx-center --gap-0 --width-100 --maxWidth --mX"
+				class="x-main-banner flx --flxColumn --flx-center --gap-0 --width-100 --bgColor-secondary"
 			>
-				<div
-					class="holder flx --flx-center --flx --bgColor-secondary --txtColor-light --txtSize-sm --pX"
-				>
+				<div class="holder flx --flx-center --flx --txtColor-light --txtSize-sm --pX">
 					<XamuActionLink
 						v-if="INSTANCE.current?.banner?.url"
 						:to="INSTANCE.current.banner.url"

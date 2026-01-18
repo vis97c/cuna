@@ -116,7 +116,7 @@ export default defineNuxtConfig({
 	firebaseNuxt: {
 		readCollection: (collectionId: string, { currentAuth }: H3Context) => {
 			/** Freely listable collections */
-			const listableCollections = ["courses"];
+			const listableCollections = [];
 
 			// Auth, Allow listing if admin or above
 			if (currentAuth && currentAuth.role <= -1) {
@@ -127,7 +127,7 @@ export default defineNuxtConfig({
 		},
 		readInstanceCollection: (collectionId: string, { currentAuth }: H3Context) => {
 			/** Freely listable collections */
-			const listableCollections = [];
+			const listableCollections = ["courses"];
 
 			// Auth, allow listing if admin or above
 			if (currentAuth && currentAuth.role <= -1) {

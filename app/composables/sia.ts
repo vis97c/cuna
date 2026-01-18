@@ -1,7 +1,6 @@
 import { arrayUnion } from "firebase/firestore";
 
 import type { Course, CourseRef } from "~/utils/types";
-import { triGram } from "~/utils/firestore";
 
 export async function useIndexCourse(
 	{
@@ -24,7 +23,6 @@ export async function useIndexCourse(
 		programs: arrayUnion(...programs),
 		typologies: arrayUnion(...typologies),
 		alternativeNames: arrayUnion(...alternativeNames),
-		indexes: triGram([course.name]),
 	};
 
 	// Ensure arrays

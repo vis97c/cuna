@@ -17,7 +17,12 @@ import { offenderLogger } from "@open-xamu-co/firebase-nuxt/functions/logger";
 
 const getInstanceSlug = makeGetSlug("instances");
 
-// instances timestamp
+/**
+ * Create timestamp
+ *
+ * @docType instance
+ * @event created
+ */
 export const onCreatedInstance = onCreated<ExtendedInstanceData>(
 	"instances",
 	async (created, { logger }) => {
@@ -71,6 +76,12 @@ export const onCreatedInstance = onCreated<ExtendedInstanceData>(
 		},
 	}
 );
+/**
+ * Update timestamp
+ *
+ * @docType instance
+ * @event updated
+ */
 export const onUpdatedInstance = onUpdated<ExtendedInstanceData>(
 	"instances",
 	async (updated, existing, { logger }) => {
@@ -94,7 +105,12 @@ export const onUpdatedInstance = onUpdated<ExtendedInstanceData>(
 	}
 );
 
-// logs timestamp
+/**
+ * Create timestamp
+ *
+ * @docType instanceLog
+ * @event created
+ */
 export const onCreatedInstanceLog = onCreated<InstanceLogData>(
 	"instances/logs",
 	(createdDoc) => {
@@ -125,17 +141,39 @@ export const onCreatedInstanceLog = onCreated<InstanceLogData>(
 		},
 	}
 );
+/**
+ * Update timestamp
+ *
+ * @docType instanceLog
+ * @event updated
+ */
 export const onUpdatedInstanceLog = onUpdated<InstanceLogData>("instances/logs");
 
-// Counters timestamp
+/**
+ * Create timestamp
+ *
+ * @docType instanceCounter
+ * @event created
+ */
 export const onCreatedInstanceCounter = onCreated("instances/counters", undefined, {
 	defaults: {
 		lock: true,
 	},
 });
+/**
+ * Update timestamp
+ *
+ * @docType instanceCounter
+ * @event updated
+ */
 export const onUpdatedInstanceCounter = onUpdated("instances/counters");
 
-// Members timestamp
+/**
+ * Create timestamp
+ *
+ * @docType instanceMember
+ * @event created
+ */
 export const onCreatedInstanceMember = onCreated<ExtendedInstanceMemberData>(
 	"instances/members",
 	undefined,
@@ -144,14 +182,31 @@ export const onCreatedInstanceMember = onCreated<ExtendedInstanceMemberData>(
 		exclude: ["role"],
 	}
 );
+/**
+ * Update timestamp
+ *
+ * @docType instanceMember
+ * @event updated
+ */
 export const onUpdatedInstanceMember = onUpdated<ExtendedInstanceMemberData>("instances/members");
 
-// Members abuses timestamp
+/**
+ * Create timestamp
+ *
+ * @docType instanceMemberAbuse
+ * @event created
+ */
 export const onCreatedInstanceMemberAbuse = onCreated<InstanceMemberAbuseData>(
 	"instances/members/abuses",
 	undefined,
 	{ defaults: { lock: false } }
 );
+/**
+ * Update timestamp
+ *
+ * @docType instanceMemberAbuse
+ * @event updated
+ */
 export const onUpdatedInstanceMemberAbuse = onUpdated<InstanceMemberAbuseData>(
 	"instances/members/abuses"
 );

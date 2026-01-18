@@ -47,7 +47,7 @@ import {
 	eSIATumacoFaculty,
 	eSIATumacoProgram,
 } from "~~/functions/src/types/SIA/enums";
-import { Cyrb53, triGram } from "~/utils/firestore";
+import { Cyrb53 } from "~/utils/firestore";
 import type { CachedH3Event } from "@open-xamu-co/firebase-nuxt/server";
 
 /**
@@ -911,7 +911,6 @@ async function updateCourse(event: CachedH3Event, code: string): Promise<boolean
 					teacherRef.set(
 						{
 							name,
-							indexes: triGram([teacher]),
 							courses: FieldValue.arrayUnion(SIAScraps.code),
 						},
 						{ merge: true }

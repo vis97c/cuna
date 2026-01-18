@@ -2,6 +2,7 @@ import { onCreated, onUpdated } from "@open-xamu-co/firebase-nuxt/functions/even
 
 import type { ExtendedInstanceData, TeacherData } from "./types/entities/index.js";
 import { getLESlug } from "./utils/data.js";
+import { getSearchIndexes } from "@open-xamu-co/firebase-nuxt/functions/search";
 
 function getLEPath({ config = {} }: ExtendedInstanceData): string {
 	const { losEstudiantesUrl = "", losEstudiantesProfessorsPath = "" } = config;
@@ -11,12 +12,14 @@ function getLEPath({ config = {} }: ExtendedInstanceData): string {
 
 // teachers timestamp
 export const onCreatedTeacher = onCreated<TeacherData>(
-	"teachers",
+	"instances/teachers",
 	async (snapshot, { logger }) => {
 		try {
-			const { name } = snapshot.data();
+			const { name = "" } = snapshot.data();
+			// Get search indexes
+			const indexes = getSearchIndexes(name);
 
-			return { losEstudiantesSlug: await getLESlug(name, getLEPath) };
+			return { indexes, losEstudiantesSlug: await getLESlug(name, getLEPath) };
 		} catch (err) {
 			logger("functions:teachers:onCreatedTeacher", err);
 
@@ -30,7 +33,7 @@ export const onCreatedTeacher = onCreated<TeacherData>(
 	}
 );
 export const onUpdatedTeacher = onUpdated<TeacherData>(
-	"teachers",
+	"instances/teachers",
 	async (snapshot, _oldSnapshot, { logger }) => {
 		try {
 			const { name, losEstudiantesSlug } = snapshot.data();
