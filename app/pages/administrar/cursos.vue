@@ -88,13 +88,13 @@
 	}
 
 	const coursesPage: iGetPage<Course> = (query) => {
-		return useQuery<iPage<Course> | undefined>("/api/courses", { query });
+		return useQuery<iPage<Course> | undefined>("/api/instance/courses", { query });
 	};
 
 	function makeCourseLogsPage(course: Course): iGetPage<Course> {
 		return function (query) {
 			return useQuery<iPage<Course> | undefined>(
-				`/api/courses/${getDocumentId(course.id)}/logs`,
+				`/api/instance/courses/${getDocumentId(course.id)}/logs`,
 				{ query }
 			);
 		};

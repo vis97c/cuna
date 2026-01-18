@@ -9,7 +9,7 @@ export default defineNuxtRouteMiddleware(async ({ params }) => {
 	const courseId = <string>params.courseId;
 	let statusCode: number | undefined;
 
-	await useQuery<Course>(`/api/all/courses/${courseId}`, {
+	await useQuery<Course>(`/api/instance/all/courses/${courseId}`, {
 		method: "HEAD",
 		onResponse({ response }) {
 			statusCode = response.status;

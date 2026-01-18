@@ -100,7 +100,7 @@
 						<div class="flx --flxRow --flx-start --width-max --minWidth-100">
 							<XamuBoxAction
 								:theme="[eColors.SECONDARY_COMPLEMENT, eColors.LIGHT]"
-								to="https://github.com/xamu-co/firebase-store"
+								to="https://github.com/vis97c/cuna"
 								target="_blank"
 								icon="github"
 								:icon-props="{ brand: true, size: 35 }"

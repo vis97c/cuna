@@ -326,7 +326,7 @@
 	const { data: indexedCourse, pending: coursePending } = useAsyncData(
 		`api:all:courses:${routeId.value}`,
 		async () => {
-			const nuxtCourse = await useQuery<Course>(`/api/all/courses/${routeId.value}`);
+			const nuxtCourse = await useQuery<Course>(`/api/instance/all/courses/${routeId.value}`);
 			const { name, description, alternativeNames = [name] } = nuxtCourse;
 
 			// Update meta
@@ -613,7 +613,7 @@
 
 		try {
 			// Scrape from old SIA. Do not refetch from hydration
-			await useQuery<boolean>("/api/groups/scrape", {
+			await useQuery<boolean>("/api/instance/groups/scrape", {
 				query: { code, options: { credentials: "include" } },
 			});
 		} catch (err) {

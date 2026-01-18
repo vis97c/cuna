@@ -364,7 +364,7 @@
 			if (!search.value || search.value.length < 5) return [];
 
 			const { faculty, ...query } = values.value;
-			const edges = await useQuery<iPageEdge<Course>[]>("/api/courses/search", {
+			const edges = await useQuery<iPageEdge<Course>[]>("/api/instance/courses/search", {
 				query: { ...query, first: 6 },
 			});
 			const courses: Course[] = [];
@@ -453,7 +453,7 @@
 		try {
 			const include = courses.map(({ id }) => id);
 			const indexedCoursesEdges = await useQuery<iPageEdge<Course, string>[]>(
-				"/api/all/courses",
+				"/api/instance/all/courses",
 				{ query: { include } }
 			);
 
