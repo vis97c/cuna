@@ -1,7 +1,6 @@
 import type { FirebaseData } from "@open-xamu-co/firebase-nuxt/functions";
 
 export * from "./course";
-export * from "./group";
 export * from "./instance";
 export * from "./user";
 

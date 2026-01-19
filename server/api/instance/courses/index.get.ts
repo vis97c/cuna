@@ -62,7 +62,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		let query: Query<CourseData> = currentInstanceRef.collection("courses");
 
 		// Order at last
-		query = getOrderedQuery(event, query.orderBy("scrapedWithErrorsAt"));
+		query = getOrderedQuery(event, query);
 
 		if (page) return getEdgesPage(event, query);
 

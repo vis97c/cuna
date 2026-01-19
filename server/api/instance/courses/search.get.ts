@@ -1,4 +1,4 @@
-import { Filter, type Query } from "firebase-admin/firestore";
+import { type CollectionReference, FieldValue, Filter, type Query } from "firebase-admin/firestore";
 
 import { defineConditionallyCachedEventHandler } from "@open-xamu-co/firebase-nuxt/server/cache";
 import { apiLogger } from "@open-xamu-co/firebase-nuxt/server/firebase";
@@ -11,7 +11,15 @@ import {
 } from "@open-xamu-co/firebase-nuxt/server/firestore";
 import { getWords, soundexEs } from "@open-xamu-co/firebase-nuxt/functions/search";
 
+import type { iCoursesPayload } from "~~/server/utils/scrape/courses";
 import type { CourseData } from "~~/functions/src/types/entities";
+import type {
+	eSIALevel,
+	eSIAPlace,
+	uSIAFaculty,
+	uSIAProgram,
+	eSIATypology,
+} from "~~/functions/src/types/SIA";
 import { getQueryString } from "~~/server/utils/params";
 
 /**
@@ -23,6 +31,7 @@ import { getQueryString } from "~~/server/utils/params";
 export default defineConditionallyCachedEventHandler(async function (event) {
 	const { currentInstanceRef } = event.context;
 	const Allow = "GET,HEAD";
+	const scrapedAt = new Date();
 
 	try {
 		// Override CORS headers
@@ -49,13 +58,18 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 		const page = getBoolean(params.page);
 		const name = getQueryString("name", params);
 		const code = getQueryString("code", params);
-		const level = getQueryString("level", params);
-		const place = getQueryString("place", params);
-		const faculty = getQueryString("faculty", params);
-		const program = getQueryString("program", params);
-		const typology = getQueryString("typology", params);
+		const level = <eSIALevel | undefined>getQueryString("level", params);
+		const place = <eSIAPlace | undefined>getQueryString("place", params);
+		const faculty = <uSIAFaculty | undefined>getQueryString("faculty", params);
+		const program = <uSIAProgram | undefined>getQueryString("program", params);
+		const typology = <eSIATypology | undefined>getQueryString("typology", params);
 
-		let query: Query<CourseData> = currentInstanceRef.collection("courses");
+		// Level, place, faculty and program are required
+		if (!level || !place || !faculty || !program) {
+			throw createError({ statusCode: 400, statusMessage: "Missing parameters" });
+		}
+
+		let query: Query<CourseData> = currentInstanceRef.collection("courses").orderBy("name");
 
 		debugFirebaseServer(event, "api:courses:search", { name, code, program, typology, page });
 
@@ -91,7 +105,7 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 				);
 			}
 
-			query = query.orderBy("name").where("indexes", "array-contains", soundex);
+			query = query.where("indexes", "array-contains", soundex);
 		} else return null;
 
 		if (typology) {
@@ -104,6 +118,39 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 				)
 			);
 		}
+
+		const coursesRef: CollectionReference<CourseData> =
+			currentInstanceRef.collection("courses");
+		const payload: iCoursesPayload = { level, place, faculty, program, typology };
+
+		// Fetch from SIA, do not await
+		getCoursesLinks(event, payload).then((links) => {
+			// Index scraped courses, do not await
+			Promise.all(
+				links.map(async (link) => {
+					// Skip if missing identifier data
+					if (!link.code || !link.credits || !link.name || !link.typology) return;
+
+					const { typology: linkTypology, ...linkData } = link;
+					const id = Cyrb53([link.code]); // Generate deduped course UID
+
+					return coursesRef.doc(String(id)).set(
+						{
+							...linkData,
+							typologies: FieldValue.arrayUnion(linkTypology),
+							// From search
+							level,
+							place,
+							programs: FieldValue.arrayUnion(program),
+							faculties: FieldValue.arrayUnion(faculty),
+							scrapedAt,
+							scrapedWith: [level, place, faculty, program, linkTypology],
+						},
+						{ merge: true }
+					);
+				})
+			);
+		});
 
 		// order at last
 		query = getOrderedQuery(event, query);

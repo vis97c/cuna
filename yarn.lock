@@ -2436,7 +2436,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@open-xamu-co/firebase-nuxt@npm:^2.0.0-next.2, @open-xamu-co/firebase-nuxt@npm:^2.0.0-next.3":
+"@open-xamu-co/firebase-nuxt@npm:^2.0.0-next.3":
   version: 2.0.0-next.3
   resolution: "@open-xamu-co/firebase-nuxt@npm:2.0.0-next.3"
   dependencies:
@@ -2471,6 +2471,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@open-xamu-co/ui-common-enums@npm:^4.0.0-next.2":
+  version: 4.0.0-next.2
+  resolution: "@open-xamu-co/ui-common-enums@npm:4.0.0-next.2"
+  checksum: 10c0/b7ea90a3f977265581db3a9e4c91599e8e55dad13fde8140e2acb279b1fd8f14526dbe6ff7cbb82366955beffd339e46488e9a6c60a40c0714aa7e84409c98cf
+  languageName: node
+  linkType: hard
+
 "@open-xamu-co/ui-common-helpers@npm:^4.0.0-next.1, @open-xamu-co/ui-common-helpers@npm:^4.0.0-next.2, @open-xamu-co/ui-common-helpers@npm:^4.0.0-next.3":
   version: 4.0.0-next.3
   resolution: "@open-xamu-co/ui-common-helpers@npm:4.0.0-next.3"
@@ -2483,14 +2490,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@open-xamu-co/ui-common-types@npm:^4.0.0-next.3":
-  version: 4.0.0-next.3
-  resolution: "@open-xamu-co/ui-common-types@npm:4.0.0-next.3"
+"@open-xamu-co/ui-common-types@npm:^4.0.0-next.4":
+  version: 4.0.0-next.4
+  resolution: "@open-xamu-co/ui-common-types@npm:4.0.0-next.4"
   dependencies:
     "@fortawesome/fontawesome-common-types": "npm:^6.4.0"
-    "@open-xamu-co/ui-common-enums": "npm:^4.0.0-next.1"
+    "@open-xamu-co/ui-common-enums": "npm:^4.0.0-next.2"
     sweetalert2: "npm:^11.11.1"
-  checksum: 10c0/e3558057cfc8bcaf1839d6a3691abf2a5f578039e0e4bdcf1eb9a1c391f3d0829d83c9b6575a9f1c8a325739dcec1921675fa9e03249c11f53af6af55bfde678
+  checksum: 10c0/f9419e04f53e7a826f0a272347cf7dddcc4d9527b397c60664fe513aaffc11470125312fb0bb59a877e1bd5f7a687f06abef4189cbee9054c5263b4441a1bfc6
   languageName: node
   linkType: hard
 
@@ -2532,12 +2539,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@open-xamu-co/ui-styles@npm:^5.0.0-next.2":
-  version: 5.0.0-next.3
-  resolution: "@open-xamu-co/ui-styles@npm:5.0.0-next.3"
+"@open-xamu-co/ui-styles@npm:^5.0.0-next.4":
+  version: 5.0.0-next.4
+  resolution: "@open-xamu-co/ui-styles@npm:5.0.0-next.4"
   dependencies:
     serve: "npm:^11.3.2"
-  checksum: 10c0/313966eb5f6ccb95a5fefb33bb2c1104ad50caa9e030217dc32494bdbb081a34c04b572a2431e39f7fa0c890c0318c1443443e47601ec6496bff3cad947bad8d
+  checksum: 10c0/031d1bf77a236d228608fe2de63cf6def82c192012664b519e3aae0eac22a2c81a598297340ea080ba0a1ea55eb36801b1fc9a756cb44069be9dd1e1dd199b20
   languageName: node
   linkType: hard
 
@@ -6224,8 +6231,8 @@ __metadata:
     "@nuxt/scripts": "npm:^0.11.2"
     "@open-xamu-co/eslint-config": "npm:^3.0.1"
     "@open-xamu-co/firebase-nuxt": "npm:^2.0.0-next.3"
-    "@open-xamu-co/ui-common-types": "npm:^4.0.0-next.3"
-    "@open-xamu-co/ui-styles": "npm:^5.0.0-next.2"
+    "@open-xamu-co/ui-common-types": "npm:^4.0.0-next.4"
+    "@open-xamu-co/ui-styles": "npm:^5.0.0-next.4"
     "@types/accept-language-parser": "npm:^1.5.8"
     "@types/lodash-es": "npm:^4.17.12"
     "@types/node": "npm:^20"
@@ -8014,8 +8021,8 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "functions@workspace:functions"
   dependencies:
-    "@open-xamu-co/firebase-nuxt": "npm:^2.0.0-next.2"
-    "@open-xamu-co/ui-common-types": "npm:^4.0.0-next.3"
+    "@open-xamu-co/firebase-nuxt": "npm:^2.0.0-next.3"
+    "@open-xamu-co/ui-common-types": "npm:^4.0.0-next.4"
     "@types/lodash-es": "npm:^4"
     firebase-admin: "npm:^13.6.0"
     firebase-functions: "npm:^7.0.3"

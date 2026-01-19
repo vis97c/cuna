@@ -10,7 +10,7 @@ import {
 } from "@open-xamu-co/firebase-nuxt/server/environment";
 import { type Stylesheet, getStyleSheetPreload } from "@open-xamu-co/ui-nuxt";
 
-import { debugHTTPS } from "./server/utils/enviroment";
+import { debugScrapper, debugHTTPS } from "./server/utils/enviroment";
 import packageJson from "./package.json" assert { type: "json" };
 
 const loaderCss = fs.readFileSync(path.resolve(__dirname, "app/assets/loader.css"), {
@@ -64,6 +64,7 @@ export default defineNuxtConfig({
 	},
 	devServer: { https: debugHTTPS.value() && { key: "server.key", cert: "server.crt" } },
 	runtimeConfig: {
+		debugScrapper: debugScrapper.value(),
 		public: {
 			debugHTTPS: debugHTTPS.value(),
 		},

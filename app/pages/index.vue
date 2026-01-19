@@ -79,7 +79,7 @@
 						<h3 class="--txtColor-dark5">Otros recursos</h3>
 					</div>
 					<ul class="x-items flx --flxRow --flx-center">
-						<li>
+						<li class="x-fit">
 							<XamuBoxAction
 								:theme="calculadoraTheme"
 								to="https://calc-unal.vercel.app?from=cuna.com.co"
@@ -88,7 +88,7 @@
 								target="_blank"
 							/>
 						</li>
-						<li>
+						<li class="x-fit">
 							<XamuBoxAction
 								:theme="estudiantesTheme"
 								to="https://losestudiantes.com/universidad-nacional?from=cuna.com.co"
@@ -127,7 +127,6 @@
 	 */
 
 	definePageMeta({
-		path_label: "Buscador",
 		title: "Buscador de cursos",
 	});
 
@@ -154,3 +153,10 @@
 		return useTimeAgo(date);
 	});
 </script>
+
+<style scoped lang="scss">
+	.x-fit .box {
+		aspect-ratio: 4/5;
+		max-width: 8rem;
+	}
+</style>

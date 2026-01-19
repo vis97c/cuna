@@ -32,16 +32,6 @@ export interface CourseLogData extends LogData {
  * @see https://stackoverflow.com/a/52969138
  */
 export interface CourseData extends FirebaseData {
-	/**
-	 * Unique SIA id
-	 *
-	 * @deprecated
-	 */
-	SIA?: number;
-	/** Explorer V1 unique id */
-	ExplorerV1Id?: number;
-	/** Explorer V2 unique id */
-	ExplorerV2Id?: string;
 	name?: string;
 	description?: string;
 	alternativeNames?: string[];
@@ -52,18 +42,10 @@ export interface CourseData extends FirebaseData {
 	typologies?: eSIATypology[];
 	level?: eSIALevel;
 	place?: eSIAPlace;
-	/** Main faculty */
-	faculty?: uSIAFaculty;
 	/** Multiple faculties for the same course */
 	faculties?: uSIAFaculty[];
 	/** Multiple programs for the same course */
 	programs?: uSIAProgram[];
-	// groups?: GroupData[];
-	/**
-	 * For non reported groups
-	 * SIA Beta update delay
-	 */
-	// unreported?: GroupData[];
 	/** @automation */
 	losEstudiantesCode?: string;
 	/** @search */
@@ -89,11 +71,48 @@ export interface CourseData extends FirebaseData {
 	spotsCount?: number;
 	/** @automated Last scrape date */
 	scrapedAt?: Timestamp;
-	/** @automated Last scrape date with errors */
-	scrapedWithErrorsAt?: Timestamp;
 	/**
 	 * Scrapper was able to get the course with this info
 	 * @automation
 	 */
-	lastScrapedWith?: ScrapedWith;
+	scrapedWith?: ScrapedWith;
+}
+
+export interface EnrolledGroup {
+	name?: string;
+	teachers?: string[];
+	schedule?: tWeeklySchedule;
+	courseId: string;
+	courseCode: string;
+	courseName: string;
+}
+export type tWeeklySchedule = [string?, string?, string?, string?, string?, string?, string?];
+
+/**
+ * Interface representing a SIA Group data.
+ */
+export interface GroupData extends FirebaseData {
+	name?: string;
+	/** Total number of available spots. */
+	spots?: number;
+	/** Schedule for each day of the week */
+	schedule?: tWeeklySchedule;
+	teachers?: string[];
+	/**
+	 * Activity name.
+	 * @example "CLASE TEORICA 2015162 (2015162)"
+	 */
+	activity?: string;
+	availableSpots?: number;
+	classrooms?: string[];
+	/**
+	 * Academic period start date
+	 */
+	periodStartAt?: Timestamp;
+	/**
+	 * Academic period end date
+	 */
+	periodEndAt?: Timestamp;
+	/** @automated Last scrape date */
+	scrapedAt?: Timestamp;
 }
