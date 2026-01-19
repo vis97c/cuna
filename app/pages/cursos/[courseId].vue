@@ -26,28 +26,9 @@
 							{{ course.description }}
 						</p>
 					</div>
-					<div v-if="withScrapingErrors" class="flx --flxColumn --flx-center --width-100">
-						<XamuBoxMessage :theme="eColors.DANGER">
-							<div class="txt --txtAlign-center">
-								<p>
-									Lo sentimos, nos ha sido imposible obtener datos de este curso.
-								</p>
-								<p class="--txtSize-sm">
-									Aunque el curso esta reportado, su información parece ser
-									inadecuada y no nos permite encontrarlo en el SIA.
-								</p>
-								<p class="--txtSize-sm">
-									Es posible que no sea ofertada este semestre.
-								</p>
-							</div>
-						</XamuBoxMessage>
-					</div>
 					<div v-if="USER.token" class="flx --flxColumn --flx-start --width-100">
 						<div class="txt">
 							<h4 class="">Herramientas:</h4>
-							<p v-if="USER.canDevelop && withScrapingErrors" class="">
-								Parece que este curso contiene datos erróneos, considera eliminarlo
-							</p>
 						</div>
 						<div class="flx --flxRow-wrap --flx-between-center --width-100">
 							<div class="flx --flxRow-wrap --flx-start-center">
@@ -61,60 +42,6 @@
 								>
 									<XamuIconFa name="hand-fist" :size="20" />
 								</XamuActionButton>
-								<template v-if="USER.token">
-									<XamuActionButtonToggle
-										tooltip="Notificarme"
-										:disabled="!INSTANCE.current?.flags?.trackCourses"
-										:size="eSizes.LG"
-										round
-										@click="trackCourse"
-									>
-										<XamuIconFa name="bell" :size="20" regular />
-										<XamuIconFa name="bell" :size="20" />
-									</XamuActionButtonToggle>
-									<XamuModal
-										v-if="withScrapingErrors || USER.canDevelop"
-										key="fix-course"
-										class="--txtColor"
-										title="Corregir curso mal indexado"
-										:save-button="{ title: 'Corregir curso' }"
-										invert-theme
-										@close="closeFixCourse"
-										@save="fixCourse"
-									>
-										<template #toggle="{ toggleModal }">
-											<XamuActionButton
-												:size="eSizes.LG"
-												:theme="eColors.DANGER"
-												:disabled="coursePending || scraping"
-												tooltip="¿El curso contiene datos erróneos?"
-												tooltip-as-text
-												@click="toggleModal"
-											>
-												Corregir datos
-											</XamuActionButton>
-										</template>
-										<template #default>
-											<div
-												class="flx --flxColumn --flx-start-stretch --maxWidth-440"
-											>
-												<div class="txt">
-													<p>¡Gracias por ayudarnos a mejorar!</p>
-													<p class="--txtSize-sm">
-														*Idealmente, los datos deben coincidir con
-														los mismos pasos que seguirías para buscar
-														el curso en el SIA.
-													</p>
-												</div>
-												<XamuForm
-													v-model="fixCourseInputs"
-													v-model:invalid="invalidFixCourse"
-													title="Corregir curso"
-												/>
-											</div>
-										</template>
-									</XamuModal>
-								</template>
 							</div>
 							<div
 								v-if="USER.canModerate"
@@ -122,37 +49,10 @@
 							>
 								<XamuActionButton
 									tooltip="Forzar actualizacion"
-									@click="() => course && scrapeCourse(course)"
+									@click="refreshAll"
 								>
 									<XamuIconFa name="refresh" />
 								</XamuActionButton>
-								<XamuModal
-									key="add-group"
-									class="--txtColor"
-									title="Añadir grupo no reportado"
-									:save-button="{ title: 'Añadir grupo' }"
-									invert-theme
-									@close="closeAddGroup"
-									@save="addGroup"
-								>
-									<template #toggle="{ toggleModal }">
-										<XamuActionButton
-											tooltip="¿Hay un grupo no reportado?"
-											@click="toggleModal"
-										>
-											Añadir grupo
-										</XamuActionButton>
-									</template>
-									<template #default>
-										<div class="--maxWidth-440">
-											<XamuForm
-												v-model="addGroupInputs"
-												v-model:invalid="invalidAddGroup"
-												title="Nuevo grupo"
-											/>
-										</div>
-									</template>
-								</XamuModal>
 								<XamuActionButton
 									v-if="USER.canDevelop"
 									tooltip="¿Se indexo con errores?"
@@ -193,30 +93,15 @@
 							</div>
 						</div>
 					</div>
-					<XamuLoaderContent
-						:loading="scraping"
-						:content="!!groups.length || !!unreportedGroups.length"
-						label="Actualizando desde el antiguo SIA..."
-						no-content-message="No hay grupos disponibles en este momento."
-						class="--width-100"
-					>
-						<div v-if="groups.length" class="flx --flxColumn --flx-start --width-100">
-							<div class="flx --flxRow --flx-start-center">
-								<h4>Grupos ({{ course.groups?.length || 0 }}):</h4>
-								<XamuActionButton
-									v-if="USER.canModerate"
-									:disabled="teachersPending"
-									@click="refreshTeachers"
-								>
-									<XamuIconFa name="refresh" />
-									<span>Actualizar profesores</span>
-								</XamuActionButton>
-							</div>
-							<XamuTable
-								:property-order="() => 0"
-								:nodes="groups"
-								:modal-props="{ class: '--txtColor', invertTheme: true }"
-								:properties="[
+					<ClientOnly>
+						<template #fallback>Cargando grupos...</template>
+						<XamuPaginationContentTable
+							:page="groupsPage"
+							:url="`api:instance:courses:${courseId}:groups`"
+							:map-node="useMapGroupEs"
+							:defaults="{ page: true }"
+							:table-props="{
+								properties: [
 									{
 										value: 'inscrito',
 										component: TableEnroll,
@@ -224,41 +109,18 @@
 									},
 									{ value: 'profesores', component: TableTeachersList },
 									{ value: 'horarios', component: TableWeek },
-								]"
-								prefer-id
-							/>
-						</div>
-						<div
-							v-if="unreportedGroups.length"
-							class="flx --flxColumn --flx-start --width-100"
-						>
-							<div class="txt --gap-5">
-								<h4>
-									Grupos no reportados ({{ course.unreported?.length || 0 }}):
-								</h4>
-								<p class="--txtSize-xs">
-									*Estos grupos estan activos en el SIA, pero aun no podemos
-									actualizar sus cupos.
-								</p>
-							</div>
-							<XamuTable
-								:property-order="() => 0"
-								:nodes="unreportedGroups"
-								:theme="eColors.PRIMARY"
-								:modal-props="{ class: '--txtColor', invertTheme: true }"
-								:properties="[
-									{
-										value: 'inscrito',
-										component: TableEnroll,
-										hidden: !USER.token,
-									},
-									{ value: 'profesores', component: TableTeachersList },
-									{ value: 'horarios', component: TableWeek },
-								]"
-								prefer-id
-							/>
-						</div>
-					</XamuLoaderContent>
+								],
+								modalProps: {
+									invertTheme: true,
+									class: '--txtColor',
+								},
+							}"
+							label="Cargando grupos..."
+							no-content-message="No hay grupos registrados"
+							client
+							@refresh="emittedGroupsRefresh = $event"
+						/>
+					</ClientOnly>
 				</template>
 			</XamuLoaderContent>
 		</section>
@@ -267,24 +129,15 @@
 
 <script setup lang="ts">
 	import { debounce } from "lodash-es";
-	import { arrayUnion, deleteField, doc, onSnapshot, type Unsubscribe } from "firebase/firestore";
-	import { FirebaseError } from "firebase/app";
+	import { doc, DocumentReference, onSnapshot, type Unsubscribe } from "firebase/firestore";
 
-	import type {
-		iInvalidInput,
-		iNodeFnResponseStream,
-		iPageEdge,
-	} from "@open-xamu-co/ui-common-types";
-	import type { FormInput } from "@open-xamu-co/ui-common-helpers";
 	import { eColors, eSizes } from "@open-xamu-co/ui-common-enums";
-	import { resolveSnapshotDefaults } from "@open-xamu-co/firebase-nuxt/client/resolver";
 
-	import type { Course, CourseRef, Group, Teacher } from "~/utils/types";
+	import type { Course, Group } from "~/utils/types";
 	import type { EnrolledGroup } from "~~/functions/src/types/entities";
-	import type { CourseValues } from "~/utils/types/values";
 
 	import { TableTeachersList, TableEnroll, TableWeek } from "#components";
-	import type { LogRef } from "@open-xamu-co/firebase-nuxt/client";
+	import type { iGetPage, iPage } from "@open-xamu-co/ui-common-types";
 
 	/**
 	 * Course page
@@ -292,30 +145,25 @@
 	 * @page
 	 */
 
-	definePageMeta({ path_label: "Curso", middleware: ["course-exists"] });
+	definePageMeta({ title: "Curso", middleware: ["course-exists"] });
 
 	const CUNA = useCunaStore();
-	const INSTANCE = useInstanceStore();
+	// const INSTANCE = useInstanceStore();
 	const USER = useUserStore();
 	const router = useRouter();
 	const route = useRoute();
+	const cache = useRuntimeConfig().public.cache;
 	const Swal = useSwal();
-	const { $clientFirestore } = useNuxtApp();
-	const { getResponse } = useFormInput();
-	const { debugScrapper } = useRuntimeConfig().public;
+	const { $clientFirestore, $resolveClientRefs } = useNuxtApp();
 
-	const estudiantesTheme = "estudiantes" as any;
-	const scraping = ref(false);
-	const deactivated = ref(false);
-	// Add group
-	const addGroupInputs = ref(markRaw(useGroupInputs()));
-	const invalidAddGroup = ref<iInvalidInput[]>([]);
-	// Fix course
-	const fixCourseInputs = ref<FormInput[]>();
-	const invalidFixCourse = ref<iInvalidInput[]>([]);
 	let unsub: Unsubscribe = () => undefined;
 
-	const routeId = computed(() => <string>route.params.courseId);
+	const estudiantesTheme = "estudiantes" as any;
+	const deactivated = ref(false);
+	const emittedGroupsRefresh = ref<() => void>();
+
+	const courseId = computed(() => <string>route.params.courseId);
+	const courseApiPath = computed(() => `/api/instance/all/courses/${courseId.value}`);
 	const losEstudiantesCourses = computed(() => {
 		const config = CUNA.config || {};
 		const { losEstudiantesUrl = "", losEstudiantesCoursesPath = "" } = config;
@@ -323,88 +171,45 @@
 		return `${losEstudiantesUrl}${losEstudiantesCoursesPath}`;
 	});
 
-	const { data: indexedCourse, pending: coursePending } = useAsyncData(
-		`api:all:courses:${routeId.value}`,
-		async () => {
-			const nuxtCourse = await useQuery<Course>(`/api/instance/all/courses/${routeId.value}`);
-			const { name, description, alternativeNames = [name] } = nuxtCourse;
-
-			// Update meta
-			route.meta.title = name;
-			route.meta.description = description;
-			route.meta.keywords = alternativeNames.join(", ");
-			// Update fix course inputs
-			fixCourseInputs.value = useCourseInputs({
-				faculty: nuxtCourse.faculty,
-				scrapedAt: nuxtCourse.scrapedAt,
-				scrapedWithErrorsAt: nuxtCourse.scrapedWithErrorsAt,
-			});
-
-			return nuxtCourse;
-		}
-	);
+	// const {
+	// 	data: indexedCourse,
+	// 	pending: coursePending,
+	// 	refresh: refreshCourse,
+	// 	error: courseError,
+	// } = useCsrfFetch<Course>(`/api/instance/notes/${courseApiPath.value}`, {
+	// 	method: "POST",
+	// 	headers: { "Cache-Control": cache.none },
+	// 	server: false,
+	// });
 
 	const {
-		data: indexedTeachers,
-		pending: teachersPending,
-		refresh: refreshTeachers,
+		data: course,
+		pending: coursePending,
+		refresh: refreshCourse,
+		error: courseError,
 	} = useAsyncData(
-		`api:teachers:course:${indexedCourse.value?.code}`,
+		`api:all:courses:${courseId.value}`,
 		async () => {
-			const code = indexedCourse.value?.code;
+			const course = await useQuery<Course>(courseApiPath.value);
 
-			if (!code || !USER.token) return [];
-
-			const teachersEdges = await useQuery<iPageEdge<Teacher, string>[]>(
-				"/api/teachers/search",
-				{ query: { courses: [code] } }
-			);
-
-			return teachersEdges.map(({ node }) => node);
+			return useMapCourse(course);
 		},
-		{ watch: [() => indexedCourse.value?.updatedAt, () => indexedCourse.value?.code] }
+		{ watch: [() => courseId.value] }
 	);
 
-	const course = computed({
-		get: () => {
-			if (!indexedCourse.value) return;
-
-			return useMapCourse(indexedCourse.value);
-		},
-		set(newCourse) {
-			if (!newCourse) return;
-
-			indexedCourse.value = newCourse;
-		},
-	});
-	const groups = computed(() => {
-		if (!Array.isArray(course.value?.groups)) return [];
-
-		return (course.value?.groups || []).map(mapGroupLike);
-	});
-	const unreportedGroups = computed(() => {
-		if (!Array.isArray(course.value?.unreported)) return [];
-		if (!Array.isArray(course.value?.unreported)) return [];
-
-		return (course.value?.unreported || []).map(mapGroupLike);
-	});
-	const withScrapingErrors = computed(() => {
-		return course.value?.scrapedWithErrorsAt;
-	});
-
-	function mapGroupLike({
-		name,
-		classrooms,
-		teachers = [],
-		schedule,
-		spots,
-		availableSpots,
-	}: Group) {
-		const mappedTeachers = teachers.map((name) => {
-			const teacher = indexedTeachers.value?.find((t) => t.name === name);
-
-			return teacher || name;
+	const groupsPage: iGetPage<Group> = (pagination) => {
+		return useQuery<iPage<Group> | undefined>(`${courseApiPath.value}/groups`, {
+			query: pagination,
+			headers: { "Cache-Control": cache.none },
 		});
+	};
+
+	function refreshAll() {
+		refreshCourse();
+		emittedGroupsRefresh.value?.();
+	}
+
+	function useMapGroupEs({ name, teachers, classrooms, schedule, spots, availableSpots }: Group) {
 		const inscrito: EnrolledGroup = {
 			schedule,
 			teachers,
@@ -420,24 +225,11 @@
 			id: `${name}`, // hotfix to prevent it to parse as date
 			cupos: `${availableSpots} de ${spots}`,
 			espacios: classrooms,
-			profesores: mappedTeachers,
+			profesores: teachers,
 			horarios: inscrito,
 			inscrito,
 		};
 	}
-
-	const trackCourse = debounce(async () => {
-		if (!course.value) return;
-
-		USER.trackCourse(course.value);
-
-		// Notify user of the success
-		await Swal.fire({
-			title: "Curso rastreado",
-			text: `Obtendrás actualizaciones del curso ${course.value?.name} periódicamente`,
-			icon: "success",
-		});
-	});
 
 	const removeCourse = debounce(async () => {
 		if (!USER.canModerate || !course.value) return;
@@ -452,7 +244,7 @@
 
 		unsub(); // close firebase socket
 
-		const removed = await useDocumentDelete(course.value);
+		const removed = await useDocumentDelete({ id: course.value.id });
 
 		if (removed) {
 			// Notify user of the success
@@ -472,181 +264,31 @@
 		});
 	});
 
-	// Add group
-	function closeAddGroup() {
-		addGroupInputs.value = useGroupInputs();
-		invalidAddGroup.value = [];
-	}
-	async function addGroup(willOpen: () => void, event: Event) {
-		const { invalidInputs, withErrors, validationHadErrors, errors } = await getResponse<
-			iNodeFnResponseStream<Course>[0],
-			Pick<
-				Group,
-				"name" | "spots" | "availableSpots" | "teachers" | "classrooms" | "schedule"
-			>
-		>(
-			async (newGroup) => {
-				if (!course.value) return { data: undefined };
-
-				try {
-					// update course groups
-					const [data] = await useDocumentUpdate<CourseRef>(course.value, {
-						unreported: arrayUnion(newGroup),
-					});
-					const [updatedCourse] = Array.isArray(data) ? data : [data];
-
-					if (typeof updatedCourse !== "object") return { errors: "Missing data" };
-
-					return { data };
-				} catch (errors: FirebaseError | unknown) {
-					return { errors };
-				}
-			},
-			addGroupInputs.value,
-			event
-		);
-
-		invalidAddGroup.value = invalidInputs;
-
-		if (!withErrors) {
-			// Succesful request, notify user of the success
-			Swal.fire({
-				title: "Grupo añadido exitosamente",
-				text: "En breve veras tu grupo nuevo",
-				icon: "success",
-				willOpen,
-			});
-		} else {
-			if (!validationHadErrors) {
-				Swal.fire({
-					title: "¡Algo sucedió!",
-					text: "Ocurrió un error mientras añadiamos el grupo",
-					icon: "error",
-					target: <HTMLElement>event.target,
-				});
-
-				if (errors instanceof FirebaseError) console.debug(errors.code, errors);
-				else console.error(errors);
-			}
-		}
-	}
-
-	// Fix course
-	function closeFixCourse() {
-		fixCourseInputs.value = useCourseInputs({
-			faculty: course.value?.faculty,
-			scrapedAt: course.value?.scrapedAt,
-			scrapedWithErrorsAt: course.value?.scrapedWithErrorsAt,
-		});
-		invalidFixCourse.value = [];
-	}
-	async function fixCourse(willOpen: () => void, event: Event) {
-		const { invalidInputs, withErrors, validationHadErrors, errors } = await getResponse<
-			boolean | null,
-			CourseValues
-		>(
-			async ({ faculty, program, typology }) => {
-				if (!course.value) return { data: null };
-
-				try {
-					const updatedCourse = {
-						typologies: typology ? [typology] : deleteField(),
-						faculty,
-						faculties: [faculty],
-						programs: program ? [program] : deleteField(),
-					};
-
-					if (debugScrapper) console.debug("Updated course", updatedCourse);
-
-					// Update course, do not await
-					useDocumentUpdate<CourseRef>(course.value, updatedCourse);
-					setTimeout(() => {
-						// Atemp course scraping, do not await
-						scrapeCourse(course.value!);
-					}, 30 * 1000);
-
-					return { data: true };
-				} catch (errors: FirebaseError | unknown) {
-					return { errors };
-				}
-			},
-			fixCourseInputs.value,
-			event
-		);
-
-		invalidFixCourse.value = invalidInputs;
-
-		if (!withErrors) {
-			// Succesful request, notify user of the success
-			Swal.fire({
-				title: "Curso modificado exitosamente",
-				text: "En breve intentaremos actualizar el curso",
-				icon: "success",
-				willOpen,
-			});
-		} else {
-			if (!validationHadErrors) {
-				Swal.fire({
-					title: "¡Algo sucedió!",
-					text: "Ocurrió un error mientras modificábamos el curso",
-					icon: "error",
-					target: <HTMLElement>event.target,
-				});
-
-				if (errors instanceof FirebaseError) console.debug(errors.code, errors);
-				else console.error(errors);
-			}
-		}
-	}
-
-	/**
-	 * Scrape course & update
-	 *
-	 * Do not remove PEAMA & PAES from indexing
-	 */
-	async function scrapeCourse(firebaseCourse: Course) {
-		if (scraping.value || CUNA.SIAMaintenance || !$clientFirestore) return;
-
-		scraping.value = true;
-
-		const { code = "" } = firebaseCourse;
-
-		try {
-			// Scrape from old SIA. Do not refetch from hydration
-			await useQuery<boolean>("/api/instance/groups/scrape", {
-				query: { code, options: { credentials: "include" } },
-			});
-		} catch (err) {
-			const courseId = <string>route.params.courseId;
-			const courseRef = doc($clientFirestore, "courses", courseId);
-			const serializedError: Record<string, unknown> = JSON.parse(
-				JSON.stringify(err, Object.getOwnPropertyNames(err))
-			);
-
-			// Custom error log, do not await
-			useDocumentCreate<LogRef>("logs", {
-				at: "pages:cursos:[courseId]:onMounted",
-				message: serializedError.message,
-				courseRef,
-				error: serializedError,
-			});
-		}
-
-		scraping.value = false;
-	}
-
 	// lifecycle
+	watch(
+		[course, courseError],
+		([newCourse, newError]) => {
+			if (newError) return showError(newError);
+
+			if (newCourse) {
+				const { name, description, alternativeNames = [name] } = newCourse;
+
+				// Update meta
+				route.meta.title = name;
+				route.meta.description = description;
+				route.meta.keywords = alternativeNames.join(", ");
+			}
+		},
+		{ immediate: true }
+	);
 	onBeforeUnmount(unsub);
 	onMounted(() => {
-		if (import.meta.server || !USER.token || !$clientFirestore) return;
-
-		onActivated(() => (deactivated.value = false));
-		onDeactivated(() => (deactivated.value = true));
+		if (import.meta.server || !USER.token || !$clientFirestore || !$resolveClientRefs) return;
 
 		const courseId = <string>route.params.courseId;
-		const courseRef = doc($clientFirestore, "courses", courseId);
+		const courseRef: DocumentReference<Course> = doc($clientFirestore, "courses", courseId);
 
-		// Hydrate course from firebase, then SIA & reindex
+		// Hydrate course from firebase (Scraped server side)
 		unsub = onSnapshot(courseRef, async (snapshot) => {
 			// prevent hydration if not active
 			if (deactivated.value) return;
@@ -659,50 +301,17 @@
 				});
 			}
 
-			const { scrapedWithErrorsAt, ...firebaseCourse }: Course = resolveSnapshotDefaults(
-				snapshot.ref.path,
-				snapshot.data()
-			);
-			const {
-				name,
-				description,
-				alternativeNames = [name],
-				updatedAt,
-				scrapedAt,
-			} = firebaseCourse;
+			const courseData = $resolveClientRefs(snapshot);
 
-			// Update with hydration conditionally
-			if (course.value?.updatedAt !== updatedAt) {
-				// Update meta
-				route.meta.title = name;
-				route.meta.description = description;
-				route.meta.keywords = alternativeNames.join(", ");
-				// Update fix course inputs
-				fixCourseInputs.value = useCourseInputs({
-					faculty: firebaseCourse.faculty,
-					scrapedAt: scrapedAt,
-					scrapedWithErrorsAt: scrapedWithErrorsAt,
-				});
-				// Update course
-				course.value = { ...course.value, ...firebaseCourse, scrapedWithErrorsAt };
+			// Hydrate course
+			if (courseData) {
+				course.value = useMapCourse(courseData);
+				emittedGroupsRefresh.value?.();
 			}
-
-			const minutes = CUNA.config?.coursesScrapeRate || 5;
-			const nowMilis = new Date().getTime();
-			const scrapedAtMilis = new Date(scrapedAt || "").getTime();
-			const scrapedDiffMilis = nowMilis - scrapedAtMilis;
-
-			// Prevent scraping until fixed
-			if (scrapedWithErrorsAt || !USER.token) return;
-
-			// Do once & update if updated more than threshold
-			if (scrapedAt && scrapedDiffMilis < useMinMilis(minutes)) {
-				if (firebaseCourse.description) return;
-			}
-
-			scrapeCourse(firebaseCourse);
 		});
 	});
+	onActivated(() => (deactivated.value = false));
+	onDeactivated(() => (deactivated.value = true));
 </script>
 
 <style lang="scss">

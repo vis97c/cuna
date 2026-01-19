@@ -1,4 +1,1258 @@
 {
-  "indexes": [],
+  "indexes": [
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "code",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "code",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "typologiesIndexes.`0`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "code",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "typologiesIndexes.`1`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "code",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "typologiesIndexes.`2`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "faculty",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "level",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "programsIndexes.`0`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "faculty",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "level",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "programsIndexes.`1`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "faculty",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "level",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "programsIndexes.`2`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "faculty",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "level",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "programsIndexes.`3`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "faculty",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "level",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "programsIndexes.`4`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "faculty",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "programsIndexes.`0`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "faculty",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "programsIndexes.`0`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "typologiesIndexes.`0`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "faculty",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "programsIndexes.`0`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "typologiesIndexes.`1`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "faculty",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "programsIndexes.`0`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "typologiesIndexes.`2`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "faculty",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "programsIndexes.`1`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "faculty",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "programsIndexes.`1`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "typologiesIndexes.`0`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "faculty",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "programsIndexes.`1`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "typologiesIndexes.`1`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "faculty",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "programsIndexes.`1`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "typologiesIndexes.`2`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "faculty",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "programsIndexes.`2`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "faculty",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "programsIndexes.`2`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "typologiesIndexes.`0`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "faculty",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "programsIndexes.`2`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "typologiesIndexes.`1`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "faculty",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "programsIndexes.`2`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "typologiesIndexes.`2`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "faculty",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "programsIndexes.`3`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "faculty",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "programsIndexes.`3`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "typologiesIndexes.`0`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "faculty",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "programsIndexes.`3`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "typologiesIndexes.`1`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "faculty",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "programsIndexes.`3`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "typologiesIndexes.`2`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "faculty",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "programsIndexes.`4`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "faculty",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "programsIndexes.`4`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "typologiesIndexes.`0`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "faculty",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "programsIndexes.`4`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "typologiesIndexes.`1`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "faculty",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "programsIndexes.`4`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "typologiesIndexes.`2`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "faculty",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "programsIndexes.`5`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "faculty",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "programsIndexes.`5`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "typologiesIndexes.`0`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "faculty",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "programsIndexes.`5`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "typologiesIndexes.`1`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "faculty",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "programsIndexes.`5`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "typologiesIndexes.`2`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "logs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "courseRef",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "teachers",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    }
+  ],
   "fieldOverrides": []
 }

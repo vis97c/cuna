@@ -49,7 +49,6 @@
 	 */
 
 	definePageMeta({
-		path_label: "Cuenta",
 		title: "Cuenta",
 		middleware: ["auth-only"],
 	});

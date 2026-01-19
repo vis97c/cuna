@@ -88,6 +88,7 @@
 			"
 			label="Cargando cursos..."
 			with-route
+			client
 			class="flx --flxColumn --flx-start-center --gap-30"
 			@refresh="(e) => (emittedRefresh = e)"
 		>
@@ -126,6 +127,7 @@
 		CourseValuesWithProgram,
 		PartialCourseValues,
 	} from "~/utils/types/values";
+	import debounce from "lodash-es/debounce";
 
 	/**
 	 * Registering unindexed courses
@@ -178,13 +180,21 @@
 		};
 	});
 
-	const coursesSearchPage: iGetPage<Course> = async (pagination) => {
+	/**
+	 * Debounced search function
+	 * Prevent multiple requests when typing
+	 */
+	const coursesSearchPageDebounce = debounce(async (pagination) => {
 		if (!search.value) return;
 
 		return useQuery<iPage<Course> | undefined>("/api/instance/courses/search", {
 			query: pagination,
 			headers: { "Cache-Control": cache.normal },
 		});
+	}, 500);
+
+	const coursesSearchPage: iGetPage<Course> = async (pagination) => {
+		return coursesSearchPageDebounce?.(pagination);
 	};
 </script>
 

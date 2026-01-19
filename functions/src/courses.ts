@@ -67,36 +67,15 @@ export const onUpdatedCourse = onUpdated<CourseData>(
  * @docType group
  * @event created
  */
-export const onCreatedGroup = onCreated<GroupData>(
-	"instances/courses/groups",
-	async (snapshot) => {
-		const { name = "" } = snapshot.data();
-
-		return { name };
+export const onCreatedGroup = onCreated<GroupData>("instances/courses/groups", undefined, {
+	defaults: {
+		lock: false,
 	},
-	{
-		defaults: {
-			lock: false,
-		},
-	}
-);
+});
 /**
  * Update timestamp
  *
  * @docType group
  * @event updated
  */
-export const onUpdatedGroup = onUpdated<GroupData>(
-	"instances/courses/groups",
-	async (newSnapshot, _existingSnapshot, { logger }) => {
-		try {
-			const { name = "" } = newSnapshot.data();
-
-			return { name };
-		} catch (err) {
-			logger("functions:groups:onUpdatedGroup", err);
-
-			throw err;
-		}
-	}
-);
+export const onUpdatedGroup = onUpdated<GroupData>("instances/courses/groups");

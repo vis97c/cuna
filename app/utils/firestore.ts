@@ -6,7 +6,7 @@ import type { ExtendedInstanceDataConfig } from "~~/functions/src/types/entities
  *
  * @see https://stackoverflow.com/a/52171480
  */
-export const Cyrb53 = (strs: (string | undefined)[] = [""], seed = 0) => {
+export const Cyrb53 = (strs: string[] = [""], seed = 0) => {
 	const str = strs.filter(isNotUndefString).join("");
 	let h1 = 0xdeadbeef ^ seed,
 		h2 = 0x41c6ce57 ^ seed;

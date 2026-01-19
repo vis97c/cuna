@@ -2,11 +2,10 @@ import { FormInput } from "@open-xamu-co/ui-common-helpers";
 import { eFormType } from "@open-xamu-co/ui-common-enums";
 
 import type { Course } from "~/utils/types";
-import { eSIALevel, type uSIAFaculty } from "~~/functions/src/types/SIA";
+import { eSIALevel } from "~~/functions/src/types/SIA";
 
 export function useCourseInputs(course: Course = {}): FormInput[] {
 	const USER = useUserStore();
-	const fixCourse = !!course?.scrapedWithErrorsAt;
 	const { selectedFaculty, faculties, programs } = useCourseProgramOptions([
 		eSIALevel.PREGRADO,
 		USER.place,
@@ -16,11 +15,7 @@ export function useCourseInputs(course: Course = {}): FormInput[] {
 	const { typologies } = useCourseTypeOptions();
 	const facultyInput = new FormInput(
 		{
-			values: [
-				course?.faculty || fixCourse
-					? <uSIAFaculty>faculties.value[0].value
-					: USER.lastFacultySearch,
-			],
+			values: [course?.faculty || USER.lastFacultySearch],
 			name: "faculty",
 			required: true,
 			title: "Facultad del curso (Sede Bogotá)",
@@ -33,10 +28,6 @@ export function useCourseInputs(course: Course = {}): FormInput[] {
 			const unwatch = watch(
 				programs,
 				(newPrograms) => {
-					if (fixCourse) {
-						newPrograms.unshift({ value: "", alias: "CUALQUIERA" });
-					}
-
 					// set first program as value
 					programInput.options = newPrograms;
 					programInput.values = [newPrograms[0].value as any];
@@ -50,12 +41,8 @@ export function useCourseInputs(course: Course = {}): FormInput[] {
 		}
 	);
 
-	if (fixCourse) {
-		programs.value.unshift({ value: "", alias: "CUALQUIERA" });
-	}
-
 	const programInput = new FormInput({
-		values: [fixCourse ? "" : course?.program || USER.lastProgramSearch],
+		values: [course?.program || USER.lastProgramSearch],
 		name: "program",
 		title: "Programa del curso (Sede Bogotá)",
 		placeholder: "Ej: Ciencias de la computación",
@@ -77,9 +64,6 @@ export function useCourseInputs(course: Course = {}): FormInput[] {
 			icon: "chess-bishop",
 		}),
 	];
-
-	// Fix course
-	if (fixCourse) return inputs;
 
 	return [
 		...inputs,
