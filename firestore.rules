@@ -2,30 +2,30 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-  	function isAuth() {
-    	return request.auth != null && request.auth.uid != null;
+    function isAuth() {
+      return request.auth != null && request.auth.uid != null;
     }
-    
+
     // rol 4: Invitado (0% acceso)
     // rol 3: Usuario (25% acceso)
     // rol 2: Moderador (30% acceso)
     // rol 1: Editor/Asistente (70% acceso)
     // rol 0: Manager (99% acceso)
     // rol -1: Desarrollador (Acceso total)
-  	function getRole(instanceId, uid) {
-    	return uid ? get(/databases/$(database)/documents/instances/$(instanceId)/members/$(uid)).data.role : 3;
+    function getRole(instanceId, uid) {
+      return uid != null ? get(/databases/$(database)/documents/instances/$(instanceId)/members/$(uid)).data.role : 3;
     }
-    
+
     // developer.role = -1
     function canDevelop(instanceId) {
-    	return getRole(instanceId, request.auth.uid) < 0
+      return getRole(instanceId, request.auth.uid) < 0
     }
-    
+
     // admin.role = 0
     function canAdmin(instanceId) {
       return canDevelop(instanceId) || getRole(instanceId, request.auth.uid) < 1
     }
-    
+
     // editor.role = 1
     function canEdit(instanceId) {
       return canAdmin(instanceId) || getRole(instanceId, request.auth.uid) < 2
@@ -35,59 +35,55 @@ service cloud.firestore {
     function canModerate(instanceId) {
       return canEdit(instanceId) || getRole(instanceId, request.auth.uid) < 3
     }
-    
+
     // user.role = 3
     function canUse(instanceId) {
-    	return canModerate(instanceId) || getRole(instanceId, request.auth.uid) < 4
+      return canModerate(instanceId) || getRole(instanceId, request.auth.uid) < 4
     }
 
     function isOwnUser(uid) {
-    	return request.auth.uid == uid;
+      return request.auth.uid == uid;
     }
-    
-    // function isAuthor() {
-    // 	return request.auth.uid == resource.data.createdByRef.uid;
-    // }
-    
+
     match /{document=**} {
-    	// deshabilita el acceso por defecto
-    	allow read, write: if false;
+      // deshabilita el acceso por defecto
+      allow read, write: if false;
     }
-    
+
     match /logs/{id} {
-    	// lectura explicita, desarrolladores
+      // lectura explicita, desarrolladores
       allow read: if canDevelop("live");
-    	// creacion explicita, cualquiera
+      // creacion explicita, cualquiera
       allow create: if true;
       // modificacion granular, desarrolladores hacia arriba
       allow update: if canDevelop("live");
       allow delete: if canDevelop("live") && resource.data.lock == false;
     }
-    
+
     match /offenders/{id} {
-    	// lectura explicita, desarrolladores
+      // lectura explicita, desarrolladores
       allow read: if canDevelop("live");
-    	// creacion explicita, cualquiera
+      // creacion explicita, cualquiera
       allow create: if true;
       // modificacion granular, desarrolladores hacia arriba
       allow update: if canDevelop("live");
       allow delete: if canDevelop("live") && resource.data.lock == false;
     }
-    
-    match /users/{id} {
-    	// lectura unica, cualquiera
+
+    match /users/{uid} {
+      // lectura unica, cualquiera
       allow get: if isAuth();
-    	// lectura multiple, desarrolladores hacia arriba
+      // lectura multiple, desarrolladores hacia arriba
       allow list: if canDevelop("live");
       // creacion granular, cualquiera
       allow create: if isAuth();
       // modificacion granular, desarrolladores o propietarios
-      allow update: if canDevelop("live") || isOwnUser(id);
-      allow delete: if (canDevelop("live") || isOwnUser(id)) && resource.data.lock == false;
+      allow update: if canDevelop("live") || isOwnUser(uid);
+      allow delete: if (canDevelop("live") || isOwnUser(uid)) && resource.data.lock == false;
     }
-    
+
     match /instances/{instanceId} {
-    	// lectura explicita, cualquiera
+      // lectura explicita, cualquiera
       allow read: if true;
       // creacion granular, administradores hacia arriba
       allow create: if canDevelop(instanceId);
@@ -95,16 +91,16 @@ service cloud.firestore {
       allow update: if canAdmin(instanceId);
       allow delete: if canDevelop(instanceId) && resource.data.lock == false;
 
-      match /members/{memberId} {
+      match /members/{uid} {
         // lectura explicita, moderadores hacia arriba
-        allow read: if canModerate(instanceId) || isOwnUser(memberId);
+        allow read: if canModerate(instanceId) || isOwnUser(uid);
         // modificacion granular, administradores hacia arriba
-        allow create: if canAdmin(instanceId) || isOwnUser(memberId);
+        allow create: if canAdmin(instanceId) || isOwnUser(uid);
         // administradores no puede modificar desarrolladores
-        allow update: if canAdmin(instanceId) || isOwnUser(memberId);
-        allow delete: if (canAdmin(instanceId) || isOwnUser(memberId)) && resource.data.lock == false;
+        allow update: if canAdmin(instanceId) || isOwnUser(uid);
+        allow delete: if (canAdmin(instanceId) || isOwnUser(uid)) && resource.data.lock == false;
       }
-      
+
       match /logs/{logId} {
         // lectura explicita, desarrolladores
         allow read: if canDevelop(instanceId);
@@ -114,7 +110,7 @@ service cloud.firestore {
         allow update: if canDevelop(instanceId);
         allow delete: if canDevelop(instanceId) && resource.data.lock == false;
       }
-      
+
       match /counters/{counterId} {
         // lectura explicita, cualquiera
         allow read: if true;
@@ -123,7 +119,7 @@ service cloud.firestore {
         allow update: if canEdit(instanceId);
         allow delete: if canDevelop(instanceId) && resource.data.lock == false;
       }
-      
+
       match /teachers/{teacherId} {
         // lectura explicita, cualquiera
         allow read: if true;
@@ -132,7 +128,7 @@ service cloud.firestore {
         allow update: if canUse(instanceId);
         allow delete: if canModerate(instanceId);
       }
-      
+
       match /courses/{courseId} {
         // lectura explicita, cualquiera
         allow read: if true;

@@ -44,6 +44,8 @@
     "firebase:server": "firebase deploy --only hosting",
     "firebase:start": "yarn build && firebase emulators:start",
     "firebase:indexes": "firebase firestore:indexes > firestore.indexes.json",
+    "emulate:firestore": "firebase emulators:start --only firestore",
+    "test:firestore": "firebase emulators:exec --only firestore \"node tests/firestore.js\"",
     "prepare": "node .husky/install.mjs && nuxt prepare",
     "postinstall": "node scripts/sync-firebase-nuxt.cjs"
   },
@@ -66,6 +68,7 @@
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.0",
     "@open-xamu-co/eslint-config": "^3.0.1",
     "@open-xamu-co/ui-common-types": "^4.0.0-next.4",
     "@open-xamu-co/ui-styles": "^5.0.0-next.4",
