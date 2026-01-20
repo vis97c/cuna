@@ -27,7 +27,7 @@ import { Cyrb53 } from "~/utils/firestore";
  */
 export default defineConditionallyCachedEventHandler(async (event) => {
 	const storage = useStorage("cache");
-	const { currentInstanceRef, currentInstanceHost } = event.context;
+	const { currentAuth, currentInstanceRef, currentInstanceHost } = event.context;
 	const Allow = "POST,HEAD";
 	const scrapedAt = FieldValue.serverTimestamp();
 	let courseRef: DocumentReference<CourseData> | undefined;
@@ -96,7 +96,8 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		// Index groups before resolving query
 		// TODO: get course prerequisites
 		try {
-			if (!cachedGroups) {
+			// Only index if user is authenticated (Prevent abusive calls)
+			if (!cachedGroups && currentAuth) {
 				const links = await getCourseGroupsLinks(event, courseRef);
 				const groupCount = links.length;
 				const spotsCount = sumBy(links, "availableSpots");
