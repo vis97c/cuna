@@ -35,10 +35,13 @@ export function safeInstanceConfig(
 		config || {};
 
 	/** Parse date */
-	function getDate(date?: adminTimestamp | clientTimestamp | Date) {
-		if (!date || date instanceof Date) return date;
+	function getDate(date?: adminTimestamp | clientTimestamp | Date | string) {
+		if (!date) return;
+		if (date instanceof Date) return date;
+		if (typeof date === "string") return new Date(date);
+		if (typeof date === "object" && "toDate" in date) return date.toDate();
 
-		return date.toDate();
+		console.error("Invalid date", date);
 	}
 
 	return {
