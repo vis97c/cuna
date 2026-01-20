@@ -1700,6 +1700,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@firebase/rules-unit-testing@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "@firebase/rules-unit-testing@npm:5.0.0"
+  peerDependencies:
+    firebase: ^12.0.0
+  checksum: 10c0/2165daa55bd5356279aabfa23c8d3f4779f67dbc50be27f54bf563f642be8f9b1446a2353a92313fe74aa9755e0c43642641b6195541310c9a9f25faee0942a1
+  languageName: node
+  linkType: hard
+
 "@firebase/storage-compat@npm:0.4.0":
   version: 0.4.0
   resolution: "@firebase/storage-compat@npm:0.4.0"
@@ -2597,7 +2606,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@open-xamu-co/firebase-nuxt@npm:^2.0.0-next.6, @open-xamu-co/firebase-nuxt@npm:^2.0.0-next.7":
+"@open-xamu-co/firebase-nuxt@npm:^2.0.0-next.7":
   version: 2.0.0-next.7
   resolution: "@open-xamu-co/firebase-nuxt@npm:2.0.0-next.7"
   dependencies:
@@ -6444,6 +6453,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "cuna@workspace:."
   dependencies:
+    "@firebase/rules-unit-testing": "npm:^5.0.0"
     "@nuxt/scripts": "npm:^0.11.2"
     "@open-xamu-co/eslint-config": "npm:^3.0.1"
     "@open-xamu-co/firebase-nuxt": "npm:^2.0.0-next.7"
@@ -8237,7 +8247,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "functions@workspace:functions"
   dependencies:
-    "@open-xamu-co/firebase-nuxt": "npm:^2.0.0-next.6"
+    "@open-xamu-co/firebase-nuxt": "npm:^2.0.0-next.7"
     "@open-xamu-co/ui-common-types": "npm:^4.0.0-next.4"
     "@types/lodash-es": "npm:^4"
     firebase-admin: "npm:^13.6.0"
