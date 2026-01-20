@@ -3,6 +3,7 @@ import type { DocumentReference, Timestamp } from "firebase-admin/firestore";
 import type { FirebaseData, LogData } from "@open-xamu-co/firebase-nuxt/functions";
 
 import type { eSIALevel, eSIAPlace, eSIATypology, uSIAFaculty, uSIAProgram } from "../SIA";
+import type { TeacherData } from "./teacher";
 
 /**
  * Scraped with info
@@ -48,7 +49,7 @@ export interface CourseData extends FirebaseData {
 	programs?: uSIAProgram[];
 	/** @automation */
 	losEstudiantesCode?: string;
-	/** @search */
+	/** @automation @search */
 	indexes?: string[];
 	/**
 	 * Array as object to be searcheable
@@ -62,6 +63,8 @@ export interface CourseData extends FirebaseData {
 	 * @automation
 	 */
 	typologiesIndexes?: Record<number, eSIATypology>;
+	/** @automation */
+	logs?: number;
 	/** @automation */
 	groupCount?: number;
 	/**
@@ -78,14 +81,6 @@ export interface CourseData extends FirebaseData {
 	scrapedWith?: ScrapedWith;
 }
 
-export interface EnrolledGroup {
-	name?: string;
-	teachers?: string[];
-	schedule?: tWeeklySchedule;
-	courseId: string;
-	courseCode: string;
-	courseName: string;
-}
 export type tWeeklySchedule = [string?, string?, string?, string?, string?, string?, string?];
 
 /**
@@ -97,14 +92,17 @@ export interface GroupData extends FirebaseData {
 	spots?: number;
 	/** Schedule for each day of the week */
 	schedule?: tWeeklySchedule;
-	teachers?: string[];
+	teachersRefs?: DocumentReference<TeacherData>[];
 	/**
 	 * Activity name.
 	 * @example "CLASE TEORICA 2015162 (2015162)"
 	 */
 	activity?: string;
-	availableSpots?: number;
 	classrooms?: string[];
+	/** Related course code */
+	courseCode?: string;
+	/** Related course name */
+	courseName?: string;
 	/**
 	 * Academic period start date
 	 */
@@ -113,6 +111,8 @@ export interface GroupData extends FirebaseData {
 	 * Academic period end date
 	 */
 	periodEndAt?: Timestamp;
+	/** @automation Remaining spots. */
+	availableSpots?: number;
 	/** @automated Last scrape date */
 	scrapedAt?: Timestamp;
 }

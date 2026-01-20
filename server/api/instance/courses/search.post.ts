@@ -1,4 +1,5 @@
 import { type CollectionReference, FieldValue, Filter, type Query } from "firebase-admin/firestore";
+import { createHash } from "node:crypto";
 
 import { defineConditionallyCachedEventHandler } from "@open-xamu-co/firebase-nuxt/server/cache";
 import { apiLogger } from "@open-xamu-co/firebase-nuxt/server/firebase";
@@ -21,6 +22,7 @@ import type {
 	eSIATypology,
 } from "~~/functions/src/types/SIA";
 import { getQueryString } from "~~/server/utils/params";
+import { Cyrb53 } from "~/utils/firestore";
 
 /**
  * Search for courses by query params
@@ -29,9 +31,9 @@ import { getQueryString } from "~~/server/utils/params";
  * @see https://es.stackoverflow.com/questions/316170/c%c3%b3mo-hacer-una-consulta-del-tipo-like-en-firebase
  */
 export default defineConditionallyCachedEventHandler(async function (event) {
-	const { currentInstanceRef } = event.context;
-	const Allow = "GET,HEAD";
-	const scrapedAt = new Date();
+	const storage = useStorage("cache");
+	const { currentInstanceRef, currentInstanceHost } = event.context;
+	const Allow = "POST,HEAD";
 
 	try {
 		// Override CORS headers
@@ -41,8 +43,8 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 			"Content-Type": "application/json",
 		});
 
-		// Only GET, HEAD & OPTIONS are allowed
-		if (!["GET", "HEAD", "OPTIONS"].includes(event.method?.toUpperCase())) {
+		// Only POST, HEAD & OPTIONS are allowed
+		if (!["POST", "HEAD", "OPTIONS"].includes(event.method?.toUpperCase())) {
 			throw createError({ statusCode: 405, statusMessage: "Unsupported method" });
 		} else if (event.method?.toUpperCase() === "OPTIONS") {
 			// Options only needs allow headers
@@ -71,7 +73,16 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 
 		let query: Query<CourseData> = currentInstanceRef.collection("courses").orderBy("name");
 
-		debugFirebaseServer(event, "api:courses:search", { name, code, program, typology, page });
+		debugFirebaseServer(event, "api:courses:search", {
+			name,
+			code,
+			level,
+			place,
+			faculty,
+			program,
+			typology,
+			page,
+		});
 
 		// Bypass body for HEAD requests
 		// Since we always return an array or an object, we can just return 200
@@ -86,12 +97,21 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 		if (code) query = query.where("code", "==", code);
 		else if (name) {
 			// Search by name instead
-			const soundex = getWords(name).map(soundexEs).join(" ");
+			const soundex = soundexEs(getWords(name).join(""));
 
 			if (!soundex) return null;
 			if (level) query = query.where("level", "==", level); // where level equals
 			if (place) query = query.where("place", "==", place); // where place equals
-			if (faculty) query = query.where("faculty", "==", faculty); // where faculty equals
+			// if (faculty) {
+			// 	// where faculty equals, 6 indexes
+			// 	query = query.where(
+			// 		Filter.or(
+			// 			Filter.where("facultyIndexes.0", "==", faculty),
+			// 			Filter.where("facultyIndexes.1", "==", faculty),
+			// 			Filter.where("facultyIndexes.2", "==", faculty),
+			// 		)
+			// 	);
+			// }
 			if (program) {
 				// where program equals, 6 indexes
 				query = query.where(
@@ -123,10 +143,19 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 			currentInstanceRef.collection("courses");
 		const payload: iCoursesPayload = { level, place, faculty, program, typology };
 
-		// Fetch from SIA, do not await
-		getCoursesLinks(event, payload).then((links) => {
-			// Index scraped courses, do not await
-			Promise.all(
+		// Check if already scraped
+		const cacheValues = [level, place, faculty, program, typology];
+		const cacheHash = createHash("sha256").update(cacheValues.join(",")).digest("hex");
+		const cacheKey = `nitro:functions:getCoursesLinks:${currentInstanceHost}:${cacheHash}.json`;
+		const cachedLinks = await storage.getItem(cacheKey);
+
+		// Fetch course links from SIA if not cached
+		// Index courses before returning search
+		if (!cachedLinks) {
+			const links = await getCoursesLinks(event, payload);
+
+			// Index scraped courses
+			await Promise.all(
 				links.map(async (link) => {
 					// Skip if missing identifier data
 					if (!link.code || !link.credits || !link.name || !link.typology) return;
@@ -134,6 +163,7 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 					const { typology: linkTypology, ...linkData } = link;
 					const id = Cyrb53([link.code]); // Generate deduped course UID
 
+					// Set course, createdAt is required for queries
 					return coursesRef.doc(String(id)).set(
 						{
 							...linkData,
@@ -143,14 +173,14 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 							place,
 							programs: FieldValue.arrayUnion(program),
 							faculties: FieldValue.arrayUnion(faculty),
-							scrapedAt,
 							scrapedWith: [level, place, faculty, program, linkTypology],
+							createdAt: FieldValue.serverTimestamp(),
 						},
 						{ merge: true }
 					);
 				})
 			);
-		});
+		}
 
 		// order at last
 		query = getOrderedQuery(event, query);

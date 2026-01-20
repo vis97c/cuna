@@ -66,14 +66,16 @@
 											:el="XamuBaseAction"
 											class="x-class --flx-center --flx --p-5 --gap-5 --txtSize-xs"
 											:disabled="highlight && highlight !== group.courseCode"
-											:to="`/cursos/${getDocumentId(group.courseId)}`"
+											:to="`/cursos/${getCourseId(group)}`"
 											:title="`${getHour(schedule.startsAt)} a ${getHour(schedule.startsAt + group.duration)}`"
 											button
 										>
 											<span class="--txtWrap --txtWeight --txtAlign-center">
 												{{ group.courseName }}
 											</span>
-											<span class="--txtAlign-center">{{ group.name }}</span>
+											<span class="--txtAlign-center">
+												{{ getShortName(group.name) }}
+											</span>
 										</XamuBaseBox>
 									</div>
 								</li>
@@ -88,20 +90,19 @@
 
 <script setup lang="ts">
 	import { eColors, eThemeColors } from "@open-xamu-co/ui-common-enums";
-	import { getDocumentId } from "@open-xamu-co/firebase-nuxt/client/resolver";
-
-	import type { EnrolledGroup } from "~~/functions/src/types/entities";
 
 	import { XamuBaseAction } from "#components";
 
+	import type { Group } from "~/utils/types";
+
 	interface ScheduledGroup {
-		groups: (EnrolledGroup & { duration: number; theme: eThemeColors })[];
+		groups: (Group & { duration: number; theme: eThemeColors })[];
 		startsAt: number;
 		duration: number;
 	}
 
 	const props = defineProps<{
-		enrolledGroups: EnrolledGroup[];
+		enrolledGroups: Group[];
 		/**
 		 * Course code to highlight
 		 */
@@ -164,6 +165,18 @@
 		const ampm = hour > 6 ? "pm" : "am";
 
 		return newHour + ampm;
+	}
+
+	function getCourseId(group: Group) {
+		const [, , , courseId] = group.id?.split("/") || [];
+
+		return courseId;
+	}
+
+	function getShortName(name?: string) {
+		const [shortName] = name?.split("-") || [];
+
+		return shortName.trim();
 	}
 </script>
 

@@ -1,8 +1,6 @@
-import deburr from "lodash-es/deburr";
-
 import type { InstanceLog, Offender } from "@open-xamu-co/firebase-nuxt/client";
 
-import type { Course, ExtendedInstance, ExtendedInstanceMember, ExtendedUser } from "~/utils/types";
+import type { ExtendedInstance, ExtendedInstanceMember, ExtendedUser } from "~/utils/types";
 import {
 	type uSIAFaculty,
 	type uSIAProgram,
@@ -257,37 +255,4 @@ export function useMapLog({ createdBy, updatedBy, metadata, ...log }: InstanceLo
 	log.updatedBy = updatedBy ? useMapMember(updatedBy) : undefined;
 
 	return { ...log, metadata };
-}
-
-export function useMapCourse({ groups = [], ...course }: Course): Course {
-	const USER = useUserStore();
-	const [, placeOnly] = deburr(USER.place).toLowerCase().replace(" de la", "").split("sede ");
-
-	if (!Array.isArray(groups)) groups = [];
-
-	const thisPlace = groups.some(({ name = "" }) => {
-		const lowerName = deburr(name).toLowerCase();
-
-		return lowerName.includes(placeOnly);
-	});
-	const withPlaces = groups.some(({ name = "" }) => {
-		const lowerName = deburr(name).toLowerCase();
-
-		return lowerName.includes("sede");
-	});
-	const filteredGroups = groups.filter(({ name }) => {
-		const lowerName = deburr(name).toLowerCase();
-
-		if (!USER.withNonRegular && (lowerName.includes("peama") || lowerName.includes("paes"))) {
-			return false;
-		} else if (thisPlace) {
-			return lowerName.includes(placeOnly);
-		} else if (withPlaces) {
-			return lowerName.includes("otras sedes");
-		}
-
-		return true;
-	});
-
-	return { ...course, groups: filteredGroups, spotsCount: useCountSpots(filteredGroups) };
 }

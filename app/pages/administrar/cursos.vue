@@ -6,18 +6,23 @@
 				<p class="--txtSize-lg">Supervisa los cursos de cuna</p>
 			</div>
 		</div>
-		<PaginatedTable
+		<XamuPaginationContentTable
 			:page="coursesPage"
-			url="api:courses"
+			url="api:instance:courses"
 			:map-node="mapCourse"
-			:defaults="{ level: 1 }"
+			:defaults="{ page: true, level: 1 }"
 			:table-props="{
 				childrenName: 'Registros',
 				childrenCountKey: 'logs',
 				deleteNode: useDocumentDelete,
 				properties: [{ value: 'createdBy', alias: 'Creado por' }],
+				modalProps: {
+					invertTheme: true,
+					class: '--txtColor',
+				},
 			}"
-			client
+			label="Cargando cursos..."
+			no-content-message="No hay cursos disponibles"
 		>
 			<template #headActions="{ refreshData }">
 				<XamuActionButtonToggle
@@ -31,17 +36,22 @@
 				</XamuActionButtonToggle>
 			</template>
 			<template #tableChildren="{ show, node }">
-				<PaginatedTable
-					:page="makeCourseLogsPage(node.course)"
-					:url="`api:courses:${getDocumentId(node.course.id)}:logs`"
+				<XamuPaginationContentTable
+					:page="makeCourseLogsPage(node)"
+					:url="`api:courses:${getDocumentId(node.id)}:logs`"
 					:prevent-autoload="!show"
-					:defaults="{ level: 1 }"
+					:defaults="{ page: true, level: 1 }"
 					:table-props="{
 						nested: true,
 						deleteNode: useDocumentDelete,
 						properties: [{ value: 'createdBy', alias: 'Creado por' }],
+						modalProps: {
+							invertTheme: true,
+							class: '--txtColor',
+						},
 					}"
-					client
+					label="Cargando registros..."
+					no-content-message="No hay registros disponibles"
 				>
 					<template #headActions="{ refreshData }">
 						<XamuActionButtonToggle
@@ -54,9 +64,9 @@
 							<XamuIconFa name="rotate-right" regular />
 						</XamuActionButtonToggle>
 					</template>
-				</PaginatedTable>
+				</XamuPaginationContentTable>
 			</template>
-		</PaginatedTable>
+		</XamuPaginationContentTable>
 	</section>
 </template>
 
@@ -81,14 +91,14 @@
 			id: course.id,
 			code: course.code,
 			scrapedAt: course.scrapedAt,
-			updatedBy: course.updatedBy,
+			// updatedBy: course.updatedBy,
 			course,
-			logs: 1,
+			logs: course.logs || 0,
 		};
 	}
 
 	const coursesPage: iGetPage<Course> = (query) => {
-		return useQuery<iPage<Course> | undefined>("/api/instance/courses", { query });
+		return useQuery<iPage<Course> | undefined>("/api/instance/all/courses", { query });
 	};
 
 	function makeCourseLogsPage(course: Course): iGetPage<Course> {

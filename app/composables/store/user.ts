@@ -1,10 +1,17 @@
-import { deleteField, doc, updateDoc, type DocumentReference } from "firebase/firestore";
+import {
+	arrayRemove,
+	arrayUnion,
+	doc,
+	updateDoc,
+	type DocumentReference,
+} from "firebase/firestore";
 
 import type {
 	Course,
 	ExtendedInstanceMember,
 	ExtendedInstanceMemberRef,
 	ExtendedUser,
+	Group,
 } from "~/utils/types";
 import {
 	eSIABogotaFaculty,
@@ -14,7 +21,6 @@ import {
 	type uSIAFaculty,
 	type uSIAProgram,
 } from "~~/functions/src/types/SIA";
-import type { EnrolledGroup } from "~~/functions/src/types/entities";
 
 import type { CookieOptions } from "#app";
 
@@ -81,8 +87,8 @@ export const useUserStore = defineStore("user", () => {
 
 		return `${firstName} ${firstLastName || secondName}`.trim();
 	});
-	const enrolled = computed<Exclude<ExtendedUser["enrolled"], undefined>>(() => {
-		return SESSION.user?.enrolled || {};
+	const enrolled = computed<Group[]>(() => {
+		return SESSION.user?.enrolled || [];
 	});
 
 	// Actions
@@ -120,7 +126,7 @@ export const useUserStore = defineStore("user", () => {
 	function toggleNonRegular(newValue = !withNonRegular.value) {
 		withNonRegular.value = newValue;
 	}
-	function enroll({ name, schedule, teachers, courseId, courseCode, courseName }: EnrolledGroup) {
+	function enroll(group: Group) {
 		const { $clientFirestore } = useNuxtApp();
 
 		if (import.meta.server || !$clientFirestore || !SESSION.token) return;
@@ -129,18 +135,17 @@ export const useUserStore = defineStore("user", () => {
 			$clientFirestore,
 			SESSION.path
 		);
-		const enroll = { name, schedule, teachers, courseId, courseCode, courseName };
+		const groupRef: DocumentReference<Group> = doc($clientFirestore, group.id || "");
 
 		// Update enrolled, do not await
-		updateDoc(memberRef, { [`enrolled.${courseCode}`]: enroll });
+		updateDoc(memberRef, { enrolledRefs: arrayUnion(groupRef) });
+
+		const filteredGroups = enrolled.value.filter(({ id }) => id !== group.id);
 
 		// Hydrate user
-		SESSION.setUser(
-			{ ...SESSION.user, enrolled: { ...SESSION.user?.enrolled, [courseCode]: enroll } },
-			SESSION.token
-		);
+		SESSION.setUser({ ...SESSION.user, enrolled: [...filteredGroups, group] }, SESSION.token);
 	}
-	function unenroll(courseCode: string) {
+	function unenroll(group: Group) {
 		const { $clientFirestore } = useNuxtApp();
 
 		if (import.meta.server || !$clientFirestore || !SESSION.token) return;
@@ -149,13 +154,14 @@ export const useUserStore = defineStore("user", () => {
 			$clientFirestore,
 			SESSION.path
 		);
+		const groupRef: DocumentReference<Group> = doc($clientFirestore, group.id || "");
 
 		// Update enrolled, do not await
-		updateDoc(memberRef, { [`enrolled.${courseCode}`]: deleteField() });
+		updateDoc(memberRef, { enrolledRefs: arrayRemove(groupRef) });
 
 		// Hydrate user
 		SESSION.setUser(
-			{ ...SESSION.user, enrolled: { ...SESSION.user?.enrolled, [courseCode]: undefined } },
+			{ ...SESSION.user, enrolled: enrolled.value.filter(({ id }) => id !== group.id) },
 			SESSION.token
 		);
 	}

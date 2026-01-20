@@ -13,17 +13,17 @@ service cloud.firestore {
     // rol 0: Manager (99% acceso)
     // rol -1: Desarrollador (Acceso total)
   	function getRole(instanceId, uid) {
-    	return uid is string ? get(/databases/$(database)/documents/instances/$(instanceId)/members/$(uid)).data.role : 3;
+    	return uid ? get(/databases/$(database)/documents/instances/$(instanceId)/members/$(uid)).data.role : 3;
     }
     
     // developer.role = -1
-    function canDevelop() {
-    	return getRole("live", request.auth.uid) < 0
+    function canDevelop(instanceId) {
+    	return getRole(instanceId, request.auth.uid) < 0
     }
     
     // admin.role = 0
     function canAdmin(instanceId) {
-      return canDevelop() || getRole(instanceId, request.auth.uid) < 1
+      return canDevelop(instanceId) || getRole(instanceId, request.auth.uid) < 1
     }
     
     // editor.role = 1
@@ -56,75 +56,75 @@ service cloud.firestore {
     
     match /logs/{id} {
     	// lectura explicita, desarrolladores
-      allow read: if canDevelop();
+      allow read: if canDevelop("live");
     	// creacion explicita, cualquiera
       allow create: if true;
       // modificacion granular, desarrolladores hacia arriba
-      allow update: if canDevelop();
-      allow delete: if canDevelop() && resource.data.lock == false;
+      allow update: if canDevelop("live");
+      allow delete: if canDevelop("live") && resource.data.lock == false;
     }
     
     match /offenders/{id} {
     	// lectura explicita, desarrolladores
-      allow read: if canDevelop();
+      allow read: if canDevelop("live");
     	// creacion explicita, cualquiera
       allow create: if true;
       // modificacion granular, desarrolladores hacia arriba
-      allow update: if canDevelop();
-      allow delete: if canDevelop() && resource.data.lock == false;
+      allow update: if canDevelop("live");
+      allow delete: if canDevelop("live") && resource.data.lock == false;
     }
     
     match /users/{id} {
     	// lectura unica, cualquiera
       allow get: if isAuth();
     	// lectura multiple, desarrolladores hacia arriba
-      allow list: if canDevelop();
+      allow list: if canDevelop("live");
       // creacion granular, cualquiera
       allow create: if isAuth();
       // modificacion granular, desarrolladores o propietarios
-      allow update: if canDevelop() || isOwnUser(id);
-      allow delete: if (canDevelop() || isOwnUser(id)) && resource.data.lock == false;
+      allow update: if canDevelop("live") || isOwnUser(id);
+      allow delete: if (canDevelop("live") || isOwnUser(id)) && resource.data.lock == false;
     }
     
     match /instances/{instanceId} {
     	// lectura explicita, cualquiera
       allow read: if true;
       // creacion granular, administradores hacia arriba
-      allow create: if canDevelop();
+      allow create: if canDevelop(instanceId);
       // modificacion granular, administradores hacia arriba
       allow update: if canAdmin(instanceId);
-      allow delete: if canDevelop() && resource.data.lock == false;
+      allow delete: if canDevelop(instanceId) && resource.data.lock == false;
 
-      match /members/{id} {
+      match /members/{memberId} {
         // lectura explicita, moderadores hacia arriba
-        allow read: if canModerate(instanceId) || isOwnUser(id);
+        allow read: if canModerate(instanceId) || isOwnUser(memberId);
         // modificacion granular, administradores hacia arriba
-        allow create: if canAdmin(instanceId) || isOwnUser(id);
+        allow create: if canAdmin(instanceId) || isOwnUser(memberId);
         // administradores no puede modificar desarrolladores
-        allow update: if canAdmin(instanceId) || isOwnUser(id);
-        allow delete: if (canAdmin(instanceId) || isOwnUser(id)) && resource.data.lock == false;
+        allow update: if canAdmin(instanceId) || isOwnUser(memberId);
+        allow delete: if (canAdmin(instanceId) || isOwnUser(memberId)) && resource.data.lock == false;
       }
       
-      match /logs/{id} {
+      match /logs/{logId} {
         // lectura explicita, desarrolladores
-        allow read: if canDevelop();
+        allow read: if canDevelop(instanceId);
         // creacion explicita, cualquiera
         allow create: if true;
         // modificacion granular, desarrolladores hacia arriba
-        allow update: if canDevelop();
-        allow delete: if canDevelop() && resource.data.lock == false;
+        allow update: if canDevelop(instanceId);
+        allow delete: if canDevelop(instanceId) && resource.data.lock == false;
       }
       
-      match /counters/{id} {
+      match /counters/{counterId} {
         // lectura explicita, cualquiera
         allow read: if true;
         // modificacion granular, editores hacia arriba
         allow create: if canEdit(instanceId);
         allow update: if canEdit(instanceId);
-        allow delete: if canDevelop() && resource.data.lock == false;
+        allow delete: if canDevelop(instanceId) && resource.data.lock == false;
       }
       
-      match /teachers/{id} {
+      match /teachers/{teacherId} {
         // lectura explicita, cualquiera
         allow read: if true;
         // modificacion granular, usuarios hacia arriba
@@ -133,16 +133,29 @@ service cloud.firestore {
         allow delete: if canModerate(instanceId);
       }
       
-      match /courses/{id} {
+      match /courses/{courseId} {
         // lectura explicita, cualquiera
         allow read: if true;
         // modificacion granular, usuarios hacia arriba
         allow create: if canUse(instanceId);
         allow update: if canUse(instanceId);
         allow delete: if canModerate(instanceId);
+
+        match /groups/{groupId} {
+          // lectura explicita, cualquiera
+          allow read: if true;
+          // modificacion granular, usuarios hacia arriba
+          allow create: if canUse(instanceId);
+          allow update: if canUse(instanceId);
+          allow delete: if canModerate(instanceId);
+        }
+
+        // Add more course subcollections rules here
       }
 
-      // Add more instance subcollecion rules here
+      // Add more instance subcollections rules here
     }
+
+    // Add more collections rules here
   }
 }

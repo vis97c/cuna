@@ -15,6 +15,7 @@ import type {
 	InstanceMemberAbuseData,
 } from "~~/functions/src/types/entities";
 import type { ExtendedUser } from "./user";
+import type { Group } from "./group";
 
 /**
  * App instance
@@ -43,6 +44,7 @@ export interface ExtendedInstanceMember
 	extends InstanceMember, FromData<ExtendedInstanceMemberData> {
 	user?: ExtendedUser;
 	rootMember?: ExtendedInstanceMember;
+	enrolled?: Group[];
 }
 /** @input Omit automation */
 export interface ExtendedInstanceMemberRef extends GetRef<ExtendedInstanceMember> {

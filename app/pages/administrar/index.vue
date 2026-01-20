@@ -74,25 +74,6 @@
 				<hr class="--vertical:md" />
 				<div class="flx --flxColumn --flx-start --maxWidth-100:md">
 					<div class="flx --flxColumn --flx-start --gap-none --txtColor">
-						<h4>Añadir</h4>
-						<p class="--txtSize-xs">Utilizar herramienta</p>
-					</div>
-					<div class="scroll --horizontal --always">
-						<div class="flx --flxRow --flx-start --width-max --minWidth-100">
-							<ModalCreateUser v-if="USER.canAdmin" v-slot="{ toggleModal }">
-								<XamuBoxAction
-									:theme="eColors.PRIMARY"
-									icon="user"
-									label="Miembro"
-									@click="toggleModal"
-								/>
-							</ModalCreateUser>
-						</div>
-					</div>
-				</div>
-				<hr class="--vertical:md" />
-				<div class="flx --flxColumn --flx-start --maxWidth-100:md">
-					<div class="flx --flxColumn --flx-start --gap-none --txtColor">
 						<h4>Desarrollo</h4>
 						<p class="--txtSize-xs">Modificar sistema</p>
 					</div>

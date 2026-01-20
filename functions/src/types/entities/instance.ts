@@ -11,7 +11,7 @@ import type {
 import type { eSIALevel, eSIAPlace, eSIATypology } from "../SIA";
 import type { ExtendedUserData } from "./user";
 import type { eMemberRole } from "../../enums";
-import type { EnrolledGroup } from "./group";
+import type { GroupData } from "./course";
 
 export interface ExtendedInstanceDataConfig extends InstanceDataConfig {
 	/** Cuna version */
@@ -158,7 +158,7 @@ export interface ExtendedInstanceMemberData extends InstanceMemberData {
 	/**
 	 * Enrolled courses (codes)
 	 */
-	enrolled?: Record<string, EnrolledGroup>;
+	enrolledRefs?: DocumentReference<GroupData>[];
 	userRef?: DocumentReference<ExtendedUserData>;
 	/** Could be non existent */
 	rootMemberRef?: DocumentReference<ExtendedInstanceMemberData>;

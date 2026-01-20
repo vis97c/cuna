@@ -4,9 +4,9 @@ import { DocumentReference } from "firebase-admin/firestore";
 import type { CachedH3Event, H3Context } from "@open-xamu-co/firebase-nuxt/server";
 import type { iSelectOption } from "@open-xamu-co/ui-common-types";
 
-import type { ExtendedInstanceData } from "~~/functions/src/types/entities";
-import { eSIATypology } from "~~/functions/src/types/SIA";
 import type { ExtendedInstance } from "~/utils/types/entities";
+import type { ExtendedInstanceData, tWeeklySchedule } from "~~/functions/src/types/entities";
+import { eSIATypology } from "~~/functions/src/types/SIA";
 
 export interface ExtendedH3Context extends H3Context {
 	currentInstance?: ExtendedInstance & {
@@ -46,6 +46,18 @@ export interface CourseLink {
 	typology?: eSIATypology;
 	name: string;
 	description: string;
+}
+
+export interface CourseGroupLink {
+	name: string;
+	spots: number;
+	schedule: tWeeklySchedule;
+	teachers: string[];
+	activity: string;
+	classrooms: string[];
+	periodStartAt: string;
+	periodEndAt: string;
+	availableSpots: number;
 }
 
 /**
@@ -117,6 +129,19 @@ export async function getPuppeteer(debug?: boolean) {
 	const page: Page = await browser.newPage();
 
 	/**
+	 * Attempt to close everything
+	 */
+	async function cleanup() {
+		try {
+			await page.close();
+		} catch (err) {
+			console.error(err);
+		}
+
+		await browser.close();
+	}
+
+	/**
 	 * Show puppet page logs
 	 * @see https://stackoverflow.com/a/59919144/3304008
 	 */
@@ -131,5 +156,5 @@ export async function getPuppeteer(debug?: boolean) {
 			);
 	}
 
-	return { browser, page };
+	return { browser, page, cleanup };
 }

@@ -2,7 +2,7 @@ import { region } from "firebase-functions/v1";
 import { beforeUserCreated, HttpsError } from "firebase-functions/v2/identity";
 import { getAuth } from "firebase-admin/auth";
 
-import { onCreated, onDelete, onUpdated } from "@open-xamu-co/firebase-nuxt/functions/event";
+import { onCreated, onDeleted, onUpdated } from "@open-xamu-co/firebase-nuxt/functions/event";
 import { getFirebase } from "@open-xamu-co/firebase-nuxt/functions/firebase";
 import { makeFunctionsLogger } from "@open-xamu-co/firebase-nuxt/functions/logger";
 
@@ -35,25 +35,28 @@ export const onUpdatedUser = onUpdated<ExtendedUserData>("users");
  * @docType user
  * @event deleted
  */
-export const onDeletedUser = onDelete<ExtendedUserData>("users", async (deletedDoc, { logger }) => {
-	try {
-		const { uid = "", instancesRefs = [] } = deletedDoc.data();
+export const onDeletedUser = onDeleted<ExtendedUserData>(
+	"users",
+	async (deletedDoc, { logger }) => {
+		try {
+			const { uid = "", instancesRefs = [] } = deletedDoc.data();
 
-		// Remove member from all instances
-		// TODO:Remove or reassign owned instances
-		await Promise.all(
-			instancesRefs.map((instanceRef) => {
-				return instanceRef.collection("members").doc(uid).delete();
-			})
-		);
+			// Remove member from all instances
+			// TODO:Remove or reassign owned instances
+			await Promise.all(
+				instancesRefs.map((instanceRef) => {
+					return instanceRef.collection("members").doc(uid).delete();
+				})
+			);
 
-		return getAuth().deleteUser(uid);
-	} catch (err) {
-		logger("functions:users:onDeletedUser", err);
+			return getAuth().deleteUser(uid);
+		} catch (err) {
+			logger("functions:users:onDeletedUser", err);
 
-		throw err;
+			throw err;
+		}
 	}
-});
+);
 /**
  * Register aditional user data on firestore
  *

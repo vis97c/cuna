@@ -16,13 +16,13 @@ export * from "./instances.js";
  */
 export const onCreatedLog = onCreated<LogData>("logs", (createdDoc) => {
 	const { firebaseFirestore } = getFirebase("onCreatedLog");
-	const { internal, ...log } = createdDoc.data();
+	const { internal, metadata, ...log } = createdDoc.data();
 
 	if (internal) return;
 
 	try {
-		// Attempt to log offender
-		offenderLogger(firebaseFirestore, createdDoc.ref, log.metadata);
+		// Attempt to log offender, do not await
+		offenderLogger(firebaseFirestore, createdDoc.ref, metadata);
 	} catch (err) {
 		const logsRef = firebaseFirestore.collection("logs");
 
