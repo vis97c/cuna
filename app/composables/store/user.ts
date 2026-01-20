@@ -98,7 +98,9 @@ export const useUserStore = defineStore("user", () => {
 		},
 	});
 
-	// Actions
+	// Action overrides
+	// Override unsetSession to also reset user preferences
+	// Provide auth from client context
 	function unsetSession(expiredToken = false) {
 		SESSION.unsetSession(expiredToken);
 
@@ -110,6 +112,18 @@ export const useUserStore = defineStore("user", () => {
 		lastProgramSearch.value = eSIAScienceBogotaProgram.CC;
 		withNonRegular.value = false;
 	}
+	function logout() {
+		const { $clientAuth } = useNuxtApp();
+
+		return SESSION.logout($clientAuth, unsetSession);
+	}
+	function remove() {
+		const { $clientAuth } = useNuxtApp();
+
+		return SESSION.remove($clientAuth);
+	}
+
+	// Actions
 	function trackCourse(course: Course) {
 		if (!course.code || track.value.includes(course.code)) return;
 
@@ -180,8 +194,6 @@ export const useUserStore = defineStore("user", () => {
 			(ExtendedUser & Omit<ExtendedInstanceMember, "user">) | undefined
 		>,
 		setUser: SESSION.setUser,
-		logout: SESSION.logout,
-		remove: SESSION.remove,
 		// User
 		track,
 		level,
@@ -196,8 +208,11 @@ export const useUserStore = defineStore("user", () => {
 		canDevelop,
 		userName,
 		enrolled,
-		// User actions
+		// User overrides
 		unsetSession,
+		logout,
+		remove,
+		// User actions
 		trackCourse,
 		untrackCourse,
 		setLastSearch,

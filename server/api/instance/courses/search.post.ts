@@ -32,7 +32,7 @@ import { Cyrb53 } from "~/utils/firestore";
  */
 export default defineConditionallyCachedEventHandler(async function (event) {
 	const storage = useStorage("cache");
-	const { currentInstanceRef, currentInstanceHost } = event.context;
+	const { currentAuth, currentInstanceRef, currentInstanceHost } = event.context;
 	const Allow = "POST,HEAD";
 
 	try {
@@ -157,7 +157,8 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 		// Fetch course links from SIA if not cached
 		// Index courses before returning search
 		try {
-			if (!cachedLinks) {
+			// Only index if user is authenticated (Prevent abusive calls)
+			if (!cachedLinks && currentAuth) {
 				const links = await getCoursesLinks(event, payload);
 
 				// Index scraped courses

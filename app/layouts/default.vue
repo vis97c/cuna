@@ -150,7 +150,7 @@
 				</ul>
 			</nav>
 			<main class="x-main-inner">
-				<div v-if="CUNA.maintenance" class="view">
+				<div v-if="CUNA.maintenance && !USER.canModerate && !isLoginPage" class="view">
 					<div class="view-item --flx-center --minHeightVh-100 --bgColor-light">
 						<div class="holder flx --flxColumn --flx-center">
 							<div class="txt --txtAlign-center --width-100">
@@ -191,8 +191,10 @@
 	const CUNA = useCunaStore();
 	const INSTANCE = useInstanceStore();
 	const USER = useUserStore();
+	const route = useRoute();
 
-	const enrolledCount = computed(() => Object.keys(USER.enrolled).length);
+	const enrolledCount = computed(() => USER.enrolled.length);
+	const isLoginPage = computed(() => route.path === "/ingresar");
 </script>
 
 <style lang="scss">
