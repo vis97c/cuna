@@ -14,6 +14,15 @@ Este proyecto usa [Nuxt3](https://nuxt.com/) y [firebase](https://firebase.googl
 
 Para usar el servidor de desarrollo HTTPS, consulta: https://stackoverflow.com/a/57895543
 
+Es necesario autorizar manualmente el [IAM para App Hosting](https://stackoverflow.com/questions/79473624/firebase-app-hosting-unable-to-retrieve-secrets-from-cloud-secret-manager)
+
+```bash
+# Reemplaza secretName, backendName y userEmail
+firebase apphosting:secrets:grantaccess secretName --backend backendName
+# También para emulación
+firebase apphosting:secrets:grantaccess secretName --emails userEmail
+```
+
 **Opcional**: Si lo deseas, haz uso de [Terraform](https://www.terraform.io/) para configurar tu propia instancia de firebase. Ver [configuracion](#terraform).
 
 ### Variables de entorno

@@ -1,12 +1,12 @@
 <template>
 	<XamuActionButtonToggle
-		v-if="props.value.schedule?.some((day) => day)"
-		:key="props.value.name"
+		v-if="props.node?.schedule?.some((day) => day)"
+		:key="props.node.name"
 		:theme="enrolled ? eColors.SUCCESS : eColors.SECONDARY"
 		:tooltip="enrolled ? 'Quitar del horario' : 'Añadir al horario'"
 		:active="enrolled"
 		round
-		@click="enrolled = !enrolled"
+		@click="() => (enrolled = !enrolled)"
 	>
 		<XamuIconFa name="question" />
 		<XamuIconFa name="check" />
@@ -16,7 +16,7 @@
 <script setup lang="ts">
 	import { eColors } from "@open-xamu-co/ui-common-enums";
 
-	import type { EnrolledGroup } from "~~/functions/src/types/entities";
+	import type { Group } from "~/utils/types";
 
 	/**
 	 * Enroll group
@@ -25,21 +25,22 @@
 	 */
 
 	const props = defineProps<{
-		value: EnrolledGroup;
+		value: any;
+		node?: Group;
 	}>();
 
 	const USER = useUserStore();
 
 	const enrolled = computed({
 		get() {
-			const { courseCode, name } = props.value;
-
-			return USER.enrolled[courseCode]?.name === name;
+			return USER.enrolled.some(({ id }) => id === props.node?.id);
 		},
 		set(enroll) {
-			if (enroll) return USER.enroll(props.value);
+			if (!props.node) return;
 
-			USER.unenroll(props.value.courseCode);
+			if (enroll) return USER.enroll(props.node);
+
+			USER.unenroll(props.node);
 		},
 	});
 </script>

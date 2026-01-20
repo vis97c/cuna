@@ -176,7 +176,7 @@ function setupAuth(instance: ExtendedInstance) {
 		const memberSnapshot = await getDoc(memberRef);
 		// Member role required before any redirect
 		const memberData = memberSnapshot.data() || {};
-		let user: ExtendedUser = { name, isAnonymous, uid, email, photoURL };
+		let user: ExtendedUser = { name, isAnonymous, uid, email, photoURL, id: memberRef.path };
 
 		// Set session, flatten member data
 		USER.setUser({ ...user, role: memberData.role ?? 3 }, token);
@@ -191,7 +191,7 @@ function setupAuth(instance: ExtendedInstance) {
 				// Smaller number means higher access role
 				const role = Math.min(rootMemberData?.role ?? 3, memberData?.role ?? 3);
 
-				user = { ...userData, uid, email, photoURL };
+				user = { ...userData, uid, email, photoURL, id: memberRef.path };
 
 				// Sync firestore user & member.
 				if (!memberSnapshot.exists() || user.email !== email || role !== memberData?.role) {

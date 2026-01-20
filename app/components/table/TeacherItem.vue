@@ -1,35 +1,36 @@
 <template>
 	<div class="flx --flxRow --flx-between-center --flx">
-		<XamuActionLink
-			v-if="!unassigned && teacherData.losEstudiantesSlug"
-			:theme="estudiantesTheme"
-			tooltip="Ver en los estudiantes"
-			:href="`${losEstudiantesProfessors}/${teacherData.losEstudiantesSlug}?from=cuna.com.co`"
-			:data-id="teacherData.id"
-		>
-			<XamuIconFa name="hand-fist" />
-			<span class="">{{ teacherData.name }}</span>
-		</XamuActionLink>
-		<span v-else :data-id="teacherData.id">{{ teacherData.name }}</span>
 		<XamuModal
-			v-if="!unassigned && teacherData.id && USER.canModerate"
 			class="--txtColor"
 			title="Editar slug de los estudiantes"
 			:theme="estudiantesTheme"
 			:save-button="{ title: 'Editar slug' }"
+			:hide="unassigned || !teacherData.id || !USER.canModerate"
 			invert-theme
 			@close="() => closeAddSlug()"
 			@save="addSlug"
 		>
 			<template #toggle="{ toggleModal }">
-				<XamuActionButton
+				<XamuActionLink
+					v-if="!unassigned && teacherData.id && USER.canModerate"
 					:theme="estudiantesTheme"
-					tooltip="¿Editar slug de los estudiantes?"
+					tooltip="Ver detalles del docente"
 					@click="toggleModal"
 				>
 					<XamuIconFa name="hand-fist" />
-					<span>Editar slug</span>
-				</XamuActionButton>
+					<span>{{ teacherData.name }}</span>
+				</XamuActionLink>
+				<XamuActionLink
+					v-else-if="teacherData.losEstudiantesSlug"
+					:theme="estudiantesTheme"
+					tooltip="Ver en los estudiantes"
+					:href="`${losEstudiantesProfessors}/${teacherData.losEstudiantesSlug}?from=cuna.com.co`"
+					:data-id="teacherData.id"
+				>
+					<XamuIconFa name="hand-fist" />
+					<span>{{ teacherData.name }}</span>
+				</XamuActionLink>
+				<span v-else :data-id="teacherData.id">{{ teacherData.name }}</span>
 			</template>
 			<template #default="{ invertedTheme }">
 				<div class="--maxWidth-440">
@@ -40,6 +41,22 @@
 						title="Actualizar slug"
 					/>
 				</div>
+			</template>
+			<template #footer-actions="{ save }">
+				<XamuActionButtonToggle
+					:theme="estudiantesTheme"
+					tooltip="Ver en los estudiantes"
+					tooltip-position="right"
+					:href="`${losEstudiantesProfessors}/${teacherData.losEstudiantesSlug}?from=cuna.com.co`"
+					:data-id="teacherData.id"
+					round
+				>
+					<XamuIconFa name="hand-fist" />
+					<XamuIconFa name="hand-fist" />
+				</XamuActionButtonToggle>
+				<XamuActionButton :theme="estudiantesTheme" @click="save">
+					Editar slug
+				</XamuActionButton>
 			</template>
 		</XamuModal>
 	</div>

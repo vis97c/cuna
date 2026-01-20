@@ -113,10 +113,6 @@
           "arrayConfig": "CONTAINS"
         },
         {
-          "fieldPath": "faculty",
-          "order": "ASCENDING"
-        },
-        {
           "fieldPath": "level",
           "order": "ASCENDING"
         },
@@ -150,10 +146,6 @@
         {
           "fieldPath": "indexes",
           "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "faculty",
-          "order": "ASCENDING"
         },
         {
           "fieldPath": "level",
@@ -191,10 +183,6 @@
           "arrayConfig": "CONTAINS"
         },
         {
-          "fieldPath": "faculty",
-          "order": "ASCENDING"
-        },
-        {
           "fieldPath": "level",
           "order": "ASCENDING"
         },
@@ -230,10 +218,6 @@
           "arrayConfig": "CONTAINS"
         },
         {
-          "fieldPath": "faculty",
-          "order": "ASCENDING"
-        },
-        {
           "fieldPath": "level",
           "order": "ASCENDING"
         },
@@ -267,10 +251,6 @@
         {
           "fieldPath": "indexes",
           "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "faculty",
-          "order": "ASCENDING"
         },
         {
           "fieldPath": "level",
@@ -308,10 +288,6 @@
           "arrayConfig": "CONTAINS"
         },
         {
-          "fieldPath": "faculty",
-          "order": "ASCENDING"
-        },
-        {
           "fieldPath": "place",
           "order": "ASCENDING"
         },
@@ -341,10 +317,6 @@
         {
           "fieldPath": "indexes",
           "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "faculty",
-          "order": "ASCENDING"
         },
         {
           "fieldPath": "place",
@@ -382,10 +354,6 @@
           "arrayConfig": "CONTAINS"
         },
         {
-          "fieldPath": "faculty",
-          "order": "ASCENDING"
-        },
-        {
           "fieldPath": "place",
           "order": "ASCENDING"
         },
@@ -419,10 +387,6 @@
         {
           "fieldPath": "indexes",
           "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "faculty",
-          "order": "ASCENDING"
         },
         {
           "fieldPath": "place",
@@ -460,10 +424,6 @@
           "arrayConfig": "CONTAINS"
         },
         {
-          "fieldPath": "faculty",
-          "order": "ASCENDING"
-        },
-        {
           "fieldPath": "place",
           "order": "ASCENDING"
         },
@@ -493,10 +453,6 @@
         {
           "fieldPath": "indexes",
           "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "faculty",
-          "order": "ASCENDING"
         },
         {
           "fieldPath": "place",
@@ -534,10 +490,6 @@
           "arrayConfig": "CONTAINS"
         },
         {
-          "fieldPath": "faculty",
-          "order": "ASCENDING"
-        },
-        {
           "fieldPath": "place",
           "order": "ASCENDING"
         },
@@ -571,10 +523,6 @@
         {
           "fieldPath": "indexes",
           "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "faculty",
-          "order": "ASCENDING"
         },
         {
           "fieldPath": "place",
@@ -612,10 +560,6 @@
           "arrayConfig": "CONTAINS"
         },
         {
-          "fieldPath": "faculty",
-          "order": "ASCENDING"
-        },
-        {
           "fieldPath": "place",
           "order": "ASCENDING"
         },
@@ -645,10 +589,6 @@
         {
           "fieldPath": "indexes",
           "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "faculty",
-          "order": "ASCENDING"
         },
         {
           "fieldPath": "place",
@@ -686,10 +626,6 @@
           "arrayConfig": "CONTAINS"
         },
         {
-          "fieldPath": "faculty",
-          "order": "ASCENDING"
-        },
-        {
           "fieldPath": "place",
           "order": "ASCENDING"
         },
@@ -723,10 +659,6 @@
         {
           "fieldPath": "indexes",
           "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "faculty",
-          "order": "ASCENDING"
         },
         {
           "fieldPath": "place",
@@ -764,10 +696,6 @@
           "arrayConfig": "CONTAINS"
         },
         {
-          "fieldPath": "faculty",
-          "order": "ASCENDING"
-        },
-        {
           "fieldPath": "place",
           "order": "ASCENDING"
         },
@@ -797,10 +725,6 @@
         {
           "fieldPath": "indexes",
           "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "faculty",
-          "order": "ASCENDING"
         },
         {
           "fieldPath": "place",
@@ -838,10 +762,6 @@
           "arrayConfig": "CONTAINS"
         },
         {
-          "fieldPath": "faculty",
-          "order": "ASCENDING"
-        },
-        {
           "fieldPath": "place",
           "order": "ASCENDING"
         },
@@ -875,10 +795,6 @@
         {
           "fieldPath": "indexes",
           "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "faculty",
-          "order": "ASCENDING"
         },
         {
           "fieldPath": "place",
@@ -916,10 +832,6 @@
           "arrayConfig": "CONTAINS"
         },
         {
-          "fieldPath": "faculty",
-          "order": "ASCENDING"
-        },
-        {
           "fieldPath": "place",
           "order": "ASCENDING"
         },
@@ -949,10 +861,6 @@
         {
           "fieldPath": "indexes",
           "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "faculty",
-          "order": "ASCENDING"
         },
         {
           "fieldPath": "place",
@@ -990,10 +898,6 @@
           "arrayConfig": "CONTAINS"
         },
         {
-          "fieldPath": "faculty",
-          "order": "ASCENDING"
-        },
-        {
           "fieldPath": "place",
           "order": "ASCENDING"
         },
@@ -1029,10 +933,6 @@
           "arrayConfig": "CONTAINS"
         },
         {
-          "fieldPath": "faculty",
-          "order": "ASCENDING"
-        },
-        {
           "fieldPath": "place",
           "order": "ASCENDING"
         },
@@ -1066,10 +966,6 @@
         {
           "fieldPath": "indexes",
           "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "faculty",
-          "order": "ASCENDING"
         },
         {
           "fieldPath": "place",
@@ -1101,10 +997,6 @@
         {
           "fieldPath": "indexes",
           "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "faculty",
-          "order": "ASCENDING"
         },
         {
           "fieldPath": "place",
@@ -1142,10 +1034,6 @@
           "arrayConfig": "CONTAINS"
         },
         {
-          "fieldPath": "faculty",
-          "order": "ASCENDING"
-        },
-        {
           "fieldPath": "place",
           "order": "ASCENDING"
         },
@@ -1181,10 +1069,6 @@
           "arrayConfig": "CONTAINS"
         },
         {
-          "fieldPath": "faculty",
-          "order": "ASCENDING"
-        },
-        {
           "fieldPath": "place",
           "order": "ASCENDING"
         },
@@ -1202,6 +1086,25 @@
         },
         {
           "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "groups",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "periodEndAt",
           "order": "DESCENDING"
         },
         {
@@ -1221,6 +1124,25 @@
         },
         {
           "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "members",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "role",
           "order": "DESCENDING"
         },
         {

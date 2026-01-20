@@ -73,32 +73,146 @@
 						información de cupos actualizada, así como otras novedades.
 					</p>
 				</div>
-				<SearchCourse />
-				<div v-if="USER.token" class="flx --flxColumn --flx-center --width-100">
-					<div class="txt">
-						<h3 class="--txtColor-dark5">Otros recursos</h3>
+				<ClientOnly>
+					<template #fallback>Cargando buscador...</template>
+					<XamuBaseBox
+						class="x-box flx --flxColumn --flx-start-stretch --width-100 --maxWidth-800 --p-20:md"
+						transparent
+					>
+						<form
+							class="flx --flxRow --flx-start-center --gap-5 --width-100"
+							@submit.prevent="emittedRefresh"
+						>
+							<div class="--flx">
+								<XamuInputText
+									id="search"
+									v-model="search"
+									placeholder="Nombre o codigo del curso..."
+									autocomplete="off"
+									icon="magnifying-glass"
+									:size="eSizes.LG"
+									class="--minWidth-100"
+								/>
+								<XamuActionLink
+									v-if="search"
+									class="x-search-reset"
+									@click="() => (search = '')"
+								>
+									<XamuIconFa name="xmark" :size="20" />
+								</XamuActionLink>
+							</div>
+						</form>
+						<div
+							class="flx --flxRow-wrap --flx-start-center --gap-5 --txtSize-xs --width-100"
+						>
+							<template v-if="!isCodeSearch">
+								<div class="flx --flxColumn --flx-start --flx --gap-5">
+									<p class="">Facultad</p>
+									<XamuSelect
+										id="faculty"
+										v-model="selectedFaculty"
+										class="--width-180 --minWidth-100"
+										:options="faculties"
+										:size="eSizes.XS"
+										required
+									/>
+								</div>
+								<div class="flx --flxColumn --flx-start --flx --gap-5">
+									<p class="">Programa</p>
+									<XamuSelect
+										id="program"
+										v-model="selectedProgram"
+										class="--width-180 --minWidth-100"
+										:options="programs"
+										:size="eSizes.XS"
+										:disabled="!selectedFaculty || !programs.length"
+										required
+									/>
+								</div>
+							</template>
+							<div
+								v-if="!CUNA.config?.explorerV2MaintenanceTillAt"
+								class="flx --flxColumn --flx-start --flx --gap-5"
+							>
+								<p class="">Tipología</p>
+								<XamuSelect
+									id="typology"
+									v-model="selectedTypology"
+									class="--width-180 --minWidth-100"
+									:options="typologies"
+									:size="eSizes.XS"
+								/>
+							</div>
+						</div>
+					</XamuBaseBox>
+					<XamuPaginationContent
+						v-if="search && search.trim().length >= 3"
+						v-slot="{ content }"
+						:page="coursesSearchPage"
+						url="api:instance:courses:search"
+						:defaults="{
+							level: 1,
+							page: true,
+							...values,
+						}"
+						:first="30"
+						:no-content-message="
+							search
+								? `Sin resultados para ${search}`
+								: 'No hay cursos disponibles en este momento. Vuelve más tarde.'
+						"
+						label="Cargando cursos desde el SIA..."
+						with-route
+						client
+						class="flx --flxColumn --flx-start-center --gap-30 --width-100 --maxWidth-800"
+						@refresh="(e) => (emittedRefresh = e)"
+					>
+						<div class="txt">
+							<h3>Resultados de búsqueda</h3>
+						</div>
+						<div class="grd --grdColumns-auto3 --width-100">
+							<ItemCourse
+								v-for="course in content"
+								:key="course.id"
+								:course="course"
+								class="grd-item"
+							/>
+							<XamuBaseBox
+								v-for="i in (3 - (content.length % 3)) % 3"
+								:key="i"
+								class="x-course-placeholder --width-100 --height-100"
+								hidden=":md-inv"
+								disabled
+								button
+							/>
+						</div>
+					</XamuPaginationContent>
+					<div v-else-if="USER.token" class="flx --flxColumn --flx-center --width-100">
+						<div class="txt">
+							<h3 class="--txtColor-dark5">Otros recursos</h3>
+						</div>
+						<ul class="x-items flx --flxRow --flx-center">
+							<li class="x-fit">
+								<XamuBoxAction
+									:theme="calculadoraTheme"
+									to="https://calc-unal.vercel.app?from=cuna.com.co"
+									icon="calculator"
+									label="Calculadora de PAPPI"
+									target="_blank"
+								/>
+							</li>
+							<li class="x-fit">
+								<XamuBoxAction
+									:theme="estudiantesTheme"
+									to="https://losestudiantes.com/universidad-nacional?from=cuna.com.co"
+									icon="hand-fist"
+									label="Los estudiantes"
+									target="_blank"
+								/>
+							</li>
+						</ul>
 					</div>
-					<ul class="x-items flx --flxRow --flx-center">
-						<li class="x-fit">
-							<XamuBoxAction
-								:theme="calculadoraTheme"
-								to="https://calc-unal.vercel.app?from=cuna.com.co"
-								icon="calculator"
-								label="Calculadora de PAPPI"
-								target="_blank"
-							/>
-						</li>
-						<li class="x-fit">
-							<XamuBoxAction
-								:theme="estudiantesTheme"
-								to="https://losestudiantes.com/universidad-nacional?from=cuna.com.co"
-								icon="hand-fist"
-								label="Los estudiantes"
-								target="_blank"
-							/>
-						</li>
-					</ul>
-				</div>
+				</ClientOnly>
 				<div class="txt --txtAlign-center --txtSize-xs --txtColor-dark5 --minWidth-100">
 					<div v-if="USER.token" class="">
 						<p>
@@ -118,7 +232,16 @@
 </template>
 
 <script setup lang="ts">
-	import { eColors } from "@open-xamu-co/ui-common-enums";
+	import type { iGetPage, iPage } from "@open-xamu-co/ui-common-types";
+	import { eSizes, eColors } from "@open-xamu-co/ui-common-enums";
+
+	import type { Course } from "~/utils/types";
+	import type {
+		CourseValues,
+		CourseValuesWithCode,
+		CourseValuesWithProgram,
+		PartialCourseValues,
+	} from "~/utils/types/values";
 
 	/**
 	 * Landing page
@@ -133,9 +256,13 @@
 	const CUNA = useCunaStore();
 	const USER = useUserStore();
 	const route = useRoute();
+	const { cache } = useRuntimeConfig().public;
 
 	const calculadoraTheme = "calculadora" as any;
 	const estudiantesTheme = "estudiantes" as any;
+
+	const search = ref<string>();
+	const emittedRefresh = ref<() => void>();
 
 	const SIAMaintenanceTillAt = computed(() => {
 		const date = new Date(CUNA.config?.siaMaintenanceTillAt || new Date());
@@ -152,11 +279,71 @@
 
 		return useTimeAgo(date);
 	});
+	const selectedLevel = computed({
+		get: () => USER.level,
+		set: (value) => {
+			USER.setLevel(value);
+		},
+	});
+	const selectedPlace = computed({
+		get: () => USER.place,
+		set: (value) => {
+			USER.setPlace(value);
+		},
+	});
+	const { selectedFaculty, selectedProgram, faculties, programs } = useCourseProgramOptions(
+		[selectedLevel, selectedPlace, USER.lastFacultySearch, USER.lastProgramSearch],
+		true
+	);
+	const { selectedTypology, typologies } = useCourseTypeOptions();
+	const isCodeSearch = computed<boolean>(() => !!search.value && /^\d/.test(search.value));
+	const values = computed<CourseValues>(() => {
+		const payload: PartialCourseValues = {
+			level: selectedLevel.value,
+			place: selectedPlace.value,
+			typology: selectedTypology.value,
+		};
+
+		const searchValue = (search.value || "").trim();
+
+		if (isCodeSearch.value) return <CourseValuesWithCode>{ ...payload, code: searchValue };
+
+		return <CourseValuesWithProgram>{
+			...payload,
+			name: searchValue,
+			faculty: selectedFaculty.value,
+			program: selectedProgram.value,
+		};
+	});
+
+	const coursesSearchPage: iGetPage<Course> = async (pagination: any) => {
+		// Don't search if metadata is missing
+		if (!pagination?.level || !pagination?.place) return;
+
+		return useCsrfQuery<iPage<Course> | undefined>("/api/instance/courses/search", {
+			method: "POST",
+			query: pagination,
+			headers: { "Cache-Control": cache.none },
+			cache: "reload",
+		});
+	};
 </script>
 
 <style scoped lang="scss">
-	.x-fit .box {
-		aspect-ratio: 4/5;
-		max-width: 8rem;
+	@media only screen {
+		.x-fit .box {
+			aspect-ratio: 4/5;
+			max-width: 8rem;
+		}
+		.x-box {
+			border-radius: 2rem;
+		}
+		.x-search-reset {
+			position: absolute;
+			top: 50%;
+			right: 1rem;
+			transform: translateY(-50%);
+			z-index: 1;
+		}
 	}
 </style>

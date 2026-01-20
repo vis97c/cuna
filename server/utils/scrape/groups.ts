@@ -1,18 +1,27 @@
 import type { ElementHandle, Page } from "puppeteer";
-import { DocumentReference, Timestamp } from "firebase-admin/firestore";
+import { DocumentReference } from "firebase-admin/firestore";
 
 import { TimedPromise } from "@open-xamu-co/firebase-nuxt/server/guards";
 import { apiLogger } from "@open-xamu-co/firebase-nuxt/server/firebase";
 import { getDocumentId } from "@open-xamu-co/firebase-nuxt/client/resolver";
 import { debugFirebaseServer } from "@open-xamu-co/firebase-nuxt/server/firestore";
 
-import type { CourseData, GroupData, tWeeklySchedule } from "~~/functions/src/types/entities";
+import type { CourseData, tWeeklySchedule } from "~~/functions/src/types/entities";
 
-import { getPuppeteer, type ExtendedH3Event } from "./utils";
-import type { iCoursesPayload } from "./courses";
+import { getPuppeteer, type CourseGroupLink, type ExtendedH3Event } from "./utils";
+import {
+	scrapeCoursesHandle,
+	scrapeCoursesWithTypologyHandle,
+	type iCoursesPayload,
+} from "./courses";
 
-function getHTMLElementIds(currentHandle: ElementHandle<Element>) {
-	return currentHandle.evaluate((table) => {
+/**
+ * Get HTML element ids from a table handle
+ * @param handle Table handle
+ * @returns Object with course codes as keys and HTML ids as values
+ */
+function getHTMLElementIds(handle: ElementHandle<Element>) {
+	return handle.evaluate((table) => {
 		const tbody = table?.querySelector("tbody");
 
 		// No courses found
@@ -34,11 +43,11 @@ function getHTMLElementIds(currentHandle: ElementHandle<Element>) {
  *
  * Assume scrapedWith is valid
  */
-export async function getCourseGroupsData(
+export async function scrapeCourseGroupsLinks(
 	event: ExtendedH3Event,
 	page: Page,
 	course: CourseData
-): Promise<{ groups: GroupData[]; errors: Error[] }> {
+): Promise<{ links: CourseGroupLink[]; errors: Error[] }> {
 	const [level, place, faculty, program, typology] = course.scrapedWith || [];
 
 	// Course data is required
@@ -46,25 +55,24 @@ export async function getCourseGroupsData(
 		throw new Error("Missing course data");
 	}
 
-	const payload: iCoursesPayload = { level, place, faculty, program };
+	const payload: iCoursesPayload = { level, place, faculty, program, typology };
 	// Get handle without typology
-	let handle: ElementHandle<Element> = await getCoursesHandle(event, page, payload);
-
+	let handle: ElementHandle<Element> = await scrapeCoursesHandle(event, page, payload);
 	let ids: Record<string, string> = await getHTMLElementIds(handle);
 	let courseHTMLId: string | undefined = ids[course.code];
 
 	// No match found, attempt with typology
-	if (!courseHTMLId) {
-		handle = await getCoursesHandle(event, page, { ...payload, typology });
+	if (!courseHTMLId && typology) {
+		handle = await scrapeCoursesWithTypologyHandle(event, page, payload);
 		ids = await getHTMLElementIds(handle);
 		courseHTMLId = ids[course.code];
 	}
 
 	if (!courseHTMLId) throw new Error("Course not found");
 
-	debugFirebaseServer(event, "getCourseGroupsData", courseHTMLId);
+	debugFirebaseServer(event, "getCourseGroupsLinks", courseHTMLId);
 
-	return TimedPromise<{ groups: GroupData[]; errors: Error[] }>(
+	return TimedPromise<{ links: CourseGroupLink[]; errors: Error[] }>(
 		async function (resolve, _reject) {
 			// Navigate to course
 			await page.click(useHTMLElementId(courseHTMLId));
@@ -74,11 +82,11 @@ export async function getCourseGroupsData(
 				const trimHTML = (el?: Element | null) => (el ? el.innerHTML.trim() : "");
 				const activityH3 = document.querySelector("span[id$=w-titulo] h3");
 				const activity = trimHTML(activityH3) || "Desconocida";
-				const groupElements = document.querySelectorAll("span[id$=pgl14]");
+				const linkElements = document.querySelectorAll("span[id$=pgl14]");
 				const errors: Error[] = [];
 
 				// Map groups
-				const groups: GroupData[] = Array.from(groupElements).map((root) => {
+				const links: CourseGroupLink[] = Array.from(linkElements).map((root) => {
 					const startDateSpan = root.querySelector("span[id$=ot12]");
 					const endDateSpan = root.querySelector("span[id$=ot14]");
 					const teacherSpan = root.querySelector("span[id$=ot8]");
@@ -150,18 +158,18 @@ export async function getCourseGroupsData(
 						classrooms,
 						name: fullName.substring(nameStartAt + 2),
 						teachers: [teacher || "No Informado"],
-						// Nuxt serializable date
-						periodStartAt: new Date(trimHTML(startDateSpan)) as unknown as Timestamp,
-						periodEndAt: new Date(trimHTML(endDateSpan)) as unknown as Timestamp,
+						// Nuxt serializable string date
+						periodStartAt: trimHTML(startDateSpan),
+						periodEndAt: trimHTML(endDateSpan),
 					};
 				});
 
-				return { groups, errors };
+				return { links, errors };
 			});
 
 			resolve(response);
 		},
-		{ timeout: 120 }
+		{ timeout: 1000 * 60 * 2 }
 	);
 }
 
@@ -170,7 +178,7 @@ export async function getCourseGroupsData(
  *
  * @cache 2 minutes
  */
-export const getCourseGroups = defineCachedFunction(
+export const getCourseGroupsLinks = defineCachedFunction(
 	async (event: ExtendedH3Event, courseRef: DocumentReference<CourseData>) => {
 		const { browser, page } = await getPuppeteer();
 
@@ -181,14 +189,14 @@ export const getCourseGroups = defineCachedFunction(
 			if (!course) throw new Error("Course not found");
 
 			// Get groups data
-			const { groups, errors } = await getCourseGroupsData(event, page, course);
+			const { links, errors } = await scrapeCourseGroupsLinks(event, page, course);
 
 			browser.close(); // Cleanup, do not await
 
 			// Log errors if any, do not await
 			errors.forEach((err) => apiLogger(event, `api:courses:[${courseRef.id}]:groups`, err));
 
-			return groups;
+			return links;
 		} catch (error) {
 			browser.close(); // Cleanup, do not await
 			apiLogger(event, `api:courses:[${courseRef.id}]:groups`, error);
@@ -198,7 +206,7 @@ export const getCourseGroups = defineCachedFunction(
 		}
 	},
 	{
-		name: "getCourseGroups",
+		name: "getCourseGroupsLinks",
 		maxAge: 60 * 2, // 2 minutes
 		getKey(event, courseRef) {
 			const { currentInstanceHost } = event.context;

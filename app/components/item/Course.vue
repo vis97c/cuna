@@ -1,33 +1,34 @@
 <template>
 	<XamuBaseBox
 		:el="XamuBaseAction"
-		class="grd-item txt --txtAlign-left --txtSize-sm --gap-5"
+		class="x-course grd-item flx --flxColumn --flx-between-stretch --gap-5 --txtSize-sm --p"
 		title="Ver detalles del curso"
-		:disabled="!course.indexed"
 		:to="`/cursos/${getDocumentId(course.id)}`"
 		button
 	>
-		<p class="--maxWidth-220 ellipsis">{{ course.name }}</p>
-		<div class="txt --txtSize-xs --txtWrap --txtWeight-regular --gap-0 --flx">
-			<p>
-				<b title="Codigo">{{ course.code }}</b>
-				⋅
-				<span title="Creditos">{{ useTCredits(course.credits) }}</span>
-				⋅
-				<span v-if="course.scrapedAt" title="Cupos disponibles">
-					{{ useTSpot(course.spotsCount) }}
-				</span>
-				<span v-else title="Cupos disponibles">Abrir para obtener los cupos</span>
-			</p>
-			<p v-if="course.programs?.length" title="Programas">
-				{{ course.programs.join(", ") }}.
-			</p>
-			<p v-if="course.typologies?.length" title="Tipologías">
-				{{ course.typologies.join(", ") }}.
-			</p>
-		</div>
-		<div v-if="course.indexed" class="flx --flxRow --flx-end-center --width-100">
-			<XamuIconFa name="arrow-right" />
+		<p class="--txtWrap --txtAlign-left" :title="course.name">{{ course.name }}.</p>
+		<div class="flx --flxColumn --flx-start-stretch --gap-5">
+			<div class="txt --txtSize-xs --txtWrap --txtWeight-regular --gap-5 --flx">
+				<p>
+					<b title="Codigo">{{ course.code }}</b>
+					⋅
+					<span title="Creditos">{{ useTCredits(course.credits) }}</span>
+					⋅
+					<span v-if="course.spotsCount ?? false" title="Cupos disponibles">
+						{{ useTSpot(course.spotsCount) }}
+					</span>
+					<span v-else title="Cupos disponibles">?? cupos</span>
+				</p>
+				<p v-if="course.programs?.length" title="Programas">
+					{{ course.programs.join(", ") }}.
+				</p>
+				<p v-if="course.typologies?.length" title="Tipologías">
+					{{ course.typologies.join(", ") }}.
+				</p>
+			</div>
+			<div class="flx --flxRow --flx-end-center --width-100">
+				<XamuIconFa name="arrow-right" />
+			</div>
 		</div>
 	</XamuBaseBox>
 </template>
@@ -46,3 +47,14 @@
 
 	defineProps<{ course: Course }>();
 </script>
+
+<style scoped lang="scss">
+	@media only screen {
+		@layer presets {
+			.x-course {
+				// Square like, but more pleasing to the eye
+				aspect-ratio: 3/2;
+			}
+		}
+	}
+</style>

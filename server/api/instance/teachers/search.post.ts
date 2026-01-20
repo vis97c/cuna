@@ -10,6 +10,7 @@ import {
 } from "@open-xamu-co/firebase-nuxt/server/firestore";
 import { getBoolean } from "@open-xamu-co/firebase-nuxt/server/guards";
 import { getWords, soundexEs } from "@open-xamu-co/firebase-nuxt/functions/search";
+import type { CourseData } from "~~/functions/src/types/entities";
 
 /**
  * Search for teachers by name
@@ -18,7 +19,7 @@ import { getWords, soundexEs } from "@open-xamu-co/firebase-nuxt/functions/searc
  */
 export default defineConditionallyCachedEventHandler(async (event) => {
 	const { currentAuth, currentInstanceRef } = event.context;
-	const Allow = "GET,HEAD";
+	const Allow = "POST,HEAD";
 
 	try {
 		// Override CORS headers
@@ -28,8 +29,8 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			"Content-Type": "application/json",
 		});
 
-		// Only GET, HEAD & OPTIONS are allowed
-		if (!["GET", "HEAD", "OPTIONS"].includes(event.method?.toUpperCase())) {
+		// Only POST, HEAD & OPTIONS are allowed
+		if (!["POST", "HEAD", "OPTIONS"].includes(event.method?.toUpperCase())) {
 			throw createError({ statusCode: 405, statusMessage: "Unsupported method" });
 		} else if (event.method?.toUpperCase() === "OPTIONS") {
 			// Options only needs allow headers
@@ -45,6 +46,8 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		const page = getBoolean(params.page);
 		const name = getQueryString("name", params);
 		const courses = Array.isArray(params.courses) ? params.courses : [params.courses];
+		const coursesRefs: CollectionReference<CourseData> =
+			currentInstanceRef.collection("courses");
 		let query: CollectionReference | Query = currentInstanceRef.collection("teachers");
 
 		debugFirebaseServer(event, "api:teachers", params);
@@ -63,18 +66,23 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 
 		if (name) {
 			// search by name
-			const soundex = getWords(name).map(soundexEs).join(" ");
+			const soundex = soundexEs(getWords(name).join(""));
+
+			if (!soundex) return null;
 
 			query = query.orderBy("name").where("indexes", "array-contains", soundex);
 		} else if (params.courses && courses.length) {
+			const refs = courses.map((id) => coursesRefs.doc(id));
+
 			/**
 			 * limited subset of documents
 			 *
 			 * According to firebase docs, queries are limited to 30 disjuntion operations
 			 * @see https://firebase.google.com/docs/firestore/query-data/queries#limits_on_or_queries
 			 */
-			courses.length = Math.min(30, courses.length);
-			query = query.where("courses", "array-contains-any", courses);
+			refs.length = Math.min(30, refs.length);
+
+			query = query.where("coursesRefs", "array-contains-any", refs);
 		} else return null;
 
 		// order at last

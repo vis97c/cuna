@@ -99,6 +99,18 @@ export default defineNuxtConfig({
 			"/cursos": {
 				redirect: "/",
 			},
+			// Search & scrape SIA courses
+			"/api/instance/courses/search": {
+				csurf: { methodsToProtect: ["POST"] },
+			},
+			// Search & scrape SIA groups
+			"/api/instance/courses/:courseId/groups": {
+				csurf: { methodsToProtect: ["POST"] },
+			},
+			// Search teachers
+			"/api/instance/teachers/search": {
+				csurf: { methodsToProtect: ["POST"] },
+			},
 		},
 		rollupConfig: {
 			external: withResolutions

@@ -1,10 +1,11 @@
-import type { CollectionReference } from "firebase-admin/firestore";
+import { FieldValue, type CollectionReference } from "firebase-admin/firestore";
 
 import type { InstanceLogData } from "@open-xamu-co/firebase-nuxt/functions";
 import { getFirebase } from "@open-xamu-co/firebase-nuxt/functions/firebase";
-import { onCreated, onUpdated } from "@open-xamu-co/firebase-nuxt/functions/event";
+import { onCreated, onDeleted, onUpdated } from "@open-xamu-co/firebase-nuxt/functions/event";
 import { makeGetSlug } from "@open-xamu-co/firebase-nuxt/functions/slugs";
 import { rootInstanceId } from "@open-xamu-co/firebase-nuxt/server/environment";
+import { offenderLogger } from "@open-xamu-co/firebase-nuxt/functions/logger";
 
 import type {
 	ExtendedInstanceData,
@@ -13,7 +14,6 @@ import type {
 	InstanceMemberAbuseData,
 } from "./types/entities/index.js";
 import { eMemberRole } from "./enums.js";
-import { offenderLogger } from "@open-xamu-co/firebase-nuxt/functions/logger";
 
 const getInstanceSlug = makeGetSlug("instances");
 
@@ -115,13 +115,23 @@ export const onCreatedInstanceLog = onCreated<InstanceLogData>(
 	"instances/logs",
 	(createdDoc) => {
 		const { firebaseFirestore } = getFirebase("onCreatedInstanceLog");
-		const { internal, ...log } = createdDoc.data();
+		const { internal, metadata, ...log } = createdDoc.data();
 
 		if (internal) return;
 
 		try {
 			// Attempt to log offender
-			offenderLogger(firebaseFirestore, createdDoc.ref, log.metadata);
+			offenderLogger(firebaseFirestore, createdDoc.ref, metadata);
+
+			// Set course ref
+			if (metadata.courseRef) {
+				const courseRef = firebaseFirestore.doc(metadata.courseRef);
+
+				// Increment logs count
+				courseRef.update({ logs: FieldValue.increment(1) });
+
+				return { courseRef };
+			}
 		} catch (err) {
 			const logsRef = firebaseFirestore.collection("logs");
 
@@ -148,6 +158,20 @@ export const onCreatedInstanceLog = onCreated<InstanceLogData>(
  * @event updated
  */
 export const onUpdatedInstanceLog = onUpdated<InstanceLogData>("instances/logs");
+/**
+ * Delete timestamp
+ *
+ * @docType instanceLog
+ * @event deleted
+ */
+export const onDeletedInstanceLog = onDeleted("instances/logs", (deletedDoc) => {
+	const { courseRef } = deletedDoc.data();
+
+	if (!courseRef) return;
+
+	// Decrement logs count
+	courseRef.update({ logs: FieldValue.increment(-1) });
+});
 
 /**
  * Create timestamp

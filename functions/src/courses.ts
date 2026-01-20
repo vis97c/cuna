@@ -1,4 +1,7 @@
-import { onCreated, onUpdated } from "@open-xamu-co/firebase-nuxt/functions/event";
+import { FieldValue } from "firebase-admin/firestore";
+import deburr from "lodash-es/deburr.js";
+
+import { onCreated, onDeleted, onUpdated } from "@open-xamu-co/firebase-nuxt/functions/event";
 import { getSearchIndexes } from "@open-xamu-co/firebase-nuxt/functions/search";
 
 import type { CourseData, ExtendedInstanceData, GroupData } from "./types/entities/index.js";
@@ -25,6 +28,7 @@ export const onCreatedCourse = onCreated<CourseData>(
 
 		return {
 			indexes,
+			alternativeNames: [name, deburr(name)],
 			programsIndexes: { ...programs },
 			typologiesIndexes: { ...typologies },
 			losEstudiantesCode: await getLESlug(code, getLEPath),
@@ -60,6 +64,34 @@ export const onUpdatedCourse = onUpdated<CourseData>(
 		}
 	}
 );
+/**
+ * Delete timestamp
+ *
+ * @docType course
+ * @event deleted
+ */
+export const onDeletedCourse = onDeleted<CourseData>("instances/courses", async (deleted) => {
+	const instanceRef = deleted.ref.parent.parent;
+	const teachersRef = instanceRef?.collection("teachers");
+	const teachersQuery = teachersRef?.where("coursesRefs", "array-contains", deleted.ref);
+	const groupsRef = deleted.ref.collection("groups");
+
+	// Get snapshots
+	const [groupsSnapshot, teachersSnapshot] = await Promise.all([
+		groupsRef.get(),
+		teachersQuery?.get(),
+	]);
+
+	// Remove groups
+	await Promise.all(groupsSnapshot.docs.map((group) => group.ref.delete()));
+
+	// Remove course from teachers
+	if (teachersSnapshot?.docs.length) {
+		const coursesRefs = FieldValue.arrayRemove(deleted.ref);
+
+		await Promise.all(teachersSnapshot.docs.map(({ ref }) => ref.update({ coursesRefs })));
+	}
+});
 
 /**
  * Create timestamp
@@ -74,8 +106,24 @@ export const onCreatedGroup = onCreated<GroupData>("instances/courses/groups", u
 });
 /**
  * Update timestamp
+ * Preserve max spots amount to compare with available spots
  *
  * @docType group
  * @event updated
  */
-export const onUpdatedGroup = onUpdated<GroupData>("instances/courses/groups");
+export const onUpdatedGroup = onUpdated<GroupData>(
+	"instances/courses/groups",
+	async (newSnapshot, existingSnapshot, { logger }) => {
+		try {
+			const { availableSpots = 0, spots = availableSpots } = newSnapshot.data();
+			const { spots: oldSpots = 0 } = existingSnapshot.data();
+
+			// Preserve spots
+			return { spots: Math.max(oldSpots, spots) };
+		} catch (err) {
+			logger("functions:courses:onUpdatedGroup", err);
+
+			throw err;
+		}
+	}
+);

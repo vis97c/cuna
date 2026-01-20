@@ -40,10 +40,17 @@
 						</XamuActionButtonToggle>
 					</li>
 					<li>
-						<XamuActionButtonToggle to="/administrar/instancias">
+						<XamuActionButtonToggle to="/administrar/cursos" round=":sm-inv">
+							<XamuIconFa name="book" />
+							<XamuIconFa name="book" regular />
+							<span class="--hidden-full:sm-inv">Cursos</span>
+						</XamuActionButtonToggle>
+					</li>
+					<li>
+						<XamuActionButtonToggle to="/administrar/instancias" round=":sm-inv">
 							<XamuIconFa name="store" />
 							<XamuIconFa name="store" regular />
-							<span>Instancias</span>
+							<span class="--hidden-full:sm-inv">Instancias</span>
 						</XamuActionButtonToggle>
 					</li>
 					<li>

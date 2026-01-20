@@ -1,5 +1,5 @@
-import { isNotUndefString } from "./guards";
 import type { ExtendedInstanceDataConfig } from "~~/functions/src/types/entities";
+import { isNotUndefString } from "./guards";
 
 /**
  * Basic string to hash function
