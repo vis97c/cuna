@@ -2597,28 +2597,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@open-xamu-co/firebase-nuxt@npm:^2.0.0-next.4":
-  version: 2.0.0-next.4
-  resolution: "@open-xamu-co/firebase-nuxt@npm:2.0.0-next.4"
-  dependencies:
-    "@nuxt/kit": "npm:^3.20.2"
-    "@open-xamu-co/ui-common-enums": "npm:^4.0.0-next.2"
-    "@open-xamu-co/ui-common-helpers": "npm:^4.0.0-next.4"
-    "@open-xamu-co/ui-components-vue": "npm:^4.0.0-next.6"
-    "@open-xamu-co/ui-nuxt": "npm:^4.0.0-next.7"
-    "@pinia/nuxt": "npm:^0.11.0"
-    accept-language-parser: "npm:^1.5.0"
-    firebase: "npm:^12.8.0"
-    firebase-admin: "npm:^13.6.0"
-    firebase-functions: "npm:^7.0.3"
-    lodash-es: "npm:^4.17.21"
-    nuxt-csurf: "npm:^1.6.5"
-    pinia: "npm:^3.0.2"
-    vue-router-better-scroller: "npm:^0.0.0"
-  checksum: 10c0/273f6272e2ea935aa55a1a00c7d29178fcda393f33b3d5a000b0a41badf7b87cd316ad4e2768df6fcf80cf7de908ac9199429255e2609cfaed0c59ad31713f4c
-  languageName: node
-  linkType: hard
-
 "@open-xamu-co/firebase-nuxt@npm:^2.0.0-next.5":
   version: 2.0.0-next.5
   resolution: "@open-xamu-co/firebase-nuxt@npm:2.0.0-next.5"
@@ -8259,7 +8237,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "functions@workspace:functions"
   dependencies:
-    "@open-xamu-co/firebase-nuxt": "npm:^2.0.0-next.4"
+    "@open-xamu-co/firebase-nuxt": "npm:^2.0.0-next.5"
     "@open-xamu-co/ui-common-types": "npm:^4.0.0-next.4"
     "@types/lodash-es": "npm:^4"
     firebase-admin: "npm:^13.6.0"
