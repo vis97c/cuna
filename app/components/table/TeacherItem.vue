@@ -105,6 +105,7 @@
 			losEstudiantesSlug: props.teacher.losEstudiantesSlug || updatedSlug.value,
 		};
 	});
+	/** Teacher is unassigned */
 	const unassigned = computed(() => {
 		const clean = deburr(teacherData.value.name?.toLowerCase() || "");
 
@@ -115,6 +116,7 @@
 		addSlugInputs.value = useTeacherSlugInputs(teacher);
 		invalidAddSlug.value = [];
 	}
+	/** Add slug to teacher */
 	async function addSlug(willOpen: () => void, event: Event) {
 		const { invalidInputs, withErrors, validationHadErrors, errors } = await getResponse<
 			iNodeFnResponseStream<Teacher>[0],

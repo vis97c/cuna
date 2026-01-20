@@ -49,8 +49,18 @@ export interface CourseData extends FirebaseData {
 	programs?: uSIAProgram[];
 	/** @automation */
 	losEstudiantesCode?: string;
-	/** @automation @search */
+	/**
+	 * Soundex indexes, used for search
+	 * @automation @search
+	 * @example ["A160", "A162", "H200", "H230", "A162 E000"]
+	 */
 	indexes?: string[];
+	/**
+	 * Weighted indexes, used for search ranking
+	 * @automation @search
+	 * @example ["0:A160", "1:A162", "1:H200", "2:H230", "3:A162 E000"]
+	 */
+	indexesWeights?: string[];
 	/**
 	 * Array as object to be searcheable
 	 * @search

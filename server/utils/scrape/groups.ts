@@ -169,7 +169,9 @@ export async function scrapeCourseGroupsLinks(
 
 			resolve(response);
 		},
-		{ timeout: 1000 * 60 * 2 }
+		{
+			timeout: 1000 * 30, // 30 seconds timeout
+		}
 	);
 }
 

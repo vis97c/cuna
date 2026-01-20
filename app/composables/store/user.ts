@@ -87,8 +87,15 @@ export const useUserStore = defineStore("user", () => {
 
 		return `${firstName} ${firstLastName || secondName}`.trim();
 	});
-	const enrolled = computed<Group[]>(() => {
-		return SESSION.user?.enrolled || [];
+	const enrolled = computed<Group[]>({
+		get() {
+			return SESSION.user?.enrolled || [];
+		},
+		set(value) {
+			if (!SESSION.token) return;
+
+			SESSION.setUser({ ...SESSION.user, enrolled: value }, SESSION.token);
+		},
 	});
 
 	// Actions
@@ -143,7 +150,7 @@ export const useUserStore = defineStore("user", () => {
 		const filteredGroups = enrolled.value.filter(({ id }) => id !== group.id);
 
 		// Hydrate user
-		SESSION.setUser({ ...SESSION.user, enrolled: [...filteredGroups, group] }, SESSION.token);
+		enrolled.value = [...filteredGroups, group];
 	}
 	function unenroll(group: Group) {
 		const { $clientFirestore } = useNuxtApp();
@@ -160,10 +167,7 @@ export const useUserStore = defineStore("user", () => {
 		updateDoc(memberRef, { enrolledRefs: arrayRemove(groupRef) });
 
 		// Hydrate user
-		SESSION.setUser(
-			{ ...SESSION.user, enrolled: enrolled.value.filter(({ id }) => id !== group.id) },
-			SESSION.token
-		);
+		enrolled.value = enrolled.value.filter(({ id }) => id !== group.id);
 	}
 
 	// To refs
