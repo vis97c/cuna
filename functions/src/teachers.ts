@@ -1,8 +1,8 @@
 import { onCreated, onUpdated } from "@open-xamu-co/firebase-nuxt/functions/event";
+import { getWeightedSearchIndexes } from "@open-xamu-co/firebase-nuxt/functions/search";
 
 import type { ExtendedInstanceData, TeacherData } from "./types/entities/index.js";
 import { getLESlug } from "./utils/data.js";
-import { getSearchIndexes } from "@open-xamu-co/firebase-nuxt/functions/search";
 
 function getLEPath({ config = {} }: ExtendedInstanceData): string {
 	const { losEstudiantesUrl = "", losEstudiantesProfessorsPath = "" } = config;
@@ -17,9 +17,13 @@ export const onCreatedTeacher = onCreated<TeacherData>(
 		try {
 			const { name = "" } = snapshot.data();
 			// Get search indexes
-			const indexes = getSearchIndexes(name);
+			const { indexes, indexesWeights } = getWeightedSearchIndexes(name);
 
-			return { indexes, losEstudiantesSlug: await getLESlug(name, getLEPath) };
+			return {
+				indexes,
+				indexesWeights,
+				losEstudiantesSlug: await getLESlug(name, getLEPath),
+			};
 		} catch (err) {
 			logger("functions:teachers:onCreatedTeacher", err);
 

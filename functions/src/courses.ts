@@ -2,7 +2,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import deburr from "lodash-es/deburr.js";
 
 import { onCreated, onDeleted, onUpdated } from "@open-xamu-co/firebase-nuxt/functions/event";
-import { getSearchIndexes } from "@open-xamu-co/firebase-nuxt/functions/search";
+import { getWeightedSearchIndexes } from "@open-xamu-co/firebase-nuxt/functions/search";
 
 import type { CourseData, ExtendedInstanceData, GroupData } from "./types/entities/index.js";
 import { getLESlug } from "./utils/data.js";
@@ -24,10 +24,11 @@ export const onCreatedCourse = onCreated<CourseData>(
 	async (snapshot) => {
 		const { name = "", code, programs = [], typologies = [] } = snapshot.data();
 		// Get search indexes
-		const indexes = getSearchIndexes(name);
+		const { indexes, indexesWeights } = getWeightedSearchIndexes(name);
 
 		return {
 			indexes,
+			indexesWeights,
 			alternativeNames: [name, deburr(name)],
 			programsIndexes: { ...programs },
 			typologiesIndexes: { ...typologies },

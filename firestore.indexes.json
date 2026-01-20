@@ -9,10 +9,6 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "name",
-          "order": "ASCENDING"
-        },
-        {
           "fieldPath": "createdAt",
           "order": "DESCENDING"
         },
@@ -33,10 +29,6 @@
         },
         {
           "fieldPath": "typologiesIndexes.`0`",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "name",
           "order": "ASCENDING"
         },
         {
@@ -63,10 +55,6 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "name",
-          "order": "ASCENDING"
-        },
-        {
           "fieldPath": "createdAt",
           "order": "DESCENDING"
         },
@@ -90,10 +78,6 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "name",
-          "order": "ASCENDING"
-        },
-        {
           "fieldPath": "createdAt",
           "order": "DESCENDING"
         },
@@ -123,6 +107,10 @@
         {
           "fieldPath": "programsIndexes.`0`",
           "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "indexesWeights",
+          "order": "DESCENDING"
         },
         {
           "fieldPath": "name",
@@ -160,6 +148,10 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "indexesWeights",
+          "order": "DESCENDING"
+        },
+        {
           "fieldPath": "name",
           "order": "ASCENDING"
         },
@@ -195,6 +187,10 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "indexesWeights",
+          "order": "DESCENDING"
+        },
+        {
           "fieldPath": "name",
           "order": "ASCENDING"
         },
@@ -230,6 +226,10 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "indexesWeights",
+          "order": "DESCENDING"
+        },
+        {
           "fieldPath": "name",
           "order": "ASCENDING"
         },
@@ -265,70 +265,8 @@
           "order": "ASCENDING"
         },
         {
-          "fieldPath": "name",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
+          "fieldPath": "indexesWeights",
           "order": "DESCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "DESCENDING"
-        }
-      ],
-      "density": "SPARSE_ALL"
-    },
-    {
-      "collectionGroup": "courses",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "indexes",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "place",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "programsIndexes.`0`",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "name",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "DESCENDING"
-        }
-      ],
-      "density": "SPARSE_ALL"
-    },
-    {
-      "collectionGroup": "courses",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "indexes",
-          "arrayConfig": "CONTAINS"
-        },
-        {
-          "fieldPath": "place",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "programsIndexes.`0`",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "typologiesIndexes.`0`",
-          "order": "ASCENDING"
         },
         {
           "fieldPath": "name",
@@ -362,8 +300,86 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "indexesWeights",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "programsIndexes.`0`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "typologiesIndexes.`0`",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "indexesWeights",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "name",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "courses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "indexes",
+          "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "programsIndexes.`0`",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "typologiesIndexes.`1`",
           "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "indexesWeights",
+          "order": "DESCENDING"
         },
         {
           "fieldPath": "name",
@@ -401,6 +417,10 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "indexesWeights",
+          "order": "DESCENDING"
+        },
+        {
           "fieldPath": "name",
           "order": "ASCENDING"
         },
@@ -430,6 +450,10 @@
         {
           "fieldPath": "programsIndexes.`1`",
           "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "indexesWeights",
+          "order": "DESCENDING"
         },
         {
           "fieldPath": "name",
@@ -467,6 +491,10 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "indexesWeights",
+          "order": "DESCENDING"
+        },
+        {
           "fieldPath": "name",
           "order": "ASCENDING"
         },
@@ -502,6 +530,10 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "indexesWeights",
+          "order": "DESCENDING"
+        },
+        {
           "fieldPath": "name",
           "order": "ASCENDING"
         },
@@ -537,6 +569,10 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "indexesWeights",
+          "order": "DESCENDING"
+        },
+        {
           "fieldPath": "name",
           "order": "ASCENDING"
         },
@@ -566,6 +602,10 @@
         {
           "fieldPath": "programsIndexes.`2`",
           "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "indexesWeights",
+          "order": "DESCENDING"
         },
         {
           "fieldPath": "name",
@@ -603,6 +643,10 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "indexesWeights",
+          "order": "DESCENDING"
+        },
+        {
           "fieldPath": "name",
           "order": "ASCENDING"
         },
@@ -636,6 +680,10 @@
         {
           "fieldPath": "typologiesIndexes.`1`",
           "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "indexesWeights",
+          "order": "DESCENDING"
         },
         {
           "fieldPath": "name",
@@ -673,6 +721,10 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "indexesWeights",
+          "order": "DESCENDING"
+        },
+        {
           "fieldPath": "name",
           "order": "ASCENDING"
         },
@@ -702,6 +754,10 @@
         {
           "fieldPath": "programsIndexes.`3`",
           "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "indexesWeights",
+          "order": "DESCENDING"
         },
         {
           "fieldPath": "name",
@@ -739,6 +795,10 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "indexesWeights",
+          "order": "DESCENDING"
+        },
+        {
           "fieldPath": "name",
           "order": "ASCENDING"
         },
@@ -772,6 +832,10 @@
         {
           "fieldPath": "typologiesIndexes.`1`",
           "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "indexesWeights",
+          "order": "DESCENDING"
         },
         {
           "fieldPath": "name",
@@ -809,6 +873,10 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "indexesWeights",
+          "order": "DESCENDING"
+        },
+        {
           "fieldPath": "name",
           "order": "ASCENDING"
         },
@@ -838,6 +906,10 @@
         {
           "fieldPath": "programsIndexes.`4`",
           "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "indexesWeights",
+          "order": "DESCENDING"
         },
         {
           "fieldPath": "name",
@@ -875,6 +947,10 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "indexesWeights",
+          "order": "DESCENDING"
+        },
+        {
           "fieldPath": "name",
           "order": "ASCENDING"
         },
@@ -910,6 +986,10 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "indexesWeights",
+          "order": "DESCENDING"
+        },
+        {
           "fieldPath": "name",
           "order": "ASCENDING"
         },
@@ -943,6 +1023,10 @@
         {
           "fieldPath": "typologiesIndexes.`2`",
           "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "indexesWeights",
+          "order": "DESCENDING"
         },
         {
           "fieldPath": "name",
@@ -976,6 +1060,10 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "indexesWeights",
+          "order": "DESCENDING"
+        },
+        {
           "fieldPath": "name",
           "order": "ASCENDING"
         },
@@ -1009,6 +1097,10 @@
         {
           "fieldPath": "typologiesIndexes.`0`",
           "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "indexesWeights",
+          "order": "DESCENDING"
         },
         {
           "fieldPath": "name",
@@ -1046,6 +1138,10 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "indexesWeights",
+          "order": "DESCENDING"
+        },
+        {
           "fieldPath": "name",
           "order": "ASCENDING"
         },
@@ -1079,6 +1175,10 @@
         {
           "fieldPath": "typologiesIndexes.`2`",
           "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "indexesWeights",
+          "order": "DESCENDING"
         },
         {
           "fieldPath": "name",
@@ -1159,6 +1259,10 @@
         {
           "fieldPath": "indexes",
           "arrayConfig": "CONTAINS"
+        },
+        {
+          "fieldPath": "indexesWeights",
+          "order": "DESCENDING"
         },
         {
           "fieldPath": "name",

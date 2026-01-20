@@ -47,23 +47,6 @@
 					</p>
 				</div>
 				<div
-					v-else-if="CUNA.ExplorerV1Maintenance || CUNA.ExplorerV2Maintenance"
-					class="txt --txtAlign-center --gap-10"
-				>
-					<h4>El buscador se encuentra en mantenimiento</h4>
-					<p class="--txtSize-sm --txtColor-dark5">
-						Puedes explorar los cursos previamente guardados.
-					</p>
-					<p v-if="CUNA.ExplorerV1Maintenance" class="--txtSize-xs --txtColor-dark5">
-						Volveremos a la normalidad
-						{{ ExplorerV1MaintenanceTillAt }}.
-					</p>
-					<p v-else class="--txtSize-xs --txtColor-dark5">
-						Volveremos a la normalidad
-						{{ ExplorerV2MaintenanceTillAt }}.
-					</p>
-				</div>
-				<div
 					v-else-if="!USER.token && route.path != '/ingresar'"
 					class="txt --txtAlign-center --gap-10"
 				>
@@ -150,12 +133,8 @@
 						v-slot="{ content }"
 						:page="coursesSearchPage"
 						url="api:instance:courses:search"
-						:defaults="{
-							level: 1,
-							page: true,
-							...values,
-						}"
-						:first="30"
+						:defaults="{ page: true, ...values }"
+						:first="25"
 						:no-content-message="
 							search
 								? `Sin resultados para ${search}`
@@ -242,6 +221,7 @@
 		CourseValuesWithProgram,
 		PartialCourseValues,
 	} from "~/utils/types/values";
+	import deburr from "lodash-es/deburr";
 
 	/**
 	 * Landing page
@@ -266,16 +246,6 @@
 
 	const SIAMaintenanceTillAt = computed(() => {
 		const date = new Date(CUNA.config?.siaMaintenanceTillAt || new Date());
-
-		return useTimeAgo(date);
-	});
-	const ExplorerV1MaintenanceTillAt = computed(() => {
-		const date = new Date(CUNA.config?.explorerV1MaintenanceTillAt || new Date());
-
-		return useTimeAgo(date);
-	});
-	const ExplorerV2MaintenanceTillAt = computed(() => {
-		const date = new Date(CUNA.config?.explorerV2MaintenanceTillAt || new Date());
 
 		return useTimeAgo(date);
 	});
@@ -304,7 +274,7 @@
 			typology: selectedTypology.value,
 		};
 
-		const searchValue = (search.value || "").trim();
+		const searchValue = deburr((search.value || "").trim().toLowerCase());
 
 		if (isCodeSearch.value) return <CourseValuesWithCode>{ ...payload, code: searchValue };
 
@@ -320,12 +290,44 @@
 		// Don't search if metadata is missing
 		if (!pagination?.level || !pagination?.place) return;
 
-		return useCsrfQuery<iPage<Course> | undefined>("/api/instance/courses/search", {
-			method: "POST",
-			query: pagination,
-			headers: { "Cache-Control": cache.none },
-			cache: "reload",
-		});
+		const page: iPage<Course> | undefined = await useCsrfQuery<iPage<Course> | undefined>(
+			"/api/instance/courses/search",
+			{
+				method: "POST",
+				query: pagination,
+				headers: { "Cache-Control": cache.none },
+				cache: "reload",
+			}
+		);
+
+		// For fuzzy search, sort exact match first
+		if (page && !isCodeSearch.value) {
+			const name: string = pagination.name;
+			const [nameFirst] = name.split(" ");
+
+			// Sort by exact match first, then similar
+			page.edges.sort((a, b) => {
+				const aName = deburr(a.node.name?.toLowerCase() || "");
+				const bName = deburr(b.node.name?.toLowerCase() || "");
+
+				// Exact match
+				const aExact = aName === name;
+				const bExact = bName === name;
+
+				if (aExact !== bExact) return aExact ? -1 : 1;
+
+				// Prefix match
+				const aPrefix = aName.startsWith(nameFirst);
+				const bPrefix = bName.startsWith(nameFirst);
+
+				if (aPrefix !== bPrefix) return aPrefix ? -1 : 1;
+
+				// Keep Firestore order
+				return 0;
+			});
+		}
+
+		return page;
 	};
 </script>
 

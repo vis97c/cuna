@@ -71,7 +71,7 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 			throw createError({ statusCode: 400, statusMessage: "Missing parameters" });
 		}
 
-		let query: Query<CourseData> = currentInstanceRef.collection("courses").orderBy("name");
+		let query: Query<CourseData> = currentInstanceRef.collection("courses");
 
 		debugFirebaseServer(event, "api:courses:search", {
 			name,
@@ -93,7 +93,7 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 			return "Ok";
 		}
 
-		// where code equals
+		// where code equals (exact match)
 		if (code) query = query.where("code", "==", code);
 		else if (name) {
 			// Search by name instead
@@ -125,7 +125,12 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 				);
 			}
 
+			debugFirebaseServer(event, "api:courses:search:name", { soundex });
+
+			// Get by matching indexes
 			query = query.where("indexes", "array-contains", soundex);
+			// Order by search relevance
+			query = query.orderBy("indexesWeights", "desc").orderBy("name");
 		} else return null;
 
 		if (typology) {
@@ -151,35 +156,46 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 
 		// Fetch course links from SIA if not cached
 		// Index courses before returning search
-		if (!cachedLinks) {
-			const links = await getCoursesLinks(event, payload);
+		try {
+			if (!cachedLinks) {
+				const links = await getCoursesLinks(event, payload);
 
-			// Index scraped courses
-			await Promise.all(
-				links.map(async (link) => {
-					// Skip if missing identifier data
-					if (!link.code || !link.credits || !link.name || !link.typology) return;
+				// Index scraped courses
+				await Promise.all(
+					links.map(async (link) => {
+						// Skip if missing identifier data
+						if (!link.code || !link.credits || !link.name || !link.typology) return;
 
-					const { typology: linkTypology, ...linkData } = link;
-					const id = Cyrb53([link.code]); // Generate deduped course UID
+						const { typology: linkTypology, ...linkData } = link;
+						const id = Cyrb53([link.code]); // Generate deduped course UID
+						const tempSoundex = soundexEs(getWords(link.name).join(""));
 
-					// Set course, createdAt is required for queries
-					return coursesRef.doc(String(id)).set(
-						{
-							...linkData,
-							typologies: FieldValue.arrayUnion(linkTypology),
-							// From search
-							level,
-							place,
-							programs: FieldValue.arrayUnion(program),
-							faculties: FieldValue.arrayUnion(faculty),
-							scrapedWith: [level, place, faculty, program, linkTypology],
-							createdAt: FieldValue.serverTimestamp(),
-						},
-						{ merge: true }
-					);
-				})
-			);
+						// Set course
+						return coursesRef.doc(String(id)).set(
+							{
+								...linkData,
+								typologies: FieldValue.arrayUnion(linkTypology),
+								// From search
+								level,
+								place,
+								programs: FieldValue.arrayUnion(program),
+								faculties: FieldValue.arrayUnion(faculty),
+								scrapedWith: [level, place, faculty, program, linkTypology],
+								// Indexes & createdAt, required for queries
+								createdAt: FieldValue.serverTimestamp(),
+								indexes: [tempSoundex],
+								indexesWeights: [`0:${tempSoundex}`],
+							},
+							{ merge: true }
+						);
+					})
+				);
+			}
+		} catch (err) {
+			// Throw error if not timeout, do not log
+			if (err !== "Timed out") {
+				throw createError({ statusCode: 500, statusMessage: "Scraping failed" });
+			}
 		}
 
 		// order at last

@@ -95,71 +95,80 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		// Fetch from SIA if not cached
 		// Index groups before resolving query
 		// TODO: get course prerequisites
-		if (!cachedGroups) {
-			const links = await getCourseGroupsLinks(event, courseRef);
-			const groupCount = links.length;
-			const spotsCount = sumBy(links, "availableSpots");
-			const { name: courseName, code: courseCode } = (await courseRef.get())?.data() || {};
+		try {
+			if (!cachedGroups) {
+				const links = await getCourseGroupsLinks(event, courseRef);
+				const groupCount = links.length;
+				const spotsCount = sumBy(links, "availableSpots");
+				const { name: courseName, code: courseCode } =
+					(await courseRef.get())?.data() || {};
 
-			// Index scraped groups (await before updating course)
-			await Promise.all(
-				links.map(async ({ teachers = [], ...group }) => {
-					// Skip if missing identifier data
-					if (!group.periodStartAt || !group.periodEndAt || !group.name) return;
+				// Index scraped groups (await before updating course)
+				await Promise.all(
+					links.map(async ({ teachers = [], ...group }) => {
+						// Skip if missing identifier data
+						if (!group.periodStartAt || !group.periodEndAt || !group.name) return;
 
-					// Get date from string (dd/mm/yyyy)
-					const [startDay, startMonth, startYear] = (group.periodStartAt as any)
-						.split("/")
-						.map(Number);
-					const [endDay, endMonth, endYear] = (group.periodEndAt as any)
-						.split("/")
-						.map(Number);
-					// Build date objects
-					const periodStartAt = new Date(startYear, startMonth - 1, startDay);
-					const periodEndAt = new Date(endYear, endMonth - 1, endDay);
-					// Generate deduped course UID
-					const id = Cyrb53([group.name, String(periodEndAt.getTime())]);
-					const groupRef = groupsRef.doc(String(id));
+						// Get date from string (dd/mm/yyyy)
+						const [startDay, startMonth, startYear] = (group.periodStartAt as any)
+							.split("/")
+							.map(Number);
+						const [endDay, endMonth, endYear] = (group.periodEndAt as any)
+							.split("/")
+							.map(Number);
+						// Build date objects
+						const periodStartAt = new Date(startYear, startMonth - 1, startDay);
+						const periodEndAt = new Date(endYear, endMonth - 1, endDay);
+						// Generate deduped course UID
+						const id = Cyrb53([group.name, String(periodEndAt.getTime())]);
+						const groupRef = groupsRef.doc(String(id));
 
-					// Index teachers
-					const teachersRefs = teachers.map((teacher) => {
-						// Generate deduped teacher UID
-						const teacherId = Cyrb53([deburr(teacher)]);
-						const teacherRef = teachersRef.doc(String(teacherId));
-						const name = startCase(teacher.toLowerCase());
+						// Index teachers
+						const teachersRefs = teachers.map((teacher) => {
+							// Generate deduped teacher UID
+							const teacherId = Cyrb53([deburr(teacher)]);
+							const teacherRef = teachersRef.doc(String(teacherId));
+							const name = startCase(teacher.toLowerCase());
 
-						// Set teacher, createdAt is required for queries, do not await
-						teacherRef.set(
+							// Set teacher, do not await
+							teacherRef.set(
+								{
+									name,
+									coursesRefs: FieldValue.arrayUnion(courseRef),
+									// CreatedAt, required for queries
+									createdAt: scrapedAt,
+								},
+								{ merge: true }
+							);
+
+							return teacherRef;
+						});
+
+						// Set group, createdAt is required for queries
+						return groupRef.set(
 							{
-								name,
-								coursesRefs: FieldValue.arrayUnion(courseRef),
+								...group,
+								courseName,
+								courseCode,
+								teachersRefs: FieldValue.arrayUnion(...teachersRefs),
+								scrapedAt,
 								createdAt: scrapedAt,
+								periodStartAt,
+								periodEndAt,
 							},
 							{ merge: true }
 						);
+					})
+				);
 
-						return teacherRef;
-					});
-
-					// Set group, createdAt is required for queries
-					return groupRef.set(
-						{
-							...group,
-							courseName,
-							courseCode,
-							teachersRefs: FieldValue.arrayUnion(...teachersRefs),
-							scrapedAt,
-							createdAt: scrapedAt,
-							periodStartAt,
-							periodEndAt,
-						},
-						{ merge: true }
-					);
-				})
-			);
-
-			// Update course group count, do not await
-			courseRef?.update({ groupCount, spotsCount, scrapedAt });
+				// Update course group count, do not await
+				courseRef?.update({ groupCount, spotsCount, scrapedAt });
+			}
+		} catch (err) {
+			// Throw error if not timeout, do not log
+			if (err !== "Timed out") {
+				throw createError({ statusCode: 500, statusMessage: "Scraping failed" });
+			}
 		}
 
 		// Order at last

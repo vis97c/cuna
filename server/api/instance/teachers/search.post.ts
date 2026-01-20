@@ -70,7 +70,12 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 
 			if (!soundex) return null;
 
-			query = query.orderBy("name").where("indexes", "array-contains", soundex);
+			debugFirebaseServer(event, "api:teachers:search:name", { soundex });
+
+			// Get by matching indexes
+			query = query.where("indexes", "array-contains", soundex);
+			// Order by search relevance
+			query = query.orderBy("indexesWeights", "desc").orderBy("name");
 		} else if (params.courses && courses.length) {
 			const refs = courses.map((id) => coursesRefs.doc(id));
 

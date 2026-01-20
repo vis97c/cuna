@@ -146,7 +146,9 @@ export async function scrapeCoursesHandle(
 
 			resolve(handle);
 		},
-		{ timeout: 1000 * 60 * 2 }
+		{
+			timeout: 1000 * 30, // 30 seconds timeout
+		}
 	);
 }
 
@@ -246,7 +248,9 @@ export async function scrapeCoursesWithTypologyHandle(
 
 			resolve(handle);
 		},
-		{ timeout: 1000 * 60 * 2 }
+		{
+			timeout: 1000 * 30, // 30 seconds timeout
+		}
 	);
 }
 

@@ -1,3 +1,6 @@
+import type { Timestamp as adminTimestamp } from "firebase-admin/firestore";
+import type { Timestamp as clientTimestamp } from "firebase/firestore";
+
 import type { ExtendedInstanceDataConfig } from "~~/functions/src/types/entities";
 import { isNotUndefString } from "./guards";
 
@@ -31,11 +34,18 @@ export function safeInstanceConfig(
 	const { siaMaintenanceTillAt, explorerV1MaintenanceTillAt, explorerV2MaintenanceTillAt } =
 		config || {};
 
+	/** Parse date */
+	function getDate(date?: adminTimestamp | clientTimestamp | Date) {
+		if (!date || date instanceof Date) return date;
+
+		return date.toDate();
+	}
+
 	return {
 		...config,
 		// Parse Timestamp to Date
-		siaMaintenanceTillAt: (siaMaintenanceTillAt as any)?.toDate(),
-		explorerV1MaintenanceTillAt: (explorerV1MaintenanceTillAt as any)?.toDate(),
-		explorerV2MaintenanceTillAt: (explorerV2MaintenanceTillAt as any)?.toDate(),
+		siaMaintenanceTillAt: getDate(siaMaintenanceTillAt),
+		explorerV1MaintenanceTillAt: getDate(explorerV1MaintenanceTillAt),
+		explorerV2MaintenanceTillAt: getDate(explorerV2MaintenanceTillAt),
 	};
 }
