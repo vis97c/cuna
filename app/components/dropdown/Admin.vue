@@ -1,27 +1,17 @@
 <template>
-	<XamuDropdown v-if="USER.token && USER.canAdmin" :position="['bottom', 'right']" invert-theme>
-		<template #toggle="{ setModel, model }">
-			<li>
-				<XamuActionLink
-					tooltip="Panel de control"
-					tooltip-as-text
-					tooltip-position="bottom"
-					@click="setModel()"
-				>
-					<XamuActionButtonToggle :active="model" round>
-						<XamuIconFa name="star-of-life" />
-						<XamuIconFa name="star-of-life" regular />
-					</XamuActionButtonToggle>
-					<XamuIconFa indicator name="chevron-down" />
-				</XamuActionLink>
-			</li>
+	<XamuDropdown
+		:position="['bottom', 'right']"
+		classes="flx --flxColumn --flx-start-stretch --gap-10:md"
+		invert-theme
+	>
+		<template #toggle="toggleScope">
+			<slot v-bind="toggleScope"></slot>
 		</template>
-		<template #default="{ invertedTheme }">
+		<template v-if="USER.token && USER.canDevelop" #default="{ invertedTheme, setModel }">
 			<nav
-				v-if="USER.canDevelop || USER.token"
-				class="list flx --flxColumn --gap-20 --minWidth-180 --maxWidth-100 --txtColor"
+				class="dropdown-item list flx --flxColumn --gap-20 --minWidth-180 --maxWidth-100 --txtColor"
 			>
-				<ul v-if="USER.canDevelop" class="list-group --gap-5">
+				<ul class="list-group --gap-5">
 					<li>
 						<p class="--txtSize-xs">Cuna</p>
 					</li>
@@ -31,9 +21,32 @@
 							<span>Panel de control</span>
 						</XamuActionLink>
 					</li>
-					<hr />
+					<li>
+						<XamuActionLink :theme="invertedTheme" to="/administrar/cursos">
+							<XamuIconFa name="book" />
+							<span>Cursos</span>
+						</XamuActionLink>
+					</li>
+				</ul>
+			</nav>
+			<nav
+				class="dropdown-item list flx --flxColumn --gap-20 --minWidth-220 --minWidth-180:md --maxWidth-100 --txtColor"
+			>
+				<ul class="list-group">
 					<li>
 						<p class="--txtSize-xs">Administrar</p>
+					</li>
+					<li>
+						<XamuActionLink :theme="invertedTheme" to="/administrar/instancias">
+							<XamuIconFa name="at" />
+							<span>Instancias</span>
+						</XamuActionLink>
+					</li>
+					<li>
+						<XamuActionLink :theme="invertedTheme" to="/administrar/usuarios">
+							<XamuIconFa name="users" />
+							<span>Usuarios</span>
+						</XamuActionLink>
 					</li>
 					<li>
 						<XamuActionLink :theme="invertedTheme" to="/administrar/registros">
@@ -41,21 +54,33 @@
 							<span>Registros</span>
 						</XamuActionLink>
 					</li>
-					<li>
-						<XamuActionLink :theme="invertedTheme" to="/administrar/cursos">
-							<XamuIconFa name="book" />
-							<span>Cursos</span>
-						</XamuActionLink>
-					</li>
+					<hr />
 					<li>
 						<XamuActionLink :theme="invertedTheme" to="/administrar/ajustes">
 							<XamuIconFa name="cog" />
 							<span>Ajustes</span>
 						</XamuActionLink>
 					</li>
-					<hr />
+				</ul>
+			</nav>
+			<nav
+				class="dropdown-item list flx --flxColumn --gap-20 --minWidth-220 --minWidth-180:md --maxWidth-100 --txtColor"
+			>
+				<ul class="list-group">
 					<li>
-						<XamuActionLink :theme="invertedTheme" @click="toggleLoadedClass">
+						<p class="--txtSize-xs">Desarrollo</p>
+					</li>
+					<li>
+						<XamuActionLink :theme="invertedTheme" @click="clearInstance">
+							<XamuIconFa name="trash-can" />
+							<span>Clear instance</span>
+						</XamuActionLink>
+					</li>
+					<li>
+						<XamuActionLink
+							:theme="invertedTheme"
+							@click="() => toggleLoadedClass(setModel)"
+						>
 							<XamuIconFa name="flag-checkered" />
 							<span>Toggle loaded class</span>
 						</XamuActionLink>
@@ -67,13 +92,33 @@
 </template>
 
 <script setup lang="ts">
-	const USER = useUserStore();
+	import debounce from "lodash-es/debounce";
 
-	function toggleLoadedClass() {
+	import type { tProp, tThemeModifier, tThemeTuple } from "@open-xamu-co/ui-common-types";
+
+	/**
+	 * Admin dropdown
+	 */
+
+	defineProps<{ theme?: tThemeTuple | tProp<tThemeModifier> }>();
+	defineOptions({ name: "DropdownAdminInstance" });
+
+	const USER = useUserStore();
+	const INSTANCE = useInstanceStore();
+
+	const toggleLoadedClass = debounce(function (toggleModal?: (v?: boolean) => void) {
+		toggleModal?.(false);
 		document.body.classList.remove("is--loaded");
 
 		setTimeout(() => {
 			document.body.classList.add("is--loaded");
 		}, 3000);
-	}
+	});
+	const clearInstance = debounce(async function () {
+		// Remove cache
+		await useCsrfQuery("/api/instance", { method: "DELETE" });
+
+		INSTANCE.unsetInstance();
+		location.reload();
+	});
 </script>
