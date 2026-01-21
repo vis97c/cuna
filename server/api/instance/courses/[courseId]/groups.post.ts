@@ -153,9 +153,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		try {
 			// Only index if user is authenticated (Prevent abusive calls)
 			// Disable if SIA is in maintenance
-			if (!cachedGroups && currentAuth && siaMaintenanceTillAt < scrapedAt) {
-				console.log("Scraping groups");
-
+			if (!cachedGroups && currentAuth && siaMaintenanceTillAt <= scrapedAt) {
 				const links = await getCourseGroupsLinks(event, courseRef);
 				const groupCount = links.length;
 				const spotsCount = sumBy(links, "availableSpots");
