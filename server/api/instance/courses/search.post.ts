@@ -184,36 +184,35 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 			const soundex = soundexEs(getWords(name).join(""));
 
 			if (!soundex) return null;
-			if (level) query = query.where("level", "==", level); // where level equals
-			if (place) query = query.where("place", "==", place); // where place equals
-			// if (faculty) {
-			// 	// where faculty equals, 6 indexes
-			// 	query = query.where(
-			// 		Filter.or(
-			// 			Filter.where("facultyIndexes.0", "==", faculty),
-			// 			Filter.where("facultyIndexes.1", "==", faculty),
-			// 			Filter.where("facultyIndexes.2", "==", faculty),
-			// 		)
-			// 	);
-			// }
-			if (program) {
-				// where program equals, 6 indexes
-				query = query.where(
-					Filter.or(
-						Filter.where("programsIndexes.0", "==", program),
-						Filter.where("programsIndexes.1", "==", program),
-						Filter.where("programsIndexes.2", "==", program),
-						Filter.where("programsIndexes.3", "==", program),
-						Filter.where("programsIndexes.4", "==", program)
-					)
-				);
-			}
+
+			query = query.where("level", "==", level); // where level equals
+			query = query.where("place", "==", place); // where place equals
+
+			// // where faculty equals, 6 indexes
+			// query = query.where(
+			// 	Filter.or(
+			// 		Filter.where("facultyIndexes.0", "==", faculty),
+			// 		Filter.where("facultyIndexes.1", "==", faculty),
+			// 		Filter.where("facultyIndexes.2", "==", faculty)
+			// 	)
+			// );
+
+			// where program equals, 6 indexes
+			query = query.where(
+				Filter.or(
+					Filter.where("programsIndexes.0", "==", program),
+					Filter.where("programsIndexes.1", "==", program),
+					Filter.where("programsIndexes.2", "==", program),
+					Filter.where("programsIndexes.3", "==", program),
+					Filter.where("programsIndexes.4", "==", program)
+				)
+			);
 
 			debugFirebaseServer(event, "api:courses:search:name", { soundex });
 
 			// Get by matching indexes
 			query = query.where("indexes", "array-contains", soundex);
-			// Order by search relevance
+			// Order by search relevance then name
 			query = query.orderBy("indexesWeights", "desc").orderBy("name");
 		} else return null;
 
@@ -243,7 +242,7 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 		try {
 			// Only index if user is authenticated (Prevent abusive calls)
 			// Disable if SIA is in maintenance
-			if (!cachedLinks && currentAuth && siaMaintenanceTillAt < scrapedAt) {
+			if (!cachedLinks && currentAuth && siaMaintenanceTillAt <= scrapedAt) {
 				const links = await getCoursesLinks(event, payload);
 
 				// Index scraped courses
