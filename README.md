@@ -49,8 +49,8 @@ RECAPTCHA_ENTERPRISE_SITE_KEY="6Lf24mwqAAAAAI0jHdUu8AcmYcyqjkCwRhquwtDr"
 CSURF_SECRET=
 
 # Proyecto
-ORIGIN="https://cuna.com.co"
-COUNTRIES_API="https://cuna.com.co/_countries"
+ORIGIN=
+COUNTRIES_API=
 # Permitir que los motores de búsqueda indexen el sitio
 INDEXABLE=false
 # ROOT instance ID

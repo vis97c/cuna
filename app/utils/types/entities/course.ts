@@ -1,8 +1,8 @@
 import type { DocumentReference, FieldValue } from "firebase/firestore";
 import type { FirebaseDocument, FromData, GetRef } from "@open-xamu-co/firebase-nuxt/client";
 
-import type { Group } from "./group";
-import type { CourseData, CourseLogData } from "~~/functions/src/types/entities";
+import type { Teacher } from "./teacher";
+import type { CourseData, CourseLogData, GroupData } from "~~/functions/src/types/entities";
 
 /**
  * Firebase course log
@@ -32,4 +32,24 @@ export interface Course extends FirebaseDocument, FromData<CourseData> {
 export interface CourseRef extends GetRef<Course, "scrapedAt"> {
 	/** @automated Last scrape date */
 	scrapedAt?: Date;
+}
+
+/**
+ * SIA Group
+ */
+export interface Group extends FirebaseDocument, FromData<GroupData> {}
+/**
+ * This one goes to the database
+ *
+ * Omit automation
+ */
+export interface GroupRef extends GetRef<Group> {}
+
+export interface GroupEs {
+	id: string;
+	cupos: string;
+	espacios?: string[];
+	profesores: Teacher[];
+	horarios: Group;
+	inscrito: Group;
 }

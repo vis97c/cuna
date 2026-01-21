@@ -27,6 +27,11 @@ async function cleanup(exitCode) {
 	process.exit(exitCode);
 }
 
+/**
+ * Initializes the test environment.
+ *
+ * @see https://firebase.google.com/docs/firestore/security/test-rules-emulator
+ */
 const testEnv = await initializeTestEnvironment({
 	// projectId: process.env.F_PROJECT_ID || "cuna-2980b9",
 	projectId: "test-project",
