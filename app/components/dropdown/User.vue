@@ -1,30 +1,13 @@
 <template>
-	<XamuDropdown v-if="USER.token" :position="['bottom', 'right']" invert-theme>
-		<template #toggle="{ setModel, model }">
-			<li>
-				<XamuActionLink
-					aria-label="Ver opciones de usuario"
-					tooltip="Ver opciones de usuario"
-					tooltip-as-text
-					tooltip-position="bottom"
-					:active="model"
-					:size="eSizes.LG"
-					@click="setModel()"
-				>
-					<span class="--hidden:sm-inv">
-						{{ USER.userName || "Sin nombre" }}
-					</span>
-					<figure v-if="USER.user?.photoURL" class="avatar --size-sm --bdr">
-						<XamuBaseImg
-							:src="USER.user.photoURL"
-							:alt="`Foto de perfil ${USER.userName || 'Sin nombre'}`"
-						/>
-					</figure>
-					<XamuIconFa indicator name="chevron-down" />
-				</XamuActionLink>
-			</li>
+	<XamuDropdown
+		:position="['bottom', 'right']"
+		classes="flx --flxColumn --flx-start-stretch --gap-10:md"
+		invert-theme
+	>
+		<template #toggle="toggleScope">
+			<slot v-bind="toggleScope"></slot>
 		</template>
-		<template #default="{ setModel }">
+		<template v-if="USER.token" #default="{ invertedTheme, setModel }">
 			<nav class="list flx --flxColumn --gap-20 --minWidth-max --txtColor">
 				<ul class="list-group --gap-5">
 					<li>
@@ -34,7 +17,7 @@
 						</p>
 					</li>
 					<li>
-						<XamuActionLink to="/cuenta">
+						<XamuActionLink :theme="invertedTheme" to="/cuenta">
 							<XamuIconFa name="circle-user" />
 							<span>Mi perfil</span>
 						</XamuActionLink>
@@ -85,17 +68,14 @@
 					</li>
 					<hr />
 					<li>
-						<XamuActionButton
+						<XamuActionLink
 							class="--width-100"
-							:theme="eColors.DANGER"
-							@click="
-								setModel(false);
-								USER.logout();
-							"
+							:theme="[eColors.DANGER, invertedTheme[1]]"
+							@click="() => logout(setModel)"
 						>
 							<XamuIconFa name="power-off" />
 							<span>Cerrar sesion</span>
-						</XamuActionButton>
+						</XamuActionLink>
 					</li>
 				</ul>
 			</nav>
@@ -104,9 +84,19 @@
 </template>
 
 <script setup lang="ts">
-	import { eColors, eSizes } from "@open-xamu-co/ui-common-enums";
+	import { debounce } from "lodash-es";
+
+	import type { tProp, tThemeModifier, tThemeTuple } from "@open-xamu-co/ui-common-types";
+	import { eColors } from "@open-xamu-co/ui-common-enums";
 
 	import { eSIALevel } from "~~/functions/src/types/SIA";
+
+	/**
+	 * User dropdown
+	 */
+
+	defineProps<{ theme?: tThemeTuple | tProp<tThemeModifier> }>();
+	defineOptions({ name: "DropdownUser" });
 
 	const USER = useUserStore();
 
@@ -129,5 +119,13 @@
 		set: (value) => {
 			USER.setPlace(value);
 		},
+	});
+
+	/**
+	 * Logout and close modal
+	 */
+	const logout = debounce(function (toggleModal?: (v?: boolean) => void) {
+		toggleModal?.(false);
+		USER.logout();
 	});
 </script>
