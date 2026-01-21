@@ -52,4 +52,6 @@ export interface GroupEs {
 	profesores: Teacher[];
 	horarios: Group;
 	inscrito: Group;
+	/** Semestre actual */
+	semestre: string;
 }

@@ -13,17 +13,12 @@ import type { ExtendedUserData } from "./user";
 import type { eMemberRole } from "../../enums";
 import type { GroupData } from "./course";
 
-export interface ExtendedInstanceDataConfig extends InstanceDataConfig {
-	/** Cuna version */
-	version?: string;
-	/**
-	 * Bloquear la navegacion con un mensaje
-	 */
-	maintenanceMessage?: string;
-	/**
-	 * Old SIA under maintenance till
-	 */
-	siaMaintenanceTillAt?: clientTimestamp | adminTimestamp | Date;
+/**
+ * Old config for migration
+ *
+ * Keep for compatibility with old instances
+ */
+interface OldCunaConfig {
 	/**
 	 * Explorer V1 under maintenance till
 	 *
@@ -58,12 +53,27 @@ export interface ExtendedInstanceDataConfig extends InstanceDataConfig {
 	 * @example https://n0n0ftmy9b.execute-api.us-east-1.amazonaws.com
 	 */
 	explorerV2CoursesURL?: string;
+}
+
+export interface ExtendedInstanceDataConfig extends InstanceDataConfig, OldCunaConfig {
+	/** Cuna version */
+	version?: string;
+	/**
+	 * Bloquear la navegacion con un mensaje
+	 */
+	maintenanceMessage?: string;
+	/**
+	 * Old SIA under maintenance till
+	 */
+	siaMaintenanceTillAt?: clientTimestamp | adminTimestamp | Date;
 	/**
 	 * Number of minutes before refreshing a course
+	 * @v2 Regulate scraped groups cache
 	 */
 	coursesRefreshRate?: number;
 	/**
 	 * Number of minutes before scraping a course
+	 * @v2 Regulate scraped courses cache
 	 */
 	coursesScrapeRate?: number;
 	/**
@@ -96,6 +106,13 @@ export interface ExtendedInstanceDataConfig extends InstanceDataConfig {
 	 * Strings because numbers are being rotated daily
 	 */
 	siaOldTypology?: Record<eSIATypology, string>;
+	/**
+	 * Notes characters limit
+	 *
+	 * @v2
+	 * @example 4096
+	 */
+	notesCharactersLimit?: number;
 }
 
 /**

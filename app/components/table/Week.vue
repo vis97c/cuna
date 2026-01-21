@@ -8,7 +8,7 @@
 		@save="() => (enrolled = !enrolled)"
 	>
 		<template #toggle="{ toggleModal, model }">
-			<XamuActionButton tooltip="Ver horario" :active="model" @click="toggleModal()">
+			<XamuActionButton :active="model" tooltip="Ver horario" round @click="toggleModal()">
 				<XamuIconFa name="calendar-week" />
 			</XamuActionButton>
 		</template>

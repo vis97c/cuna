@@ -80,7 +80,7 @@
 					</div>
 				</div>
 				<XamuLoaderContent
-					:content="!!groups"
+					:content="!!groupsData.filtered.length"
 					:loading="groupsPending"
 					:errors="groupsError"
 					:el="ClientOnly"
@@ -88,6 +88,7 @@
 					no-content-message="No hay grupos registrados"
 				>
 					<template #fallback>Cargando grupos...</template>
+					<h4 class="--mBottom">Grupos {{ groupsData.filtered[0].semestre }}:</h4>
 					<XamuTable
 						v-bind="{
 							preferId: true,

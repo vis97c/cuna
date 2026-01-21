@@ -1,19 +1,12 @@
 import type { ElementHandle, Page } from "puppeteer";
-import { DocumentReference } from "firebase-admin/firestore";
 
 import { TimedPromise } from "@open-xamu-co/firebase-nuxt/server/guards";
-import { apiLogger } from "@open-xamu-co/firebase-nuxt/server/firebase";
-import { getDocumentId } from "@open-xamu-co/firebase-nuxt/client/resolver";
 import { debugFirebaseServer } from "@open-xamu-co/firebase-nuxt/server/firestore";
 
 import type { CourseData, tWeeklySchedule } from "~~/functions/src/types/entities";
 
-import { getPuppeteer, type CourseGroupLink, type ExtendedH3Event } from "./utils";
-import {
-	scrapeCoursesHandle,
-	scrapeCoursesWithTypologyHandle,
-	type iCoursesPayload,
-} from "./courses";
+import type { CourseGroupLink, ExtendedH3Event } from "./utils";
+import type { iCoursesPayload } from "./courses";
 
 /**
  * Get HTML element ids from a table handle
@@ -174,47 +167,3 @@ export async function scrapeCourseGroupsLinks(
 		}
 	);
 }
-
-/**
- * Get courses from SIA course
- *
- * @cache 2 minutes
- */
-export const getCourseGroupsLinks = defineCachedFunction(
-	async (event: ExtendedH3Event, courseRef: DocumentReference<CourseData>) => {
-		const { browser, page } = await getPuppeteer();
-
-		try {
-			const snapshot = await courseRef.get();
-			const course = snapshot.data();
-
-			if (!course) throw new Error("Course not found");
-
-			// Get groups data
-			const { links, errors } = await scrapeCourseGroupsLinks(event, page, course);
-
-			browser.close(); // Cleanup, do not await
-
-			// Log errors if any, do not await
-			errors.forEach((err) => apiLogger(event, `api:courses:[${courseRef.id}]:groups`, err));
-
-			return links;
-		} catch (error) {
-			browser.close(); // Cleanup, do not await
-			apiLogger(event, `api:courses:[${courseRef.id}]:groups`, error);
-
-			// Prevent caching by throwing error
-			throw error;
-		}
-	},
-	{
-		name: "getCourseGroupsLinks",
-		maxAge: 60 * 2, // 2 minutes
-		getKey(event, courseRef) {
-			const { currentInstanceHost } = event.context;
-
-			// Compact hash
-			return `${currentInstanceHost}:${getDocumentId(courseRef.id)}`;
-		},
-	}
-);
