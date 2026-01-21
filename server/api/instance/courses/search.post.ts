@@ -1,4 +1,10 @@
-import { type CollectionReference, FieldValue, Filter, type Query } from "firebase-admin/firestore";
+import {
+	type CollectionReference,
+	FieldValue,
+	Filter,
+	type Query,
+	Timestamp,
+} from "firebase-admin/firestore";
 import { createHash } from "node:crypto";
 
 import { defineConditionallyCachedEventHandler } from "@open-xamu-co/firebase-nuxt/server/cache";
@@ -13,7 +19,7 @@ import {
 import { getWords, soundexEs } from "@open-xamu-co/firebase-nuxt/functions/search";
 
 import type { iCoursesPayload } from "~~/server/utils/scrape/courses";
-import type { CourseData } from "~~/functions/src/types/entities";
+import type { CourseData, ExtendedInstanceDataConfig } from "~~/functions/src/types/entities";
 import type {
 	eSIALevel,
 	eSIAPlace,
@@ -31,9 +37,87 @@ import { Cyrb53 } from "~/utils/firestore";
  * @see https://es.stackoverflow.com/questions/316170/c%c3%b3mo-hacer-una-consulta-del-tipo-like-en-firebase
  */
 export default defineConditionallyCachedEventHandler(async function (event) {
+	const scrapedAt = new Date();
 	const storage = useStorage("cache");
-	const { currentAuth, currentInstanceRef, currentInstanceHost } = event.context;
+	const { currentAuth, currentInstanceRef, currentInstance, currentInstanceHost } = event.context;
+	const {
+		coursesScrapeRate = 1440, // A day by	default
+		siaMaintenanceTillAt = scrapedAt,
+	}: ExtendedInstanceDataConfig = currentInstance?.config || {};
+	const { debugScrapper } = useRuntimeConfig();
 	const Allow = "POST,HEAD";
+
+	/**
+	 * Get courses from SIA
+	 */
+	const getCoursesLinks = defineCachedFunction(
+		async (event: ExtendedH3Event, payload: iCoursesPayload) => {
+			const { page, cleanup } = await getPuppeteer(debugScrapper);
+
+			try {
+				let coursesHandle = await scrapeCoursesHandle(event, page, payload);
+
+				if (payload.typology) {
+					// Search by typology if given
+					coursesHandle = await scrapeCoursesWithTypologyHandle(event, page, payload);
+				}
+
+				// Get courses
+				const courseLinks: CourseLink[] = await coursesHandle.evaluate(
+					(table, typologies) => {
+						const tbody = table?.querySelector("tbody");
+
+						// No courses found
+						if (tbody?.tagName !== "TBODY") return [];
+
+						return Array.from(tbody?.children).map((row) => {
+							const link = row.children[0].getElementsByTagName("a")[0];
+							const code = link.innerHTML;
+							const nameSpan = row.children[1].querySelector("span[title]");
+							const creditSpan = row.children[2].querySelector("span[title]");
+							const typologySpan = row.children[3].querySelector("span[title]");
+							const descriptionSpan = row.children[4].querySelector("span[title]");
+							const typology = typologySpan?.innerHTML
+								? typologies[typologySpan.innerHTML]
+								: undefined;
+
+							return {
+								code,
+								name: nameSpan?.innerHTML || "",
+								credits: Number(creditSpan?.innerHTML || 0),
+								typology,
+								description: descriptionSpan?.innerHTML || "",
+							};
+						});
+					},
+					SIATypologies
+				);
+
+				await cleanup(); // Cleanup puppeteer
+
+				return courseLinks;
+			} catch (err) {
+				await cleanup(); // Cleanup puppeteer
+				apiLogger(event, "getCoursesLinks", err);
+
+				// Prevent caching by throwing error
+				throw err;
+			}
+		},
+		{
+			name: "getCoursesLinks",
+			maxAge: 60 * coursesScrapeRate,
+			getKey(event, payload) {
+				const { currentInstanceHost } = event.context;
+				const { level, place, faculty, program, typology = "" } = payload;
+				const values = [level, place, faculty, program, typology];
+				const hash = createHash("sha256").update(values.join(",")).digest("hex");
+
+				// Compact hash
+				return `${currentInstanceHost}:${hash}`;
+			},
+		}
+	);
 
 	try {
 		// Override CORS headers
@@ -158,7 +242,8 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 		// Index courses before returning search
 		try {
 			// Only index if user is authenticated (Prevent abusive calls)
-			if (!cachedLinks && currentAuth) {
+			// Disable if SIA is in maintenance
+			if (!cachedLinks && currentAuth && siaMaintenanceTillAt < scrapedAt) {
 				const links = await getCoursesLinks(event, payload);
 
 				// Index scraped courses
@@ -183,7 +268,7 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 								faculties: FieldValue.arrayUnion(faculty),
 								scrapedWith: [level, place, faculty, program, linkTypology],
 								// Indexes & createdAt, required for queries
-								createdAt: FieldValue.serverTimestamp(),
+								createdAt: Timestamp.fromDate(scrapedAt),
 								indexes: [tempSoundex],
 								indexesWeights: [`0:${tempSoundex}`],
 							},

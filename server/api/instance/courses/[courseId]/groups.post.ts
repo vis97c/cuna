@@ -19,18 +19,73 @@ import {
 	getQueryAsEdges,
 } from "@open-xamu-co/firebase-nuxt/server/firestore";
 
-import type { CourseData, GroupData, TeacherData } from "~~/functions/src/types/entities";
+import type {
+	CourseData,
+	ExtendedInstanceDataConfig,
+	GroupData,
+	TeacherData,
+} from "~~/functions/src/types/entities";
 import { Cyrb53 } from "~/utils/firestore";
+import { getDocumentId } from "@open-xamu-co/firebase-nuxt/client/resolver";
 
 /**
  * Get the edges from the logs collection by courseRef
  */
 export default defineConditionallyCachedEventHandler(async (event) => {
+	const scrapedAt = new Date();
 	const storage = useStorage("cache");
-	const { currentAuth, currentInstanceRef, currentInstanceHost } = event.context;
+	const { currentAuth, currentInstanceRef, currentInstance, currentInstanceHost } = event.context;
+	const {
+		coursesRefreshRate = 2, // 2 minutes by default
+		siaMaintenanceTillAt = scrapedAt,
+	}: ExtendedInstanceDataConfig = currentInstance?.config || {};
+	const { debugScrapper } = useRuntimeConfig();
 	const Allow = "POST,HEAD";
-	const scrapedAt = FieldValue.serverTimestamp();
 	let courseRef: DocumentReference<CourseData> | undefined;
+
+	/**
+	 * Scrape the course groups links from SIA
+	 */
+	const getCourseGroupsLinks = defineCachedFunction(
+		async (event: ExtendedH3Event, courseRef: DocumentReference<CourseData>) => {
+			const { browser, page } = await getPuppeteer(debugScrapper);
+
+			try {
+				const snapshot = await courseRef.get();
+				const course = snapshot.data();
+
+				if (!course) throw new Error("Course not found");
+
+				// Get groups data
+				const { links, errors } = await scrapeCourseGroupsLinks(event, page, course);
+
+				browser.close(); // Cleanup, do not await
+
+				// Log errors if any, do not await
+				errors.forEach((err) =>
+					apiLogger(event, `api:courses:[${courseRef.id}]:groups`, err)
+				);
+
+				return links;
+			} catch (error) {
+				browser.close(); // Cleanup, do not await
+				apiLogger(event, `api:courses:[${courseRef.id}]:groups`, error);
+
+				// Prevent caching by throwing error
+				throw error;
+			}
+		},
+		{
+			name: "getCourseGroupsLinks",
+			maxAge: 60 * coursesRefreshRate,
+			getKey(event, courseRef) {
+				const { currentInstanceHost } = event.context;
+
+				// Compact hash
+				return `${currentInstanceHost}:${getDocumentId(courseRef.id)}`;
+			},
+		}
+	);
 
 	try {
 		// Override CORS headers
@@ -97,7 +152,8 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		// TODO: scrape course prerequisites
 		try {
 			// Only index if user is authenticated (Prevent abusive calls)
-			if (!cachedGroups && currentAuth) {
+			// Disable if SIA is in maintenance
+			if (!cachedGroups && currentAuth && siaMaintenanceTillAt < scrapedAt) {
 				console.log("Scraping groups");
 
 				const links = await getCourseGroupsLinks(event, courseRef);
@@ -139,7 +195,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 									name,
 									coursesRefs: FieldValue.arrayUnion(courseRef),
 									// CreatedAt, required for queries
-									createdAt: scrapedAt,
+									createdAt: Timestamp.fromDate(scrapedAt),
 								},
 								{ merge: true }
 							);
@@ -154,8 +210,8 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 								courseName,
 								courseCode,
 								teachersRefs: FieldValue.arrayUnion(...teachersRefs),
-								scrapedAt,
-								createdAt: scrapedAt,
+								scrapedAt: Timestamp.fromDate(scrapedAt),
+								createdAt: Timestamp.fromDate(scrapedAt),
 								periodStartAt,
 								periodEndAt,
 							},
@@ -165,7 +221,11 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 				);
 
 				// Update course group count, do not await
-				courseRef?.update({ groupCount, spotsCount, scrapedAt });
+				courseRef?.update({
+					groupCount,
+					spotsCount,
+					scrapedAt: Timestamp.fromDate(scrapedAt),
+				});
 			}
 		} catch (err) {
 			// Throw error if not timeout, do not log

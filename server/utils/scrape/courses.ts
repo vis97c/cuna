@@ -1,7 +1,5 @@
 import type { ElementHandle, Page } from "puppeteer";
-import { createHash } from "node:crypto";
 
-import { apiLogger } from "@open-xamu-co/firebase-nuxt/server/firebase";
 import { debugFirebaseServer } from "@open-xamu-co/firebase-nuxt/server/firestore";
 import { TimedPromise } from "@open-xamu-co/firebase-nuxt/server/guards";
 
@@ -22,7 +20,7 @@ import {
 	type uSIAProgram,
 } from "~~/functions/src/types/SIA";
 
-import { getPuppeteer, type ExtendedH3Event } from "./utils";
+import { type ExtendedH3Event } from "./utils";
 
 export interface iCoursesPayload {
 	level: eSIALevel;
@@ -50,7 +48,7 @@ const SIALEPrograms: Record<eSIAPlace, uSIAProgram> = {
 /**
  * From OldSIA to SIA typologies
  */
-const SIATypologies: Record<string, eSIATypology> = {
+export const SIATypologies: Record<string, eSIATypology> = {
 	"DISCIPLINAR OPTATIVA (T)": eSIATypology.DISC_OPTATIVA,
 	"DISCIPLINAR OBLIGATORIA (C)": eSIATypology.DISC_OBLIGATORIA,
 	"FUND. OBLIGATORIA (B)": eSIATypology.FUND_OBLIGATORIA,
@@ -253,75 +251,3 @@ export async function scrapeCoursesWithTypologyHandle(
 		}
 	);
 }
-
-/**
- * Get courses from SIA
- *
- * @cache 2 minutes
- */
-export const getCoursesLinks = defineCachedFunction(
-	async (event: ExtendedH3Event, payload: iCoursesPayload) => {
-		const { debugScrapper } = useRuntimeConfig();
-		const { page, cleanup } = await getPuppeteer(debugScrapper);
-
-		try {
-			let coursesHandle = await scrapeCoursesHandle(event, page, payload);
-
-			if (payload.typology) {
-				// Search by typology if given
-				coursesHandle = await scrapeCoursesWithTypologyHandle(event, page, payload);
-			}
-
-			// Get courses
-			const courseLinks: CourseLink[] = await coursesHandle.evaluate((table, typologies) => {
-				const tbody = table?.querySelector("tbody");
-
-				// No courses found
-				if (tbody?.tagName !== "TBODY") return [];
-
-				return Array.from(tbody?.children).map((row) => {
-					const link = row.children[0].getElementsByTagName("a")[0];
-					const code = link.innerHTML;
-					const nameSpan = row.children[1].querySelector("span[title]");
-					const creditSpan = row.children[2].querySelector("span[title]");
-					const typologySpan = row.children[3].querySelector("span[title]");
-					const descriptionSpan = row.children[4].querySelector("span[title]");
-					const typology = typologySpan?.innerHTML
-						? typologies[typologySpan.innerHTML]
-						: undefined;
-
-					return {
-						code,
-						name: nameSpan?.innerHTML || "",
-						credits: Number(creditSpan?.innerHTML || 0),
-						typology,
-						description: descriptionSpan?.innerHTML || "",
-					};
-				});
-			}, SIATypologies);
-
-			await cleanup(); // Cleanup puppeteer
-
-			return courseLinks;
-		} catch (err) {
-			await cleanup(); // Cleanup puppeteer
-			apiLogger(event, "getCoursesLinks", err);
-
-			// Prevent caching by throwing error
-			throw err;
-		}
-	},
-	{
-		name: "getCoursesLinks",
-		maxAge: 60 * 60 * 24, // 1 day
-		getKey(event, payload) {
-			const { currentInstanceHost } = event.context;
-			const { level, place, faculty, program, typology = "" } = payload;
-			const values = [level, place, faculty, program, typology];
-			const hash = createHash("sha256").update(values.join(",")).digest("hex");
-
-			// Compact hash
-			return `${currentInstanceHost}:${hash}`;
-		},
-	}
-);
