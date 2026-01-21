@@ -8,7 +8,9 @@
 	>
 		<p class="--txtWrap --txtAlign-left" :title="course.name">{{ course.name }}.</p>
 		<div class="flx --flxColumn --flx-start-stretch --gap-5">
-			<div class="txt --txtSize-xs --txtWrap --txtWeight-regular --gap-5 --flx">
+			<div
+				class="txt --txtSize-xs --txtWrap --txtWeight-regular --txtAlign-left --gap-5 --flx"
+			>
 				<p>
 					<b title="Codigo">{{ course.code }}</b>
 					⋅

@@ -33,14 +33,10 @@
 						<div class="flx --flxRow --flx-start --width-max --minWidth-100">
 							<XamuBoxAction
 								to="/administrar/instancias"
-								icon="store"
+								icon="at"
 								label="Instancias"
 							/>
-							<XamuBoxAction
-								to="/administrar/cursos"
-								icon="building-columns"
-								label="Cursos"
-							/>
+							<XamuBoxAction to="/administrar/cursos" icon="book" label="Cursos" />
 							<XamuBoxAction
 								to="/administrar/usuarios"
 								icon="users"

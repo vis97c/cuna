@@ -48,8 +48,8 @@
 					</li>
 					<li>
 						<XamuActionButtonToggle to="/administrar/instancias" round=":sm-inv">
-							<XamuIconFa name="store" />
-							<XamuIconFa name="store" regular />
+							<XamuIconFa name="at" />
+							<XamuIconFa name="at" regular />
 							<span class="--hidden-full:sm-inv">Instancias</span>
 						</XamuActionButtonToggle>
 					</li>
