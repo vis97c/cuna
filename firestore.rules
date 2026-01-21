@@ -45,6 +45,10 @@ service cloud.firestore {
       return request.auth.uid == uid;
     }
 
+    function isAuthor() {
+      return request.auth.uid == resource.data.createdByRef.uid;
+    }
+
     match /{document=**} {
       // deshabilita el acceso por defecto
       allow read, write: if false;
@@ -99,6 +103,18 @@ service cloud.firestore {
         // administradores no puede modificar desarrolladores
         allow update: if canAdmin(instanceId) || isOwnUser(uid);
         allow delete: if (canAdmin(instanceId) || isOwnUser(uid)) && resource.data.lock == false;
+
+        match /notes/{id} {
+          // lectura explicita, cualquiera
+          allow read: if true;
+          // cualquier usuario puede crear una nota
+          allow create: if canUse(instanceId);
+          // modificacion granular, editores hacia arriba
+          allow update: if isAuthor() || canDevelop(instanceId);
+          allow delete: if (isAuthor() || canDevelop(instanceId)) && resource.data.lock == false;
+        }
+
+        // Add more members subcollections rules here
       }
 
       match /logs/{logId} {

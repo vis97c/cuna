@@ -17,37 +17,65 @@
 				</div>
 			</header>
 			<nav class="x-main-nav">
-				<ul class="holder flx --flxRow --flx-between-center --gap-30 --height-100">
+				<ul
+					class="holder flx --flxRow --flx-between-center --gap-10 --gap:sm --gap-30:md --height-100"
+				>
 					<li>
-						<ul class="flx --flxRow --flx-start-center --gap-30">
+						<ul class="flx --flxRow --flx-start-center --gap-10 --gap:sm --gap-30:md">
 							<li>
 								<XamuActionLink to="/" tooltip="Inicio">
 									<XamuIconFa name="chess-knight" :size="35" />
 								</XamuActionLink>
 							</li>
-							<!-- <li v-if="USER.user">
+							<li>
+								<XamuActionButtonLink
+									to="/cursos"
+									tooltip="Ir a las cursos"
+									round=":sm-inv"
+									as-toggle
+								>
+									<XamuIconFa name="book" class="" />
+									<XamuIconFa name="book" class="--hidden-full:md" />
+									<span class="--hidden-full:sm-inv">Cursos</span>
+								</XamuActionButtonLink>
+							</li>
+							<li>
 								<XamuActionButtonLink
 									to="/notas"
-									tooltip="Ir a mis notas"
+									tooltip="Ir a las notas"
 									round=":sm-inv"
 									as-toggle
 								>
 									<XamuIconFa name="layer-group" class="" />
 									<XamuIconFa name="layer-group" class="--hidden-full:md" />
-									<span class="--hidden-full:sm-inv">Mis notas</span>
+									<span class="--hidden-full:sm-inv">Notas</span>
 								</XamuActionButtonLink>
-							</li> -->
+							</li>
 						</ul>
 					</li>
 					<li>
-						<ul class="flx --flxRow --flx-end-center --gap-30">
-							<li v-if="INSTANCE.current?.instagramId">
+						<ul class="flx --flxRow --flx-end-center --gap-10 --gap:sm --gap-30:md">
+							<li
+								v-if="INSTANCE.current?.instagramId"
+								:class="{ '--hidden-full:sm-inv': USER.canModerate }"
+							>
 								<XamuActionLink
 									tooltip="Síguenos para estar al tanto de las novedades"
 									:href="`https://www.instagram.com/${INSTANCE.current.instagramId}/`"
 								>
-									<XamuIconFa name="instagram" brand />
-									<span class="x-uncapitalize --hidden:xs-inv">
+									<XamuIconFa
+										name="instagram"
+										brand
+										:size="25"
+										class="--hidden-full:md"
+									/>
+									<XamuIconFa
+										name="instagram"
+										brand
+										:size="20"
+										class="--hidden-full:md-inv"
+									/>
+									<span class="x-uncapitalize --hidden-full:md-inv">
 										{{ INSTANCE.current.instagramId }}
 									</span>
 								</XamuActionLink>
@@ -126,7 +154,7 @@
 										</XamuActionLink>
 									</DropdownUser>
 								</li>
-								<li v-if="USER.canEdit">
+								<li v-if="USER.canDevelop">
 									<DropdownAdmin v-slot="{ setModel, model }">
 										<li>
 											<XamuActionLink

@@ -95,9 +95,9 @@ export default defineNuxtConfig({
 			"/api/instance": {
 				csurf: { methodsToProtect: ["DELETE"] },
 			},
-			// Redirect cursos to / (Old landing page)
-			"/cursos": {
-				redirect: "/",
+			// Get all courses
+			"/api/instance/courses": {
+				csurf: { methodsToProtect: ["POST"] },
 			},
 			// Search & scrape SIA courses
 			"/api/instance/courses/search": {
@@ -109,6 +109,10 @@ export default defineNuxtConfig({
 			},
 			// Search teachers
 			"/api/instance/teachers/search": {
+				csurf: { methodsToProtect: ["POST"] },
+			},
+			// Read instance notes
+			"/api/instance/notes/**": {
 				csurf: { methodsToProtect: ["POST"] },
 			},
 		},
@@ -140,11 +144,14 @@ export default defineNuxtConfig({
 		},
 		readInstanceCollection: (collectionId: string, { currentAuth }: H3Context) => {
 			/** Freely listable collections */
-			const listableCollections = ["courses"];
+			const listableCollections = [];
 
-			// Auth, allow listing if admin or above
-			if (currentAuth && currentAuth.role <= -1) {
-				listableCollections.push("logs");
+			// Auth required
+			if (currentAuth) {
+				listableCollections.push("courses");
+
+				// Auth, Allow listing if admin or above
+				if (currentAuth.role <= -1) listableCollections.push("logs");
 			}
 
 			return listableCollections.includes(collectionId);

@@ -90,7 +90,6 @@
 		return {
 			id: course.id,
 			code: course.code,
-			scrapedAt: course.scrapedAt,
 			// updatedBy: course.updatedBy,
 			course,
 			logs: course.logs || 0,
