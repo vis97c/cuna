@@ -2606,15 +2606,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@open-xamu-co/firebase-nuxt@npm:^2.0.0-next.7":
-  version: 2.0.0-next.7
-  resolution: "@open-xamu-co/firebase-nuxt@npm:2.0.0-next.7"
+"@open-xamu-co/firebase-nuxt@npm:^2.0.0-next.9":
+  version: 2.0.0-next.9
+  resolution: "@open-xamu-co/firebase-nuxt@npm:2.0.0-next.9"
   dependencies:
     "@nuxt/kit": "npm:^3.20.2"
     "@open-xamu-co/ui-common-enums": "npm:^4.0.0-next.2"
     "@open-xamu-co/ui-common-helpers": "npm:^4.0.0-next.4"
-    "@open-xamu-co/ui-components-vue": "npm:^4.0.0-next.7"
-    "@open-xamu-co/ui-nuxt": "npm:^4.0.0-next.7"
+    "@open-xamu-co/ui-components-vue": "npm:^4.0.0-next.10"
+    "@open-xamu-co/ui-nuxt": "npm:^4.0.0-next.8"
     "@pinia/nuxt": "npm:^0.11.0"
     accept-language-parser: "npm:^1.5.0"
     firebase: "npm:^12.8.0"
@@ -2624,7 +2624,7 @@ __metadata:
     nuxt-csurf: "npm:^1.6.5"
     pinia: "npm:^3.0.2"
     vue-router-better-scroller: "npm:^0.0.0"
-  checksum: 10c0/7ad486242e2df4a5e01788ca96000f4ea382e2c74cd350b49328f46928b880da184582d85b4dbcee56c2605d4faa627cd4d54e931302342d60d929816590f2e8
+  checksum: 10c0/400652671b432ab32e1c77b79dc54a8ace4f0a47a73d957c4e90d9272d7ce25801fe16e3244548c1355e98a4bc332db74d7dffe658bf09b2e774eb1d05a392dd
   languageName: node
   linkType: hard
 
@@ -2658,9 +2658,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@open-xamu-co/ui-components-vue@npm:^4.0.0-next.6, @open-xamu-co/ui-components-vue@npm:^4.0.0-next.7":
-  version: 4.0.0-next.7
-  resolution: "@open-xamu-co/ui-components-vue@npm:4.0.0-next.7"
+"@open-xamu-co/ui-components-vue@npm:^4.0.0-next.10":
+  version: 4.0.0-next.10
+  resolution: "@open-xamu-co/ui-components-vue@npm:4.0.0-next.10"
   dependencies:
     "@codemirror/lang-markdown": "npm:^6.5.0"
     "@fortawesome/fontawesome-common-types": "npm:^6.4.0"
@@ -2688,23 +2688,57 @@ __metadata:
   peerDependenciesMeta:
     vue-router:
       optional: true
-  checksum: 10c0/7841eb4e5ec669b15ad384f9fa7a18ccc29b89de2d1673a3c4251de18c01128a90d64f46ecfac7ce68ee536983fe49f4c9d334a105b32c6646fb293f733c5452
+  checksum: 10c0/a84840a2fb9cb924048a93a03d3dd892dc117b025ed5f77f6facda8e157e77daebe91fa7a2d152cdab6acbc0f6c70499ab9c53e93cf40487bc8b25957fc5451d
   languageName: node
   linkType: hard
 
-"@open-xamu-co/ui-nuxt@npm:^4.0.0-next.7":
-  version: 4.0.0-next.7
-  resolution: "@open-xamu-co/ui-nuxt@npm:4.0.0-next.7"
+"@open-xamu-co/ui-components-vue@npm:^4.0.0-next.9":
+  version: 4.0.0-next.9
+  resolution: "@open-xamu-co/ui-components-vue@npm:4.0.0-next.9"
+  dependencies:
+    "@codemirror/lang-markdown": "npm:^6.5.0"
+    "@fortawesome/fontawesome-common-types": "npm:^6.4.0"
+    "@fsegurai/codemirror-theme-material-light": "npm:^6.2.3"
+    "@open-xamu-co/ui-common-enums": "npm:^4.0.0-next.2"
+    "@open-xamu-co/ui-common-helpers": "npm:^4.0.0-next.4"
+    codemirror: "npm:^6.0.2"
+    lodash-es: "npm:^4.17.21"
+    markdown-it: "npm:^14.1.0"
+    markdown-it-abbr: "npm:^2.0.0"
+    markdown-it-anchor: "npm:^9.2.0"
+    markdown-it-footnote: "npm:^4.0.0"
+    markdown-it-highlightjs: "npm:^4.2.0"
+    markdown-it-sub: "npm:^2.0.0"
+    markdown-it-sup: "npm:^2.0.0"
+    markdown-it-task-lists: "npm:^2.1.1"
+    markdown-it-toc-done-right: "npm:^4.2.0"
+    sweetalert2: "npm:^11.11.1"
+    ts-md5: "npm:^1.3.1"
+    validator: "npm:^13.11.0"
+    vue-color: "npm:^3.3.1"
+  peerDependencies:
+    vue: ^3.5.25
+    vue-router: ^4.6.4
+  peerDependenciesMeta:
+    vue-router:
+      optional: true
+  checksum: 10c0/cb3998bc9f07890bb29d39d3a88f8bff887a6dc421c7873f72c1f1af55a563c006752f76db111ec46f7e1ccbe5951ac8e5f13bb0a83830ac2d105ba63844681c
+  languageName: node
+  linkType: hard
+
+"@open-xamu-co/ui-nuxt@npm:^4.0.0-next.8":
+  version: 4.0.0-next.8
+  resolution: "@open-xamu-co/ui-nuxt@npm:4.0.0-next.8"
   dependencies:
     "@nuxt/image": "npm:^1.10.0"
     "@nuxt/kit": "npm:^3.20.2"
     "@open-xamu-co/ui-common-enums": "npm:^4.0.0-next.2"
     "@open-xamu-co/ui-common-helpers": "npm:^4.0.0-next.4"
-    "@open-xamu-co/ui-components-vue": "npm:^4.0.0-next.6"
+    "@open-xamu-co/ui-components-vue": "npm:^4.0.0-next.9"
     lodash-es: "npm:^4.17.21"
     nuxt-countries-api: "npm:^2.0.0"
     sweetalert2: "npm:^11.11.1"
-  checksum: 10c0/77a51854e9a52e304cf92d061a673285ffb72920284413e7ab45c4cd4c139dd0055408120bee01a27f99ac8ee9207f8194fb89d38d2b83b579045e160fdf8ff7
+  checksum: 10c0/0ba80dc081d91f1cae5a9623ef1880953370fe8d0e62c1e31f41b2ffbab89c41c4617a4e39f84c4668d9a327d51ce2d79f131bd970ba04afe1bfab46858999b1
   languageName: node
   linkType: hard
 
@@ -3728,13 +3762,6 @@ __metadata:
   dependencies:
     tslib: "npm:^2.4.0"
   checksum: 10c0/b255094f293794c6d2289300c5fbcafbb5532a3aed3a5ffd2f8dc1828e639b88d75f6a376dd8f94347a44813fd7a7149d8463477a9a49525c8b2dcaa38c2d1e8
-  languageName: node
-  linkType: hard
-
-"@types/accept-language-parser@npm:^1.5.8":
-  version: 1.5.8
-  resolution: "@types/accept-language-parser@npm:1.5.8"
-  checksum: 10c0/acd6909999f8761d812e2eb8878bcb22c270937560766f6ba404f98e9b2c76144b4c556c76f78c0b0387ff1c2bef8665dae69c617d6ef87cd32c957f53e8b446
   languageName: node
   linkType: hard
 
@@ -6422,10 +6449,9 @@ __metadata:
     "@firebase/rules-unit-testing": "npm:^5.0.0"
     "@nuxt/scripts": "npm:^0.11.2"
     "@open-xamu-co/eslint-config": "npm:^3.0.1"
-    "@open-xamu-co/firebase-nuxt": "npm:^2.0.0-next.7"
+    "@open-xamu-co/firebase-nuxt": "npm:^2.0.0-next.9"
     "@open-xamu-co/ui-common-types": "npm:^4.0.0-next.4"
     "@open-xamu-co/ui-styles": "npm:^5.0.0-next.4"
-    "@types/accept-language-parser": "npm:^1.5.8"
     "@types/lodash-es": "npm:^4.17.12"
     "@types/node": "npm:^20"
     "@typescript-eslint/eslint-plugin": "npm:^6.15.0"
@@ -8213,7 +8239,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "functions@workspace:functions"
   dependencies:
-    "@open-xamu-co/firebase-nuxt": "npm:^2.0.0-next.7"
+    "@open-xamu-co/firebase-nuxt": "npm:^2.0.0-next.9"
     "@open-xamu-co/ui-common-types": "npm:^4.0.0-next.4"
     "@types/lodash-es": "npm:^4"
     firebase-admin: "npm:^13.6.0"

@@ -44,8 +44,8 @@
     "firebase:server": "firebase deploy --only hosting",
     "firebase:start": "yarn build && firebase emulators:start",
     "firebase:indexes": "firebase firestore:indexes > firestore.indexes.json",
-    "emulate:firestore": "firebase emulators:start --only firestore",
-    "test:firestore": "firebase emulators:exec --only firestore \"node tests/firestore.js\"",
+    "firebase:emulate": "firebase emulators:start",
+    "firebase:test": "firebase emulators:exec --only firestore \"node tests/firestore.js\"",
     "prepare": "node .husky/install.mjs && nuxt prepare",
     "postinstall": "node scripts/sync-firebase-nuxt.cjs"
   },
@@ -59,7 +59,7 @@
   ],
   "dependencies": {
     "@nuxt/scripts": "^0.11.2",
-    "@open-xamu-co/firebase-nuxt": "^2.0.0-next.7",
+    "@open-xamu-co/firebase-nuxt": "^2.0.0-next.9",
     "@unhead/vue": "^2.0.0-rc.13",
     "@vueuse/core": "^13.0.0",
     "lodash-es": "^4.17.21",
@@ -72,7 +72,6 @@
     "@open-xamu-co/eslint-config": "^3.0.1",
     "@open-xamu-co/ui-common-types": "^4.0.0-next.4",
     "@open-xamu-co/ui-styles": "^5.0.0-next.4",
-    "@types/accept-language-parser": "^1.5.8",
     "@types/lodash-es": "^4.17.12",
     "@types/node": "^20",
     "@typescript-eslint/eslint-plugin": "^6.15.0",

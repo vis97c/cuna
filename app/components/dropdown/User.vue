@@ -8,7 +8,7 @@
 			<slot v-bind="toggleScope"></slot>
 		</template>
 		<template v-if="USER.token" #default="{ invertedTheme, setModel }">
-			<nav class="list flx --flxColumn --gap-20 --minWidth-max --txtColor">
+			<nav class="dropdown-item list flx --flxColumn --gap-20 --minWidth-max --txtColor">
 				<ul class="list-group --gap-5">
 					<li>
 						<p class="--txtSize-xs">
@@ -23,6 +23,20 @@
 						</XamuActionLink>
 					</li>
 					<hr />
+					<li>
+						<XamuActionLink
+							class="--width-100"
+							:theme="[eColors.DANGER, invertedTheme[1]]"
+							@click="() => logout(setModel)"
+						>
+							<XamuIconFa name="power-off" />
+							<span>Cerrar sesion</span>
+						</XamuActionLink>
+					</li>
+				</ul>
+			</nav>
+			<nav class="dropdown-item list flx --flxColumn --gap-20 --minWidth-max --txtColor">
+				<ul class="list-group --gap-5">
 					<li>
 						<p class="--txtSize-xs">Buscador</p>
 					</li>
@@ -65,17 +79,6 @@
 							habilita esta opción para que Cuna te muestre los grupos (Según
 							disponibilidad) con cupos exclusivos para estos programas.
 						</p>
-					</li>
-					<hr />
-					<li>
-						<XamuActionLink
-							class="--width-100"
-							:theme="[eColors.DANGER, invertedTheme[1]]"
-							@click="() => logout(setModel)"
-						>
-							<XamuIconFa name="power-off" />
-							<span>Cerrar sesion</span>
-						</XamuActionLink>
 					</li>
 				</ul>
 			</nav>

@@ -59,7 +59,7 @@
 				<ClientOnly>
 					<template #fallback>Cargando buscador...</template>
 					<XamuBaseBox
-						class="x-box flx --flxColumn --flx-start-stretch --width-100 --maxWidth-800 --p-20:md"
+						class="x-box flx --flxColumn --flx-start-stretch --width-100 --maxWidth-770 --p-20:md"
 						transparent
 					>
 						<form
@@ -113,10 +113,7 @@
 									/>
 								</div>
 							</template>
-							<div
-								v-if="!CUNA.config?.explorerV2MaintenanceTillAt"
-								class="flx --flxColumn --flx-start --flx --gap-5"
-							>
+							<div class="flx --flxColumn --flx-start --flx --gap-5">
 								<p class="">Tipología</p>
 								<XamuSelect
 									id="typology"
@@ -141,15 +138,16 @@
 								: 'No hay cursos disponibles en este momento. Vuelve más tarde.'
 						"
 						label="Cargando cursos desde el SIA..."
+						hide-controls="single"
 						with-route
 						client
-						class="flx --flxColumn --flx-start-center --gap-30 --width-100 --maxWidth-800"
+						class="flx --flxColumn --flx-start-center --gap-30 --width-100 --maxWidth-770"
 						@refresh="(e) => (emittedRefresh = e)"
 					>
 						<div class="txt">
 							<h3>Resultados de búsqueda</h3>
 						</div>
-						<div class="grd --grdColumns-auto3 --width-100">
+						<div class="grd --grdColumns-auto3 --gap-20 --width-100">
 							<ItemCourse
 								v-for="course in content"
 								:key="course.id"
@@ -170,30 +168,41 @@
 						<div class="txt">
 							<h3 class="--txtColor-dark5">Otros recursos</h3>
 						</div>
-						<ul class="x-items flx --flxRow --flx-center">
-							<li class="x-fit">
-								<XamuBoxAction
-									:theme="calculadoraTheme"
-									to="https://calc-unal.vercel.app?from=cuna.com.co"
-									icon="calculator"
-									label="Calculadora de PAPPI"
-									target="_blank"
-								/>
-							</li>
-							<li class="x-fit">
-								<XamuBoxAction
-									:theme="estudiantesTheme"
-									to="https://losestudiantes.com/universidad-nacional?from=cuna.com.co"
-									icon="hand-fist"
-									label="Los estudiantes"
-									target="_blank"
-								/>
-							</li>
-						</ul>
+						<div class="scroll --horizontal --always --maxWidth-100">
+							<ul class="x-items flx --flxRow --flx-center --width-fit">
+								<li class="x-fit">
+									<XamuBoxAction
+										to="/notas"
+										icon="sticky-note"
+										label="Explora las notas"
+									/>
+								</li>
+								<li class="x-fit">
+									<XamuBoxAction
+										:theme="calculadoraTheme"
+										to="https://calc-unal.vercel.app?from=cuna.com.co"
+										icon="calculator"
+										label="Calculadora de PAPPI"
+										target="_blank"
+									/>
+								</li>
+								<li class="x-fit">
+									<XamuBoxAction
+										:theme="estudiantesTheme"
+										to="https://losestudiantes.com/universidad-nacional?from=cuna.com.co"
+										icon="hand-fist"
+										label="Los estudiantes"
+										target="_blank"
+									/>
+								</li>
+							</ul>
+						</div>
 					</div>
 				</ClientOnly>
 				<div class="txt --txtAlign-center --txtSize-xs --txtColor-dark5 --minWidth-100">
-					<p>Visita cada curso para obtener los cupos en tiempo real desde el SIA.</p>
+					<p v-if="USER.token">
+						Visita cada curso para obtener los cupos en tiempo real desde el SIA.
+					</p>
 					<p>No dudes en reportar cualquier problema o sugerencia a nuestro instagram.</p>
 				</div>
 			</div>
@@ -326,7 +335,7 @@
 	@media only screen {
 		.x-fit .box {
 			aspect-ratio: 4/5;
-			max-width: 8rem;
+			width: 8rem;
 		}
 		.x-box {
 			border-radius: 2rem;
