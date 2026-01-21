@@ -4,6 +4,9 @@
 			class="view-item --minHeightVh-100 --bgColor-light"
 			:content="!!course"
 			:loading="coursePending"
+			:errors="courseError"
+			label="Cargando curso..."
+			no-content-message="No se encontró el curso"
 		>
 			<section
 				v-if="course"
@@ -58,8 +61,8 @@
 							:value="{
 								código: course.code,
 								créditos: course.credits,
-								cuposDisponibles: course.spotsCount,
-								actividad: groupActivity || 'No definida',
+								cuposDisponibles: groupsData.spots || '??',
+								actividad: groupsData.activity || 'No definida',
 							}"
 							:modal-props="{ class: '--txtColor', invertTheme: true }"
 						/>
@@ -76,16 +79,18 @@
 						/>
 					</div>
 				</div>
-				<ClientOnly>
+				<XamuLoaderContent
+					:content="!!groups"
+					:loading="groupsPending"
+					:errors="groupsError"
+					:el="ClientOnly"
+					label="Cargando grupos..."
+					no-content-message="No hay grupos registrados"
+				>
 					<template #fallback>Cargando grupos...</template>
-					<XamuPaginationContentTable
-						:page="groupsPage"
-						:url="`api:instance:courses:${courseId}:groups`"
-						:map-node="useMapGroupEs"
-						:defaults="{ page: true, level: 1 }"
-						:table-props="{
+					<XamuTable
+						v-bind="{
 							preferId: true,
-							mapNodes: filterGroups,
 							properties: [
 								{
 									value: 'inscrito',
@@ -100,12 +105,9 @@
 								class: '--txtColor',
 							},
 						}"
-						label="Cargando grupos..."
-						no-content-message="No hay grupos registrados"
-						client
-						@refresh="emittedGroupsRefresh = $event"
+						:nodes="groupsData.filtered"
 					/>
-				</ClientOnly>
+				</XamuLoaderContent>
 			</section>
 		</XamuLoaderContent>
 	</div>
@@ -116,21 +118,12 @@
 	import deburr from "lodash-es/deburr";
 	import { doc, DocumentReference, onSnapshot, type Unsubscribe } from "firebase/firestore";
 
+	import type { iPageEdge } from "@open-xamu-co/ui-common-types";
 	import { eColors } from "@open-xamu-co/ui-common-enums";
 
-	import type { Course, Group, Teacher } from "~/utils/types";
+	import type { Course, Group, GroupEs } from "~/utils/types";
 
-	import { TableTeachersList, TableEnroll, TableWeek } from "#components";
-	import type { iGetPage, iPage } from "@open-xamu-co/ui-common-types";
-
-	interface iGroupEs {
-		id: string;
-		cupos: string;
-		espacios?: string[];
-		profesores: Teacher[];
-		horarios: boolean;
-		inscrito: boolean;
-	}
+	import { TableTeachersList, TableEnroll, TableWeek, ClientOnly } from "#components";
 
 	/**
 	 * Course page
@@ -138,7 +131,7 @@
 	 * @page
 	 */
 
-	definePageMeta({ title: "Curso", middleware: ["course-exists"] });
+	definePageMeta({ middleware: ["course-exists"] });
 
 	const CUNA = useCunaStore();
 	// const INSTANCE = useInstanceStore();
@@ -153,8 +146,6 @@
 
 	const estudiantesTheme = "estudiantes" as any;
 	const deactivated = ref(false);
-	const emittedGroupsRefresh = ref<() => void>();
-	const groupActivity = ref<string>("");
 
 	const courseId = computed(() => <string>route.params.courseId);
 	const losEstudiantesCourses = computed(() => {
@@ -163,6 +154,12 @@
 
 		return `${losEstudiantesUrl}${losEstudiantesCoursesPath}`;
 	});
+	/** Place without "sede" */
+	const placeOnly = computed(() => {
+		const [, placeOnly] = deburr(USER.place).toLowerCase().replace(" de la", "").split("sede ");
+
+		return placeOnly;
+	});
 
 	const {
 		data: course,
@@ -170,7 +167,7 @@
 		refresh: refreshCourse,
 		error: courseError,
 	} = useAsyncData(
-		`api:all:courses:${courseId.value}`,
+		`api:instance:all:courses:${courseId.value}`,
 		async () => {
 			const courseApiPath = `/api/instance/all/courses/${courseId.value}`;
 
@@ -179,34 +176,79 @@
 				cache: "reload",
 			});
 		},
+		{ watch: [() => courseId.value], server: false }
+	);
+
+	const {
+		data: groups,
+		pending: groupsPending,
+		refresh: refreshGroups,
+		error: groupsError,
+	} = useAsyncData(
+		`api:instance:courses:${courseId.value}:groups`,
+		async () => {
+			const courseApiPath = `/api/instance/courses/${courseId.value}/groups`;
+
+			return useCsrfQuery<iPageEdge<Group>[]>(courseApiPath, {
+				query: { level: 1 },
+				method: "POST",
+				headers: { "Cache-Control": cache.none },
+				cache: "reload",
+			});
+		},
 		{ watch: [() => courseId.value] }
 	);
 
-	const groupsPage: iGetPage<Group> = (pagination) => {
-		const courseApiPath = `/api/instance/courses/${courseId.value}`;
+	/**
+	 * Get filtered groups metadata
+	 *
+	 * Current implementation requires 2 loops (O(2n))
+	 */
+	const groupsData = computed(() => {
+		/** There are groups with the current place in their name */
+		let withThisPlace = false;
+		/** There are groups with other places in their name */
+		let withOtherPlaces = false;
+		let activity = "";
+		let spots = 0;
 
-		return useCsrfQuery<iPage<Group> | undefined>(`${courseApiPath}/groups`, {
-			method: "POST",
-			query: pagination,
-			headers: { "Cache-Control": cache.none },
-			cache: "reload",
-		});
-	};
+		// Get place flags
+		for (const { node } of groups.value || []) {
+			const lowerName = deburr(node.name).toLowerCase();
+
+			activity ||= node.activity || activity;
+
+			if (lowerName.includes(placeOnly.value)) withThisPlace = true;
+			if (lowerName.includes("otras sedes")) withOtherPlaces = true;
+		}
+
+		const filtered: GroupEs[] = [];
+
+		// Filter according to user preferences
+		for (const { node } of groups.value || []) {
+			const lowerName = deburr(node.name).toLowerCase();
+			const nonRegular = lowerName.includes("peama") || lowerName.includes("paes");
+			const isThisPlace = lowerName.includes(placeOnly.value);
+			const isOtherPlace = lowerName.includes("otras sedes");
+
+			if (
+				(!USER.withNonRegular && nonRegular) ||
+				(withThisPlace && !isThisPlace) ||
+				(withOtherPlaces && !isOtherPlace)
+			) {
+				continue;
+			}
+
+			filtered.push(useMapGroupEs(node));
+			spots += node.availableSpots || 0;
+		}
+
+		return { filtered, activity, spots };
+	});
 
 	function refreshAll() {
 		refreshCourse();
-		emittedGroupsRefresh.value?.();
-	}
-
-	function useMapGroupEs({ name, teachers, classrooms, spots, availableSpots }: Group): iGroupEs {
-		return {
-			id: `${name}`, // hotfix to prevent it to parse as date
-			cupos: `${availableSpots} de ${spots}`,
-			espacios: classrooms?.filter((c) => !!c),
-			profesores: teachers,
-			horarios: true,
-			inscrito: true,
-		};
+		refreshGroups();
 	}
 
 	const removeCourse = debounce(async () => {
@@ -241,50 +283,6 @@
 			icon: "error",
 		});
 	});
-
-	function filterGroups(groups: Group[]) {
-		const [, placeOnly] = deburr(USER.place).toLowerCase().replace(" de la", "").split("sede ");
-		let thisPlace = false;
-		let withPlaces = false;
-		let activity = "";
-
-		// Check if there are groups with place in their name
-		for (const group of groups) {
-			const lowerName = deburr(group.name).toLowerCase();
-
-			activity ||= group.activity || activity;
-
-			if (lowerName.includes(placeOnly)) thisPlace = true;
-			if (lowerName.includes("sede")) withPlaces = true;
-		}
-
-		const filterGroups: iGroupEs[] = [];
-
-		// Filter according to user preferences
-		for (const group of groups) {
-			const lowerName = deburr(group.name).toLowerCase();
-
-			if (
-				!USER.withNonRegular &&
-				(lowerName.includes("peama") || lowerName.includes("paes"))
-			) {
-				// Filter out non-regular courses if user doesn't want to see them
-				continue;
-			} else if (thisPlace) {
-				// Filter groups by user's place
-				if (lowerName.includes(placeOnly)) filterGroups.push(useMapGroupEs(group));
-			} else if (withPlaces) {
-				// Show groups from other places
-				if (lowerName.includes("otras sedes")) filterGroups.push(useMapGroupEs(group));
-			}
-
-			filterGroups.push(useMapGroupEs(group));
-		}
-
-		groupActivity.value = activity;
-
-		return filterGroups;
-	}
 
 	// lifecycle
 	watch(
@@ -327,7 +325,7 @@
 					if (courseData?.id) {
 						course.value = courseData;
 
-						emittedGroupsRefresh.value?.();
+						refreshGroups();
 					}
 				});
 			}

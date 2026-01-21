@@ -67,11 +67,11 @@
 
 	const INSTANCE = useInstanceStore();
 	const route = useRoute();
-	const { indexable, countriesUrl } = useRuntimeConfig().public;
+	const { indexable } = useRuntimeConfig().public;
 
 	// lifecycle
 	useHead(() => {
-		const { hostname } = new URL(countriesUrl);
+		const { hostname } = new URL(INSTANCE.current?.url || "https://cuna.com.co");
 		const title = `Cuna ⋅ ${route.meta.title || "Visor de cupos UNAL"}`;
 		const base = `https://${hostname}`;
 		const url = `${base}/${route.path}`;

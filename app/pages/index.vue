@@ -193,16 +193,7 @@
 					</div>
 				</ClientOnly>
 				<div class="txt --txtAlign-center --txtSize-xs --txtColor-dark5 --minWidth-100">
-					<div v-if="USER.token" class="">
-						<p>
-							Visita cada pagina de curso para obtener los cupos en tiempo real
-							(Antiguo SIA).
-						</p>
-						<p>
-							Usamos el explorador de cursos para listar los cursos, de momento este
-							no algunos cursos como los de libre elección.
-						</p>
-					</div>
+					<p>Visita cada curso para obtener los cupos en tiempo real desde el SIA.</p>
 					<p>No dudes en reportar cualquier problema o sugerencia a nuestro instagram.</p>
 				</div>
 			</div>

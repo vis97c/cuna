@@ -15,7 +15,7 @@ import type {
 	InstanceMemberAbuseData,
 } from "~~/functions/src/types/entities";
 import type { ExtendedUser } from "./user";
-import type { Group } from "./group";
+import type { Group } from "./course";
 
 /**
  * App instance

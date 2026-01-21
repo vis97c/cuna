@@ -15,7 +15,6 @@
 					<XamuActionButton
 						:size="eSizes.LG"
 						:theme="eColors.DANGER"
-						:disabled="production"
 						@click.prevent="loginWithGoogle"
 					>
 						<XamuIconFa name="google" brand :size="20" />
@@ -41,6 +40,5 @@
 		middleware: ["guest-only"],
 	});
 
-	const { production } = useRuntimeConfig().public;
 	const { loading, loginWithGoogle } = useGoogleAuth();
 </script>

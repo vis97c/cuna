@@ -1,7 +1,7 @@
 <template>
 	<XamuActionButtonToggle
-		v-if="props.node?.schedule?.some((day) => day)"
-		:key="props.node.name"
+		v-if="props.value?.schedule?.some((day) => day)"
+		:key="props.value.name"
 		:theme="enrolled ? eColors.SUCCESS : eColors.SECONDARY"
 		:tooltip="enrolled ? 'Quitar del horario' : 'Añadir al horario'"
 		:active="enrolled"
@@ -25,22 +25,21 @@
 	 */
 
 	const props = defineProps<{
-		value: any;
-		node?: Group;
+		value: Group;
 	}>();
 
 	const USER = useUserStore();
 
 	const enrolled = computed({
 		get() {
-			return USER.enrolled.some(({ id }) => id === props.node?.id);
+			return USER.enrolled.some(({ id }) => id === props.value.id);
 		},
 		set(enroll) {
-			if (!props.node) return;
+			if (!props.value) return;
 
-			if (enroll) return USER.enroll(props.node);
+			if (enroll) return USER.enroll(props.value);
 
-			USER.unenroll(props.node);
+			USER.unenroll(props.value);
 		},
 	});
 </script>

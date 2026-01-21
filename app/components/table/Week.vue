@@ -1,8 +1,8 @@
 <template>
 	<XamuModal
-		v-if="node?.schedule?.some((day) => day)"
+		v-if="value?.schedule?.some((day) => day)"
 		class="--txtColor"
-		:title="`${node.courseName}. ${node.name}`"
+		:title="`${value.courseName}. ${value.name}`"
 		:save-button="{ title: enrolledMessage }"
 		invert-theme
 		@save="() => (enrolled = !enrolled)"
@@ -14,8 +14,8 @@
 		</template>
 		<template #default>
 			<Week
-				:enrolled-groups="enrolled ? USER.enrolled : [node, ...USER.enrolled]"
-				:highlight="!enrolled ? node.courseCode : ''"
+				:enrolled-groups="enrolled ? USER.enrolled : [value, ...USER.enrolled]"
+				:highlight="!enrolled ? value.courseCode : ''"
 			/>
 		</template>
 	</XamuModal>
@@ -32,25 +32,26 @@
 	 * @component
 	 */
 
-	const props = defineProps<{ value: any; node?: Group }>();
+	const props = defineProps<{ value: Group }>();
 
 	const USER = useUserStore();
 
 	const enrolled = computed({
 		get() {
-			return USER.enrolled.some(({ id }) => id === props.node?.id);
+			return USER.enrolled.some(({ id }) => id === props.value.id);
 		},
 		set(enroll) {
-			if (!props.node) return;
+			if (!props.value) return;
 
-			if (enroll) return USER.enroll(props.node);
+			if (enroll) return USER.enroll(props.value);
 
-			USER.unenroll(props.node);
+			USER.unenroll(props.value);
 		},
 	});
 	const enrolledMessage = computed(() => {
+		if (!USER.token) return ""; // Require session
 		if (enrolled.value) return "Quitar del horario";
-		if (USER.enrolled.some(({ id }) => id === props.node?.id)) {
+		if (USER.enrolled.some(({ id }) => id === props.value.id)) {
 			return "Reemplazar grupo";
 		}
 

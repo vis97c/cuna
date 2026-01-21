@@ -94,10 +94,12 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 
 		// Fetch from SIA if not cached
 		// Index groups before resolving query
-		// TODO: get course prerequisites
+		// TODO: scrape course prerequisites
 		try {
 			// Only index if user is authenticated (Prevent abusive calls)
 			if (!cachedGroups && currentAuth) {
+				console.log("Scraping groups");
+
 				const links = await getCourseGroupsLinks(event, courseRef);
 				const groupCount = links.length;
 				const spotsCount = sumBy(links, "availableSpots");
