@@ -1,15 +1,20 @@
-import { Timestamp, type DocumentReference } from "firebase-admin/firestore";
+import { FieldValue, Timestamp, type DocumentReference } from "firebase-admin/firestore";
 
 import { onCreated, onUpdated } from "@open-xamu-co/firebase-nuxt/functions/event";
 import { makeGetSlug } from "@open-xamu-co/firebase-nuxt/functions/slugs";
 import { getFirebase } from "@open-xamu-co/firebase-nuxt/functions/firebase";
 import { encrypt } from "@open-xamu-co/firebase-nuxt/functions/encrypt";
 
-import type { ExtendedInstanceData, NoteData } from "./types/entities";
+import type { ExtendedInstanceData, NoteData, NoteVoteData } from "./types/entities";
 
 const getNoteSlug = makeGetSlug("notes");
 
-// Notes timestamp
+/**
+ * Create note
+ *
+ * @docType instance
+ * @event created
+ */
 export const onCreatedNote = onCreated<NoteData>(
 	"instances/members/notes",
 	async (created, { logger, createdAt }) => {
@@ -57,6 +62,12 @@ export const onCreatedNote = onCreated<NoteData>(
 		},
 	}
 );
+/**
+ * Update note
+ *
+ * @docType instance
+ * @event updated
+ */
 export const onUpdatedNote = onUpdated<NoteData>(
 	"instances/members/notes",
 	async (updated, existing, { updatedAt, logger }) => {
@@ -98,6 +109,87 @@ export const onUpdatedNote = onUpdated<NoteData>(
 			return { slug, body, encodedAt };
 		} catch (err) {
 			logger("functions:instances:members:onUpdatedNote", err);
+
+			throw err;
+		}
+	}
+);
+
+/**
+ * Create note vote
+ *
+ * @docType instance
+ * @event created
+ */
+export const onCreatedNoteVote = onCreated<NoteVoteData>(
+	"instances/members/notes/votes",
+	async (created, { logger }) => {
+		try {
+			let { vote = 0 } = created.data();
+
+			// Delete invalid vote
+			if (vote !== 1 && vote !== -1) {
+				throw new Error("Invalid vote");
+			}
+
+			return { vote };
+		} catch (err) {
+			logger("functions:instances:members:onCreatedNoteVote", err);
+
+			throw err;
+		}
+	},
+	{
+		defaults: {
+			lock: true,
+		},
+	}
+);
+
+/**
+ * Update note vote.
+ * Calculate deltas & update note.
+ *
+ * @docType instance
+ * @event updated
+ */
+export const onUpdatedNoteVote = onUpdated<NoteVoteData>(
+	"instances/members/notes/votes",
+	async (updated, existing, { logger }) => {
+		const noteRef = updated.ref.parent.parent;
+
+		try {
+			if (!noteRef) throw new Error("Missing note ref");
+
+			const oldVote = existing.data()?.vote ?? 0;
+			const vote = updated.data()?.vote ?? 0;
+
+			// Omit if vote is the same
+			if (vote === oldVote) return;
+
+			/** Total change in score. */
+			const delta = vote - oldVote;
+			/** Change in upvote count. */
+			const upvotesDelta = oldVote === 1 ? -1 : vote === 1 ? 1 : 0;
+			/** Change in downvote count. */
+			const downvotesDelta = oldVote === -1 ? -1 : vote === -1 ? 1 : 0;
+
+			const voteBatch = updated.ref.firestore.batch();
+
+			// Setup transactions
+			voteBatch.update(noteRef, {
+				upvotes: FieldValue.increment(upvotesDelta),
+				downvotes: FieldValue.increment(downvotesDelta),
+				score: FieldValue.increment(delta),
+			});
+
+			// Eliminar voto si se quitó
+			if (vote === 0) voteBatch.delete(updated.ref);
+
+			// Commit batch
+			return voteBatch.commit();
+		} catch (err) {
+			logger("functions:instances:members:onUpdatedNoteVote", err);
 
 			throw err;
 		}

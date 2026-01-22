@@ -1,24 +1,21 @@
 <template>
 	<div id="landing" class="view">
-		<XamuLoaderContent
-			class="view-item --minHeightVh-100 --bgColor-light"
-			:content="!!course"
-			:loading="coursePending"
-			:errors="courseError"
-			label="Cargando curso..."
-			no-content-message="No se encontró el curso"
-		>
-			<section
-				v-if="course"
+		<section class="view-item --minHeightVh-100 --bgColor-light">
+			<XamuLoaderContent
 				class="holder flx --flxColumn --flx-center-stretch --maxWidth-1080"
+				:content="!!course"
+				:loading="coursePending"
+				:errors="courseError"
+				label="Cargando curso..."
+				no-content-message="No se encontró el curso"
 			>
 				<div v-if="USER.token" class="flx --flxRow-wrap --flx-between-center --width-100">
 					<div class="flx --flxRow-wrap --flx-start-center">
 						<XamuActionButton
 							:theme="estudiantesTheme"
 							tooltip="Ver en los estudiantes"
-							:href="`${losEstudiantesCourses}/${course.losEstudiantesCode}?from=cuna.com.co`"
-							:disabled="!course.losEstudiantesCode"
+							:href="`${losEstudiantesCourses}/${course?.losEstudiantesCode}?from=cuna.com.co`"
+							:disabled="!course?.losEstudiantesCode"
 							round
 						>
 							<XamuIconFa name="hand-fist" />
@@ -39,19 +36,19 @@
 					</div>
 				</div>
 				<div class="flx --flxColumn --flx-start">
-					<h2 :key="course.id">{{ course.name }}</h2>
+					<h2 :key="course?.id">{{ course?.name }}</h2>
 					<div class="flx --flxColumn --flx-start --gap-5">
-						<p v-if="course.alternativeNames?.length" title="Otros nombres">
+						<p v-if="course?.alternativeNames?.length" title="Otros nombres">
 							{{ course.alternativeNames.join(", ") }}.
 						</p>
-						<p v-if="course.updatedAt" class="--txtSize-xs --txtColor-dark5">
+						<p v-if="course?.updatedAt" class="--txtSize-xs --txtColor-dark5">
 							<span>Actualizado {{ useTimeAgo(new Date(course.updatedAt)) }}</span>
 							<span v-if="USER.canDevelop && course.scrapedAt">
 								⋅ SIA {{ useTimeAgo(new Date(course.scrapedAt)) }}
 							</span>
 						</p>
 					</div>
-					<p v-if="course.description" class="--txtSize-sm --txtLineHeight-xl">
+					<p v-if="course?.description" class="--txtSize-sm --txtLineHeight-xl">
 						{{ course.description }}
 					</p>
 				</div>
@@ -59,8 +56,8 @@
 					<div class="x-values grd-item">
 						<XamuValueList
 							:value="{
-								código: course.code,
-								créditos: course.credits,
+								código: course?.code,
+								créditos: course?.credits,
 								cuposDisponibles: groupsData.spots || '??',
 								actividad: groupsData.activity || 'No definida',
 							}"
@@ -70,10 +67,10 @@
 					<div class="x-values grd-item">
 						<XamuValueList
 							:value="{
-								sede: course.place,
-								facultades: course.faculties,
-								programas: course.programs,
-								tipologías: course.typologies,
+								sede: course?.place,
+								facultades: course?.faculties,
+								programas: course?.programs,
+								tipologías: course?.typologies,
 							}"
 							:modal-props="{ class: '--txtColor', invertTheme: true }"
 						/>
@@ -84,8 +81,9 @@
 					:loading="groupsPending"
 					:errors="groupsError"
 					:el="ClientOnly"
-					label="Cargando grupos..."
-					no-content-message="No hay grupos registrados"
+					label="Cargando grupos desde el SIA..."
+					no-content-message="No hay grupos programados"
+					client
 				>
 					<template #fallback>Cargando grupos...</template>
 					<h4 class="--mBottom">Grupos {{ groupsData.filtered[0].semestre }}:</h4>
@@ -109,8 +107,8 @@
 						:nodes="groupsData.filtered"
 					/>
 				</XamuLoaderContent>
-			</section>
-		</XamuLoaderContent>
+			</XamuLoaderContent>
+		</section>
 	</div>
 </template>
 

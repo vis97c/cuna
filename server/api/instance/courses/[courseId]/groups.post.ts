@@ -48,7 +48,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 	 */
 	const getCourseGroupsLinks = defineCachedFunction(
 		async (event: ExtendedH3Event, courseRef: DocumentReference<CourseData>) => {
-			const { browser, page } = await getPuppeteer(debugScrapper);
+			const { browser, page } = await getPuppeteer(event, debugScrapper);
 
 			try {
 				const snapshot = await courseRef.get();

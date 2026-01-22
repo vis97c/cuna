@@ -76,9 +76,13 @@ export async function scrapeCoursesHandle(
 	} = currentInstance?.config || {};
 	const siaOldEnpoint = siaOldURL + siaOldPath + siaOldQuery;
 
+	// Navigate to SIA, in less than 30 seconds
+	const response = await page.goto(siaOldEnpoint, { timeout: 1000 * 30 });
+
+	if (!response?.ok) throw new Error("There was an error loading the page");
+
 	return TimedPromise<ElementHandle<Element>>(
 		async function (resolve, reject) {
-			await page.goto(siaOldEnpoint);
 			await page.evaluate(() => {
 				// #d1 es un div que tiene altura 1 cuando la página se carga incorrectamente
 				if (document.querySelector("#d1")?.clientHeight === 1) {
