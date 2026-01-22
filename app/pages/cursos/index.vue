@@ -7,7 +7,6 @@
 					<p>Encuentra cursos útiles o que te llamen la atención.</p>
 				</div>
 				<div
-					v-if="!emittedHasContent"
 					class="flx --flxColumn --flx-start --gap-5 --width-100 --maxWidth-220 --txtSize-xs"
 				>
 					<p class="">Tipología</p>
@@ -32,20 +31,7 @@
 						hide-controls="single"
 						with-route
 						client
-						@has-content="hasContent"
 					>
-						<div
-							class="flx --flxColumn --flx-start --gap-5 --width-100 --maxWidth-220 --txtSize-xs"
-						>
-							<p class="">Tipología</p>
-							<XamuSelect
-								id="typology"
-								v-model="selectedTypology"
-								class="--width-180 --minWidth-100"
-								:options="typologies"
-								:size="eSizes.XS"
-							/>
-						</div>
 						<div class="grd --grdColumns-auto3 --gap-20 --width-100">
 							<ItemCourse
 								v-for="course in content"
@@ -78,8 +64,6 @@
 
 	import type { Course, PartialCourseValues } from "~/utils/types";
 
-	type HydrateNodes = (newContent: Course[] | null, newErrors?: unknown) => void;
-
 	/**
 	 * Course page
 	 *
@@ -90,8 +74,6 @@
 
 	const USER = useUserStore();
 	const { cache } = useRuntimeConfig().public;
-
-	const emittedHasContent = ref<boolean>();
 
 	const selectedLevel = computed({
 		get: () => USER.level,
@@ -117,13 +99,7 @@
 			method: "POST",
 			query: pagination,
 			headers: { "Cache-Control": cache.frequent },
+			cache: "reload",
 		});
 	};
-
-	/**
-	 * Handles content emission
-	 */
-	function hasContent(value: boolean, _content?: Course[] | null, _hydrateNodes?: HydrateNodes) {
-		emittedHasContent.value = value;
-	}
 </script>

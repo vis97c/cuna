@@ -66,7 +66,7 @@
 	import deburr from "lodash-es/deburr";
 
 	import type { iInvalidInput, iNodeFnResponseStream } from "@open-xamu-co/ui-common-types";
-	import type { FormInput } from "@open-xamu-co/ui-common-helpers";
+	import type { tFormInput } from "@open-xamu-co/ui-common-types";
 
 	import type { Teacher, TeacherRef } from "~/utils/types";
 
@@ -94,7 +94,7 @@
 	const estudiantesTheme = "estudiantes" as any;
 
 	const updatedSlug = ref("");
-	const addSlugInputs = ref<FormInput[]>();
+	const addSlugInputs = ref<tFormInput[]>();
 	const invalidAddSlug = ref<iInvalidInput[]>([]);
 
 	const teacherData = computed<Teacher>(() => {

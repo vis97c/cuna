@@ -21,7 +21,13 @@ export const onCreatedNote = onCreated<NoteData>(
 		try {
 			if (!instanceRef) throw new Error(`Missing instance at: "${created.ref.path}"`);
 
-			let { slug, name, keywords = name?.split(" "), body = "", encodedAt } = created.data();
+			let {
+				slug,
+				name,
+				keywords = name?.trim().split(" "),
+				body = "",
+				encodedAt,
+			} = created.data();
 			const newSlug = await getNoteSlug(firebaseFirestore, name);
 
 			// Encode new unencoded body
@@ -44,6 +50,9 @@ export const onCreatedNote = onCreated<NoteData>(
 	{
 		defaults: {
 			public: false,
+			score: 1,
+			upvotes: 1, // Author upvote
+			downvotes: 0,
 			lock: false,
 		},
 	}
@@ -61,17 +70,16 @@ export const onUpdatedNote = onUpdated<NoteData>(
 
 			const existingData = existing.data();
 			let {
-				name = "",
 				slug = "",
 				body = "",
 				encodedAt = Timestamp.fromDate(updatedAt),
 				lock,
 			} = updated.data();
 
-			// Update slug if name has changed
-			if (existingData.name !== name && existingData.slug === slug) {
+			// Validate slug if slug has changed
+			if (existingData.slug !== slug) {
 				// Update slug if unlocked
-				if (!lock) slug = await getNoteSlug(firebaseFirestore, name, existingData.slug);
+				if (!lock) slug = await getNoteSlug(firebaseFirestore, slug, existingData.slug);
 			}
 
 			// Encode updated body

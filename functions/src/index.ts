@@ -7,6 +7,7 @@ export * from "./users.js";
 export * from "./courses.js";
 export * from "./teachers.js";
 export * from "./instances.js";
+export * from "./notes.js";
 
 /**
  * Create timestamp
