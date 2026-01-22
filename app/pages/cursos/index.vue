@@ -5,18 +5,18 @@
 				<div class="txt --txtAlign-center">
 					<h1 class="--txtLineHeight-sm">Cursos</h1>
 					<p>Encuentra cursos útiles o que te llamen la atención.</p>
-				</div>
-				<div
-					class="flx --flxColumn --flx-start --gap-5 --width-100 --maxWidth-220 --txtSize-xs"
-				>
-					<p class="">Tipología</p>
-					<XamuSelect
-						id="typology"
-						v-model="selectedTypology"
-						class="--width-180 --minWidth-100"
-						:options="typologies"
-						:size="eSizes.XS"
-					/>
+					<div
+						class="flx --flxColumn --flx-start --gap-5 --width-100 --maxWidth-220 --txtSize-xs"
+					>
+						<p class="">Tipología</p>
+						<XamuSelect
+							id="typology"
+							v-model="selectedTypology"
+							class="--width-180 --minWidth-100"
+							:options="typologies"
+							:size="eSizes.XS"
+						/>
+					</div>
 				</div>
 				<ClientOnly>
 					<template #fallback>Cargando notas...</template>
