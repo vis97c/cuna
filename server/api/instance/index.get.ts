@@ -16,9 +16,32 @@ export default defineEventHandler(async (event) => {
 	try {
 		if (!currentInstance) return;
 
+		const {
+			maintenanceMessage,
+			siaMaintenanceTillAt,
+			explorerV1MaintenanceTillAt,
+			explorerV2MaintenanceTillAt,
+			losEstudiantesUrl,
+			losEstudiantesCoursesPath,
+			losEstudiantesProfessorsPath,
+			version,
+		} = currentInstance?.config || {};
+
+		/** Be explicit about what is exposed to the client */
+		const publicConfig = {
+			maintenanceMessage,
+			siaMaintenanceTillAt,
+			explorerV1MaintenanceTillAt,
+			explorerV2MaintenanceTillAt,
+			losEstudiantesUrl,
+			losEstudiantesCoursesPath,
+			losEstudiantesProfessorsPath,
+			version,
+		};
+
 		return {
 			...currentInstance,
-			config: safeInstanceConfig(currentInstance?.config),
+			config: safeInstanceConfig(publicConfig),
 		};
 	} catch (err) {
 		apiLogger(event, "api:instance", err);

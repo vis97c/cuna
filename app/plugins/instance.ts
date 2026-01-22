@@ -121,8 +121,6 @@ function setupAuth(instance: ExtendedInstance) {
 		unsubUser?.();
 
 		if (!authUser) {
-			console.log("no authUser");
-
 			// Attempt checking redirect result
 			// Setup is required for: https://console.cloud.google.com/auth/clients
 			try {
