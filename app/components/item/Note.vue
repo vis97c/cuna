@@ -61,7 +61,7 @@
 							<XamuActionLink tooltip="Votar +1" class="x-vote --up">
 								<XamuIconFa name="caret-up" :size="20" />
 							</XamuActionLink>
-							<span>1</span>
+							<span>{{ note.score }}</span>
 							<XamuActionLink tooltip="Votar -1" class="x-vote --down">
 								<XamuIconFa name="caret-down" :size="20" />
 							</XamuActionLink>
@@ -255,6 +255,9 @@
 			}
 		}
 	}
+
+	function upvoteNote() {}
+	function downvoteNote() {}
 
 	// lifecycle
 	onActivated(() => {

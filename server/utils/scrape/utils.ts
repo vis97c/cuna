@@ -1,12 +1,18 @@
+import { ProxyAgent } from "undici";
 import { type Browser, Page, launch } from "puppeteer";
-import { DocumentReference } from "firebase-admin/firestore";
+import { DocumentReference, FieldValue } from "firebase-admin/firestore";
 
 import type { CachedH3Event, H3Context } from "@open-xamu-co/firebase-nuxt/server";
 import type { iSelectOption } from "@open-xamu-co/ui-common-types";
+import { debugFirebaseServer } from "@open-xamu-co/firebase-nuxt/server/firestore";
+import { apiLogger } from "@open-xamu-co/firebase-nuxt/server/firebase";
+import { getFirebase } from "@open-xamu-co/firebase-nuxt/functions/firebase";
 
 import type { ExtendedInstance } from "~/utils/types/entities";
 import type { ExtendedInstanceData, tWeeklySchedule } from "~~/functions/src/types/entities";
 import { eSIATypology } from "~~/functions/src/types/SIA";
+
+import { getProxies } from "./proxies";
 
 export interface ExtendedH3Context extends H3Context {
 	currentInstance?: ExtendedInstance & {
@@ -112,26 +118,21 @@ export function useHTMLElementId(id: string): string {
 	return `#${id.replace(/:/g, "\\:")}`;
 }
 
-export async function getPuppeteer(debug?: boolean) {
-	// Setup puppeteer
-	const browser: Browser = await launch({
-		headless: !debug,
-		args: [
-			"--no-sandbox",
-			"--disable-setuid-sandbox",
-			"--disable-dev-shm-usage",
-			"--disable-accelerated-2d-canvas",
-			"--no-first-run",
-			"--no-zygote",
-			"--disable-gpu",
-		],
-	});
-	const page: Page = await browser.newPage();
+const puppeteerArgs = [
+	"--no-sandbox",
+	"--disable-setuid-sandbox",
+	"--disable-dev-shm-usage",
+	"--disable-accelerated-2d-canvas",
+	"--no-first-run",
+	"--no-zygote",
+	"--disable-gpu",
+];
 
+function makeCleanup(page: Page, browser: Browser) {
 	/**
 	 * Attempt to close everything
 	 */
-	async function cleanup() {
+	return async function cleanup() {
 		try {
 			await page.close();
 		} catch (err) {
@@ -139,22 +140,108 @@ export async function getPuppeteer(debug?: boolean) {
 		}
 
 		await browser.close();
+	};
+}
+
+/**
+ * Show puppet page logs
+ * @see https://stackoverflow.com/a/59919144/3304008
+ */
+function debugPage(page: Page, debug?: boolean): Page {
+	if (!debug) return page;
+
+	page.on("console", (message) =>
+		console.log(`${message.type().substr(0, 3).toUpperCase()} ${message.text()}`)
+	)
+		.on("pageerror", ({ message }) => console.log(message))
+		.on("response", (response) => console.log(`${response.status()} ${response.url()}`))
+		.on("requestfailed", (request) =>
+			console.log(`${request.failure()?.errorText} ${request.url()}`)
+		);
+
+	return page;
+}
+
+/**
+ * Puppeteer instance with proxy support
+ */
+export async function getPuppeteer(event: ExtendedH3Event, debug?: boolean) {
+	const { firebaseFirestore } = getFirebase("getPuppeteer");
+	const proxiesList = await getProxies(event);
+
+	// Omit proxy if not found
+	if (!proxiesList.length) {
+		const browser: Browser = await launch({ headless: !debug, args: puppeteerArgs });
+		const page: Page = debugPage(await browser.newPage(), debug);
+
+		return { browser, page, cleanup: makeCleanup(page, browser) };
 	}
 
-	/**
-	 * Show puppet page logs
-	 * @see https://stackoverflow.com/a/59919144/3304008
-	 */
-	if (debug) {
-		page.on("console", (message) =>
-			console.log(`${message.type().substr(0, 3).toUpperCase()} ${message.text()}`)
-		)
-			.on("pageerror", ({ message }) => console.log(message))
-			.on("response", (response) => console.log(`${response.status()} ${response.url()}`))
-			.on("requestfailed", (request) =>
-				console.log(`${request.failure()?.errorText} ${request.url()}`)
-			);
+	// Get working proxy
+	while (proxiesList.length > 0) {
+		// Pick a random proxy
+		const randomIndex = Math.floor(Math.random() * proxiesList.length);
+		const { proxy = "", path } = proxiesList[randomIndex];
+		const testStartAt = new Date();
+
+		try {
+			const dispatcher = new ProxyAgent(proxy);
+			let ok = false;
+
+			await Promise.race([
+				new Promise<void>((_resolve, reject) => {
+					// Reject slow proxies, 30 seconds
+					setTimeout(() => reject(new Error("Timeout")), 1000 * 30);
+				}),
+				$fetch("https://status.search.google.com", {
+					dispatcher,
+					onResponse({ response }) {
+						ok = response.ok;
+					},
+				}),
+			]);
+
+			if (!ok) throw new Error("Proxy is not working");
+
+			// Success! Get test duration in seconds
+			const testEndAt = new Date();
+			const testDuration = (testEndAt.getTime() - testStartAt.getTime()) / 1000;
+
+			debugFirebaseServer(event, "getPuppeteer:success", { proxy, testDuration });
+
+			// Update proxy score
+			firebaseFirestore.doc(path).update({
+				timesAlive: FieldValue.increment(1),
+				timeout: testDuration, // Avg timeout recalculated in Cloud Function
+			});
+
+			const browser: Browser = await launch({
+				headless: !debug,
+				args: [...puppeteerArgs, `--proxy-server=${proxy}`],
+			});
+			const page: Page = debugPage(await browser.newPage(), debug);
+			const cleanup = makeCleanup(page, browser);
+
+			return { browser, page, cleanup };
+		} catch (err) {
+			// Error! Get test duration in seconds
+			const testEndAt = new Date();
+			const testDuration = (testEndAt.getTime() - testStartAt.getTime()) / 1000;
+
+			// Report proxy error
+			debugFirebaseServer(event, "getPuppeteer:error", { proxy, testDuration });
+			apiLogger(event, "getPuppeteer:error", err, { proxy, testDuration });
+
+			// Update proxy score
+			firebaseFirestore.doc(path).update({
+				timesDead: FieldValue.increment(1),
+				timeout: testDuration, // Avg timeout recalculated in Cloud Function
+			});
+
+			// Remove proxy from list
+			proxiesList.splice(randomIndex, 1);
+		}
 	}
 
-	return { browser, page, cleanup };
+	throw new Error("No working proxy found");
 }

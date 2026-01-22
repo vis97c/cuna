@@ -113,6 +113,13 @@ export interface ExtendedInstanceDataConfig extends InstanceDataConfig, OldCunaC
 	 * @example 4096
 	 */
 	notesCharactersLimit?: number;
+	/**
+	 * Proxies list
+	 * Proxies could break at any time
+	 *
+	 * @example ["socks4://68.71.249.153:48606"]
+	 */
+	proxies?: string[];
 }
 
 /**

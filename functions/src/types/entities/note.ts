@@ -3,7 +3,7 @@ import type { Timestamp } from "firebase-admin/firestore";
 import type { SharedData } from "@open-xamu-co/firebase-nuxt/functions";
 
 /**
- * Instance note
+ * Note
  *
  * @collection instance/notes
  */
@@ -35,4 +35,16 @@ export interface NoteData extends SharedData {
 	 * @automated @cached
 	 */
 	downvotes?: number;
+}
+
+/**
+ * Single vote per user for a note
+ *
+ * @collection instance/{instanceId}/notes/{noteId}/votes/{userId}
+ */
+export interface NoteVoteData extends SharedData {
+	/**
+	 * Note vote
+	 */
+	vote?: 1 | 0 | -1;
 }

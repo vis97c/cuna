@@ -52,7 +52,7 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 	 */
 	const getCoursesLinks = defineCachedFunction(
 		async (event: ExtendedH3Event, payload: iCoursesPayload) => {
-			const { page, cleanup } = await getPuppeteer(debugScrapper);
+			const { page, cleanup } = await getPuppeteer(event, debugScrapper);
 
 			try {
 				let coursesHandle = await scrapeCoursesHandle(event, page, payload);
