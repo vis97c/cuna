@@ -1,4 +1,4 @@
 export * from "./courses";
-export * from "./groups";
+export * from "./notes";
 export * from "./teachers";
 export * from "./instance";

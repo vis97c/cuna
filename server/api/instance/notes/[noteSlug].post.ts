@@ -73,9 +73,9 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		);
 
 		const notesSnapshot = await query.limit(1).get();
-		const [snapshot] = notesSnapshot.docs; // get the first one
+		const [snapshot] = notesSnapshot.docs; // get the first one if any
 
-		if (!snapshot.exists) {
+		if (!snapshot?.exists) {
 			throw createError({ statusCode: 404, statusMessage: "Note not found" });
 		}
 

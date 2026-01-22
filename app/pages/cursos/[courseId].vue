@@ -173,7 +173,7 @@
 			const courseApiPath = `/api/instance/all/courses/${courseId.value}`;
 
 			return useQuery<Course>(courseApiPath, {
-				headers: { "Cache-Control": cache.none },
+				headers: { "Cache-Control": cache.frequent },
 				cache: "reload",
 			});
 		},
@@ -191,7 +191,7 @@
 			const courseApiPath = `/api/instance/courses/${courseId.value}/groups`;
 
 			return useCsrfQuery<iPageEdge<Group>[]>(courseApiPath, {
-				query: { level: 1 },
+				query: { level: 1 }, // Get teachers refs
 				method: "POST",
 				headers: { "Cache-Control": cache.none },
 				cache: "reload",

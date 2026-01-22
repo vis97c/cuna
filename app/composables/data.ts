@@ -9,6 +9,12 @@ import type {
 } from "~/utils/types";
 import { eMemberRole } from "~~/functions/src/enums";
 
+export const markdownExample =
+	"# Título\n\n" +
+	"Esto es un ejemplo de texto.\n\n" +
+	"[Enlace](https://cuna.com.co)\n\n" +
+	"![Imagen](https://cuna.com.co/images/seo.png)";
+
 export function useRoleName(role = 3) {
 	let roleName = "Invitado";
 

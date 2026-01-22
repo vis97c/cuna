@@ -1,9 +1,10 @@
+import type { tFormInput } from "@open-xamu-co/ui-common-types";
 import { eFormType } from "@open-xamu-co/ui-common-enums";
 import { FormInput } from "@open-xamu-co/ui-common-helpers";
 
 import type { ExtendedInstance } from "~/utils/types";
 
-export function useInstanceSEOInputs(instance: ExtendedInstance = {}): FormInput[] {
+export function useInstanceSEOInputs(instance: ExtendedInstance = {}): tFormInput[] {
 	return [
 		new FormInput({
 			values: [instance.description || ""],
@@ -21,7 +22,7 @@ export function useInstanceSEOInputs(instance: ExtendedInstance = {}): FormInput
 	];
 }
 
-export function useInstanceBannerInputs(instance: ExtendedInstance = {}): FormInput[] {
+export function useInstanceBannerInputs(instance: ExtendedInstance = {}): tFormInput[] {
 	return [
 		new FormInput({
 			values: [instance?.banner?.message || ""],
