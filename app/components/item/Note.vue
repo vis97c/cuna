@@ -68,7 +68,7 @@
 						</div>
 						<XamuActionButton v-if="ownNote" tooltip="Editar nota" @click="toggleModal">
 							<XamuIconFa name="pen" />
-							<span class="--hidden:sm-inv">Editar</span>
+							<span class="--hidden:sm-inv">Editar nota</span>
 						</XamuActionButton>
 					</div>
 				</div>
