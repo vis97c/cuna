@@ -24,7 +24,8 @@ import type { Note } from "~/utils/types";
  */
 export default defineConditionallyCachedEventHandler(async (event) => {
 	const { firebaseFirestore } = getFirebase("api:instance:members:notes");
-	const { currentAuth, currentInstanceRef, currentInstanceMillis } = event.context;
+	const { currentAuth, currentAuthRef, currentInstanceRef, currentInstanceMillis } =
+		event.context;
 	const Allow = "POST,HEAD";
 
 	try {
@@ -57,6 +58,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		const notesRef = firebaseFirestore.collectionGroup("notes");
 		const params = getQuery(event);
 		const asPage = getBoolean(params.page);
+		const personal = getBoolean(params.personal);
 
 		debugFirebaseServer(event, "api:instance:members:notes", params);
 
@@ -71,8 +73,13 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 
 		let query: Query<NoteData, Note> = notesRef;
 
-		// Get public notes
-		query = query.where("public", "==", true);
+		if (personal) {
+			// Personal notes only
+			query = query.where("createdByRef", "==", currentAuthRef);
+		} else {
+			// Public notes only
+			query = query.where("public", "==", true);
+		}
 
 		// order at last
 		query = getOrderedQuery(event, query);

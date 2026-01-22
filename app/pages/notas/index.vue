@@ -5,7 +5,21 @@
 				<div class="flx --flxColumn --flx-center --gap-30 --width-100">
 					<div class="txt --txtAlign-center">
 						<h1 class="--txtLineHeight-sm">Notas</h1>
-						<p>Encuentra notas útiles o comparte una.</p>
+						<p class="">Encuentra notas útiles o comparte una.</p>
+						<div class="flx --flxRow --flx-center --gap-20">
+							<component
+								:is="personal ? XamuActionLink : XamuActionButtonToggle"
+								@click="personal = false"
+							>
+								Explorar
+							</component>
+							<component
+								:is="!personal ? XamuActionLink : XamuActionButtonToggle"
+								@click="personal = true"
+							>
+								Mis notas
+							</component>
+						</div>
 					</div>
 					<XamuModal
 						title="Nueva nota"
@@ -69,7 +83,7 @@
 						v-slot="{ content }"
 						:page="notesPage"
 						url="api:instance:notes"
-						:defaults="{ page: true }"
+						:defaults="{ page: true, personal }"
 						no-content-message="No hay notas disponibles, puedes crear una."
 						label="Cargando notas..."
 						class="flx --flxColumn --flx-start-center --maxWidth-770 --width-100 --gap-50"
@@ -106,6 +120,8 @@
 
 	import type { Note, NoteRef, NoteValues } from "~/utils/types";
 
+	import { XamuActionButtonToggle, XamuActionLink } from "#components";
+
 	type HydrateNodes = (newContent: Note[] | null, newErrors?: unknown) => void;
 
 	/**
@@ -114,7 +130,10 @@
 	 * @page
 	 */
 
-	definePageMeta({ title: "Notas", middleware: ["enabled", "auth-only"] });
+	definePageMeta({
+		title: "Notas",
+		middleware: ["enabled", "auth-only"],
+	});
 
 	const { getResponse } = useFormInput();
 	const { cache } = useRuntimeConfig().public;
@@ -133,6 +152,9 @@
 	const emittedHasContent = ref<boolean>();
 	const emittedHydrateNodes = ref<HydrateNodes>();
 	const deactivated = ref<boolean>(false);
+
+	/** Personal notes only */
+	const personal = ref<boolean>(false);
 
 	const notesPage: iGetPage<Note> = (pagination) => {
 		return useCsrfQuery<iPage<Note> | undefined>("/api/instance/notes", {
