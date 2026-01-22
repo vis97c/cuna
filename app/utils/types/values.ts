@@ -33,3 +33,12 @@ export interface InstanceBannerValues {
 	message: string;
 	url: string;
 }
+
+export interface NoteValues {
+	name: string;
+	body: string;
+	public: boolean;
+	keywords?: string;
+	slug?: string;
+	lock?: boolean;
+}
