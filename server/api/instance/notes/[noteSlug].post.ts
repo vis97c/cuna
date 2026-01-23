@@ -76,7 +76,8 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		const notesSnapshot = await query.limit(1).get();
 		const [snapshot] = notesSnapshot.docs; // get the first one if any
 
-		if (!snapshot?.exists) {
+		// Check if note exists and belongs to current instance
+		if (!snapshot?.exists || !snapshot.ref.path.startsWith(currentInstanceRef.path)) {
 			throw createError({ statusCode: 404, statusMessage: "Note not found" });
 		}
 
@@ -89,6 +90,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		}
 
 		const note = await resolveServerDocumentRefs(event, snapshot);
+
 		// Decode note body using instance timestamp
 		const body = decrypt(note?.body || "", currentInstanceMillis);
 

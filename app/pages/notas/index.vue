@@ -1,5 +1,5 @@
 <template>
-	<div id="note" class="view --gap-none">
+	<div id="notes" class="view --gap-none">
 		<section class="view-item --minHeightVh-100 --bgColor-light">
 			<div class="holder flx --flxColumn --flx-center --gap-50">
 				<div class="flx --flxColumn --flx-center --gap-30 --width-100">
@@ -256,7 +256,7 @@
 						updatedNodes = emittedContent.value?.toSpliced(0, 0, createdNote);
 
 						// Hydration stream, do not await
-						Promise.all(
+						Promise.allSettled(
 							stream.map(async (next) => {
 								const updated = await next;
 
@@ -383,7 +383,7 @@
 			Hide pagination size selector
 			Likes fetch size depends on this
 		*/
-		li:has(> select#first) {
+		#notes.view li:has(> select#first) {
 			display: none;
 		}
 	}

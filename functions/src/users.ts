@@ -43,7 +43,7 @@ export const onDeletedUser = onDeleted<ExtendedUserData>(
 
 			// Remove member from all instances
 			// TODO:Remove or reassign owned instances
-			await Promise.all(
+			await Promise.allSettled(
 				instancesRefs.map((instanceRef) => {
 					return instanceRef.collection("members").doc(uid).delete();
 				})

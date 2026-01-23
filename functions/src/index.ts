@@ -95,7 +95,6 @@ export const onCreatedProxy = onCreated<ProxyData>("proxies", undefined, {
 /**
  * Update timestamp
  * Get timeout average, update score
- * TODO: consider timeout as a factor
  *
  * @docType proxy
  * @event updated

@@ -22,7 +22,20 @@ function getLEPath({ config = {} }: ExtendedInstanceData): string {
 export const onCreatedCourse = onCreated<CourseData>(
 	"instances/courses",
 	async (snapshot) => {
-		const { name = "", code, programs = [], typologies = [] } = snapshot.data();
+		const {
+			name = "",
+			code,
+			programs = [],
+			typologies = [],
+			indexes: existingIndexes,
+			indexesWeights: existingIndexesWeights,
+		} = snapshot.data();
+
+		// Assume pre-indexed
+		if (existingIndexes && existingIndexesWeights) {
+			return { losEstudiantesCode: await getLESlug(code, getLEPath) };
+		}
+
 		// Get search indexes
 		const { indexes, indexesWeights } = getWeightedSearchIndexes(name);
 
@@ -51,9 +64,31 @@ export const onUpdatedCourse = onUpdated<CourseData>(
 	"instances/courses",
 	async (newSnapshot, _existingSnapshot, { logger }) => {
 		try {
-			const { code, losEstudiantesCode, programs = [], typologies = [] } = newSnapshot.data();
+			const {
+				name = "",
+				code,
+				programs = [],
+				typologies = [],
+				losEstudiantesCode,
+				indexes: existingIndexes,
+				indexesWeights: existingIndexesWeights,
+			} = newSnapshot.data();
 
+			// Assume pre-indexed
+			if (existingIndexes && existingIndexesWeights) {
+				return {
+					losEstudiantesCode: losEstudiantesCode || (await getLESlug(code, getLEPath)),
+				};
+			}
+
+			// Get search indexes
+			const { indexes, indexesWeights } = getWeightedSearchIndexes(name);
+
+			// Keep valid indexes
 			return {
+				indexes,
+				indexesWeights,
+				alternativeNames: [name, deburr(name)],
 				programsIndexes: { ...programs },
 				typologiesIndexes: { ...typologies },
 				losEstudiantesCode: losEstudiantesCode || (await getLESlug(code, getLEPath)),
@@ -84,13 +119,15 @@ export const onDeletedCourse = onDeleted<CourseData>("instances/courses", async 
 	]);
 
 	// Remove groups
-	await Promise.all(groupsSnapshot.docs.map((group) => group.ref.delete()));
+	await Promise.allSettled(groupsSnapshot.docs.map((group) => group.ref.delete()));
 
 	// Remove course from teachers
 	if (teachersSnapshot?.docs.length) {
 		const coursesRefs = FieldValue.arrayRemove(deleted.ref);
 
-		await Promise.all(teachersSnapshot.docs.map(({ ref }) => ref.update({ coursesRefs })));
+		await Promise.allSettled(
+			teachersSnapshot.docs.map(({ ref }) => ref.update({ coursesRefs }))
+		);
 	}
 });
 

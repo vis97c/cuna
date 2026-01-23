@@ -14,7 +14,7 @@ interface ExtendedProxyData extends ProxyData {
  * Get proxies
  */
 export const getProxies = defineCachedFunction(
-	async (event: ExtendedH3Event) => {
+	async (event: ExtendedH3Event, debug = false) => {
 		try {
 			const { firebaseFirestore } = getFirebase("getPuppeteer");
 			const proxiesRef: CollectionReference<ProxyData> =
@@ -23,13 +23,19 @@ export const getProxies = defineCachedFunction(
 			const query = proxiesRef
 				.where("disabled", "==", false)
 				.where("score", "<=", 1)
-				.where("timeout", "<=", 17);
+				.where("timeout", "<=", 20);
 			const proxiesSnapshot = await query.get();
 
 			return proxiesSnapshot.docs.reduce<ExtendedProxyData[]>((acc, doc) => {
 				const data = doc.data();
+				const { proxy = "", timesDead = 1, timesAlive = 1 } = data;
 
-				if (data.proxy) acc.push({ ...data, path: doc.ref.path });
+				if (proxy) {
+					// Bypass if death more than 90%
+					if (!debug && timesDead > timesAlive * 0.9) return acc;
+
+					acc.push({ ...data, path: doc.ref.path });
+				}
 
 				return acc;
 			}, []);
@@ -43,7 +49,7 @@ export const getProxies = defineCachedFunction(
 	{
 		name: "getProxies",
 		maxAge: 60 * 60 * 24, // 1 day
-		getKey(event) {
+		getKey(event, _debug) {
 			const { currentInstanceHost } = event.context;
 
 			return `${currentInstanceHost}:proxies`;

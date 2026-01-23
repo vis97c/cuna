@@ -322,7 +322,7 @@
 						props.hydrateNode({ ...props.note, ...updatedNote });
 
 						// Hydration stream, do not await
-						Promise.all(
+						Promise.allSettled(
 							stream.map(async (next) => {
 								const updated = await next;
 
