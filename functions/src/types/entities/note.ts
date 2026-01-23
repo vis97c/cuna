@@ -47,4 +47,10 @@ export interface NoteVoteData extends SharedData {
 	 * Note vote
 	 */
 	vote?: 1 | 0 | -1;
+	/**
+	 * Vote was created by internal function
+	 * A new note will have 1 upvote from the creator
+	 * @automated @internal
+	 */
+	internal?: boolean;
 }

@@ -1,4 +1,4 @@
-import { CollectionReference, DocumentSnapshot } from "firebase-admin/firestore";
+import { CollectionReference } from "firebase-admin/firestore";
 
 import { getFirebase } from "@open-xamu-co/firebase-nuxt/functions/firebase";
 import { apiLogger } from "@open-xamu-co/firebase-nuxt/server/firebase";
@@ -19,11 +19,11 @@ export const getProxies = defineCachedFunction(
 			const { firebaseFirestore } = getFirebase("getPuppeteer");
 			const proxiesRef: CollectionReference<ProxyData> =
 				firebaseFirestore.collection("proxies");
-			// Get proxies with score <= 1 and timeout <= 16 seconds
+			// Get proxies with score <= 1 and timeout <= 17 seconds
 			const query = proxiesRef
 				.where("disabled", "==", false)
 				.where("score", "<=", 1)
-				.where("timeout", "<=", 16);
+				.where("timeout", "<=", 17);
 			const proxiesSnapshot = await query.get();
 
 			return proxiesSnapshot.docs.reduce<ExtendedProxyData[]>((acc, doc) => {

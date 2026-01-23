@@ -57,12 +57,28 @@
 						></div>
 					</section>
 					<div class="flx --flxRow --flx-between-center --width-100">
-						<div class="x-votes">
-							<XamuActionLink tooltip="Votar +1" class="x-vote --up">
+						<div
+							class="x-votes"
+							:class="{
+								'--bgColor-success1 --txtColor-success': vote.vote === 1,
+								'--bgColor-danger1 --txtColor-danger': vote.vote === -1,
+							}"
+						>
+							<XamuActionLink
+								:theme="eColors.SUCCESS"
+								:tooltip="vote.vote === 1 ? 'Quitar voto' : 'Votar +1'"
+								class="x-vote --up"
+								@click="upvoteNote"
+							>
 								<XamuIconFa name="caret-up" :size="20" />
 							</XamuActionLink>
-							<span>{{ note.score }}</span>
-							<XamuActionLink tooltip="Votar -1" class="x-vote --down">
+							<span>{{ (note.score ?? 1) + (vote.vote ?? 0) }}</span>
+							<XamuActionLink
+								:theme="eColors.DANGER"
+								:tooltip="vote.vote === -1 ? 'Quitar voto' : 'Votar -1'"
+								class="x-vote --down"
+								@click="downvoteNote"
+							>
 								<XamuIconFa name="caret-down" :size="20" />
 							</XamuActionLink>
 						</div>
@@ -91,14 +107,15 @@
 </template>
 
 <script setup lang="ts">
-	import { eSizes } from "@open-xamu-co/ui-common-enums";
+	import { getDocumentId } from "@open-xamu-co/firebase-nuxt/client/resolver";
+	import { eColors, eSizes } from "@open-xamu-co/ui-common-enums";
 	import type {
 		iInvalidInput,
 		iNodeFnResponseStream,
 		tFormInput,
 	} from "@open-xamu-co/ui-common-types";
 
-	import type { Note, NoteRef, NoteValues } from "~/utils/types";
+	import type { Note, NoteRef, NoteValues, NoteVote, NoteVoteRef } from "~/utils/types";
 
 	/**
 	 * Item de note
@@ -108,14 +125,21 @@
 	 * <ItemNote ></ItemNote>
 	 */
 
+	interface ExtendedNote extends Note {
+		/**
+		 * Current user vote
+		 */
+		vote?: 1 | 0 | -1;
+	}
+
 	defineOptions({ name: "ItemNote", inheritAttrs: false });
 
 	const props = defineProps<{
 		/**
 		 * Note data
 		 */
-		note: Note;
-		hydrateNode?: (node: Note | null, errors?: unknown) => void;
+		note: ExtendedNote;
+		hydrateNode?: (node: ExtendedNote | null, errors?: unknown) => void;
 		refresh?: (...args: any[]) => any;
 	}>();
 
@@ -134,6 +158,40 @@
 	 */
 	const ownNote = computed(() => {
 		return props.note.id?.startsWith(USER.path);
+	});
+	const vote = computed<NoteVote>({
+		get: () => ({
+			vote: props.note.vote ?? 0,
+		}),
+		set: (newVote) => {
+			const savedVote = props.note.vote ?? 0;
+
+			// Make optimistic update
+			props.hydrateNode?.({ ...props.note, vote: newVote.vote ?? 0 });
+
+			// Vote id, user uid as vote identifier
+			const id = `${props.note.id}/votes/${getDocumentId(USER.path)}`;
+
+			// Perform update, do not await
+			useDocumentUpdate<NoteVoteRef, NoteVote>({ id }, { vote: newVote.vote }).then(
+				async ([data]) => {
+					const [votedNote, finalDataPromise] = Array.isArray(data) ? data : [data];
+
+					// Unexpected error, rollback hydration
+					if (typeof votedNote !== "object") {
+						return props.hydrateNode?.({ ...props.note, vote: savedVote });
+					}
+
+					const finalData = await finalDataPromise;
+
+					// Server rejected vote
+					// Zero would eliminate the vote (expected)
+					if (newVote.vote !== 0 && typeof finalData !== "object") {
+						return props.hydrateNode?.({ ...props.note, vote: savedVote });
+					}
+				}
+			);
+		},
 	});
 
 	function close() {
@@ -256,8 +314,30 @@
 		}
 	}
 
-	function upvoteNote() {}
-	function downvoteNote() {}
+	async function upvoteNote() {
+		if (!props.note.id) return;
+		if (vote.value.vote === 1) {
+			// remove vote
+			vote.value = { vote: 0 };
+
+			return;
+		}
+
+		// Perform upvote
+		vote.value = { vote: 1 };
+	}
+	async function downvoteNote() {
+		if (!props.note.id) return;
+		if (vote.value.vote === -1) {
+			// remove vote
+			vote.value = { vote: 0 };
+
+			return;
+		}
+
+		// Perform downvote
+		vote.value = { vote: -1 };
+	}
 
 	// lifecycle
 	onActivated(() => {
@@ -361,15 +441,19 @@
 
 <style lang="scss" scoped>
 	@media only screen {
+		@layer defaults {
+			.x-votes {
+				background: xamu.color(secondary, 0.1);
+				color: xamu.color(secondary);
+			}
+		}
 		@layer presets {
 			.x-votes {
 				width: auto;
 				padding: 0;
 				border-radius: 1rem;
-				background: xamu.color(secondary, 0.1);
 				font-weight: xamu.weight(bold);
 				vertical-align: middle;
-				color: xamu.color(secondary);
 				min-height: 2.4rem;
 
 				// Clear all transition
