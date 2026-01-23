@@ -16,6 +16,10 @@ export interface NoteData extends SharedData {
 	 * Note can be shown in global feed
 	 */
 	public?: boolean;
+	/**
+	 * Score is hidden from users
+	 */
+	hideScore?: boolean;
 	/** @automated unique slug */
 	slug?: string;
 	/** @automated Last encode date */
@@ -47,6 +51,11 @@ export interface NoteVoteData extends SharedData {
 	 * Note vote
 	 */
 	vote?: 1 | 0 | -1;
+	/**
+	 * Related note reference
+	 * Required for queries
+	 */
+	notePath?: string;
 	/**
 	 * Vote was created by internal function
 	 * A new note will have 1 upvote from the creator

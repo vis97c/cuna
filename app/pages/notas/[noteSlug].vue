@@ -24,7 +24,11 @@
 </template>
 
 <script setup lang="ts">
-	import type { Note } from "~/utils/types";
+	import { getDoc, doc, type DocumentReference } from "firebase/firestore";
+
+	import { getDocumentId } from "@open-xamu-co/firebase-nuxt/client/resolver";
+
+	import type { Note, NoteVoteRef } from "~/utils/types";
 
 	/**
 	 * Note page
@@ -36,6 +40,8 @@
 
 	const route = useRoute();
 	const { cache } = useRuntimeConfig().public;
+	const { $clientFirestore } = useNuxtApp();
+	const USER = useUserStore();
 
 	const noteSlug = computed(() => {
 		return route.params.noteSlug ? route.params.noteSlug : "";
@@ -46,12 +52,12 @@
 		pending: notePending,
 		refresh: noteRefresh,
 		error: noteError,
-	} = useAsyncData(
+	} = useAsyncData<Note>(
 		`api:instance:notes:${noteSlug.value}`,
 		async () => {
 			const noteApiPath = `/api/instance/notes/${noteSlug.value}`;
 
-			return useCsrfQuery<Note>(noteApiPath, {
+			return useCsrfQuery(noteApiPath, {
 				method: "POST",
 				headers: { "Cache-Control": cache.frequent },
 				cache: "reload",
@@ -69,12 +75,22 @@
 	// lifecycle
 	watch(
 		[note, noteError],
-		([newNote, newError]) => {
+		async ([newNote, newError]) => {
 			if (newError) return showError(newError);
 
-			if (newNote) {
+			if (newNote?.id) {
 				// Update meta
 				route.meta.title = newNote?.name || "Nota";
+
+				if (import.meta.server || !$clientFirestore) return;
+
+				// Get note vote
+				const id = `${newNote.id}/votes/${getDocumentId(USER.path)}`;
+				const voteRef: DocumentReference<NoteVoteRef> = doc($clientFirestore, id);
+				const voteSnapshot = await getDoc(voteRef);
+				const { vote = 0 } = voteSnapshot.data() || {};
+
+				note.value = { ...note.value, vote };
 			}
 		},
 		{ immediate: true }
