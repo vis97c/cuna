@@ -39,7 +39,6 @@
 	definePageMeta({ middleware: ["enabled", "auth-only"] });
 
 	const route = useRoute();
-	const { cache } = useRuntimeConfig().public;
 	const { $clientFirestore } = useNuxtApp();
 	const USER = useUserStore();
 
@@ -59,8 +58,8 @@
 
 			return useCsrfQuery(noteApiPath, {
 				method: "POST",
-				headers: { "Cache-Control": cache.frequent },
-				cache: "reload",
+				headers: { "Cache-Control": "no-store" },
+				cache: "no-store",
 			});
 		},
 		{ watch: [() => noteSlug.value], server: false }

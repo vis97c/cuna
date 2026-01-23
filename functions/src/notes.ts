@@ -213,12 +213,11 @@ export const onUpdatedNoteVote = onUpdated<NoteVoteData>(
 			// Omit if vote is the same
 			if (vote === oldVote) return;
 
-			/** Total change in score. */
+			// Calculate deltas
 			const delta = vote - oldVote;
-			/** Change in upvote count. */
 			const upvotesDelta = oldVote === 1 ? -1 : vote === 1 ? 1 : 0;
-			/** Change in downvote count. */
 			const downvotesDelta = oldVote === -1 ? -1 : vote === -1 ? 1 : 0;
+
 			// Perform batch operations
 			const voteBatch = updated.ref.firestore.batch();
 
