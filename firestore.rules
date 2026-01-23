@@ -54,6 +54,14 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Collection Group, votes
+    match /{document=**}/votes/{uid} {
+      // lectura explicita, cualquiera
+      allow read: if true;
+      // Prevent other actions
+      allow create, update, delete: if false;
+    }
+
     match /logs/{id} {
       // lectura explicita, desarrolladores
       allow read: if canDevelop("live");
