@@ -167,7 +167,6 @@
 	});
 
 	const { getResponse } = useFormInput();
-	const { cache } = useRuntimeConfig().public;
 	const Swal = useSwal();
 	const CUNA = useCunaStore();
 	const USER = useUserStore();
@@ -199,8 +198,8 @@
 		return useCsrfQuery<iPage<Note> | undefined>("/api/instance/notes", {
 			method: "POST",
 			query: pagination,
-			headers: { "Cache-Control": cache.none },
-			cache: "reload",
+			headers: { "Cache-Control": "no-store" },
+			cache: "no-store",
 		});
 	};
 
