@@ -4,6 +4,7 @@ import { onCreated, onUpdated } from "@open-xamu-co/firebase-nuxt/functions/even
 import { makeGetSlug } from "@open-xamu-co/firebase-nuxt/functions/slugs";
 import { getFirebase } from "@open-xamu-co/firebase-nuxt/functions/firebase";
 import { encrypt } from "@open-xamu-co/firebase-nuxt/functions/encrypt";
+import { getDocumentId } from "@open-xamu-co/firebase-nuxt/client/resolver";
 
 import type { ExtendedInstanceData, NoteData, NoteVoteData } from "./types/entities";
 
@@ -24,7 +25,9 @@ export const onCreatedNote = onCreated<NoteData>(
 			memberRef?.parent.parent;
 
 		try {
-			if (!instanceRef) throw new Error(`Missing instance at: "${created.ref.path}"`);
+			if (!instanceRef || !memberRef) {
+				throw new Error(`Missing instance or member at: "${created.ref.path}"`);
+			}
 
 			let {
 				slug,
@@ -45,6 +48,11 @@ export const onCreatedNote = onCreated<NoteData>(
 				encodedAt = Timestamp.fromDate(createdAt);
 			}
 
+			const voteRef = created.ref.collection("votes").doc(getDocumentId(memberRef.path));
+
+			// Create author vote, do not await
+			voteRef.set({ vote: 1, internal: true });
+
 			return { slug: slug || newSlug, body, encodedAt, keywords };
 		} catch (err) {
 			logger("functions:instances:members:onCreatedNote", err);
@@ -54,10 +62,10 @@ export const onCreatedNote = onCreated<NoteData>(
 	},
 	{
 		defaults: {
-			public: false,
 			score: 1,
 			upvotes: 1, // Author upvote
 			downvotes: 0,
+			public: false,
 			lock: false,
 		},
 	}
@@ -124,15 +132,36 @@ export const onUpdatedNote = onUpdated<NoteData>(
 export const onCreatedNoteVote = onCreated<NoteVoteData>(
 	"instances/members/notes/votes",
 	async (created, { logger }) => {
+		const noteRef = created.ref.parent.parent;
+		const { vote = 0, internal } = created.data();
+
+		if (internal) return;
+
 		try {
-			let { vote = 0 } = created.data();
+			// Parent note is required
+			if (!noteRef) throw new Error("Missing note ref");
 
 			// Delete invalid vote
-			if (vote !== 1 && vote !== -1) {
-				throw new Error("Invalid vote");
-			}
+			if (vote !== 1 && vote !== -1) throw new Error("Invalid vote");
 
-			return { vote };
+			/** Total change in score. */
+			const delta = vote;
+			/** Change in upvote count. */
+			const upvotesDelta = vote === 1 ? 1 : 0;
+			/** Change in downvote count. */
+			const downvotesDelta = vote === -1 ? 1 : 0;
+			// Perform batch operations
+			const voteBatch = created.ref.firestore.batch();
+
+			// Setup transactions
+			voteBatch.update(noteRef, {
+				upvotes: FieldValue.increment(upvotesDelta),
+				downvotes: FieldValue.increment(downvotesDelta),
+				score: FieldValue.increment(delta),
+			});
+
+			// Commit batch
+			await voteBatch.commit();
 		} catch (err) {
 			logger("functions:instances:members:onCreatedNoteVote", err);
 
@@ -159,6 +188,7 @@ export const onUpdatedNoteVote = onUpdated<NoteVoteData>(
 		const noteRef = updated.ref.parent.parent;
 
 		try {
+			// Parent note is required
 			if (!noteRef) throw new Error("Missing note ref");
 
 			const oldVote = existing.data()?.vote ?? 0;
@@ -173,7 +203,7 @@ export const onUpdatedNoteVote = onUpdated<NoteVoteData>(
 			const upvotesDelta = oldVote === 1 ? -1 : vote === 1 ? 1 : 0;
 			/** Change in downvote count. */
 			const downvotesDelta = oldVote === -1 ? -1 : vote === -1 ? 1 : 0;
-
+			// Perform batch operations
 			const voteBatch = updated.ref.firestore.batch();
 
 			// Setup transactions
@@ -187,7 +217,7 @@ export const onUpdatedNoteVote = onUpdated<NoteVoteData>(
 			if (vote === 0) voteBatch.delete(updated.ref);
 
 			// Commit batch
-			return voteBatch.commit();
+			await voteBatch.commit();
 		} catch (err) {
 			logger("functions:instances:members:onUpdatedNoteVote", err);
 
