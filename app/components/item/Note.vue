@@ -28,7 +28,11 @@
 									{{ note.name }}
 								</span>
 							</h2>
-							<p v-if="note?.createdAt && note?.updatedAt" class="--txtSize-sm">
+							<p
+								v-if="note?.createdAt && note?.updatedAt"
+								v-once
+								class="--txtSize-sm"
+							>
 								Creada {{ useTimeAgo(new Date(note.createdAt)) }} ⋅ Actualizada
 								{{ useTimeAgo(new Date(note.updatedAt)) }}
 							</p>
@@ -72,7 +76,13 @@
 							>
 								<XamuIconFa name="caret-up" :size="20" />
 							</XamuActionLink>
-							<span>{{ score }}</span>
+							<span v-if="!note.hideScore">{{ note.score }}</span>
+							<XamuIconFa
+								v-else
+								name="eye-slash"
+								title="Votación oculta"
+								force-regular
+							/>
 							<XamuActionLink
 								:theme="eColors.DANGER"
 								:tooltip="ownVote === -1 ? 'Quitar voto' : 'Votar -1'"
@@ -168,22 +178,36 @@
 	const noteInputs = ref<tFormInput[]>([]);
 	const deactivated = ref<boolean>(false);
 
-	// Keep track of the changes
-	const localVote = ref<1 | 0 | -1>();
-
 	/**
 	 * The note belongs to the current user
 	 */
 	const isOwnNote = computed(() => {
 		return props.note.id?.startsWith(USER.path);
 	});
+	/** Current user vote */
 	const ownVote = computed<1 | 0 | -1>({
-		get: () => localVote.value ?? props.note.vote ?? 0,
+		get: () => props.note.vote ?? 0,
 		set: (newVote) => {
-			const savedVote = props.note.vote ?? 0;
+			const {
+				vote: oldVote = 0,
+				score: oldScore = 0,
+				upvotes: oldUpvotes = 0,
+				downvotes: oldDownvotes = 0,
+			} = props.note;
+
+			// Calculate deltas
+			const delta = newVote - oldVote;
+			const upvotesDelta = oldVote === 1 ? -1 : newVote === 1 ? 1 : 0;
+			const downvotesDelta = oldVote === -1 ? -1 : newVote === -1 ? 1 : 0;
 
 			// Make optimistic update
-			localVote.value = newVote;
+			props.hydrateNode?.({
+				...props.note,
+				score: (props.note.score ?? 0) + delta,
+				upvotes: (props.note.upvotes ?? 0) + upvotesDelta,
+				downvotes: (props.note.downvotes ?? 0) + downvotesDelta,
+				vote: newVote,
+			});
 
 			if (!$clientFirestore) throw new Error("Firestore client not found");
 
@@ -207,15 +231,15 @@
 				{ merge: true }
 			).catch(() => {
 				// Unexpected error, rollback vote
-				localVote.value = savedVote;
+				props.hydrateNode?.({
+					...props.note,
+					score: oldScore,
+					upvotes: oldUpvotes,
+					downvotes: oldDownvotes,
+					vote: oldVote,
+				});
 			});
 		},
-	});
-	/** Actual score */
-	const score = computed(() => {
-		const voteWithOffset = (localVote.value ?? 0) * (props.note.vote ?? 0);
-
-		return (props.note.score ?? 0) + voteWithOffset;
 	});
 
 	function close() {
