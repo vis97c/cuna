@@ -52,8 +52,9 @@
 				>
 					<h4>Modo lectura</h4>
 					<p class="--txtSize-sm --txtColor-dark5">
-						Inicia sesión para obtener una experiencia completa con búsqueda de cursos e
-						información de cupos actualizada, así como otras novedades.
+						Inicia sesión para obtener una experiencia completa con notas, búsqueda
+						filtrada de cursos por sede, información de cupos actualizada, así como
+						otras novedades.
 					</p>
 				</div>
 				<ClientOnly>

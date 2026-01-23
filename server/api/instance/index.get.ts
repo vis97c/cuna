@@ -24,6 +24,7 @@ export default defineEventHandler(async (event) => {
 			losEstudiantesUrl,
 			losEstudiantesCoursesPath,
 			losEstudiantesProfessorsPath,
+			notesCharactersLimit,
 			version,
 		} = currentInstance?.config || {};
 
@@ -36,6 +37,7 @@ export default defineEventHandler(async (event) => {
 			losEstudiantesUrl,
 			losEstudiantesCoursesPath,
 			losEstudiantesProfessorsPath,
+			notesCharactersLimit,
 			version,
 		};
 

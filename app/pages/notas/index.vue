@@ -19,6 +19,16 @@
 							>
 								Mis notas
 							</component>
+							<XamuActionButtonToggle
+								v-if="USER.canDevelop"
+								tooltip="Actualizar"
+								tooltip-position="right"
+								round
+								@click="emittedRefresh"
+							>
+								<XamuIconFa name="rotate-right" />
+								<XamuIconFa name="rotate-right" regular />
+							</XamuActionButtonToggle>
 						</div>
 					</div>
 					<XamuModal
@@ -37,32 +47,37 @@
 									class="--width-100 --flx"
 								>
 									<template #submit>
-										<div
-											class="flx --flxRow --flx-center --gap-5 --gap:md --pLeft-10:md"
+										<span
+											v-if="newNoteBody.length"
+											:class="{
+												'--txtColor-danger': remainingCharacters < 0,
+											}"
+											style="order: -1"
 										>
-											<XamuActionButtonToggle
-												:disabled="!newNoteBody"
-												tag="label"
-												for="new-note-public"
-											>
-												<XamuInputToggle
-													id="new-note-public"
-													v-model="newNotePublic"
-													:size="eSizes.XS"
-													:label="newNotePublic ? 'Publico' : 'Privado'"
-												/>
-											</XamuActionButtonToggle>
-											<XamuActionButton
-												:disabled="!newNoteBody"
-												tooltip="Publicar nota"
-												tooltip-position="bottom"
-												round
-												@click="() => toggleModal(true)"
-											>
-												<span class="--hidden:md-inv">Publicar</span>
-												<XamuIconFa name="paper-plane" />
-											</XamuActionButton>
-										</div>
+											{{ remainingCharacters }}
+										</span>
+										<XamuActionButtonToggle
+											:disabled="!newNoteBody"
+											tag="label"
+											for="new-note-public"
+										>
+											<XamuInputToggle
+												id="new-note-public"
+												v-model="newNotePublic"
+												:size="eSizes.XS"
+												:label="newNotePublic ? 'Publico' : 'Privado'"
+											/>
+										</XamuActionButtonToggle>
+										<XamuActionButton
+											:disabled="!newNoteBody"
+											tooltip="Publicar nota"
+											tooltip-position="bottom"
+											round
+											@click="() => toggleModal(true)"
+										>
+											<span class="--hidden:md-inv">Publicar</span>
+											<XamuIconFa name="paper-plane" />
+										</XamuActionButton>
 									</template>
 								</XamuBoxEditor>
 							</div>
@@ -109,6 +124,16 @@
 </template>
 
 <script setup lang="ts">
+	import {
+		collectionGroup,
+		query,
+		where,
+		getDocs,
+		doc,
+		type DocumentReference,
+		type Query,
+	} from "firebase/firestore";
+
 	import type {
 		iGetPage,
 		iInvalidInput,
@@ -118,7 +143,13 @@
 	} from "@open-xamu-co/ui-common-types";
 	import { eSizes } from "@open-xamu-co/ui-common-enums";
 
-	import type { Note, NoteRef, NoteValues } from "~/utils/types";
+	import type {
+		Note,
+		NoteRef,
+		NoteValues,
+		NoteVoteRef,
+		ExtendedInstanceMemberRef,
+	} from "~/utils/types";
 
 	import { XamuActionButtonToggle, XamuActionLink } from "#components";
 
@@ -138,7 +169,9 @@
 	const { getResponse } = useFormInput();
 	const { cache } = useRuntimeConfig().public;
 	const Swal = useSwal();
+	const CUNA = useCunaStore();
 	const USER = useUserStore();
+	const { $clientFirestore } = useNuxtApp();
 
 	// Form refs
 	const invalidNote = ref<iInvalidInput[]>([]);
@@ -156,11 +189,17 @@
 	/** Personal notes only */
 	const personal = ref<boolean>(false);
 
+	const remainingCharacters = computed(() => {
+		const limit = CUNA.config?.notesCharactersLimit ?? 4096;
+
+		return limit - newNoteBody.value.length;
+	});
+
 	const notesPage: iGetPage<Note> = (pagination) => {
 		return useCsrfQuery<iPage<Note> | undefined>("/api/instance/notes", {
 			method: "POST",
 			query: pagination,
-			headers: { "Cache-Control": cache.frequent },
+			headers: { "Cache-Control": cache.none },
 			cache: "reload",
 		});
 	};
@@ -180,7 +219,10 @@
 							`${USER.path}/notes`,
 							{
 								name,
-								body: newNoteBody.value,
+								body: newNoteBody.value.slice(
+									0,
+									CUNA.config?.notesCharactersLimit ?? 4096
+								),
 								public: newNotePublic.value,
 								keywords: name.trim().split(" "),
 							}
@@ -240,6 +282,9 @@
 						emittedHydrateNodes.value(updatedNodes);
 					} else if (!emittedHydrateNodes.value) emittedRefresh.value?.();
 
+					// Reset form
+					newNoteBody.value = "";
+					newNotePublic.value = true;
 					closeModal?.();
 				},
 			});
@@ -286,6 +331,43 @@
 	}
 
 	// lifecycle
+	watch(
+		emittedContent,
+		async (content = [], oldContent = []) => {
+			if (import.meta.server || !$clientFirestore) return;
+			// Bypass if same content
+			if (!content?.length || content[0]?.updatedAt === oldContent?.[0]?.updatedAt) return;
+
+			// Get votes for the new notes
+			const createdByRef: DocumentReference<ExtendedInstanceMemberRef> = doc(
+				$clientFirestore,
+				USER.path
+			);
+			const notePaths: string[] = content.map(({ id = "" }) => id);
+			const votesRef: Query<NoteVoteRef> = collectionGroup($clientFirestore, "votes");
+			// Get own votes for the new notes
+			const toQuery = query(
+				votesRef,
+				where("createdByRef", "==", createdByRef),
+				where("notePath", "in", notePaths)
+			);
+			const votesSnapshot = await getDocs(toQuery);
+			// Map votes within notes
+			const hydratedNotes: Note[] = content.map((note) => {
+				// Match vote with note
+				const voteSnapshot = votesSnapshot.docs.find(({ ref }) => {
+					return note.id && ref?.path?.startsWith(note.id);
+				});
+				const { vote = 0 } = voteSnapshot?.data() || {};
+
+				return { ...note, vote };
+			});
+
+			// Hydrate nodes
+			emittedHydrateNodes.value?.(hydratedNotes);
+		},
+		{ immediate: true }
+	);
 	onActivated(() => {
 		if (deactivated.value) emittedRefresh.value?.();
 
@@ -296,8 +378,22 @@
 	});
 </script>
 
+<style lang="scss">
+	@media only screen {
+		/**
+			Hide pagination size selector
+			Likes fetch size depends on this
+		*/
+		li:has(> select#first) {
+			display: none;
+		}
+	}
+</style>
+
 <style scoped lang="scss">
-	.x-editor-span {
-		grid-column: 1/ -1;
+	@media only screen {
+		.x-editor-span {
+			grid-column: 1/ -1;
+		}
 	}
 </style>

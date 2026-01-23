@@ -60,29 +60,33 @@
 						<div
 							class="x-votes"
 							:class="{
-								'--bgColor-success1 --txtColor-success': vote.vote === 1,
-								'--bgColor-danger1 --txtColor-danger': vote.vote === -1,
+								'--bgColor-success1 --txtColor-success': ownVote === 1,
+								'--bgColor-danger1 --txtColor-danger': ownVote === -1,
 							}"
 						>
 							<XamuActionLink
 								:theme="eColors.SUCCESS"
-								:tooltip="vote.vote === 1 ? 'Quitar voto' : 'Votar +1'"
+								:tooltip="ownVote === 1 ? 'Quitar voto' : 'Votar +1'"
 								class="x-vote --up"
 								@click="upvoteNote"
 							>
 								<XamuIconFa name="caret-up" :size="20" />
 							</XamuActionLink>
-							<span>{{ (note.score ?? 1) + (vote.vote ?? 0) }}</span>
+							<span>{{ score }}</span>
 							<XamuActionLink
 								:theme="eColors.DANGER"
-								:tooltip="vote.vote === -1 ? 'Quitar voto' : 'Votar -1'"
+								:tooltip="ownVote === -1 ? 'Quitar voto' : 'Votar -1'"
 								class="x-vote --down"
 								@click="downvoteNote"
 							>
 								<XamuIconFa name="caret-down" :size="20" />
 							</XamuActionLink>
 						</div>
-						<XamuActionButton v-if="ownNote" tooltip="Editar nota" @click="toggleModal">
+						<XamuActionButton
+							v-if="isOwnNote"
+							tooltip="Editar nota"
+							@click="toggleModal"
+						>
 							<XamuIconFa name="pen" />
 							<span class="--hidden:sm-inv">Editar nota</span>
 						</XamuActionButton>
@@ -107,6 +111,8 @@
 </template>
 
 <script setup lang="ts">
+	import { setDoc, doc, DocumentReference } from "firebase/firestore";
+
 	import { getDocumentId } from "@open-xamu-co/firebase-nuxt/client/resolver";
 	import { eColors, eSizes } from "@open-xamu-co/ui-common-enums";
 	import type {
@@ -115,7 +121,15 @@
 		tFormInput,
 	} from "@open-xamu-co/ui-common-types";
 
-	import type { Note, NoteRef, NoteValues, NoteVote, NoteVoteRef } from "~/utils/types";
+	import type {
+		Note,
+		NoteRef,
+		NoteValues,
+		NoteVote,
+		NoteVoteRef,
+		ExtendedInstanceMember,
+		ExtendedInstanceMemberRef,
+	} from "~/utils/types";
 
 	/**
 	 * Item de note
@@ -147,51 +161,61 @@
 	const { getResponse } = useFormInput();
 	const Swal = useSwal();
 	const route = useRoute();
+	const { $clientFirestore } = useNuxtApp();
 
 	// Form refs
 	const invalidNote = ref<iInvalidInput[]>([]);
 	const noteInputs = ref<tFormInput[]>([]);
 	const deactivated = ref<boolean>(false);
 
+	// Keep track of the changes
+	const localVote = ref<1 | 0 | -1>();
+
 	/**
 	 * The note belongs to the current user
 	 */
-	const ownNote = computed(() => {
+	const isOwnNote = computed(() => {
 		return props.note.id?.startsWith(USER.path);
 	});
-	const vote = computed<NoteVote>({
-		get: () => ({
-			vote: props.note.vote ?? 0,
-		}),
+	const ownVote = computed<1 | 0 | -1>({
+		get: () => localVote.value ?? props.note.vote ?? 0,
 		set: (newVote) => {
 			const savedVote = props.note.vote ?? 0;
 
 			// Make optimistic update
-			props.hydrateNode?.({ ...props.note, vote: newVote.vote ?? 0 });
+			localVote.value = newVote;
+
+			if (!$clientFirestore) throw new Error("Firestore client not found");
 
 			// Vote id, user uid as vote identifier
 			const id = `${props.note.id}/votes/${getDocumentId(USER.path)}`;
+			const voteRef: DocumentReference<NoteVoteRef, NoteVote> = doc($clientFirestore, id);
+			const createdByRef: DocumentReference<
+				ExtendedInstanceMemberRef,
+				ExtendedInstanceMember
+			> = doc($clientFirestore, USER.path);
 
-			// Perform update, do not await
-			useDocumentUpdate<NoteVoteRef, NoteVote>({ id }, { vote: newVote.vote }).then(
-				async ([data]) => {
-					const [votedNote, finalDataPromise] = Array.isArray(data) ? data : [data];
-
-					// Unexpected error, rollback hydration
-					if (typeof votedNote !== "object") {
-						return props.hydrateNode?.({ ...props.note, vote: savedVote });
-					}
-
-					const finalData = await finalDataPromise;
-
-					// Server rejected vote
-					// Zero would eliminate the vote (expected)
-					if (newVote.vote !== 0 && typeof finalData !== "object") {
-						return props.hydrateNode?.({ ...props.note, vote: savedVote });
-					}
-				}
-			);
+			// Create or update vote, do not await
+			setDoc(
+				voteRef,
+				{
+					vote: newVote,
+					notePath: props.note.id,
+					createdByRef,
+					updatedByRef: createdByRef,
+				},
+				{ merge: true }
+			).catch(() => {
+				// Unexpected error, rollback vote
+				localVote.value = savedVote;
+			});
 		},
+	});
+	/** Actual score */
+	const score = computed(() => {
+		const voteWithOffset = (localVote.value ?? 0) * (props.note.vote ?? 0);
+
+		return (props.note.score ?? 0) + voteWithOffset;
 	});
 
 	function close() {
@@ -271,7 +295,7 @@
 				willOpen() {
 					// Update existing node. Prefer hydration over refreshing
 					if (typeof updatedNote === "object" && updatedNote.id && props.hydrateNode) {
-						props.hydrateNode(updatedNote);
+						props.hydrateNode({ ...props.note, ...updatedNote });
 
 						// Hydration stream, do not await
 						Promise.all(
@@ -283,7 +307,11 @@
 								if (typeof updated === "object" && updated.id) {
 									if (withSlug) return navigateTo(`/notas/${updated.slug}`);
 
-									props.hydrateNode?.({ ...updatedNote, ...updated });
+									props.hydrateNode?.({
+										...props.note,
+										...updatedNote,
+										...updated,
+									});
 								}
 							})
 						);
@@ -316,27 +344,27 @@
 
 	async function upvoteNote() {
 		if (!props.note.id) return;
-		if (vote.value.vote === 1) {
+		if (ownVote.value === 1) {
 			// remove vote
-			vote.value = { vote: 0 };
+			ownVote.value = 0;
 
 			return;
 		}
 
 		// Perform upvote
-		vote.value = { vote: 1 };
+		ownVote.value = 1;
 	}
 	async function downvoteNote() {
 		if (!props.note.id) return;
-		if (vote.value.vote === -1) {
+		if (ownVote.value === -1) {
 			// remove vote
-			vote.value = { vote: 0 };
+			ownVote.value = 0;
 
 			return;
 		}
 
 		// Perform downvote
-		vote.value = { vote: -1 };
+		ownVote.value = -1;
 	}
 
 	// lifecycle

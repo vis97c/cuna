@@ -1,6 +1,6 @@
 import { FieldValue, Timestamp, type DocumentReference } from "firebase-admin/firestore";
 
-import { onCreated, onUpdated } from "@open-xamu-co/firebase-nuxt/functions/event";
+import { onCreated, onDeleted, onUpdated } from "@open-xamu-co/firebase-nuxt/functions/event";
 import { makeGetSlug } from "@open-xamu-co/firebase-nuxt/functions/slugs";
 import { getFirebase } from "@open-xamu-co/firebase-nuxt/functions/firebase";
 import { encrypt } from "@open-xamu-co/firebase-nuxt/functions/encrypt";
@@ -51,7 +51,7 @@ export const onCreatedNote = onCreated<NoteData>(
 			const voteRef = created.ref.collection("votes").doc(getDocumentId(memberRef.path));
 
 			// Create author vote, do not await
-			voteRef.set({ vote: 1, internal: true });
+			voteRef.set({ vote: 1, notePath: created.ref.path, internal: true });
 
 			return { slug: slug || newSlug, body, encodedAt, keywords };
 		} catch (err) {
@@ -66,6 +66,7 @@ export const onCreatedNote = onCreated<NoteData>(
 			upvotes: 1, // Author upvote
 			downvotes: 0,
 			public: false,
+			hideScore: false,
 			lock: false,
 		},
 	}
@@ -122,6 +123,20 @@ export const onUpdatedNote = onUpdated<NoteData>(
 		}
 	}
 );
+/**
+ * Delete timestamp
+ * Remove related note votes
+ *
+ * @docType note
+ * @event deleted
+ */
+export const onDeletedNote = onDeleted("instances/members/notes", async (deletedDoc) => {
+	const votesRef = deletedDoc.ref.collection("votes");
+	const votesSnapshot = await votesRef.get();
+
+	// Delete related votes
+	votesSnapshot.forEach((doc) => doc.ref.delete());
+});
 
 /**
  * Create note vote
@@ -162,6 +177,8 @@ export const onCreatedNoteVote = onCreated<NoteVoteData>(
 
 			// Commit batch
 			await voteBatch.commit();
+
+			return { notePath: noteRef.path };
 		} catch (err) {
 			logger("functions:instances:members:onCreatedNoteVote", err);
 
@@ -174,7 +191,6 @@ export const onCreatedNoteVote = onCreated<NoteVoteData>(
 		},
 	}
 );
-
 /**
  * Update note vote.
  * Calculate deltas & update note.

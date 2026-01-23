@@ -5,7 +5,9 @@
 				v-if="INSTANCE.current?.banner?.message"
 				class="x-main-banner flx --flxColumn --flx-center --gap-0 --width-100 --bgColor-secondary"
 			>
-				<div class="holder flx --flx-center --flx --txtColor-light --txtSize-sm --pX">
+				<div
+					class="holder flx --flx-center --flx --txtColor-light --txtSize-xs --txtSize-sm:md --pX"
+				>
 					<XamuActionLink
 						v-if="INSTANCE.current?.banner?.url"
 						:to="INSTANCE.current.banner.url"
