@@ -89,10 +89,19 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			const page = await getEdgesPage(event, query);
 
 			// Decode bodies
-			page.edges = page.edges.map(({ node, cursor }) => ({
-				node: { ...node, body: decrypt(node.body, currentInstanceMillis) },
-				cursor,
-			}));
+			for (let i = 0; i < page.edges.length; i++) {
+				try {
+					// Group collection could fail attempting to decrypt notes from other instances
+					page.edges[i].node.body = decrypt(
+						page.edges[i].node.body,
+						currentInstanceMillis
+					);
+				} catch (err) {
+					// Remove the edge if body can't be decrypted
+					page.edges.splice(i, 1);
+					apiLogger(event, "api:instance:members:notes:page:decode", err);
+				}
+			}
 
 			return page;
 		}
@@ -102,10 +111,18 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		const edges = await getQueryAsEdges(event, query.limit(first));
 
 		// Decode bodies
-		return edges.map(({ node, cursor }) => ({
-			node: { ...node, body: decrypt(node.body, currentInstanceMillis) },
-			cursor,
-		}));
+		for (let i = 0; i < edges.length; i++) {
+			try {
+				// Group collection could fail attempting to decrypt notes from other instances
+				edges[i].node.body = decrypt(edges[i].node.body, currentInstanceMillis);
+			} catch (err) {
+				// Remove the edge if body can't be decrypted
+				edges.splice(i, 1);
+				apiLogger(event, "api:instance:members:notes:edges:decode", err);
+			}
+		}
+
+		return edges;
 	} catch (err) {
 		apiLogger(event, "api:instance:members:notes", err);
 

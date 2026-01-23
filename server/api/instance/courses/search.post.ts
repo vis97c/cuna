@@ -16,7 +16,11 @@ import {
 	getOrderedQuery,
 	getQueryAsEdges,
 } from "@open-xamu-co/firebase-nuxt/server/firestore";
-import { getWords, soundexEs } from "@open-xamu-co/firebase-nuxt/functions/search";
+import {
+	getWords,
+	soundexEs,
+	getWeightedSearchIndexes,
+} from "@open-xamu-co/firebase-nuxt/functions/search";
 
 import type { iCoursesPayload } from "~~/server/utils/scrape/courses";
 import type { CourseData, ExtendedInstanceDataConfig } from "~~/functions/src/types/entities";
@@ -40,10 +44,9 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 	const scrapedAt = new Date();
 	const storage = useStorage("cache");
 	const { currentAuth, currentInstanceRef, currentInstance, currentInstanceHost } = event.context;
-	const {
-		coursesScrapeRate = 1440, // A day by	default
-		siaMaintenanceTillAt = scrapedAt,
-	}: ExtendedInstanceDataConfig = currentInstance?.config || {};
+	const config: ExtendedInstanceDataConfig = currentInstance?.config || {};
+	const coursesScrapeRate = config.coursesScrapeRate || 1440; // A day by	default
+	const siaMaintenanceTillAt = new Date(config.siaMaintenanceTillAt as Date) || scrapedAt;
 	const { debugScrapper } = useRuntimeConfig();
 	const Allow = "POST,HEAD";
 
@@ -52,7 +55,7 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 	 */
 	const getCoursesLinks = defineCachedFunction(
 		async (event: ExtendedH3Event, payload: iCoursesPayload) => {
-			const { page, cleanup } = await getPuppeteer(event, debugScrapper);
+			const { page, cleanup, proxy } = await getPuppeteer(event, debugScrapper);
 
 			try {
 				let coursesHandle = await scrapeCoursesHandle(event, page, payload);
@@ -98,7 +101,7 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 				return courseLinks;
 			} catch (err) {
 				await cleanup(); // Cleanup puppeteer
-				apiLogger(event, "getCoursesLinks", err);
+				apiLogger(event, "getCoursesLinks", err, { proxy });
 
 				// Prevent caching by throwing error
 				throw err;
@@ -109,8 +112,8 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 			maxAge: 60 * coursesScrapeRate,
 			getKey(event, payload) {
 				const { currentInstanceHost } = event.context;
-				const { level, place, faculty, program, typology = "" } = payload;
-				const values = [level, place, faculty, program, typology];
+				const { level, place, faculty, program, typology } = payload;
+				const values = [level, place, faculty, program, typology || ""];
 				const hash = createHash("sha256").update(values.join(",")).digest("hex");
 
 				// Compact hash
@@ -125,6 +128,7 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 			Allow,
 			"Access-Control-Allow-Methods": Allow,
 			"Content-Type": "application/json",
+			"Cache-Control": "no-store", // Browser cache is not allowed
 		});
 
 		// Only POST, HEAD & OPTIONS are allowed
@@ -232,7 +236,7 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 		const payload: iCoursesPayload = { level, place, faculty, program, typology };
 
 		// Check if already scraped
-		const cacheValues = [level, place, faculty, program, typology];
+		const cacheValues = [level, place, faculty, program, typology || ""];
 		const cacheHash = createHash("sha256").update(cacheValues.join(",")).digest("hex");
 		const cacheKey = `nitro:functions:getCoursesLinks:${currentInstanceHost}:${cacheHash}.json`;
 		const cachedLinks = await storage.getItem(cacheKey);
@@ -240,20 +244,27 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 		// Fetch course links from SIA if not cached
 		// Index courses before returning search
 		try {
+			if (!currentAuth) {
+				apiLogger(event, "api:courses:search", "Scraping courses without authentication");
+
+				throw new Error("Missing auth");
+			}
+
 			// Only index if user is authenticated (Prevent abusive calls)
 			// Disable if SIA is in maintenance
-			if (!cachedLinks && currentAuth && siaMaintenanceTillAt <= scrapedAt) {
+			if (!cachedLinks && siaMaintenanceTillAt <= scrapedAt) {
 				const links = await getCoursesLinks(event, payload);
 
-				// Index scraped courses
-				await Promise.all(
+				// Index scraped courses in parallel
+				await Promise.allSettled(
 					links.map(async (link) => {
 						// Skip if missing identifier data
 						if (!link.code || !link.credits || !link.name || !link.typology) return;
 
 						const { typology: linkTypology, ...linkData } = link;
 						const id = Cyrb53([link.code]); // Generate deduped course UID
-						const tempSoundex = soundexEs(getWords(link.name).join(""));
+						// Get search indexes
+						const { indexes, indexesWeights } = getWeightedSearchIndexes(link.name);
 
 						// Set course
 						return coursesRef.doc(String(id)).set(
@@ -268,8 +279,8 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 								scrapedWith: [level, place, faculty, program, linkTypology],
 								// Indexes & createdAt, required for queries
 								createdAt: Timestamp.fromDate(scrapedAt),
-								indexes: [tempSoundex],
-								indexesWeights: [`0:${tempSoundex}`],
+								indexes,
+								indexesWeights,
 							},
 							{ merge: true }
 						);
@@ -278,7 +289,7 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 			}
 		} catch (err) {
 			// Throw error if not timeout, do not log
-			if (err !== "Timed out") {
+			if (err !== "Timed out" && err !== "Missing auth") {
 				throw createError({ statusCode: 500, statusMessage: "Scraping failed" });
 			}
 		}

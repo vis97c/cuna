@@ -79,7 +79,7 @@ export async function scrapeCoursesHandle(
 	// Navigate to SIA, in less than 30 seconds
 	const response = await page.goto(siaOldEnpoint, { timeout: 1000 * 30 });
 
-	if (!response?.ok) throw new Error("There was an error loading the page");
+	if (!response?.ok) throw new Error("Unable to reach SIA");
 
 	return TimedPromise<ElementHandle<Element>>(
 		async function (resolve, reject) {

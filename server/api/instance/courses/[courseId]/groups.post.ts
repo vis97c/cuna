@@ -35,10 +35,9 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 	const scrapedAt = new Date();
 	const storage = useStorage("cache");
 	const { currentAuth, currentInstanceRef, currentInstance, currentInstanceHost } = event.context;
-	const {
-		coursesRefreshRate = 2, // 2 minutes by default
-		siaMaintenanceTillAt = scrapedAt,
-	}: ExtendedInstanceDataConfig = currentInstance?.config || {};
+	const config: ExtendedInstanceDataConfig = currentInstance?.config || {};
+	const coursesRefreshRate = config.coursesRefreshRate || 2; // 2 minutes by default
+	const siaMaintenanceTillAt = new Date(config.siaMaintenanceTillAt as Date) || scrapedAt;
 	const { debugScrapper } = useRuntimeConfig();
 	const Allow = "POST,HEAD";
 	let courseRef: DocumentReference<CourseData> | undefined;
@@ -48,7 +47,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 	 */
 	const getCourseGroupsLinks = defineCachedFunction(
 		async (event: ExtendedH3Event, courseRef: DocumentReference<CourseData>) => {
-			const { browser, page } = await getPuppeteer(event, debugScrapper);
+			const { browser, page, proxy } = await getPuppeteer(event, debugScrapper);
 
 			try {
 				const snapshot = await courseRef.get();
@@ -63,16 +62,16 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 
 				// Log errors if any, do not await
 				errors.forEach((err) =>
-					apiLogger(event, `api:courses:[${courseRef.id}]:groups`, err)
+					apiLogger(event, `api:courses:[${courseRef.id}]:groups`, err, { proxy })
 				);
 
 				return links;
-			} catch (error) {
+			} catch (err) {
 				browser.close(); // Cleanup, do not await
-				apiLogger(event, `api:courses:[${courseRef.id}]:groups`, error);
+				apiLogger(event, `api:courses:[${courseRef.id}]:groups`, err, { proxy });
 
 				// Prevent caching by throwing error
-				throw error;
+				throw err;
 			}
 		},
 		{
@@ -93,6 +92,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			Allow,
 			"Access-Control-Allow-Methods": Allow,
 			"Content-Type": "application/json",
+			"Cache-Control": "no-store", // Browser cache is not allowed
 		});
 
 		// Only POST, HEAD & OPTIONS are allowed
@@ -151,17 +151,30 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		// Index groups before resolving query
 		// TODO: scrape course prerequisites
 		try {
+			if (!currentAuth) {
+				apiLogger(event, "api:courses:groups", "Scraping groups without authentication");
+
+				throw new Error("Missing auth");
+			}
+
 			// Only index if user is authenticated (Prevent abusive calls)
 			// Disable if SIA is in maintenance
-			if (!cachedGroups && currentAuth && siaMaintenanceTillAt <= scrapedAt) {
+			if (!cachedGroups && siaMaintenanceTillAt <= scrapedAt) {
 				const links = await getCourseGroupsLinks(event, courseRef);
 				const groupCount = links.length;
 				const spotsCount = sumBy(links, "availableSpots");
 				const { name: courseName, code: courseCode } =
 					(await courseRef.get())?.data() || {};
 
-				// Index scraped groups (await before updating course)
-				await Promise.all(
+				// Update course group count, do not await
+				courseRef?.update({
+					groupCount,
+					spotsCount,
+					scrapedAt: Timestamp.fromDate(scrapedAt),
+				});
+
+				// Index scraped groups in parallel
+				await Promise.allSettled(
 					links.map(async ({ teachers = [], ...group }) => {
 						// Skip if missing identifier data
 						if (!group.periodStartAt || !group.periodEndAt || !group.name) return;
@@ -217,17 +230,10 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 						);
 					})
 				);
-
-				// Update course group count, do not await
-				courseRef?.update({
-					groupCount,
-					spotsCount,
-					scrapedAt: Timestamp.fromDate(scrapedAt),
-				});
 			}
 		} catch (err) {
 			// Throw error if not timeout, do not log
-			if (err !== "Timed out") {
+			if (err !== "Timed out" && err !== "Missing auth") {
 				throw createError({ statusCode: 500, statusMessage: "Scraping failed" });
 			}
 		}

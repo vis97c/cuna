@@ -167,14 +167,14 @@ function debugPage(page: Page, debug?: boolean): Page {
  */
 export async function getPuppeteer(event: ExtendedH3Event, debug?: boolean) {
 	const { firebaseFirestore } = getFirebase("getPuppeteer");
-	const proxiesList = await getProxies(event);
+	const proxiesList = await getProxies(event, debug);
 
 	// Omit proxy if not found
 	if (!proxiesList.length) {
 		const browser: Browser = await launch({ headless: !debug, args: puppeteerArgs });
 		const page: Page = debugPage(await browser.newPage(), debug);
 
-		return { browser, page, cleanup: makeCleanup(page, browser) };
+		return { browser, page, cleanup: makeCleanup(page, browser), proxy: null };
 	}
 
 	// Get working proxy
@@ -222,7 +222,7 @@ export async function getPuppeteer(event: ExtendedH3Event, debug?: boolean) {
 			const page: Page = debugPage(await browser.newPage(), debug);
 			const cleanup = makeCleanup(page, browser);
 
-			return { browser, page, cleanup };
+			return { browser, page, cleanup, proxy };
 		} catch (err) {
 			// Error! Get test duration in seconds
 			const testEndAt = new Date();

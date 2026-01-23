@@ -52,7 +52,7 @@ function runStylelintInBatches(files, batchSize = 50) {
 		promises.push(promise);
 	}
 
-	return Promise.all(promises);
+	return Promise.allSettled(promises);
 }
 
 try {
