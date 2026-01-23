@@ -45,8 +45,8 @@ service cloud.firestore {
       return request.auth.uid == uid;
     }
 
-    function isAuthor() {
-      return request.auth.uid == resource.data.createdByRef.uid;
+    function isAuthor(instanceId) {
+      return /databases/(default)/documents/instances/$(instanceId)/members/$(request.auth.uid) == resource.data.createdByRef;
     }
 
     match /{document=**} {
@@ -110,8 +110,20 @@ service cloud.firestore {
           // cualquier usuario puede crear una nota
           allow create: if canUse(instanceId);
           // modificacion granular, editores hacia arriba
-          allow update: if isAuthor() || canDevelop(instanceId);
-          allow delete: if (isAuthor() || canDevelop(instanceId)) && resource.data.lock == false;
+          allow update: if isAuthor(instanceId) || canDevelop(instanceId);
+          allow delete: if (isAuthor(instanceId) || canDevelop(instanceId)) && resource.data.lock == false;
+
+          match /votes/{uid} {
+            // lectura explicita, cualquiera
+            allow read: if true;
+            // cualquier usuario puede crear un voto
+            allow create: if canUse(instanceId);
+            // modificacion granular, editores hacia arriba
+            allow update: if isOwnUser(uid) || canDevelop(instanceId);
+            allow delete: if (isOwnUser(uid) || canDevelop(instanceId)) && resource.data.lock == false;
+          }
+
+          // Add more notes subcollections rules here
         }
 
         // Add more members subcollections rules here
