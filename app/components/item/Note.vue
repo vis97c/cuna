@@ -18,7 +18,7 @@
 						<div class="flx --flxColumn --flx-start --gap-5">
 							<h2 class="x-note-title">
 								<XamuActionLink
-									v-if="route.path !== `/notas/${note.slug}`"
+									v-if="note.slug && route.path !== `/notas/${note.slug}`"
 									:to="`/notas/${note.slug}`"
 									class="--txtLineHeight-1 --txtWrap --txtAlign"
 								>
@@ -94,6 +94,7 @@
 						</div>
 						<XamuActionButton
 							v-if="isOwnNote"
+							:disabled="!note.slug"
 							tooltip="Editar nota"
 							@click="toggleModal"
 						>
