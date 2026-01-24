@@ -37,4 +37,10 @@ export interface ProxyData extends SharedData {
 	 * @automation
 	 */
 	timeout?: number;
+	/**
+	 * How much time in average did a session (scraping) take in seconds
+	 *
+	 * @automation
+	 */
+	sessionTimeout?: number;
 }

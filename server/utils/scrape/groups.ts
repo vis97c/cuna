@@ -1,4 +1,4 @@
-import type { ElementHandle, Page } from "puppeteer";
+import type { ElementHandle, Page } from "puppeteer-core";
 
 import { TimedPromise } from "@open-xamu-co/firebase-nuxt/server/guards";
 import { debugFirebaseServer } from "@open-xamu-co/firebase-nuxt/server/firestore";
@@ -41,6 +41,12 @@ export async function scrapeCourseGroupsLinks(
 	page: Page,
 	course: CourseData
 ): Promise<{ links: CourseGroupLink[]; errors: Error[] }> {
+	const { currentInstance } = event.context;
+	const { siaOldURL = "" } = currentInstance?.config || {};
+
+	// SIA navigation is required beforehand
+	if (!page.url().includes(siaOldURL)) throw new Error("Page is not the SIA");
+
 	const [level, place, faculty, program, typology] = course.scrapedWith || [];
 
 	// Course data is required

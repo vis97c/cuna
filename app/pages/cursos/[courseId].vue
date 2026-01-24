@@ -137,7 +137,6 @@
 	const USER = useUserStore();
 	const router = useRouter();
 	const route = useRoute();
-	const cache = useRuntimeConfig().public.cache;
 	const Swal = useSwal();
 	const { $clientFirestore, $resolveClientRefs } = useNuxtApp();
 
@@ -171,8 +170,8 @@
 			const courseApiPath = `/api/instance/all/courses/${courseId.value}`;
 
 			return useQuery<Course>(courseApiPath, {
-				headers: { "Cache-Control": cache.frequent },
-				cache: "reload",
+				headers: { "Cache-Control": "no-store" },
+				cache: "no-store",
 			});
 		},
 		{ watch: [() => courseId.value], server: false }
@@ -191,8 +190,8 @@
 			return useCsrfQuery<iPageEdge<Group>[]>(courseApiPath, {
 				query: { level: 1 }, // Get teachers refs
 				method: "POST",
-				headers: { "Cache-Control": cache.none },
-				cache: "reload",
+				headers: { "Cache-Control": "no-store" },
+				cache: "no-store",
 			});
 		},
 		{ watch: [() => courseId.value] }

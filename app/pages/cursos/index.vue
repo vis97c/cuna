@@ -73,7 +73,6 @@
 	definePageMeta({ title: "Cursos", middleware: ["enabled", "auth-only"] });
 
 	const USER = useUserStore();
-	const { cache } = useRuntimeConfig().public;
 
 	const selectedLevel = computed({
 		get: () => USER.level,
@@ -98,8 +97,8 @@
 		return useCsrfQuery<iPage<Course> | undefined>("/api/instance/courses", {
 			method: "POST",
 			query: pagination,
-			headers: { "Cache-Control": cache.frequent },
-			cache: "reload",
+			headers: { "Cache-Control": "no-store" },
+			cache: "no-store",
 		});
 	};
 </script>

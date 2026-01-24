@@ -1,42 +1,7 @@
 const fs = require("fs");
 const path = require("path");
-const puppeteer = require("puppeteer");
-
-async function getPuppeteer(proxyServer) {
-	const setup = {
-		headless: true,
-		args: [
-			"--no-sandbox",
-			"--disable-setuid-sandbox",
-			"--disable-dev-shm-usage",
-			"--disable-accelerated-2d-canvas",
-			"--no-first-run",
-			"--no-zygote",
-			"--disable-gpu",
-		],
-	};
-
-	if (proxyServer) setup.args.push(`--proxy-server=${proxyServer}`);
-
-	// Setup puppeteer
-	const browser = await puppeteer.launch(setup);
-	const page = await browser.newPage();
-
-	/**
-	 * Attempt to close everything
-	 */
-	async function cleanup() {
-		try {
-			await page.close();
-		} catch (err) {
-			console.error(err);
-		}
-
-		await browser.close();
-	}
-
-	return { browser, page, cleanup };
-}
+const { ProxyAgent } = require("undici");
+const { ofetch } = require("ofetch");
 
 const siaDomain = "https://sia.unal.edu.co";
 const siaPath = "/Catalogo/facespublico/public/servicioPublico.jsf";
@@ -61,19 +26,20 @@ const siaUrl = `${siaDomain}${siaPath}${siaQuery}`;
 
 			// Return task to be run on demand
 			pendingTasks.push(async () => {
-				const { page, cleanup } = await getPuppeteer(proxy);
-
 				try {
-					// Reject slow proxies, 30 seconds
-					const response = await Promise.race([
-						new Promise((_resolve, reject) => {
-							setTimeout(() => reject(new Error("Timeout")), 1000 * 30);
-						}),
-						page.goto(siaUrl),
-						// page.goto("https://status.search.google.com"),
-					]);
+					// Reject slow proxies, 60 seconds
+					const dispatcher = new ProxyAgent(proxy);
+					let ok = false;
 
-					if (!response.ok()) throw new Error("Not ok");
+					await ofetch(siaUrl, {
+						dispatcher,
+						onResponse({ response }) {
+							ok = response.ok;
+						},
+						timeout: 1000 * 60, // 60 seconds
+					});
+
+					if (!ok) throw new Error("Not ok");
 
 					// Success
 					list.add(proxy);
@@ -81,8 +47,6 @@ const siaUrl = `${siaDomain}${siaPath}${siaQuery}`;
 				} catch (err) {
 					console.log(`\x1b[31mServer ${proxy} is not working\x1b[0m`);
 				}
-
-				await cleanup();
 
 				// Run next task
 				return pendingTasks.pop()?.();
