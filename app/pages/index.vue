@@ -135,10 +135,10 @@
 						:first="25"
 						:no-content-message="
 							search
-								? `Sin resultados para ${search}`
-								: 'No hay cursos disponibles en este momento. Vuelve más tarde.'
+								? `Sin resultados para ${search}. Intenta con otro término.`
+								: 'No hay cursos disponibles. Intenta de nuevo más tarde.'
 						"
-						label="Cargando cursos desde el SIA..."
+						label="Cargando cursos guardados..."
 						hide-controls="single"
 						with-route
 						client
@@ -237,7 +237,6 @@
 	const CUNA = useCunaStore();
 	const USER = useUserStore();
 	const route = useRoute();
-	const { cache } = useRuntimeConfig().public;
 
 	const calculadoraTheme = "calculadora" as any;
 	const estudiantesTheme = "estudiantes" as any;
@@ -296,8 +295,8 @@
 			{
 				method: "POST",
 				query: pagination,
-				headers: { "Cache-Control": cache.none },
-				cache: "reload",
+				headers: { "Cache-Control": "no-store" },
+				cache: "no-store",
 			}
 		);
 

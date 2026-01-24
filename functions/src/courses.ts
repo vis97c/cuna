@@ -22,20 +22,7 @@ function getLEPath({ config = {} }: ExtendedInstanceData): string {
 export const onCreatedCourse = onCreated<CourseData>(
 	"instances/courses",
 	async (snapshot) => {
-		const {
-			name = "",
-			code,
-			programs = [],
-			typologies = [],
-			indexes: existingIndexes,
-			indexesWeights: existingIndexesWeights,
-		} = snapshot.data();
-
-		// Assume pre-indexed
-		if (existingIndexes && existingIndexesWeights) {
-			return { losEstudiantesCode: await getLESlug(code, getLEPath) };
-		}
-
+		const { name = "", code, programs = [], typologies = [] } = snapshot.data();
 		// Get search indexes
 		const { indexes, indexesWeights } = getWeightedSearchIndexes(name);
 
@@ -65,33 +52,19 @@ export const onUpdatedCourse = onUpdated<CourseData>(
 	async (newSnapshot, _existingSnapshot, { logger }) => {
 		try {
 			const {
-				name = "",
 				code,
 				programs = [],
 				typologies = [],
 				losEstudiantesCode,
-				indexes: existingIndexes,
-				indexesWeights: existingIndexesWeights,
+				createdAt,
 			} = newSnapshot.data();
-
-			// Assume pre-indexed
-			if (existingIndexes && existingIndexesWeights) {
-				return {
-					losEstudiantesCode: losEstudiantesCode || (await getLESlug(code, getLEPath)),
-				};
-			}
-
-			// Get search indexes
-			const { indexes, indexesWeights } = getWeightedSearchIndexes(name);
 
 			// Keep valid indexes
 			return {
-				indexes,
-				indexesWeights,
-				alternativeNames: [name, deburr(name)],
 				programsIndexes: { ...programs },
 				typologiesIndexes: { ...typologies },
 				losEstudiantesCode: losEstudiantesCode || (await getLESlug(code, getLEPath)),
+				createdAt,
 			};
 		} catch (err) {
 			logger("functions:courses:onUpdatedCourse", err);
@@ -153,11 +126,11 @@ export const onUpdatedGroup = onUpdated<GroupData>(
 	"instances/courses/groups",
 	async (newSnapshot, existingSnapshot, { logger }) => {
 		try {
-			const { availableSpots = 0, spots = availableSpots } = newSnapshot.data();
+			const { availableSpots = 0, spots = availableSpots, createdAt } = newSnapshot.data();
 			const { spots: oldSpots = 0 } = existingSnapshot.data();
 
-			// Preserve spots
-			return { spots: Math.max(oldSpots, spots) };
+			// Preserve spots & createdAt
+			return { spots: Math.max(oldSpots, spots), createdAt };
 		} catch (err) {
 			logger("functions:courses:onUpdatedGroup", err);
 

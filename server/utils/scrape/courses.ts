@@ -1,4 +1,4 @@
-import type { ElementHandle, Page } from "puppeteer";
+import type { ElementHandle, Page } from "puppeteer-core";
 
 import { debugFirebaseServer } from "@open-xamu-co/firebase-nuxt/server/firestore";
 import { TimedPromise } from "@open-xamu-co/firebase-nuxt/server/guards";
@@ -59,7 +59,7 @@ export const SIATypologies: Record<string, eSIATypology> = {
 } as const;
 
 /**
- * Navigate the SIA to get to the courses list
+ * Get to the courses list from sia
  */
 export async function scrapeCoursesHandle(
 	event: ExtendedH3Event,
@@ -67,19 +67,10 @@ export async function scrapeCoursesHandle(
 	payload: iCoursesPayload
 ): Promise<ElementHandle<Element>> {
 	const { currentInstance } = event.context;
-	const {
-		siaOldURL = "",
-		siaOldPath = "",
-		siaOldQuery = "",
-		siaOldLevel,
-		siaOldPlace,
-	} = currentInstance?.config || {};
-	const siaOldEnpoint = siaOldURL + siaOldPath + siaOldQuery;
+	const { siaOldURL = "", siaOldLevel, siaOldPlace } = currentInstance?.config || {};
 
-	// Navigate to SIA, in less than 30 seconds
-	const response = await page.goto(siaOldEnpoint, { timeout: 1000 * 30 });
-
-	if (!response?.ok) throw new Error("Unable to reach SIA");
+	// SIA navigation is required beforehand
+	if (!page.url().includes(siaOldURL)) throw new Error("Page is not the SIA");
 
 	return TimedPromise<ElementHandle<Element>>(
 		async function (resolve, reject) {

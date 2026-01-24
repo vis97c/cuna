@@ -21,8 +21,8 @@
 					</span>
 					<span v-else title="Cupos disponibles">?? cupos</span>
 				</p>
-				<p v-if="course.programs?.length" title="Programas">
-					{{ course.programs.join(", ") }}.
+				<p v-if="course.faculties?.length" title="Facultades">
+					{{ course.faculties.join(", ") }}.
 				</p>
 				<p v-if="course.typologies?.length" title="Tipologías">
 					{{ course.typologies.join(", ") }}.

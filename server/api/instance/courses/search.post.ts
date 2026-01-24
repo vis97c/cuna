@@ -16,11 +16,8 @@ import {
 	getOrderedQuery,
 	getQueryAsEdges,
 } from "@open-xamu-co/firebase-nuxt/server/firestore";
-import {
-	getWords,
-	soundexEs,
-	getWeightedSearchIndexes,
-} from "@open-xamu-co/firebase-nuxt/functions/search";
+import { getWords, soundexEs } from "@open-xamu-co/firebase-nuxt/functions/search";
+import { getFirebase } from "@open-xamu-co/firebase-nuxt/functions/firebase";
 
 import type { iCoursesPayload } from "~~/server/utils/scrape/courses";
 import type { CourseData, ExtendedInstanceDataConfig } from "~~/functions/src/types/entities";
@@ -35,28 +32,56 @@ import { getQueryString } from "~~/server/utils/params";
 import { Cyrb53 } from "~/utils/firestore";
 
 /**
- * Search for courses by query params
- * Scrape SIA in the background
- *
- * @see https://es.stackoverflow.com/questions/316170/c%c3%b3mo-hacer-una-consulta-del-tipo-like-en-firebase
+ * Get courses from SIA
  */
-export default defineConditionallyCachedEventHandler(async function (event) {
-	const scrapedAt = new Date();
-	const storage = useStorage("cache");
-	const { currentAuth, currentInstanceRef, currentInstance, currentInstanceHost } = event.context;
-	const config: ExtendedInstanceDataConfig = currentInstance?.config || {};
-	const coursesScrapeRate = config.coursesScrapeRate || 1440; // A day by	default
-	const siaMaintenanceTillAt = new Date(config.siaMaintenanceTillAt as Date) || scrapedAt;
-	const { debugScrapper } = useRuntimeConfig();
-	const Allow = "POST,HEAD";
-
-	/**
-	 * Get courses from SIA
-	 */
-	const getCoursesLinks = defineCachedFunction(
+function makeGetCoursesLinks(maxAgeMinutes: number, debug?: boolean) {
+	return defineCachedFunction(
 		async (event: ExtendedH3Event, payload: iCoursesPayload) => {
-			const { page, cleanup, proxy } = await getPuppeteer(event, debugScrapper);
+			const { page, cleanup, proxy } = await getPuppeteer(event, debug);
+			const { firebaseFirestore } = getFirebase("getCoursesLinks");
+			const { currentInstance } = event.context;
+			const config: ExtendedInstanceDataConfig = currentInstance?.config || {};
+			const siaOldURL = config.siaOldURL || "";
+			const siaOldPath = config.siaOldPath || "";
+			const siaOldQuery = config.siaOldQuery || "";
+			const siaOldEnpoint = siaOldURL + siaOldPath + siaOldQuery;
+			const testStartAt = new Date();
 
+			// Navigate to SIA, in less than 60 seconds
+			try {
+				const response = await page.goto(siaOldEnpoint, { timeout: 1000 * 60 });
+
+				if (!response?.ok) throw new Error("Unable to reach SIA");
+			} catch (err) {
+				// Error! Get test duration in seconds
+				const testEndAt = new Date();
+				const testDuration = (testEndAt.getTime() - testStartAt.getTime()) / 1000;
+
+				// Report proxy error
+				debugFirebaseServer(event, "getCoursesLinks:SIA", {
+					proxy: proxy?.proxy,
+					testDuration,
+				});
+				apiLogger(event, "getCoursesLinks:SIA", err, {
+					proxy: proxy?.proxy,
+					testDuration,
+				});
+
+				if (proxy) {
+					// Update proxy score, do not await
+					firebaseFirestore.doc(proxy.path).update({
+						timesDead: FieldValue.increment(1),
+						timeout: testDuration,
+					});
+				}
+
+				await cleanup(); // Cleanup puppeteer
+
+				// Timed out errors are not logged
+				throw new Error("Timed out");
+			}
+
+			// Get courses links
 			try {
 				let coursesHandle = await scrapeCoursesHandle(event, page, payload);
 
@@ -96,12 +121,23 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 					SIATypologies
 				);
 
+				if (proxy) {
+					// Success! Get session duration in seconds
+					const sessionEndAt = new Date();
+					const sessionDuration = (sessionEndAt.getTime() - testStartAt.getTime()) / 1000;
+
+					// Update proxy score, do not await
+					firebaseFirestore.doc(proxy.path).update({
+						sessionTimeout: sessionDuration,
+					});
+				}
+
 				await cleanup(); // Cleanup puppeteer
 
 				return courseLinks;
 			} catch (err) {
 				await cleanup(); // Cleanup puppeteer
-				apiLogger(event, "getCoursesLinks", err, { proxy });
+				apiLogger(event, "getCoursesLinks", err, { proxy: proxy?.proxy });
 
 				// Prevent caching by throwing error
 				throw err;
@@ -109,7 +145,7 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 		},
 		{
 			name: "getCoursesLinks",
-			maxAge: 60 * coursesScrapeRate,
+			maxAge: 60 * maxAgeMinutes,
 			getKey(event, payload) {
 				const { currentInstanceHost } = event.context;
 				const { level, place, faculty, program, typology } = payload;
@@ -121,6 +157,99 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 			},
 		}
 	);
+}
+
+/**
+ * Scrape courses from SIA
+ * Fetch course links from SIA if not cached
+ * Index courses before returning search
+ * @param event H3 event
+ * @param payload Courses payload
+ * @param debug Debug mode
+ */
+async function scrapeCoursesFromSIA(
+	event: ExtendedH3Event,
+	payload: iCoursesPayload,
+	debug?: boolean
+) {
+	const { currentAuth, currentInstance, currentInstanceRef, currentInstanceHost } = event.context;
+	const config: ExtendedInstanceDataConfig = currentInstance?.config || {};
+	const scrapedAt = new Date();
+	const siaMaintenanceTillAt = new Date(config.siaMaintenanceTillAt as Date) || scrapedAt;
+	const { level, place, faculty, program, typology = "" } = payload;
+
+	try {
+		// Check if already scraped
+		const storage = useStorage("cache");
+		const cacheValues = [level, place, faculty, program, typology];
+		const cacheHash = createHash("sha256").update(cacheValues.join(",")).digest("hex");
+		const cacheKey = `nitro:functions:getCoursesLinks:${currentInstanceHost}:${cacheHash}.json`;
+		const cachedLinks = await storage.getItem(cacheKey);
+
+		if (!currentAuth || !currentInstanceRef) {
+			apiLogger(event, "api:courses:search", "Scraping courses without authentication");
+
+			throw new Error("Missing auth");
+		}
+
+		const coursesRef: CollectionReference<CourseData> =
+			currentInstanceRef.collection("courses");
+
+		// Only index if user is authenticated (Prevent abusive calls)
+		// Disable if SIA is in maintenance
+		if (!cachedLinks && siaMaintenanceTillAt <= scrapedAt) {
+			// Cache for a day by default
+			const getCoursesLinks = makeGetCoursesLinks(config.coursesScrapeRate ?? 1440, debug);
+			const links = await getCoursesLinks(event, payload);
+
+			// Index scraped courses in parallel
+			await Promise.allSettled(
+				links.map(async (link) => {
+					// Skip if missing identifier data
+					if (!link.code || !link.credits || !link.name || !link.typology) return;
+
+					const { typology: linkTypology, ...linkData } = link;
+					const id = Cyrb53([link.code]); // Generate deduped course UID
+
+					// Set course
+					return coursesRef.doc(String(id)).set(
+						{
+							...linkData,
+							typologies: FieldValue.arrayUnion(linkTypology),
+							// From search
+							level,
+							place,
+							programs: FieldValue.arrayUnion(program),
+							faculties: FieldValue.arrayUnion(faculty),
+							scrapedWith: [level, place, faculty, program, linkTypology],
+							// Query requirements
+							createdAt: Timestamp.fromDate(scrapedAt),
+						},
+						{ merge: true }
+					);
+				})
+			);
+		}
+	} catch (err) {
+		debugFirebaseServer(event, "api:courses:search:error", { err });
+
+		// Throw error if not timeout, do not log
+		if (err !== "Timed out" && err !== "Missing auth") {
+			throw createError({ statusCode: 500, statusMessage: "Course scraping failed" });
+		}
+	}
+}
+
+/**
+ * Search for courses by query params
+ * Scrape SIA in the background
+ *
+ * @see https://es.stackoverflow.com/questions/316170/c%c3%b3mo-hacer-una-consulta-del-tipo-like-en-firebase
+ */
+export default defineConditionallyCachedEventHandler(async function (event) {
+	const { debugScrapper } = useRuntimeConfig();
+	const { currentInstanceRef } = event.context;
+	const Allow = "POST,HEAD";
 
 	try {
 		// Override CORS headers
@@ -201,16 +330,18 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 			// 	)
 			// );
 
-			// where program equals, 6 indexes
-			query = query.where(
-				Filter.or(
-					Filter.where("programsIndexes.0", "==", program),
-					Filter.where("programsIndexes.1", "==", program),
-					Filter.where("programsIndexes.2", "==", program),
-					Filter.where("programsIndexes.3", "==", program),
-					Filter.where("programsIndexes.4", "==", program)
-				)
-			);
+			if (!typology) {
+				// where program equals, 6 indexes
+				query = query.where(
+					Filter.or(
+						Filter.where("programsIndexes.0", "==", program),
+						Filter.where("programsIndexes.1", "==", program),
+						Filter.where("programsIndexes.2", "==", program),
+						Filter.where("programsIndexes.3", "==", program),
+						Filter.where("programsIndexes.4", "==", program)
+					)
+				);
+			}
 
 			debugFirebaseServer(event, "api:courses:search:name", { soundex });
 
@@ -231,68 +362,10 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 			);
 		}
 
-		const coursesRef: CollectionReference<CourseData> =
-			currentInstanceRef.collection("courses");
-		const payload: iCoursesPayload = { level, place, faculty, program, typology };
-
-		// Check if already scraped
-		const cacheValues = [level, place, faculty, program, typology || ""];
-		const cacheHash = createHash("sha256").update(cacheValues.join(",")).digest("hex");
-		const cacheKey = `nitro:functions:getCoursesLinks:${currentInstanceHost}:${cacheHash}.json`;
-		const cachedLinks = await storage.getItem(cacheKey);
-
-		// Fetch course links from SIA if not cached
-		// Index courses before returning search
-		try {
-			if (!currentAuth) {
-				apiLogger(event, "api:courses:search", "Scraping courses without authentication");
-
-				throw new Error("Missing auth");
-			}
-
-			// Only index if user is authenticated (Prevent abusive calls)
-			// Disable if SIA is in maintenance
-			if (!cachedLinks && siaMaintenanceTillAt <= scrapedAt) {
-				const links = await getCoursesLinks(event, payload);
-
-				// Index scraped courses in parallel
-				await Promise.allSettled(
-					links.map(async (link) => {
-						// Skip if missing identifier data
-						if (!link.code || !link.credits || !link.name || !link.typology) return;
-
-						const { typology: linkTypology, ...linkData } = link;
-						const id = Cyrb53([link.code]); // Generate deduped course UID
-						// Get search indexes
-						const { indexes, indexesWeights } = getWeightedSearchIndexes(link.name);
-
-						// Set course
-						return coursesRef.doc(String(id)).set(
-							{
-								...linkData,
-								typologies: FieldValue.arrayUnion(linkTypology),
-								// From search
-								level,
-								place,
-								programs: FieldValue.arrayUnion(program),
-								faculties: FieldValue.arrayUnion(faculty),
-								scrapedWith: [level, place, faculty, program, linkTypology],
-								// Indexes & createdAt, required for queries
-								createdAt: Timestamp.fromDate(scrapedAt),
-								indexes,
-								indexesWeights,
-							},
-							{ merge: true }
-						);
-					})
-				);
-			}
-		} catch (err) {
-			// Throw error if not timeout, do not log
-			if (err !== "Timed out" && err !== "Missing auth") {
-				throw createError({ statusCode: 500, statusMessage: "Scraping failed" });
-			}
-		}
+		// Scrape courses in the background, do not await
+		// Since this is a search endpoint it needs to be as fast as possible
+		// The scraper uses proxies and it can take a while to scrape the old SIA site
+		scrapeCoursesFromSIA(event, { level, place, faculty, program, typology }, debugScrapper);
 
 		// order at last
 		query = getOrderedQuery(event, query);

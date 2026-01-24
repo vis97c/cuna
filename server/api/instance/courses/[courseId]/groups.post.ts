@@ -27,28 +27,59 @@ import type {
 } from "~~/functions/src/types/entities";
 import { Cyrb53 } from "~/utils/firestore";
 import { getDocumentId } from "@open-xamu-co/firebase-nuxt/client/resolver";
+import { getFirebase } from "@open-xamu-co/firebase-nuxt/functions/firebase";
 
 /**
- * Get the edges from the logs collection by courseRef
+ * Scrape the course groups links from SIA
  */
-export default defineConditionallyCachedEventHandler(async (event) => {
-	const scrapedAt = new Date();
-	const storage = useStorage("cache");
-	const { currentAuth, currentInstanceRef, currentInstance, currentInstanceHost } = event.context;
-	const config: ExtendedInstanceDataConfig = currentInstance?.config || {};
-	const coursesRefreshRate = config.coursesRefreshRate || 2; // 2 minutes by default
-	const siaMaintenanceTillAt = new Date(config.siaMaintenanceTillAt as Date) || scrapedAt;
-	const { debugScrapper } = useRuntimeConfig();
-	const Allow = "POST,HEAD";
-	let courseRef: DocumentReference<CourseData> | undefined;
-
-	/**
-	 * Scrape the course groups links from SIA
-	 */
-	const getCourseGroupsLinks = defineCachedFunction(
+function makeGetCourseGroupsLinks(maxAgeMinutes: number, debug?: boolean) {
+	return defineCachedFunction(
 		async (event: ExtendedH3Event, courseRef: DocumentReference<CourseData>) => {
-			const { browser, page, proxy } = await getPuppeteer(event, debugScrapper);
+			const { page, cleanup, proxy } = await getPuppeteer(event, debug);
+			const { firebaseFirestore } = getFirebase("getCourseGroupsLinks");
+			const { currentInstance } = event.context;
+			const config: ExtendedInstanceDataConfig = currentInstance?.config || {};
+			const siaOldURL = config.siaOldURL || "";
+			const siaOldPath = config.siaOldPath || "";
+			const siaOldQuery = config.siaOldQuery || "";
+			const siaOldEnpoint = siaOldURL + siaOldPath + siaOldQuery;
+			const testStartAt = new Date();
 
+			// Navigate to SIA, in less than 60 seconds
+			try {
+				const response = await page.goto(siaOldEnpoint, { timeout: 1000 * 60 });
+
+				if (!response?.ok) throw new Error("Unable to reach SIA");
+			} catch (err) {
+				// Error! Get test duration in seconds
+				const testEndAt = new Date();
+				const testDuration = (testEndAt.getTime() - testStartAt.getTime()) / 1000;
+
+				// Report proxy error
+				debugFirebaseServer(event, "getCourseGroupsLinks:SIA", {
+					proxy: proxy?.proxy,
+					testDuration,
+				});
+				apiLogger(event, "getCourseGroupsLinks:SIA", err, {
+					proxy: proxy?.proxy,
+					testDuration,
+				});
+
+				if (proxy) {
+					// Update proxy score, do not await
+					firebaseFirestore.doc(proxy.path).update({
+						timesDead: FieldValue.increment(1),
+						timeout: testDuration,
+					});
+				}
+
+				await cleanup(); // Cleanup puppeteer
+
+				// Timed out errors are not logged
+				throw new Error("Timed out");
+			}
+
+			// Get course data
 			try {
 				const snapshot = await courseRef.get();
 				const course = snapshot.data();
@@ -58,17 +89,32 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 				// Get groups data
 				const { links, errors } = await scrapeCourseGroupsLinks(event, page, course);
 
-				browser.close(); // Cleanup, do not await
+				if (proxy) {
+					// Success! Get session duration in seconds
+					const sessionEndAt = new Date();
+					const sessionDuration = (sessionEndAt.getTime() - testStartAt.getTime()) / 1000;
+
+					// Update proxy score, do not await
+					firebaseFirestore.doc(proxy.path).update({
+						sessionTimeout: sessionDuration,
+					});
+				}
+
+				await cleanup(); // Cleanup puppeteer
 
 				// Log errors if any, do not await
 				errors.forEach((err) =>
-					apiLogger(event, `api:courses:[${courseRef.id}]:groups`, err, { proxy })
+					apiLogger(event, `api:courses:[${courseRef.id}]:groups`, err, {
+						proxy: proxy?.proxy,
+					})
 				);
 
 				return links;
 			} catch (err) {
-				browser.close(); // Cleanup, do not await
-				apiLogger(event, `api:courses:[${courseRef.id}]:groups`, err, { proxy });
+				await cleanup(); // Cleanup puppeteer
+				apiLogger(event, `api:courses:[${courseRef.id}]:groups`, err, {
+					proxy: proxy?.proxy,
+				});
 
 				// Prevent caching by throwing error
 				throw err;
@@ -76,7 +122,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		},
 		{
 			name: "getCourseGroupsLinks",
-			maxAge: 60 * coursesRefreshRate,
+			maxAge: 60 * maxAgeMinutes,
 			getKey(event, courseRef) {
 				const { currentInstanceHost } = event.context;
 
@@ -85,6 +131,20 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			},
 		}
 	);
+}
+
+/**
+ * Get the edges from the logs collection by courseRef
+ */
+export default defineConditionallyCachedEventHandler(async (event) => {
+	const scrapedAt = new Date();
+	const storage = useStorage("cache");
+	const { currentAuth, currentInstanceRef, currentInstance, currentInstanceHost } = event.context;
+	const config: ExtendedInstanceDataConfig = currentInstance?.config || {};
+	const siaMaintenanceTillAt = new Date(config.siaMaintenanceTillAt as Date) || scrapedAt;
+	const { debugScrapper } = useRuntimeConfig();
+	const Allow = "POST,HEAD";
+	let courseRef: DocumentReference<CourseData> | undefined;
 
 	try {
 		// Override CORS headers
@@ -160,6 +220,11 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			// Only index if user is authenticated (Prevent abusive calls)
 			// Disable if SIA is in maintenance
 			if (!cachedGroups && siaMaintenanceTillAt <= scrapedAt) {
+				// Cache for 2 minutes by default
+				const getCourseGroupsLinks = makeGetCourseGroupsLinks(
+					config.coursesRefreshRate ?? 2,
+					debugScrapper
+				);
 				const links = await getCourseGroupsLinks(event, courseRef);
 				const groupCount = links.length;
 				const spotsCount = sumBy(links, "availableSpots");
@@ -205,8 +270,6 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 								{
 									name,
 									coursesRefs: FieldValue.arrayUnion(courseRef),
-									// CreatedAt, required for queries
-									createdAt: Timestamp.fromDate(scrapedAt),
 								},
 								{ merge: true }
 							);
@@ -222,9 +285,10 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 								courseCode,
 								teachersRefs: FieldValue.arrayUnion(...teachersRefs),
 								scrapedAt: Timestamp.fromDate(scrapedAt),
-								createdAt: Timestamp.fromDate(scrapedAt),
 								periodStartAt,
 								periodEndAt,
+								// Query requirements
+								createdAt: Timestamp.fromDate(scrapedAt),
 							},
 							{ merge: true }
 						);
@@ -234,7 +298,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		} catch (err) {
 			// Throw error if not timeout, do not log
 			if (err !== "Timed out" && err !== "Missing auth") {
-				throw createError({ statusCode: 500, statusMessage: "Scraping failed" });
+				throw createError({ statusCode: 500, statusMessage: "Group scraping failed" });
 			}
 		}
 
