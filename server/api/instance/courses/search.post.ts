@@ -326,6 +326,9 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 
 		let query: Query<CourseData> = currentInstanceRef.collection("courses");
 
+		query = query.where("level", "==", level); // where level equals
+		query = query.where("place", "==", place); // where place equals
+
 		// where code equals (exact match)
 		if (code) query = query.where("code", "==", code);
 		else if (name) {
@@ -333,9 +336,6 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 			const soundex = soundexEs(getWords(name).join(""));
 
 			if (!soundex) return null;
-
-			query = query.where("level", "==", level); // where level equals
-			query = query.where("place", "==", place); // where place equals
 
 			// // where faculty equals, 6 indexes
 			// query = query.where(

@@ -1,6 +1,4 @@
-import { default as puppeteerCore, type Browser, type Page } from "puppeteer-core";
-import puppeteer from "puppeteer";
-import chromium from "@sparticuz/chromium";
+import { default as puppeteer, type Browser, type Page } from "puppeteer";
 import { ProxyAgent } from "undici";
 import { DocumentReference, FieldValue } from "firebase-admin/firestore";
 
@@ -185,29 +183,12 @@ export async function getPuppeteer(event: ExtendedH3Event, debug?: boolean) {
 	const config: ExtendedInstanceDataConfig = event.context.currentInstance?.config || {};
 	const getProxies = makeGetProxies(debug);
 	const proxiesList = await getProxies(event);
-	const headless = "shell";
 
 	async function setupBrowser(args: string[] = []): Promise<Browser> {
 		// Puppeteer instance
-		if (debug) {
-			const browser = await puppeteer.launch({
-				headless: true,
-				args: [...puppeteerArgs, ...args],
-			});
-
-			return browser;
-		}
-
-		// Disable webgl
-		chromium.setGraphicsMode = false;
-
-		const browser: Browser = await puppeteerCore.launch({
-			headless,
-			args: puppeteerCore.defaultArgs({
-				args: [...chromium.args, ...args],
-				headless,
-			}),
-			executablePath: await chromium.executablePath(),
+		const browser = await puppeteer.launch({
+			headless: !debug,
+			args: [...puppeteerArgs, ...args],
 		});
 
 		return browser;
@@ -231,7 +212,7 @@ export async function getPuppeteer(event: ExtendedH3Event, debug?: boolean) {
 					const dispatcher = new ProxyAgent(proxy);
 					let ok = false;
 
-					await $fetch(config.pingUrl || "https://status.search.google.com/", {
+					await $fetch(config.pingUrl || "https://status.search.google.com", {
 						dispatcher,
 						onResponse({ response }) {
 							ok = response.ok;

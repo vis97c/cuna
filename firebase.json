@@ -21,7 +21,8 @@
   "emulators": {
     "apphosting": {
       "startCommand": "node .output/server/index.mjs",
-      "rootDirectory": "."
+      "rootDirectory": ".",
+      "port": 3000
     },
     "firestore": {
       "port": 8080
@@ -29,6 +30,7 @@
     "ui": {
       "enabled": true,
       "port": 4000
-    }
+    },
+    "singleProjectMode": true
   }
 }

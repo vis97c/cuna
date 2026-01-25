@@ -25,6 +25,28 @@ firebase apphosting:secrets:grantaccess secretName --emails userEmail
 
 **Opcional**: Si lo deseas, haz uso de [Terraform](https://www.terraform.io/) para configurar tu propia instancia de firebase. Ver [configuracion](#terraform).
 
+### Emulación y desarrollo
+
+El emulador usara el archivo `apphosting.emulator.yaml` para su configuración.
+Al cambiar entre instancias es importante limpiar la cache de nuxt y borrar todas las cookies relacionadas en el navegador.
+
+```bash
+# Instala
+yarn
+
+# Inicia el servidor de desarrollo en http://localhost:3000
+yarn dev
+
+# Despues de una build exitosa, puedes iniciar el emulador
+firebase emulators:start
+
+# Limpia la cache de nuxt
+nuxt cleanup
+
+# Compila la aplicación para producción
+yarn build
+```
+
 ### Variables de entorno
 
 Configuración requerida por este proyecto.
@@ -86,30 +108,6 @@ terraform.tfvars
 PROJECT_NAME = ""
 PROJECT_ID = ""
 PROJECT_BILLING_ACCOUNT = ""
-```
-
-## Configuración
-
-Asegúrate de instalar las dependencias:
-
-```bash
-yarn install
-```
-
-### Servidor de Desarrollo
-
-Inicia el servidor de desarrollo en http://localhost:3000
-
-```bash
-yarn dev
-```
-
-### Producción
-
-Construye la aplicación para producción:
-
-```bash
-yarn build
 ```
 
 ## Contribuir a Cuna
