@@ -5,6 +5,22 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "level",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "level",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "code",
           "order": "ASCENDING"
         },
@@ -23,6 +39,14 @@
       "collectionGroup": "courses",
       "queryScope": "COLLECTION",
       "fields": [
+        {
+          "fieldPath": "level",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
         {
           "fieldPath": "code",
           "order": "ASCENDING"
@@ -47,6 +71,14 @@
       "queryScope": "COLLECTION",
       "fields": [
         {
+          "fieldPath": "level",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "code",
           "order": "ASCENDING"
         },
@@ -69,6 +101,14 @@
       "collectionGroup": "courses",
       "queryScope": "COLLECTION",
       "fields": [
+        {
+          "fieldPath": "level",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "place",
+          "order": "ASCENDING"
+        },
         {
           "fieldPath": "code",
           "order": "ASCENDING"

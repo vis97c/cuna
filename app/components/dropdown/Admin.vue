@@ -13,7 +13,7 @@
 			>
 				<ul class="list-group --gap-5">
 					<li>
-						<p class="--txtSize-xs">Cuna</p>
+						<p class="--txtSize-xs">Cuna ⋅ {{ getDocumentId(INSTANCE.current?.id) }}</p>
 					</li>
 					<li>
 						<XamuActionLink :theme="invertedTheme" to="/administrar">
@@ -95,6 +95,7 @@
 	import debounce from "lodash-es/debounce";
 
 	import type { tProp, tThemeModifier, tThemeTuple } from "@open-xamu-co/ui-common-types";
+	import { getDocumentId } from "@open-xamu-co/firebase-nuxt/client/resolver";
 
 	/**
 	 * Admin dropdown

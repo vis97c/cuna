@@ -11,46 +11,48 @@ runConfig:
 # See https://firebase.google.com/docs/app-hosting/configure#user-defined-environment
 # Grant access to secrets in Cloud Secret Manager.
 # See https://firebase.google.com/docs/app-hosting/configure#secret-parameters
+# Values must use quotes
+# See https://medium.com/@andre.mendes.peixoto/%EF%B8%8F-gotcha-with-boolean-environment-variables-in-firebase-app-hosting-and-how-to-fix-it-6e67947f2a56
 env:
     # Yarn
     - variable: YARN_ENABLE_IMMUTABLE_INSTALLS
-      value: false
+      value: "false"
       availability:
           - BUILD
           - RUNTIME
     # Firebase
     - variable: F_API_KEY
-      value: AIzaSyAQdNWMlI8-Pl5CAvpDxEoMEorwR_iYsH4
+      value: "AIzaSyAQdNWMlI8-Pl5CAvpDxEoMEorwR_iYsH4"
       availability:
           - BUILD
           - RUNTIME
     - variable: F_AUTH_DOMAIN
-      value: cuna.com.co
+      value: "cuna.com.co"
       availability:
           - BUILD
           - RUNTIME
     - variable: F_PROJECT_ID
-      value: cuna-2980b9
+      value: "cuna-2980b9"
       availability:
           - BUILD
           - RUNTIME
     - variable: F_STORAGE_BUCKET
-      value: cuna-2980b9.firebasestorage.app
+      value: "cuna-2980b9.firebasestorage.app"
       availability:
           - BUILD
           - RUNTIME
     - variable: F_MESSAGING_SENDER_ID
-      value: 516433389242
+      value: "516433389242"
       availability:
           - BUILD
           - RUNTIME
     - variable: F_APP_ID
-      value: 1:516433389242:web:eda757ac314d6dcf9ec483
+      value: "1:516433389242:web:eda757ac314d6dcf9ec483"
       availability:
           - BUILD
           - RUNTIME
     - variable: F_MEASUREMENT_ID
-      value: G-X7H48BMMRK
+      value: "G-X7H48BMMRK"
       availability:
           - BUILD
           - RUNTIME
@@ -67,7 +69,7 @@ env:
           - RUNTIME
     # App check, site key
     - variable: RECAPTCHA_ENTERPRISE_SITE_KEY
-      value: 6Lf24mwqAAAAAI0jHdUu8AcmYcyqjkCwRhquwtDr
+      value: "6Lf24mwqAAAAAI0jHdUu8AcmYcyqjkCwRhquwtDr"
       availability:
           - BUILD
           - RUNTIME
@@ -79,22 +81,22 @@ env:
           - RUNTIME
     # Project
     - variable: NODE_ENV
-      value: production
+      value: "production"
       availability:
           - BUILD
           - RUNTIME
     - variable: INSTANCE
-      value: live
+      value: "live"
       availability:
           - BUILD
           - RUNTIME
     - variable: ROOT_INSTANCE
-      value: live
+      value: "live"
       availability:
           - BUILD
           - RUNTIME
     - variable: INDEXABLE
-      value: true
+      value: "true"
       availability:
           - BUILD
           - RUNTIME

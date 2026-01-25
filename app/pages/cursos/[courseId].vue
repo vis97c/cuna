@@ -36,7 +36,9 @@
 					</div>
 				</div>
 				<div class="flx --flxColumn --flx-start">
-					<h2 :key="course?.id">{{ course?.name }}</h2>
+					<h2 :key="course?.id">
+						{{ course?.name }} {{ groupsData.filtered[0]?.semestre }}
+					</h2>
 					<div class="flx --flxColumn --flx-start --gap-5">
 						<p v-if="course?.alternativeNames?.length" title="Otros nombres">
 							{{ course.alternativeNames.join(", ") }}.
@@ -76,8 +78,19 @@
 						/>
 					</div>
 				</div>
-				<div class="flx --flxRow-wrap --flx-start-center --gap-5 --txtSize-xs --width-100">
-					<div class="flx --flxColumn --flx-start --flx --gap-5">
+				<div class="flx --flxRow-wrap --flx-center --gap-5 --txtSize-xs">
+					<div class="flx --flxColumn --flx-start --gap-5 --width-100 --maxWidth-220">
+						<p class="">Facultad</p>
+						<XamuSelect
+							id="faculty"
+							v-model="selectedFaculty"
+							class="--width-180 --minWidth-100"
+							:options="faculties"
+							:size="eSizes.XS"
+							required
+						/>
+					</div>
+					<div class="flx --flxColumn --flx-start --gap-5 --width-100 --maxWidth-220">
 						<p class="">Programa</p>
 						<XamuSelect
 							id="program"
@@ -88,7 +101,7 @@
 							required
 						/>
 					</div>
-					<div class="flx --flxColumn --flx-start --flx --gap-5">
+					<div class="flx --flxColumn --flx-start --gap-5 --width-100 --maxWidth-220">
 						<p class="">Tipología</p>
 						<XamuSelect
 							id="typology"
@@ -109,7 +122,6 @@
 					client
 				>
 					<template #fallback>Cargando grupos...</template>
-					<h4 class="--mBottom">Grupos {{ groupsData.filtered[0].semestre }}:</h4>
 					<XamuTable
 						v-bind="{
 							preferId: true,
@@ -194,11 +206,6 @@
 			USER.setPlace(value);
 		},
 	});
-	const { selectedProgram, programs } = useCourseProgramOptions(
-		[selectedLevel, selectedPlace, USER.lastFacultySearch, USER.lastProgramSearch],
-		true
-	);
-	const { selectedTypology, typologies } = useCourseTypeOptions();
 
 	const {
 		data: course,
@@ -217,6 +224,13 @@
 		},
 		{ watch: [() => courseId.value], server: false }
 	);
+
+	const { selectedFaculty, faculties, selectedProgram, programs } = useCourseProgramOptions(
+		[selectedLevel, selectedPlace, USER.lastFacultySearch, USER.lastProgramSearch],
+		true,
+		course
+	);
+	const { selectedTypology, typologies } = useCourseTypeOptions([], course);
 
 	/** Async data key */
 	const courseGroupsKey = computed(() => {
@@ -239,6 +253,7 @@
 
 			return useCsrfQuery(courseApiPath, {
 				query: {
+					faculty: selectedFaculty.value,
 					program: selectedProgram.value,
 					typology: selectedTypology.value,
 					level: 1, // Get teachers refs

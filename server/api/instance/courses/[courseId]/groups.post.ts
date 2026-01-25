@@ -28,7 +28,7 @@ import type {
 import { Cyrb53 } from "~/utils/firestore";
 import { getDocumentId } from "@open-xamu-co/firebase-nuxt/client/resolver";
 import { getFirebase } from "@open-xamu-co/firebase-nuxt/functions/firebase";
-import type { eSIATypology, uSIAProgram } from "~~/functions/src/types/SIA";
+import type { eSIATypology, uSIAFaculty, uSIAProgram } from "~~/functions/src/types/SIA";
 import type { iGroupsPayload } from "~~/server/utils/scrape/groups";
 
 /**
@@ -174,7 +174,7 @@ async function scrapeCourseGroupsFromSIA(
 	try {
 		// Check if already scraped
 		const storage = useStorage("cache");
-		const cacheKayBase = `nitro:functions:getCourseGroupsLinks:${currentInstanceHost}:${getDocumentId(courseRef.path)}:${program}`;
+		const cacheKayBase = `nitro:functions:getCourseGroupsLinks:${currentInstanceHost}:${getDocumentId(courseRef.id)}:${program}`;
 		const cacheKey = typology ? `${cacheKayBase}:${typology}.json` : `${cacheKayBase}.json`;
 		const cachedGroups = await storage.getItem(cacheKey);
 
@@ -326,12 +326,15 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		}
 
 		const params = getQuery(event);
+		const faculty = <uSIAFaculty | undefined>getQueryString("faculty", params);
 		const program = <uSIAProgram | undefined>getQueryString("program", params);
 		const typology = <eSIATypology | undefined>getQueryString("typology", params);
 		const page = getBoolean(params.page);
 
-		// Program is required
-		if (!program) throw createError({ statusCode: 400, statusMessage: "Missing program" });
+		// Faculty & program are required
+		if (!faculty || !program) {
+			throw createError({ statusCode: 400, statusMessage: "Missing faculty or program" });
+		}
 
 		debugFirebaseServer(event, "api:courses:logs:courseId", {
 			courseId,
@@ -370,7 +373,12 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 
 		// Index groups before resolving query
 		// TODO: use a count aggregator to prevent awaiting the scrape, and scrape in the background
-		scrapeCourseGroupsFromSIA(event, courseRef, { program, typology }, debugScrapper);
+		await scrapeCourseGroupsFromSIA(
+			event,
+			courseRef,
+			{ faculty, program, typology },
+			debugScrapper
+		);
 
 		// Order at last
 		query = getOrderedQuery(event, query);

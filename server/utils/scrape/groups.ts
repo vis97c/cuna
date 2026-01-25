@@ -7,7 +7,7 @@ import type { CourseData, tWeeklySchedule } from "~~/functions/src/types/entitie
 
 import type { CourseGroupLink, ExtendedH3Event } from "./utils";
 import type { iCoursesPayload } from "./courses";
-import type { eSIATypology, uSIAProgram } from "~~/functions/src/types/SIA";
+import type { eSIATypology, uSIAFaculty, uSIAProgram } from "~~/functions/src/types/SIA";
 
 interface HTMLCourse {
 	id: string;
@@ -56,6 +56,7 @@ function getHTMLElementIds(handle: ElementHandle<Element>) {
  * Different typologies could offer different groups for the same course
  */
 export interface iGroupsPayload {
+	faculty: uSIAFaculty;
 	program: uSIAProgram;
 	typology?: eSIATypology;
 }
@@ -69,7 +70,7 @@ export async function scrapeCourseGroupsLinks(
 	event: ExtendedH3Event,
 	page: Page,
 	course: CourseData,
-	{ program, typology }: iGroupsPayload
+	{ faculty, program, typology }: iGroupsPayload
 ): Promise<{ links: CourseGroupLink[]; errors: Error[] }> {
 	const { currentInstance } = event.context;
 	const { siaOldURL = "" } = currentInstance?.config || {};
@@ -77,7 +78,7 @@ export async function scrapeCourseGroupsLinks(
 	// SIA navigation is required beforehand
 	if (!page.url().includes(siaOldURL)) throw new Error("Page is not the SIA");
 
-	const [level, place, faculty] = course.scrapedWith || [];
+	const [level, place] = course.scrapedWith || [];
 
 	// Course data is required
 	if (!course.code || !level || !place || !faculty || !program) {
@@ -97,7 +98,7 @@ export async function scrapeCourseGroupsLinks(
 		courseHTML = courses[course.code];
 	}
 
-	if (!courseHTML.typology) throw new Error("Course not found in SIA");
+	if (!courseHTML?.typology) throw new Error("Course not found in SIA");
 
 	debugFirebaseServer(event, "getCourseGroupsLinks", courseHTML);
 
