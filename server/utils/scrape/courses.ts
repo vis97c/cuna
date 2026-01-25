@@ -22,12 +22,24 @@ import {
 
 import { type ExtendedH3Event } from "./utils";
 
+export type tCoursesSearchMode = "faculty" | "program" | "programOld";
+
+/**
+ * Courses scrape dynamic payload
+ */
 export interface iCoursesPayload {
 	level: eSIALevel;
 	place: eSIAPlace;
 	faculty: uSIAFaculty;
 	program: uSIAProgram;
 	typology?: eSIATypology;
+	/**
+	 * Search mode for LE typology courses
+	 * - faculty: Search by faculty
+	 * - program: Search by program
+	 * - programOld: Search by program. But place (old version)
+	 */
+	searchMode?: tCoursesSearchMode;
 }
 
 /**
@@ -156,14 +168,16 @@ export async function scrapeCoursesWithTypologyHandle(
 	payload: iCoursesPayload
 ): Promise<ElementHandle<Element>> {
 	const { currentInstance } = event.context;
-	const { siaOldTypology } = currentInstance?.config || {};
+	const { siaOldTypology, siaOldPlace } = currentInstance?.config || {};
 
 	return TimedPromise<ElementHandle<Element>>(
 		async (resolve, reject) => {
 			// Attempt to load courses by typology
 			if (!payload.typology) throw reject("Missing typology");
 
-			if (!siaOldTypology?.[payload.typology]) throw reject("Missing typology list");
+			if (!siaOldTypology?.[payload.typology] || !siaOldPlace?.[payload.place]) {
+				throw reject("Missing typology or place list");
+			}
 
 			// Get typology options
 			const typologyOptions = await getHTMLElementOptions(page, eHTMLElementIds.TYPOLOGY);
@@ -192,34 +206,123 @@ export async function scrapeCoursesWithTypologyHandle(
 
 				// Select search mode, search by program
 				await page.click(useHTMLElementId(eHTMLElementIds.SEARCH_LE));
-				await page.select(useHTMLElementId(eHTMLElementIds.SEARCH_LE), "1");
-				await page.waitForSelector(useHTMLElementId(eHTMLElementIds.PROGRAM_LE), {
-					visible: true,
-				});
 
-				// Get LE Program options
-				const leProgramOptions = await getHTMLElementOptions(
-					page,
-					eHTMLElementIds.PROGRAM_LE
-				);
-				const leProgramValue = leProgramOptions.find(({ alias }) => {
-					return SIALEPrograms[payload.place] === alias;
-				});
+				switch (payload.searchMode || "program") {
+					case "faculty": {
+						await page.select(useHTMLElementId(eHTMLElementIds.SEARCH_LE), "0");
+						await page.waitForSelector(
+							useHTMLElementId(eHTMLElementIds.FACULTY_PLACE_LE),
+							{ visible: true }
+						);
 
-				if (!leProgramValue) throw reject(`No LE program found for ${payload.place}`);
+						// Select LE Place
+						await page.click(useHTMLElementId(eHTMLElementIds.FACULTY_PLACE_LE));
+						await page.select(
+							useHTMLElementId(eHTMLElementIds.FACULTY_PLACE_LE),
+							siaOldPlace[payload.place]
+						);
+						await waitForSelect(page, eHTMLElementIds.FACULTY_FACULTY_LE);
 
-				debugFirebaseServer(
-					event,
-					"scrapeCoursesHandle:typology:LE:program",
-					leProgramValue.alias
-				);
+						// Get LE faculty options
+						const leFacultyOptions = await getHTMLElementOptions(
+							page,
+							eHTMLElementIds.FACULTY_FACULTY_LE
+						);
+						const leFacultyValue = leFacultyOptions.find(
+							({ alias }) => payload.faculty === alias
+						);
 
-				// Search by LE program
-				await page.click(useHTMLElementId(eHTMLElementIds.PROGRAM_LE));
-				await page.select(
-					useHTMLElementId(eHTMLElementIds.PROGRAM_LE),
-					leProgramValue.value
-				);
+						if (!leFacultyValue) {
+							throw reject(`No LE faculty found for ${payload.faculty}`);
+						}
+
+						debugFirebaseServer(
+							event,
+							"scrapeCoursesHandle:typology:LE:faculty",
+							payload.faculty
+						);
+
+						// Select Faculty
+						await page.click(useHTMLElementId(eHTMLElementIds.FACULTY_FACULTY_LE));
+						await page.select(
+							useHTMLElementId(eHTMLElementIds.FACULTY_FACULTY_LE),
+							leFacultyValue.value
+						);
+
+						// Get LE Faculty program options
+						// Less courses by scraping session, but less programs are related to a course (Precision)
+						const leFacultyProgramOptions = await getHTMLElementOptions(
+							page,
+							eHTMLElementIds.PROGRAM_PROGRAM_LE
+						);
+						const leFacultyProgramValue = leFacultyProgramOptions.find(({ alias }) => {
+							return SIALEPrograms[payload.place] === alias;
+						});
+
+						if (!leFacultyProgramValue) {
+							throw reject(`No LE program found for ${payload.program}`);
+						}
+
+						debugFirebaseServer(
+							event,
+							"scrapeCoursesHandle:typology:LE:faculty:program",
+							leFacultyProgramValue.alias
+						);
+
+						// Search by LE program
+						await page.click(useHTMLElementId(eHTMLElementIds.PROGRAM_PROGRAM_LE));
+						await page.select(
+							useHTMLElementId(eHTMLElementIds.PROGRAM_PROGRAM_LE),
+							leFacultyProgramValue.value
+						);
+
+						break;
+					}
+					case "program":
+					case "programOld": {
+						await page.select(useHTMLElementId(eHTMLElementIds.SEARCH_LE), "1");
+						await page.waitForSelector(
+							useHTMLElementId(eHTMLElementIds.PROGRAM_PROGRAM_LE),
+							{ visible: true }
+						);
+
+						// Get LE Program options
+						const leProgramOptions = await getHTMLElementOptions(
+							page,
+							eHTMLElementIds.PROGRAM_PROGRAM_LE
+						);
+						const leProgramValue = leProgramOptions.find(({ alias }) => {
+							// LE courses for this specific program, recommended
+							if (payload.searchMode === "program") return payload.program === alias;
+
+							// LE courses for this specific place
+							// Since is the same as searching by LE place, not recommended
+							return SIALEPrograms[payload.place] === alias;
+						});
+
+						if (!leProgramValue) {
+							throw reject(`No LE program found for ${payload.program}`);
+						}
+
+						debugFirebaseServer(
+							event,
+							"scrapeCoursesHandle:typology:LE:program",
+							leProgramValue.alias
+						);
+
+						// Search by LE program
+						await page.click(useHTMLElementId(eHTMLElementIds.PROGRAM_PROGRAM_LE));
+						await page.select(
+							useHTMLElementId(eHTMLElementIds.PROGRAM_PROGRAM_LE),
+							leProgramValue.value
+						);
+
+						break;
+					}
+					default: {
+						throw reject("Invalid search mode");
+					}
+				}
 
 				// Necessary for switching between LE programs
 				await page.waitForNetworkIdle();

@@ -95,6 +95,7 @@ export type tWeeklySchedule = [string?, string?, string?, string?, string?, stri
 
 /**
  * Interface representing a SIA Group data.
+ * Diferentiated by program and typology
  */
 export interface GroupData extends SharedData {
 	name?: string;
@@ -113,6 +114,10 @@ export interface GroupData extends SharedData {
 	courseCode?: string;
 	/** Related course name */
 	courseName?: string;
+	/** Program */
+	program?: uSIAProgram;
+	/** Typology */
+	typology?: eSIATypology;
 	/**
 	 * Academic period start date
 	 */

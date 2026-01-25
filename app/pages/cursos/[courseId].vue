@@ -76,6 +76,29 @@
 						/>
 					</div>
 				</div>
+				<div class="flx --flxRow-wrap --flx-start-center --gap-5 --txtSize-xs --width-100">
+					<div class="flx --flxColumn --flx-start --flx --gap-5">
+						<p class="">Programa</p>
+						<XamuSelect
+							id="program"
+							v-model="selectedProgram"
+							class="--width-180 --minWidth-100"
+							:options="programs"
+							:size="eSizes.XS"
+							required
+						/>
+					</div>
+					<div class="flx --flxColumn --flx-start --flx --gap-5">
+						<p class="">Tipología</p>
+						<XamuSelect
+							id="typology"
+							v-model="selectedTypology"
+							class="--width-180 --minWidth-100"
+							:options="typologies"
+							:size="eSizes.XS"
+						/>
+					</div>
+				</div>
 				<XamuLoaderContent
 					:content="!!groupsData.filtered.length"
 					:loading="groupsPending"
@@ -118,11 +141,12 @@
 	import { doc, DocumentReference, onSnapshot, type Unsubscribe } from "firebase/firestore";
 
 	import type { iPageEdge } from "@open-xamu-co/ui-common-types";
-	import { eColors } from "@open-xamu-co/ui-common-enums";
+	import { eColors, eSizes } from "@open-xamu-co/ui-common-enums";
 
 	import type { Course, Group, GroupEs } from "~/utils/types";
 
 	import { TableTeachersList, TableEnroll, TableWeek, ClientOnly } from "#components";
+	import { eSIATypology } from "~~/functions/src/types/SIA";
 
 	/**
 	 * Course page
@@ -158,6 +182,23 @@
 
 		return placeOnly;
 	});
+	const selectedLevel = computed({
+		get: () => USER.level,
+		set: (value) => {
+			USER.setLevel(value);
+		},
+	});
+	const selectedPlace = computed({
+		get: () => USER.place,
+		set: (value) => {
+			USER.setPlace(value);
+		},
+	});
+	const { selectedProgram, programs } = useCourseProgramOptions(
+		[selectedLevel, selectedPlace, USER.lastFacultySearch, USER.lastProgramSearch],
+		true
+	);
+	const { selectedTypology, typologies } = useCourseTypeOptions();
 
 	const {
 		data: course,
@@ -177,29 +218,41 @@
 		{ watch: [() => courseId.value], server: false }
 	);
 
+	/** Async data key */
+	const courseGroupsKey = computed(() => {
+		const baseKey = `api:instance:courses:${courseId.value}:groups:${selectedProgram.value}`;
+
+		if (selectedTypology.value) return `${baseKey}:${selectedTypology.value}`;
+
+		return baseKey;
+	});
+
 	const {
 		data: groups,
 		pending: groupsPending,
 		refresh: refreshGroups,
 		error: groupsError,
-	} = useAsyncData(
-		`api:instance:courses:${courseId.value}:groups`,
+	} = useAsyncData<iPageEdge<Group>[]>(
+		courseGroupsKey.value,
 		async () => {
 			const courseApiPath = `/api/instance/courses/${courseId.value}/groups`;
 
-			return useCsrfQuery<iPageEdge<Group>[]>(courseApiPath, {
-				query: { level: 1 }, // Get teachers refs
+			return useCsrfQuery(courseApiPath, {
+				query: {
+					program: selectedProgram.value,
+					typology: selectedTypology.value,
+					level: 1, // Get teachers refs
+				},
 				method: "POST",
 				headers: { "Cache-Control": "no-store" },
 				cache: "no-store",
 			});
 		},
-		{ watch: [() => courseId.value] }
+		{ watch: [() => courseId.value, selectedProgram, selectedTypology], server: false }
 	);
 
 	/**
 	 * Get filtered groups metadata
-	 *
 	 * Current implementation requires 2 loops (O(2n))
 	 */
 	const groupsData = computed(() => {
@@ -222,13 +275,14 @@
 
 		const filtered: GroupEs[] = [];
 
-		// Filter according to user preferences
+		// Filter groups
 		for (const { node } of groups.value || []) {
 			const lowerName = deburr(node.name).toLowerCase();
 			const nonRegular = lowerName.includes("peama") || lowerName.includes("paes");
 			const isThisPlace = lowerName.includes(placeOnly.value);
 			const isOtherPlace = lowerName.includes("otras sedes");
 
+			// Filter by user preferences
 			if (
 				(!USER.withNonRegular && nonRegular) ||
 				(withThisPlace && !isThisPlace) ||
@@ -236,6 +290,10 @@
 			) {
 				continue;
 			}
+
+			// If missing, filter by typology (not LE)
+			// Assume filtered otherwise
+			if (!selectedTypology.value && node.typology === eSIATypology.LIBRE_ELECCIÓN) continue;
 
 			filtered.push(useMapGroupEs(node));
 			spots += node.availableSpots || 0;
