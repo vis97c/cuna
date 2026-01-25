@@ -57,12 +57,13 @@
 	 */
 	definePageMeta({ title: "Instancias", middleware: ["can-develop"] });
 
-	const { cache, appName } = useRuntimeConfig().public;
+	const { appName } = useRuntimeConfig().public;
 
 	const instancesPage: iGetPage<ExtendedInstance> = (pagination) => {
 		return useQuery<iPage<ExtendedInstance> | undefined>("/api/all/instances", {
 			query: pagination,
-			headers: { "Cache-Control": cache.none },
+			headers: { "Cache-Control": "no-store" },
+			cache: "no-store",
 		});
 	};
 

@@ -86,7 +86,7 @@
 	const USER = useUserStore();
 	const INSTANCE = useInstanceStore();
 	const Swal = useSwal();
-	const { cache, appName } = useRuntimeConfig().public;
+	const { appName } = useRuntimeConfig().public;
 	const route = useRoute();
 
 	const emulatedLogCount = ref(1);
@@ -106,13 +106,15 @@
 	const logsPage: iGetPage<InstanceLog> = (pagination) => {
 		return useQuery<iPage<InstanceLog> | undefined>("/api/all/logs", {
 			query: pagination,
-			headers: { "Cache-Control": cache.none },
+			headers: { "Cache-Control": "no-store" },
+			cache: "no-store",
 		});
 	};
 	const instanceLogsPage: iGetPage<InstanceLog> = (pagination) => {
 		return useQuery<iPage<InstanceLog> | undefined>("/api/instance/all/logs", {
 			query: pagination,
-			headers: { "Cache-Control": cache.none },
+			headers: { "Cache-Control": "no-store" },
+			cache: "no-store",
 		});
 	};
 

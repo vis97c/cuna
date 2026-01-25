@@ -301,7 +301,7 @@
 		);
 
 		// For fuzzy search, sort exact match first
-		if (page && !isCodeSearch.value) {
+		if (page && "name" in pagination) {
 			const name: string = pagination.name;
 			const [nameFirst] = name.split(" ");
 

@@ -1,4 +1,5 @@
-import type { Browser, Page } from "puppeteer-core";
+import { default as puppeteerCore, type Browser, type Page } from "puppeteer-core";
+import puppeteer from "puppeteer";
 import chromium from "@sparticuz/chromium";
 import { ProxyAgent } from "undici";
 import { DocumentReference, FieldValue } from "firebase-admin/firestore";
@@ -10,7 +11,11 @@ import { apiLogger } from "@open-xamu-co/firebase-nuxt/server/firebase";
 import { getFirebase } from "@open-xamu-co/firebase-nuxt/functions/firebase";
 
 import type { ExtendedInstance } from "~/utils/types/entities";
-import type { ExtendedInstanceData, tWeeklySchedule } from "~~/functions/src/types/entities";
+import type {
+	ExtendedInstanceData,
+	ExtendedInstanceDataConfig,
+	tWeeklySchedule,
+} from "~~/functions/src/types/entities";
 import { eSIATypology } from "~~/functions/src/types/SIA";
 
 export interface ExtendedH3Context extends H3Context {
@@ -40,7 +45,13 @@ export enum eHTMLElementIds {
 	TYPOLOGY = "pt1:r1:0:soc4::content",
 	NAME = "pt1:r1:0:it11::content",
 	SEARCH_LE = "pt1:r1:0:soc5::content",
-	PROGRAM_LE = "pt1:r1:0:soc8::content",
+	// Search by program
+	PROGRAM_PROGRAM_LE = "pt1:r1:0:soc8::content",
+	// Search by faculty
+	FACULTY_PLACE_LE = "pt1:r1:0:soc10::content",
+	FACULTY_FACULTY_LE = "pt1:r1:0:soc6::content",
+	FACULTY_PROGRAM_LE = "pt1:r1:0:soc7::content",
+	// Results
 	SHOW = "pt1:r1:0:cb1",
 	TABLE = "pt1:r1:0:t4::db",
 }
@@ -63,6 +74,7 @@ export interface CourseGroupLink {
 	periodStartAt: string;
 	periodEndAt: string;
 	availableSpots: number;
+	typology: eSIATypology;
 }
 
 /**
@@ -152,8 +164,8 @@ function debugPage(page: Page, debug?: boolean): Page {
 	page.on("console", (message) =>
 		console.log(`${message.type().substr(0, 3).toUpperCase()} ${message.text()}`)
 	)
-		.on("pageerror", (res) => {
-			if (res instanceof Error) console.log(res.message);
+		.on("pageerror", (err) => {
+			if (err instanceof Error) console.log(err.message);
 		})
 		.on("response", (response) => console.log(`${response.status()} ${response.url()}`))
 		.on("requestfailed", (request) =>
@@ -170,6 +182,7 @@ function debugPage(page: Page, debug?: boolean): Page {
  */
 export async function getPuppeteer(event: ExtendedH3Event, debug?: boolean) {
 	const { firebaseFirestore } = getFirebase("getPuppeteer");
+	const config: ExtendedInstanceDataConfig = event.context.currentInstance?.config || {};
 	const getProxies = makeGetProxies(debug);
 	const proxiesList = await getProxies(event);
 	const headless = "shell";
@@ -177,7 +190,6 @@ export async function getPuppeteer(event: ExtendedH3Event, debug?: boolean) {
 	async function setupBrowser(args: string[] = []): Promise<Browser> {
 		// Puppeteer instance
 		if (debug) {
-			const puppeteer = await import("puppeteer");
 			const browser = await puppeteer.launch({
 				headless: true,
 				args: [...puppeteerArgs, ...args],
@@ -186,14 +198,12 @@ export async function getPuppeteer(event: ExtendedH3Event, debug?: boolean) {
 			return browser;
 		}
 
-		const puppeteer = await import("puppeteer-core");
-
 		// Disable webgl
 		chromium.setGraphicsMode = false;
 
-		const browser: Browser = await puppeteer.launch({
+		const browser: Browser = await puppeteerCore.launch({
 			headless,
-			args: puppeteer.defaultArgs({
+			args: puppeteerCore.defaultArgs({
 				args: [...chromium.args, ...args],
 				headless,
 			}),
@@ -221,7 +231,7 @@ export async function getPuppeteer(event: ExtendedH3Event, debug?: boolean) {
 					const dispatcher = new ProxyAgent(proxy);
 					let ok = false;
 
-					await $fetch("https://status.search.google.com", {
+					await $fetch(config.pingUrl || "https://status.search.google.com/", {
 						dispatcher,
 						onResponse({ response }) {
 							ok = response.ok;
@@ -272,5 +282,39 @@ export async function getPuppeteer(event: ExtendedH3Event, debug?: boolean) {
 		const cleanup = makeCleanup(page, browser);
 
 		return { browser, page, cleanup, proxy: null };
+	}
+}
+
+/**
+ * Retry puppeteer operation
+ * @see https://webscraping.ai/faq/puppeteer/how-to-handle-errors-in-puppeteer
+ *
+ * @param operation	Operation to retry
+ * @param maxRetries	Maximum number of retries
+ * @param delay	Delay between retries
+ * @returns Result of operation
+ */
+export async function retryPuppeteerOperation<T>(
+	operation: () => Promise<T>,
+	maxRetries = 2,
+	delay = 1000
+) {
+	for (let attempt = 1; attempt <= maxRetries; attempt++) {
+		try {
+			return await operation();
+		} catch (err) {
+			if (err && typeof err === "object" && "message" in err) {
+				console.error(`Attempt ${attempt} failed:`, err.message);
+
+				if (attempt === maxRetries) {
+					throw new Error(
+						`Operation failed after ${maxRetries} attempts: ${err.message}`
+					);
+				}
+			}
+
+			// Wait before retrying
+			await new Promise((resolve) => setTimeout(resolve, delay * attempt));
+		}
 	}
 }

@@ -97,14 +97,18 @@
 	}
 
 	const coursesPage: iGetPage<Course> = (query) => {
-		return useQuery<iPage<Course> | undefined>("/api/instance/all/courses", { query });
+		return useQuery<iPage<Course> | undefined>("/api/instance/all/courses", {
+			query,
+			headers: { "Cache-Control": "no-store" },
+			cache: "no-store",
+		});
 	};
 
 	function makeCourseLogsPage(course: Course): iGetPage<Course> {
 		return function (query) {
 			return useQuery<iPage<Course> | undefined>(
 				`/api/instance/courses/${getDocumentId(course.id)}/logs`,
-				{ query }
+				{ query, headers: { "Cache-Control": "no-store" }, cache: "no-store" }
 			);
 		};
 	}

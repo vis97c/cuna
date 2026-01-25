@@ -120,6 +120,11 @@ export interface ExtendedInstanceDataConfig extends InstanceDataConfig, OldCunaC
 	 * @example ["socks4://68.71.249.153:48606"]
 	 */
 	proxies?: string[];
+	/**
+	 * Ping URL
+	 * @example https://status.search.google.com
+	 */
+	pingUrl?: string;
 }
 
 /**

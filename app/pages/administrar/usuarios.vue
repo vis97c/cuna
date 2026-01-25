@@ -121,7 +121,6 @@
 	});
 
 	const Swal = useSwal();
-	const { cache } = useRuntimeConfig().public;
 	const USER = useUserStore();
 	const route = useRoute();
 
@@ -145,7 +144,8 @@
 	const membersPage: iGetPage<ExtendedInstanceMember> = (pagination) => {
 		return useQuery<iPage<ExtendedInstanceMember> | undefined>("/api/instance/members", {
 			query: pagination,
-			headers: { "Cache-Control": cache.none },
+			headers: { "Cache-Control": "no-store" },
+			cache: "no-store",
 		});
 	};
 

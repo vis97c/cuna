@@ -54,12 +54,11 @@
 	 */
 	definePageMeta({ title: "Ofensores", middleware: ["can-develop"] });
 
-	const { cache } = useRuntimeConfig().public;
-
 	const offendersPage: iGetPage<Offender> = (pagination) => {
 		return useQuery<iPage<Offender> | undefined>("/api/all/offenders", {
 			query: pagination,
-			headers: { "Cache-Control": cache.none },
+			headers: { "Cache-Control": "no-store" },
+			cache: "no-store",
 		});
 	};
 </script>

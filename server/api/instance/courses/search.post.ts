@@ -19,7 +19,7 @@ import {
 import { getWords, soundexEs } from "@open-xamu-co/firebase-nuxt/functions/search";
 import { getFirebase } from "@open-xamu-co/firebase-nuxt/functions/firebase";
 
-import type { iCoursesPayload } from "~~/server/utils/scrape/courses";
+import type { iCoursesPayload, tCoursesSearchMode } from "~~/server/utils/scrape/courses";
 import type { CourseData, ExtendedInstanceDataConfig } from "~~/functions/src/types/entities";
 import type {
 	eSIALevel,
@@ -47,9 +47,12 @@ function makeGetCoursesLinks(maxAgeMinutes: number, debug?: boolean) {
 			const siaOldEnpoint = siaOldURL + siaOldPath + siaOldQuery;
 			const testStartAt = new Date();
 
-			// Navigate to SIA, in less than 60 seconds
 			try {
-				const response = await page.goto(siaOldEnpoint, { timeout: 1000 * 60 });
+				// Navigate to SIA, in less than 60 seconds
+				// Public proxies could easily throw network errors
+				const response = await retryPuppeteerOperation(() => {
+					return page.goto(siaOldEnpoint, { timeout: 1000 * 60 });
+				});
 
 				if (!response?.ok) throw new Error("Unable to reach SIA");
 			} catch (err) {
@@ -78,7 +81,7 @@ function makeGetCoursesLinks(maxAgeMinutes: number, debug?: boolean) {
 				await cleanup(); // Cleanup puppeteer
 
 				// Timed out errors are not logged
-				throw new Error("Timed out");
+				throw new Error("Unreachable");
 			}
 
 			// Get courses links
@@ -98,25 +101,35 @@ function makeGetCoursesLinks(maxAgeMinutes: number, debug?: boolean) {
 						// No courses found
 						if (tbody?.tagName !== "TBODY") return [];
 
-						return Array.from(tbody?.children).map((row) => {
+						// Some courses could be duplicated (Old SIA thing)
+						return Array.from(tbody?.children).reduce<CourseLink[]>((acc, row) => {
 							const link = row.children[0].getElementsByTagName("a")[0];
 							const code = link.innerHTML;
 							const nameSpan = row.children[1].querySelector("span[title]");
 							const creditSpan = row.children[2].querySelector("span[title]");
 							const typologySpan = row.children[3].querySelector("span[title]");
 							const descriptionSpan = row.children[4].querySelector("span[title]");
+							// Map to standard typology
 							const typology = typologySpan?.innerHTML
 								? typologies[typologySpan.innerHTML]
 								: undefined;
 
-							return {
-								code,
-								name: nameSpan?.innerHTML || "",
-								credits: Number(creditSpan?.innerHTML || 0),
-								typology,
-								description: descriptionSpan?.innerHTML || "",
-							};
-						});
+							const existingIndex = acc.findIndex((course) => course.code === code);
+
+							// Omit if already on array
+							if (existingIndex !== -1) return acc;
+
+							return [
+								...acc,
+								{
+									code,
+									name: nameSpan?.innerHTML || "",
+									credits: Number(creditSpan?.innerHTML || 0),
+									typology,
+									description: descriptionSpan?.innerHTML || "",
+								},
+							];
+						}, []);
 					},
 					SIATypologies
 				);
@@ -172,9 +185,9 @@ async function scrapeCoursesFromSIA(
 	payload: iCoursesPayload,
 	debug?: boolean
 ) {
+	const scrapedAt = new Date();
 	const { currentAuth, currentInstance, currentInstanceRef, currentInstanceHost } = event.context;
 	const config: ExtendedInstanceDataConfig = currentInstance?.config || {};
-	const scrapedAt = new Date();
 	const siaMaintenanceTillAt = new Date(config.siaMaintenanceTillAt as Date) || scrapedAt;
 	const { level, place, faculty, program, typology = "" } = payload;
 
@@ -244,6 +257,7 @@ async function scrapeCoursesFromSIA(
  * Search for courses by query params
  * Scrape SIA in the background
  *
+ * Implements soundex search for name similarity
  * @see https://es.stackoverflow.com/questions/316170/c%c3%b3mo-hacer-una-consulta-del-tipo-like-en-firebase
  */
 export default defineConditionallyCachedEventHandler(async function (event) {
@@ -282,13 +296,12 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 		const faculty = <uSIAFaculty | undefined>getQueryString("faculty", params);
 		const program = <uSIAProgram | undefined>getQueryString("program", params);
 		const typology = <eSIATypology | undefined>getQueryString("typology", params);
+		const searchMode = <tCoursesSearchMode | undefined>getQueryString("searchMode", params);
 
 		// Level, place, faculty and program are required
 		if (!level || !place || !faculty || !program) {
 			throw createError({ statusCode: 400, statusMessage: "Missing parameters" });
 		}
-
-		let query: Query<CourseData> = currentInstanceRef.collection("courses");
 
 		debugFirebaseServer(event, "api:courses:search", {
 			name,
@@ -298,6 +311,7 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 			faculty,
 			program,
 			typology,
+			searchMode,
 			page,
 		});
 
@@ -309,6 +323,8 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 			// Prevent no content status
 			return "Ok";
 		}
+
+		let query: Query<CourseData> = currentInstanceRef.collection("courses");
 
 		// where code equals (exact match)
 		if (code) query = query.where("code", "==", code);
@@ -365,7 +381,11 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 		// Scrape courses in the background, do not await
 		// Since this is a search endpoint it needs to be as fast as possible
 		// The scraper uses proxies and it can take a while to scrape the old SIA site
-		scrapeCoursesFromSIA(event, { level, place, faculty, program, typology }, debugScrapper);
+		scrapeCoursesFromSIA(
+			event,
+			{ level, place, faculty, program, typology, searchMode },
+			debugScrapper
+		);
 
 		// order at last
 		query = getOrderedQuery(event, query);
