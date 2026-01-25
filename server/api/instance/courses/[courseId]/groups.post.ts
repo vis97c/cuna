@@ -150,6 +150,12 @@ function makeGetCourseGroupsLinks(maxAgeMinutes: number, debug?: boolean) {
 	);
 }
 
+interface CourseDataRef extends Omit<CourseData, "programs" | "faculties" | "typologies"> {
+	programs: uSIAProgram[] | FieldValue;
+	faculties: uSIAFaculty[] | FieldValue;
+	typologies?: eSIATypology[] | FieldValue;
+}
+
 /**
  * Scrape the course groups from SIA
  * TODO: scrape course prerequisites
@@ -169,7 +175,7 @@ async function scrapeCourseGroupsFromSIA(
 	const { currentAuth, currentInstance, currentInstanceRef, currentInstanceHost } = event.context;
 	const config: ExtendedInstanceDataConfig = currentInstance?.config || {};
 	const siaMaintenanceTillAt = new Date(config.siaMaintenanceTillAt as Date) || scrapedAt;
-	const { program, typology } = payload;
+	const { faculty, program, typology } = payload;
 
 	try {
 		// Check if already scraped
@@ -197,16 +203,25 @@ async function scrapeCourseGroupsFromSIA(
 				debug
 			);
 			const links = await getCourseGroupsLinks(event, courseRef, payload);
+
+			if (!links.length) return; // Bypass if no links found
+
 			const groupCount = links.length;
 			const spotsCount = sumBy(links, "availableSpots");
 			const { name: courseName, code: courseCode } = (await courseRef.get())?.data() || {};
-
-			// Update course group count, do not await
-			courseRef?.update({
+			const newCourseData: CourseDataRef = {
 				groupCount,
 				spotsCount,
 				scrapedAt: Timestamp.fromDate(scrapedAt),
-			});
+				// Improve indexation
+				programs: FieldValue.arrayUnion(program),
+				faculties: FieldValue.arrayUnion(faculty),
+			};
+
+			if (typology) newCourseData.typologies = FieldValue.arrayUnion(typology);
+
+			// Update course data, do not await
+			courseRef?.update(newCourseData);
 
 			// Index scraped groups in parallel
 			await Promise.allSettled(

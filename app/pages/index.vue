@@ -60,36 +60,38 @@
 				<ClientOnly>
 					<template #fallback>Cargando buscador...</template>
 					<XamuBaseBox
+						el="form"
 						class="x-box flx --flxColumn --flx-start-stretch --width-100 --maxWidth-770 --p-20:md"
 						transparent
 					>
 						<form
-							class="flx --flxRow --flx-start-center --gap-5 --width-100"
+							class="flx --flxColumn --flx-start-stretch --width-100"
 							@submit.prevent="emittedRefresh"
 						>
-							<div class="--flx">
-								<XamuInputText
-									id="search"
-									v-model="search"
-									placeholder="Nombre o codigo del curso..."
-									autocomplete="off"
-									icon="magnifying-glass"
-									:size="eSizes.LG"
-									class="--minWidth-100"
-								/>
-								<XamuActionLink
-									v-if="search"
-									class="x-search-reset"
-									@click="() => (search = '')"
-								>
-									<XamuIconFa name="xmark" :size="20" />
-								</XamuActionLink>
+							<div class="flx --flxRow --flx-start-center --gap-5 --width-100">
+								<div class="--flx">
+									<XamuInputText
+										id="search"
+										v-model="search"
+										placeholder="Nombre o codigo del curso..."
+										autocomplete="off"
+										icon="magnifying-glass"
+										:size="eSizes.LG"
+										class="--minWidth-100"
+									/>
+									<XamuActionLink
+										v-if="search"
+										class="x-search-reset"
+										@click="() => (search = '')"
+									>
+										<XamuIconFa name="xmark" :size="20" />
+									</XamuActionLink>
+								</div>
 							</div>
-						</form>
-						<div
-							class="flx --flxRow-wrap --flx-start-center --gap-5 --txtSize-xs --width-100"
-						>
-							<template v-if="!isCodeSearch">
+							<div
+								v-if="!isCodeSearch"
+								class="flx --flxRow-wrap --flx-start-center --gap-5 --txtSize-xs --width-100"
+							>
 								<div class="flx --flxColumn --flx-start --flx --gap-5">
 									<p class="">Facultad</p>
 									<XamuSelect
@@ -113,18 +115,18 @@
 										required
 									/>
 								</div>
-							</template>
-							<div class="flx --flxColumn --flx-start --flx --gap-5">
-								<p class="">Tipología</p>
-								<XamuSelect
-									id="typology"
-									v-model="selectedTypology"
-									class="--width-180 --minWidth-100"
-									:options="typologies"
-									:size="eSizes.XS"
-								/>
+								<div class="flx --flxColumn --flx-start --flx --gap-5">
+									<p class="">Tipología</p>
+									<XamuSelect
+										id="typology"
+										v-model="selectedTypology"
+										class="--width-180 --minWidth-100"
+										:options="typologies"
+										:size="eSizes.XS"
+									/>
+								</div>
 							</div>
-						</div>
+						</form>
 					</XamuBaseBox>
 					<XamuPaginationContent
 						v-if="search && search.trim().length >= 3"
@@ -263,7 +265,7 @@
 	});
 	const { selectedFaculty, selectedProgram, faculties, programs } = useCourseProgramOptions(
 		[selectedLevel, selectedPlace, USER.lastFacultySearch, USER.lastProgramSearch],
-		true
+		{ noUndef: true, saveSearch: true }
 	);
 	const { selectedTypology, typologies } = useCourseTypeOptions();
 	const isCodeSearch = computed<boolean>(() => !!search.value && /^\d/.test(search.value));
@@ -271,7 +273,6 @@
 		const payload: PartialCourseValues = {
 			level: selectedLevel.value,
 			place: selectedPlace.value,
-			typology: selectedTypology.value,
 		};
 
 		const searchValue = deburr((search.value || "").trim().toLowerCase());
@@ -280,6 +281,7 @@
 
 		return <CourseValuesWithProgram>{
 			...payload,
+			typology: selectedTypology.value,
 			name: searchValue,
 			faculty: selectedFaculty.value,
 			program: selectedProgram.value,

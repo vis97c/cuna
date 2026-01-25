@@ -1,5 +1,3 @@
-import { isEqual } from "lodash-es";
-
 import type { iSelectOption } from "@open-xamu-co/ui-common-types";
 
 import {
@@ -93,14 +91,20 @@ export function useCourseProgramOptions(
 		(uSIAFaculty | Ref<uSIAFaculty | undefined>)?,
 		(uSIAProgram | Ref<uSIAProgram | undefined>)?,
 	] = [],
-	noUndef?: boolean,
-	course?: Ref<Course | null>
+	{ noUndef, course }: { noUndef?: boolean; course?: Ref<Course | null> } = {}
 ) {
 	const USER = useUserStore();
 	const selectedLevel = level && isRef(level) ? level : ref(level);
 	const selectedPlace = place && isRef(place) ? place : ref(place);
 	const selectedFaculty = faculty && isRef(faculty) ? faculty : ref(faculty);
 	const selectedProgram = program && isRef(program) ? program : ref(program);
+
+	// Get initial faculty from search context if valid
+	// const defaultFaculty = computed<uSIAFaculty | undefined>(() => {
+	// 	if (!course.value?.faculties?.includes(USER.lastFacultySearch)) return;
+
+	// 	return USER.lastFacultySearch;
+	// });
 
 	// static
 	const levels = toOptions(eSIALevel);
@@ -110,57 +114,55 @@ export function useCourseProgramOptions(
 		switch (selectedPlace.value) {
 			// facultades por sede
 			case eSIAPlace.BOGOTÁ:
-				return toOptions(eSIABogotaFaculty, course?.value?.faculties);
+				return toOptions(eSIABogotaFaculty);
 			case eSIAPlace.LA_PAZ:
-				return toOptions(eSIALaPazFaculty, course?.value?.faculties);
+				return toOptions(eSIALaPazFaculty);
 			case eSIAPlace.MEDELLÍN:
-				return toOptions(eSIAMedellinFaculty, course?.value?.faculties);
+				return toOptions(eSIAMedellinFaculty);
 			case eSIAPlace.MANIZALES:
-				return toOptions(eSIAManizalesFaculty, course?.value?.faculties);
+				return toOptions(eSIAManizalesFaculty);
 			case eSIAPlace.PALMIRA:
-				return toOptions(eSIAPalmiraFaculty, course?.value?.faculties);
+				return toOptions(eSIAPalmiraFaculty);
 			case eSIAPlace.TUMACO:
-				return toOptions(eSIATumacoFaculty, course?.value?.faculties);
+				return toOptions(eSIATumacoFaculty);
 			case eSIAPlace.CARIBE:
-				return toOptions(eSIACaribeFaculty, course?.value?.faculties);
+				return toOptions(eSIACaribeFaculty);
 			case eSIAPlace.AMAZONÍA:
-				return toOptions(eSIAAmazoniaFaculty, course?.value?.faculties);
+				return toOptions(eSIAAmazoniaFaculty);
 		}
 
 		return [];
 	});
+
 	const programs = computed<iSelectOption[]>(() => {
 		switch (selectedPlace.value) {
 			case eSIAPlace.BOGOTÁ:
 				switch (selectedFaculty.value) {
 					// programas sede Bogota
 					case eSIABogotaFaculty.SEDE_BOGOTÁ:
-						return toOptions(eSIABogotaProgram, course?.value?.programs);
+						return toOptions(eSIABogotaProgram);
 					case eSIABogotaFaculty.MEDICINA:
-						return toOptions(eSIAMedicineBogotaProgram, course?.value?.programs);
+						return toOptions(eSIAMedicineBogotaProgram);
 					case eSIABogotaFaculty.MEDICINA_VETERINARIA:
-						return toOptions(eSIAVetMedicineBogotaProgram, course?.value?.programs);
+						return toOptions(eSIAVetMedicineBogotaProgram);
 					case eSIABogotaFaculty.ENFERMERÍA:
-						return toOptions(eSIAEnfermeryBogotaProgram, course?.value?.programs);
+						return toOptions(eSIAEnfermeryBogotaProgram);
 					case eSIABogotaFaculty.ARTES:
-						return toOptions(eSIAArtsBogotaProgram, course?.value?.programs);
+						return toOptions(eSIAArtsBogotaProgram);
 					case eSIABogotaFaculty.INGENIERÍA:
-						return toOptions(eSIAEngineeringBogotaProgram, course?.value?.programs);
+						return toOptions(eSIAEngineeringBogotaProgram);
 					case eSIABogotaFaculty.ODONTOLOGÍA:
-						return toOptions(eSIAOdontologyBogotaProgram, course?.value?.programs);
+						return toOptions(eSIAOdontologyBogotaProgram);
 					case eSIABogotaFaculty.DERECHO:
-						return toOptions(eSIALawBogotaProgram, course?.value?.programs);
+						return toOptions(eSIALawBogotaProgram);
 					case eSIABogotaFaculty.CIENCIAS:
-						return toOptions(eSIAScienceBogotaProgram, course?.value?.programs);
+						return toOptions(eSIAScienceBogotaProgram);
 					case eSIABogotaFaculty.CIENCIAS_HUMANAS:
-						return toOptions(eSIAHumanScienceBogotaProgram, course?.value?.programs);
+						return toOptions(eSIAHumanScienceBogotaProgram);
 					case eSIABogotaFaculty.CIENCIAS_ECONÓMICAS:
-						return toOptions(
-							eSIAEconomicalScienceBogotaProgram,
-							course?.value?.programs
-						);
+						return toOptions(eSIAEconomicalScienceBogotaProgram);
 					case eSIABogotaFaculty.CIENCIAS_AGRARIAS:
-						return toOptions(eSIAAgrarianScienceBogotaProgram, course?.value?.programs);
+						return toOptions(eSIAAgrarianScienceBogotaProgram);
 				}
 
 				break;
@@ -168,9 +170,9 @@ export function useCourseProgramOptions(
 				switch (selectedFaculty.value) {
 					// programas sede La Paz
 					case eSIALaPazFaculty.SEDE_LA_PAZ:
-						return toOptions(eSIALaPazProgram, course?.value?.programs);
+						return toOptions(eSIALaPazProgram);
 					case eSIALaPazFaculty.ESCUELA_DE_PREGRADO:
-						return toOptions(eSIAPregradoLaPazProgram, course?.value?.programs);
+						return toOptions(eSIAPregradoLaPazProgram);
 				}
 
 				break;
@@ -178,23 +180,17 @@ export function useCourseProgramOptions(
 				switch (selectedFaculty.value) {
 					// programas sede Medellín
 					case eSIAMedellinFaculty.SEDE_MEDELLÍN:
-						return toOptions(eSIAMedellinProgram, course?.value?.programs);
+						return toOptions(eSIAMedellinProgram);
 					case eSIAMedellinFaculty.FACULTAD_DE_MINAS:
-						return toOptions(eSIAMinesMedellinProgram, course?.value?.programs);
+						return toOptions(eSIAMinesMedellinProgram);
 					case eSIAMedellinFaculty.FACULTAD_DE_ARQUITECTURA:
-						return toOptions(eSIAArchitectureMedellinProgram, course?.value?.programs);
+						return toOptions(eSIAArchitectureMedellinProgram);
 					case eSIAMedellinFaculty.FACULTAD_DE_CIENCIAS:
-						return toOptions(eSIAScienceMedellinProgram, course?.value?.programs);
+						return toOptions(eSIAScienceMedellinProgram);
 					case eSIAMedellinFaculty.FACULTAD_DE_CIENCIAS_AGRARIAS:
-						return toOptions(
-							eSIAAgrarianSciencesMedellinProgram,
-							course?.value?.programs
-						);
+						return toOptions(eSIAAgrarianSciencesMedellinProgram);
 					case eSIAMedellinFaculty.FACULTAD_DE_CIENCIAS_HUMANAS_Y_ECONÓMICAS_A:
-						return toOptions(
-							eSIAHumanSciencesAMedellinProgram,
-							course?.value?.programs
-						);
+						return toOptions(eSIAHumanSciencesAMedellinProgram);
 				}
 
 				break;
@@ -202,19 +198,13 @@ export function useCourseProgramOptions(
 				switch (selectedFaculty.value) {
 					// programas sede Manizales
 					case eSIAManizalesFaculty.SEDE_MANIZALES:
-						return toOptions(eSIAManizalesProgram, course?.value?.programs);
+						return toOptions(eSIAManizalesProgram);
 					case eSIAManizalesFaculty.FACULTAD_DE_INGENIERIA_Y_ARQUITECTURA:
-						return toOptions(
-							eSIAEngineeringAndArchitectureManizalesProgram,
-							course?.value?.programs
-						);
+						return toOptions(eSIAEngineeringAndArchitectureManizalesProgram);
 					case eSIAManizalesFaculty.FACULTAD_DE_CIENCIAS_EXACTAS_Y_NATURALES:
-						return toOptions(
-							eSIAExactSciencesManizalesProgram,
-							course?.value?.programs
-						);
+						return toOptions(eSIAExactSciencesManizalesProgram);
 					case eSIAManizalesFaculty.FACULTAD_DE_ADMINISTRACIÓN:
-						return toOptions(eSIAManagementManizalesProgram, course?.value?.programs);
+						return toOptions(eSIAManagementManizalesProgram);
 				}
 
 				break;
@@ -222,22 +212,13 @@ export function useCourseProgramOptions(
 				switch (selectedFaculty.value) {
 					// programas sede Palmira
 					case eSIAPalmiraFaculty.SEDE_PALMIRA:
-						return toOptions(eSIAPalmiraProgram, course?.value?.programs);
+						return toOptions(eSIAPalmiraProgram);
 					case eSIAPalmiraFaculty.FACULTAD_DE_CIENCIAS_AGROPECUARIAS:
-						return toOptions(
-							eSIAgronomicalSciencesPalmiraProgram,
-							course?.value?.programs
-						);
+						return toOptions(eSIAgronomicalSciencesPalmiraProgram);
 					case eSIAPalmiraFaculty.FACULTAD_DE_INGENIERIA_Y_ADMINISTRACIÓN:
-						return toOptions(
-							eSIAEngineeringAndAdministrationPalmiraProgram,
-							course?.value?.programs
-						);
+						return toOptions(eSIAEngineeringAndAdministrationPalmiraProgram);
 					case eSIAPalmiraFaculty.FACULTAD_DE_MEDICINA_VETERINARIA_Y_DE_ZOOTECNIA_PAET:
-						return toOptions(
-							eSIAVeterinarialMedicineAndZootechnyPalmiraProgram,
-							course?.value?.programs
-						);
+						return toOptions(eSIAVeterinarialMedicineAndZootechnyPalmiraProgram);
 				}
 
 				break;
@@ -245,16 +226,13 @@ export function useCourseProgramOptions(
 				switch (selectedFaculty.value) {
 					// programas sede Tumaco
 					case eSIATumacoFaculty.SEDE_TUMACO:
-						return toOptions(eSIATumacoProgram, course?.value?.programs);
+						return toOptions(eSIATumacoProgram);
 					case eSIATumacoFaculty.FACULTAD_DE_ADMINISTRACION:
-						return toOptions(eSIAAdministrationTumacoProgram, course?.value?.programs);
+						return toOptions(eSIAAdministrationTumacoProgram);
 					case eSIATumacoFaculty.FACULTAD_DE_DERECHO_CIENCIAS_POLITICAS_Y_SOCIALES:
-						return toOptions(
-							eSIALawAndSocialPoliticsTumacoProgram,
-							course?.value?.programs
-						);
+						return toOptions(eSIALawAndSocialPoliticsTumacoProgram);
 					case eSIATumacoFaculty.FACULTAD_DE_ENFERMERIA:
-						return toOptions(eSIANursingTumacoProgram, course?.value?.programs);
+						return toOptions(eSIANursingTumacoProgram);
 				}
 
 				break;
@@ -262,18 +240,15 @@ export function useCourseProgramOptions(
 				switch (selectedFaculty.value) {
 					// programas sede Amazonía
 					case eSIAAmazoniaFaculty.SEDE_AMAZONIA:
-						return toOptions(eSIAAmazoniaProgram, course?.value?.programs);
+						return toOptions(eSIAAmazoniaProgram);
 					case eSIAAmazoniaFaculty.FACULTAD_DE_ARQUITECTURA:
-						return toOptions(eSIAArchitectureAmazoniaProgram, course?.value?.programs);
+						return toOptions(eSIAArchitectureAmazoniaProgram);
 					case eSIAAmazoniaFaculty.FACULTAD_DE_CIENCIAS_EXACTAS_Y_NATURALES:
-						return toOptions(
-							eSIANaturalSciencesAmazoniaProgram,
-							course?.value?.programs
-						);
+						return toOptions(eSIANaturalSciencesAmazoniaProgram);
 					case eSIAAmazoniaFaculty.FACULTAD_DE_CIENCIAS_HUMANAS:
-						return toOptions(eSIAHumanSciencesAmazoniaProgram, course?.value?.programs);
+						return toOptions(eSIAHumanSciencesAmazoniaProgram);
 					case eSIAAmazoniaFaculty.FACULTAD_DE_MINAS:
-						return toOptions(eSIAMiningAmazoniaProgram, course?.value?.programs);
+						return toOptions(eSIAMiningAmazoniaProgram);
 				}
 
 				break;
@@ -281,11 +256,11 @@ export function useCourseProgramOptions(
 				switch (selectedFaculty.value) {
 					// programas sede Caribe
 					case eSIACaribeFaculty.SEDE_CARIBE:
-						return toOptions(eSIACaribeProgram, course?.value?.programs);
+						return toOptions(eSIACaribeProgram);
 					case eSIACaribeFaculty.FACULTAD_DE_ENFERMERÍA:
-						return toOptions(eSIANursingCaribeProgram, course?.value?.programs);
+						return toOptions(eSIANursingCaribeProgram);
 					case eSIACaribeFaculty.FACULTAD_DE_MINAS:
-						return toOptions(eSIAMiningCaribeProgram, course?.value?.programs);
+						return toOptions(eSIAMiningCaribeProgram);
 				}
 
 				break;
@@ -293,21 +268,15 @@ export function useCourseProgramOptions(
 				switch (selectedFaculty.value) {
 					// programas sede Orinoquia
 					case eSIAOrinoquiaFaculty.SEDE_ORINOQUIA:
-						return toOptions(eSIAOrinoquiaProgram, course?.value?.programs);
+						return toOptions(eSIAOrinoquiaProgram);
 					case eSIAOrinoquiaFaculty.FACULTAD_DE_ENFERMERÍA:
-						return toOptions(eSIANursingOrinoquiaProgram, course?.value?.programs);
+						return toOptions(eSIANursingOrinoquiaProgram);
 					case eSIAOrinoquiaFaculty.FACULTAD_DE_CIENCIAS_EXACTAS_Y_NATURALES:
-						return toOptions(
-							eSIANaturalSciencesOrinoquiaProgram,
-							course?.value?.programs
-						);
+						return toOptions(eSIANaturalSciencesOrinoquiaProgram);
 					case eSIAOrinoquiaFaculty.FACULTAD_DE_CIENCIAS_HUMANAS:
-						return toOptions(
-							eSIAHumanSciencesOrinoquiaProgram,
-							course?.value?.programs
-						);
+						return toOptions(eSIAHumanSciencesOrinoquiaProgram);
 					case eSIAOrinoquiaFaculty.FACULTAD_DE_MINAS:
-						return toOptions(eSIAMiningOrinoquiaProgram, course?.value?.programs);
+						return toOptions(eSIAMiningOrinoquiaProgram);
 				}
 
 				break;
@@ -318,13 +287,17 @@ export function useCourseProgramOptions(
 
 	// lifecycle
 	watch(
-		faculties,
-		(newFaculties = []) => {
-			const [newDefault] = newFaculties;
+		[faculties, () => course?.value?.faculties],
+		([newFaculties = [], courseFaculties]) => {
+			const faculties = courseFaculties?.map((value) => ({ value })) || newFaculties;
 
 			// reset
 			if (noUndef) {
-				if (newDefault) selectedFaculty.value = <uSIAFaculty>newDefault.value;
+				const [newDefault] = faculties;
+
+				if (faculties.find(({ value }) => value === USER.lastFacultySearch)) {
+					selectedFaculty.value = <uSIAFaculty>USER.lastFacultySearch;
+				} else if (newDefault) selectedFaculty.value = <uSIAFaculty>newDefault.value;
 
 				return;
 			}
@@ -334,21 +307,15 @@ export function useCourseProgramOptions(
 		{ immediate: false }
 	);
 	watch(
-		[programs, selectedProgram],
-		([newPrograms = [], newProgram], [oldPrograms, oldProgram]) => {
-			const [newDefault] = newPrograms;
+		[programs, () => course?.value?.programs],
+		([newPrograms = [], coursePrograms]) => {
+			const [newDefault] = coursePrograms?.map((value) => ({ value })) || newPrograms;
 
-			if (!newProgram) {
-				if (noUndef && newDefault) selectedProgram.value = <uSIAProgram>newDefault.value;
-			} else {
-				if (!isEqual(newPrograms, oldPrograms)) {
-					selectedProgram.value = undefined;
+			// reset
+			if (noUndef) {
+				if (newDefault) selectedProgram.value = <uSIAProgram>newDefault.value;
 
-					return;
-				}
-				if (!selectedFaculty.value || newProgram === oldProgram) return;
-
-				USER.setLastSearch(selectedFaculty.value, newProgram);
+				return;
 			}
 		},
 		{ immediate: false }
@@ -375,11 +342,11 @@ export function useCourseTypeOptions(
 ) {
 	const selectedTypology = ref<eSIATypology | undefined>(typology || ("" as eSIATypology));
 
-	// static
-	const typologies = [
+	// dynamic
+	const typologies = computed<iSelectOption[]>(() => [
 		{ value: "", alias: "CUALQUIERA" },
 		...toOptions(eSIATypology, course?.value?.typologies),
-	];
+	]);
 
 	return {
 		selectedTypology,

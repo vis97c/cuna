@@ -6,6 +6,7 @@ import type {
 	ExtendedUser,
 	Group,
 	GroupEs,
+	Proxy,
 } from "~/utils/types";
 import { eMemberRole } from "~~/functions/src/enums";
 
@@ -104,4 +105,22 @@ export function useMapGroupEs(group: Group): GroupEs {
 		inscrito: group,
 		semestre,
 	};
+}
+
+/**
+ * Map proxy
+ * Active definition based on makeGetProxies definitions
+ */
+export function useMapProxy({ proxy, createdAt, updatedAt, lock, disabled, ...metrics }: Proxy) {
+	const score = metrics.score ?? 1;
+	const timeout = metrics.timeout ?? 1;
+	// Not ignored by query
+	const queryOk = score <= 2 && timeout <= 30;
+	const timesDead = metrics.timesDead ?? 1;
+	const timesAlive = metrics.timesAlive ?? 1;
+	// Percentage of times dead
+	const threshold = timesDead > timesAlive * 0.9;
+	const active = !metrics.disabled && queryOk && !threshold;
+
+	return { metrics, proxy, active, lock, disabled, createdAt, updatedAt };
 }

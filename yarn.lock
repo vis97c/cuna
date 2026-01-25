@@ -3727,16 +3727,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@sparticuz/chromium@npm:^143.0.4":
-  version: 143.0.4
-  resolution: "@sparticuz/chromium@npm:143.0.4"
-  dependencies:
-    follow-redirects: "npm:^1.15.11"
-    tar-fs: "npm:^3.1.1"
-  checksum: 10c0/eab7db834ad4b2f7d07c233a59b1a4dee44e271e15f1747e8e5c5d02515d059f109e5f5f84766d95c067f47aacaed0be3d5b08ee05fa2f7e73d42a2dae0f4f4f
-  languageName: node
-  linkType: hard
-
 "@speed-highlight/core@npm:^1.2.9":
   version: 1.2.14
   resolution: "@speed-highlight/core@npm:1.2.14"
@@ -6461,7 +6451,6 @@ __metadata:
     "@open-xamu-co/firebase-nuxt": "npm:^2.0.0-next.9"
     "@open-xamu-co/ui-common-types": "npm:^4.0.0-next.4"
     "@open-xamu-co/ui-styles": "npm:^5.0.0-next.4"
-    "@sparticuz/chromium": "npm:^143.0.4"
     "@types/lodash-es": "npm:^4.17.12"
     "@types/node": "npm:^20"
     "@typescript-eslint/eslint-plugin": "npm:^6.15.0"
@@ -6491,7 +6480,6 @@ __metadata:
     postcss-sort-media-queries: "npm:^5.2.0"
     prettier: "npm:^3.7.4"
     puppeteer: "npm:^24.36.0"
-    puppeteer-core: "npm:^24.36.0"
     sass: "npm:^1.97.0"
     stylelint: "npm:^16.26.1"
     stylelint-config-recommended-scss: "npm:^16.0.2"
@@ -8086,16 +8074,6 @@ __metadata:
   version: 3.3.3
   resolution: "flatted@npm:3.3.3"
   checksum: 10c0/e957a1c6b0254aa15b8cce8533e24165abd98fadc98575db082b786b5da1b7d72062b81bfdcd1da2f4d46b6ed93bec2434e62333e9b4261d79ef2e75a10dd538
-  languageName: node
-  linkType: hard
-
-"follow-redirects@npm:^1.15.11":
-  version: 1.15.11
-  resolution: "follow-redirects@npm:1.15.11"
-  peerDependenciesMeta:
-    debug:
-      optional: true
-  checksum: 10c0/d301f430542520a54058d4aeeb453233c564aaccac835d29d15e050beb33f339ad67d9bddbce01739c5dc46a6716dbe3d9d0d5134b1ca203effa11a7ef092343
   languageName: node
   linkType: hard
 
@@ -13377,7 +13355,7 @@ postcss-precision@vis97c/postcss-precision:
   languageName: node
   linkType: hard
 
-"puppeteer-core@npm:24.36.0, puppeteer-core@npm:^24.36.0":
+"puppeteer-core@npm:24.36.0":
   version: 24.36.0
   resolution: "puppeteer-core@npm:24.36.0"
   dependencies:

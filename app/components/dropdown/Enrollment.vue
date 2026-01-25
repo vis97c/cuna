@@ -4,10 +4,20 @@
 			<slot v-bind="toggleSlots"></slot>
 		</template>
 		<template #default>
-			<div class="flx --flxColumn --flx-start --gap-10 --txtColor">
-				<div class="txt --gap-5">
+			<div class="flx --flxColumn --flx-start-stretch --gap-10 --txtColor">
+				<div class="flx --flxColumn --flx-start-stretch --gap-5">
 					<p class="--txtSize-xs">Cursos inscritos</p>
-					<h4>Mi horario académico</h4>
+					<div class="flx --flxRow --flx-between-center">
+						<h4>Mi horario académico</h4>
+						<XamuActionButtonToggle
+							tooltip="Limpiar mi horario"
+							round
+							@click="USER.clearEnrolled"
+						>
+							<XamuIconFa name="broom" />
+							<XamuIconFa name="broom" regular />
+						</XamuActionButtonToggle>
+					</div>
 				</div>
 				<div class="--pX-5 --width-100">
 					<hr />
