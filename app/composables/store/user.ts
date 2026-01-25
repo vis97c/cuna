@@ -1,6 +1,7 @@
 import {
 	arrayRemove,
 	arrayUnion,
+	deleteField,
 	doc,
 	updateDoc,
 	type DocumentReference,
@@ -184,6 +185,32 @@ export const useUserStore = defineStore("user", () => {
 		enrolled.value = enrolled.value.filter(({ id }) => id !== group.id);
 	}
 
+	const clearEnrolled = async () => {
+		const { $clientFirestore } = useNuxtApp();
+
+		if (import.meta.server || !$clientFirestore || !SESSION.token) return;
+
+		const Swal = useSwal();
+		const memberRef: DocumentReference<ExtendedInstanceMemberRef> = doc(
+			$clientFirestore,
+			SESSION.path
+		);
+
+		const { value } = await Swal.firePrevent({
+			title: "Limpiar horario",
+			text: "¿Esta seguro de querer limpiar tu horario?",
+			footer: "Puedes volver a organizarlo mas tarde",
+		});
+
+		if (!value) return;
+
+		// Update enrolled, do not await
+		updateDoc(memberRef, { enrolledRefs: deleteField() });
+
+		// Hydrate user
+		enrolled.value = [];
+	};
+
 	// To refs
 	const sessionRefs = storeToRefs(SESSION);
 
@@ -221,5 +248,6 @@ export const useUserStore = defineStore("user", () => {
 		toggleNonRegular,
 		enroll,
 		unenroll,
+		clearEnrolled,
 	};
 });

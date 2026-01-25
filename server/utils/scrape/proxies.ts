@@ -28,7 +28,7 @@ export function makeGetProxies(debug?: boolean) {
 					// Useful to reevaluate proxies locally
 					query = query.where("score", "<=", 10).where("timeout", "<=", 60);
 				} else {
-					query = query.where("score", "<=", 1).where("timeout", "<=", 20);
+					query = query.where("score", "<=", 2).where("timeout", "<=", 30);
 				}
 
 				const proxiesSnapshot = await query.get();

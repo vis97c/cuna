@@ -365,22 +365,23 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 			query = query.where("indexes", "array-contains", soundex);
 			// Order by search relevance then name
 			query = query.orderBy("indexesWeights", "desc").orderBy("name");
-		} else return null;
 
-		if (typology) {
-			// where typology equals, 3 indexes
-			query = query.where(
-				Filter.or(
-					Filter.where("typologiesIndexes.0", "==", typology),
-					Filter.where("typologiesIndexes.1", "==", typology),
-					Filter.where("typologiesIndexes.2", "==", typology)
-				)
-			);
-		}
+			if (typology) {
+				// where typology equals, 3 indexes
+				query = query.where(
+					Filter.or(
+						Filter.where("typologiesIndexes.0", "==", typology),
+						Filter.where("typologiesIndexes.1", "==", typology),
+						Filter.where("typologiesIndexes.2", "==", typology)
+					)
+				);
+			}
+		} else return null;
 
 		// Scrape courses in the background, do not await
 		// Since this is a search endpoint it needs to be as fast as possible
 		// The scraper uses proxies and it can take a while to scrape the old SIA site
+		// TODO: Pre-index all courses periodically since they are not updated often across places
 		scrapeCoursesFromSIA(
 			event,
 			{ level, place, faculty, program, typology, searchMode },

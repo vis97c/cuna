@@ -102,6 +102,15 @@
 												<span>Ofensores</span>
 											</XamuActionLink>
 										</li>
+										<li>
+											<XamuActionLink
+												to="/administrar/registros/proxies"
+												:theme="invertedTheme"
+											>
+												<XamuIconFa name="door-open" />
+												<span>Proxies</span>
+											</XamuActionLink>
+										</li>
 									</ul>
 								</nav>
 							</template>

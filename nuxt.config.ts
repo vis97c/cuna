@@ -137,7 +137,7 @@ export default defineNuxtConfig({
 
 			// Auth, Allow listing if admin or above
 			if (currentAuth && currentAuth.role <= -1) {
-				listableCollections.push("logs", "instances", "offenders");
+				listableCollections.push("logs", "instances", "offenders", "proxies");
 			}
 
 			return listableCollections.includes(collectionId);

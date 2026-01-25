@@ -29,7 +29,7 @@
   "type": "module",
   "scripts": {
     "dev": "nuxt dev",
-    "gcp-build": "yarn build",
+    "gcp-build": "yarn postinstall && yarn build",
     "build": "cross-env NODE_ENV=production yarn vendor && nuxt build && node scripts/postbuild.cjs",
     "preview": "nuxt preview",
     "lint:eslint": "eslint --ext .ts,.js,.vue --ignore-path .prettierignore .",

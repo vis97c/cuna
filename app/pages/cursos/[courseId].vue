@@ -113,12 +113,13 @@
 					</div>
 				</div>
 				<XamuLoaderContent
+					:refresh="refreshAll"
 					:content="!!groupsData.filtered.length"
 					:loading="groupsPending"
 					:errors="groupsError"
 					:el="ClientOnly"
 					label="Cargando grupos desde el SIA..."
-					no-content-message="No hay grupos programados"
+					no-content-message="No encontramos grupos programados que coincidan"
 					client
 				>
 					<template #fallback>Cargando grupos...</template>
@@ -140,8 +141,12 @@
 							},
 						}"
 						:nodes="groupsData.filtered"
+						:refresh="refreshAll"
 					/>
 				</XamuLoaderContent>
+				<div class="txt --txtAlign-center --txtSize-xs --txtColor-dark5 --minWidth-100">
+					<p v-if="USER.token">¿No ves tu programa? Intentalo desde el buscador.</p>
+				</div>
 			</XamuLoaderContent>
 		</section>
 	</div>
@@ -169,7 +174,6 @@
 	definePageMeta({ middleware: ["course-exists"] });
 
 	const CUNA = useCunaStore();
-	// const INSTANCE = useInstanceStore();
 	const USER = useUserStore();
 	const router = useRouter();
 	const route = useRoute();
@@ -226,9 +230,8 @@
 	);
 
 	const { selectedFaculty, faculties, selectedProgram, programs } = useCourseProgramOptions(
-		[selectedLevel, selectedPlace, USER.lastFacultySearch, USER.lastProgramSearch],
-		true,
-		course
+		[selectedLevel, selectedPlace],
+		{ noUndef: true, course }
 	);
 	const { selectedTypology, typologies } = useCourseTypeOptions([], course);
 
