@@ -340,13 +340,24 @@ export function useCourseTypeOptions(
 	[typology]: [eSIATypology?] = [],
 	course?: Ref<Course | null>
 ) {
-	const selectedTypology = ref<eSIATypology | undefined>(typology || ("" as eSIATypology));
+	const selectedTypology = typology && isRef(typology) ? typology : ref(typology);
 
 	// dynamic
 	const typologies = computed<iSelectOption[]>(() => [
 		{ value: "", alias: "CUALQUIERA" },
-		...toOptions(eSIATypology, course?.value?.typologies),
+		...toOptions(eSIATypology),
 	]);
+
+	watch(
+		[typologies, () => course?.value?.typologies],
+		([newTypologies = [], courseTypologies]) => {
+			const [newDefault] = courseTypologies?.map((value) => ({ value })) || newTypologies;
+
+			// reset
+			if (newDefault) selectedTypology.value = <eSIATypology>newDefault.value;
+		},
+		{ immediate: false }
+	);
 
 	return {
 		selectedTypology,

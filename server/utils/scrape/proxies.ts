@@ -20,15 +20,15 @@ export function makeGetProxies(debug?: boolean) {
 				const { firebaseFirestore } = getFirebase("getPuppeteer");
 				const proxiesRef: CollectionReference<ProxyData> =
 					firebaseFirestore.collection("proxies");
-				// Get proxies with score <= 1 and timeout <= 17 seconds
-				let query: Query<ProxyData> = proxiesRef.where("disabled", "==", false);
+				let query: Query<ProxyData> = proxiesRef;
 
-				// Be less strict with proxies in debug mode
-				if (debug) {
-					// Useful to reevaluate proxies locally
-					query = query.where("score", "<=", 10).where("timeout", "<=", 60);
-				} else {
-					query = query.where("score", "<=", 2).where("timeout", "<=", 30);
+				// Get proven proxies only
+				// Get proxies with score <= 2 and timeout <= 30 seconds
+				if (!debug) {
+					query = query
+						.where("disabled", "==", false)
+						.where("score", "<=", 2)
+						.where("timeout", "<=", 30);
 				}
 
 				const proxiesSnapshot = await query.get();

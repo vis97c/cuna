@@ -63,7 +63,7 @@
 </template>
 <script setup lang="ts">
 	import { FirebaseError } from "firebase/app";
-	import deburr from "lodash-es/deburr";
+	import deburr from "lodash-es/deburr.js";
 
 	import type { iInvalidInput, iNodeFnResponseStream } from "@open-xamu-co/ui-common-types";
 	import type { tFormInput } from "@open-xamu-co/ui-common-types";

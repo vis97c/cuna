@@ -214,6 +214,8 @@
 </template>
 
 <script setup lang="ts">
+	import deburr from "lodash-es/deburr.js";
+
 	import type { iGetPage, iPage } from "@open-xamu-co/ui-common-types";
 	import { eSizes, eColors } from "@open-xamu-co/ui-common-enums";
 
@@ -224,7 +226,6 @@
 		CourseValuesWithProgram,
 		PartialCourseValues,
 	} from "~/utils/types/values";
-	import deburr from "lodash-es/deburr";
 
 	/**
 	 * Landing page
@@ -265,7 +266,7 @@
 	});
 	const { selectedFaculty, selectedProgram, faculties, programs } = useCourseProgramOptions(
 		[selectedLevel, selectedPlace, USER.lastFacultySearch, USER.lastProgramSearch],
-		{ noUndef: true, saveSearch: true }
+		{ noUndef: true }
 	);
 	const { selectedTypology, typologies } = useCourseTypeOptions();
 	const isCodeSearch = computed<boolean>(() => !!search.value && /^\d/.test(search.value));
@@ -331,6 +332,13 @@
 
 		return page;
 	};
+
+	// lifecycle
+	watch([selectedFaculty, selectedProgram], ([newFaculty, newProgram]) => {
+		if (!newFaculty || !newProgram) return;
+
+		USER.setLastSearch(newFaculty, newProgram);
+	});
 </script>
 
 <style scoped lang="scss">

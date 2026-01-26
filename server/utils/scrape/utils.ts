@@ -187,6 +187,7 @@ export async function getPuppeteer(event: ExtendedH3Event, debug?: boolean) {
 	async function setupBrowser(args: string[] = []): Promise<Browser> {
 		// Puppeteer instance
 		const browser = await puppeteer.launch({
+			browser: "firefox",
 			headless: !debug,
 			args: [...puppeteerArgs, ...args],
 		});
@@ -253,6 +254,30 @@ export async function getPuppeteer(event: ExtendedH3Event, debug?: boolean) {
 		const browser = await setupBrowser([`--proxy-server=${proxyItem.proxy}`]);
 		const page: Page = debugPage(await browser.newPage(), debug);
 		const cleanup = makeCleanup(page, browser);
+
+		// Enable request interception
+		await page.setRequestInterception(true);
+
+		// Block requests
+		page.on("request", (request) => {
+			const url = request.url();
+
+			if (
+				url.endsWith(".woff2") ||
+				url.endsWith(".woff") ||
+				url.endsWith(".gif") ||
+				url.endsWith(".png") ||
+				url.endsWith(".jpg") ||
+				url.endsWith(".jpeg") ||
+				url.endsWith(".svg")
+			) {
+				// Block requests to static files.
+				console.log(`[intercept] Request aborted: ${url}`);
+				request.abort();
+			} else {
+				request.continue();
+			}
+		});
 
 		return { browser, page, cleanup, proxy: proxyItem };
 	} catch (err) {

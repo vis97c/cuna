@@ -86,23 +86,27 @@ export async function scrapeCoursesHandle(
 
 	return TimedPromise<ElementHandle<Element>>(
 		async function (resolve, reject) {
-			await page.evaluate(() => {
-				// #d1 es un div que tiene altura 1 cuando la página se carga incorrectamente
-				if (document.querySelector("#d1")?.clientHeight === 1) {
-					throw reject("There was an error loading the page");
-				}
-			});
-
 			if (!siaOldLevel?.[payload.level] || !siaOldPlace?.[payload.place]) {
 				throw reject("Missing place or level lists");
 			}
 
-			debugFirebaseServer(event, "scrapeCoursesHandle", [payload.level, payload.place]);
+			await page.evaluate(() => {
+				// #d1 es un div que tiene altura 1 cuando la página se carga incorrectamente
+				if (document.querySelector("#d1")?.clientHeight === 1) {
+					throw new Error("There was an error loading the page");
+				}
+			});
+
+			await page.waitForSelector(useHTMLElementId(eHTMLElementIds.LEVEL), { visible: true });
+
+			debugFirebaseServer(event, "scrapeCoursesHandle:level", payload.level);
 
 			// Select level
 			await page.click(useHTMLElementId(eHTMLElementIds.LEVEL));
 			await page.select(useHTMLElementId(eHTMLElementIds.LEVEL), siaOldLevel[payload.level]);
 			await waitForSelect(page, eHTMLElementIds.PLACE);
+
+			debugFirebaseServer(event, "scrapeCoursesHandle:place", payload.place);
 
 			// Select Place
 			await page.click(useHTMLElementId(eHTMLElementIds.PLACE));
@@ -194,10 +198,11 @@ export async function scrapeCoursesWithTypologyHandle(
 			await page.select(useHTMLElementId(eHTMLElementIds.TYPOLOGY), typologyValue.value);
 
 			// Necessary for switching between typologies
-			await page.waitForNetworkIdle();
+			// await page.waitForNetworkIdle();
 
 			// Additional actions for LE
 			if (payload.typology === eSIATypology.LIBRE_ELECCIÓN) {
+				// await waitForSelect(page, eHTMLElementIds.SEARCH_LE);
 				await page.waitForSelector(useHTMLElementId(eHTMLElementIds.SEARCH_LE), {
 					visible: true,
 				});
@@ -221,7 +226,10 @@ export async function scrapeCoursesWithTypologyHandle(
 							useHTMLElementId(eHTMLElementIds.FACULTY_PLACE_LE),
 							siaOldPlace[payload.place]
 						);
-						await waitForSelect(page, eHTMLElementIds.FACULTY_FACULTY_LE);
+						await page.waitForSelector(
+							useHTMLElementId(eHTMLElementIds.FACULTY_FACULTY_LE),
+							{ visible: true }
+						);
 
 						// Get LE faculty options
 						const leFacultyOptions = await getHTMLElementOptions(
@@ -247,6 +255,10 @@ export async function scrapeCoursesWithTypologyHandle(
 						await page.select(
 							useHTMLElementId(eHTMLElementIds.FACULTY_FACULTY_LE),
 							leFacultyValue.value
+						);
+						await page.waitForSelector(
+							useHTMLElementId(eHTMLElementIds.PROGRAM_PROGRAM_LE),
+							{ visible: true }
 						);
 
 						// Get LE Faculty program options
@@ -323,9 +335,6 @@ export async function scrapeCoursesWithTypologyHandle(
 						throw reject("Invalid search mode");
 					}
 				}
-
-				// Necessary for switching between LE programs
-				await page.waitForNetworkIdle();
 			}
 
 			// Load courses (click show button)
