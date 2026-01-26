@@ -153,8 +153,8 @@
 </template>
 
 <script setup lang="ts">
-	import debounce from "lodash-es/debounce";
-	import deburr from "lodash-es/deburr";
+	import debounce from "lodash-es/debounce.js";
+	import deburr from "lodash-es/deburr.js";
 	import { doc, DocumentReference, onSnapshot, type Unsubscribe } from "firebase/firestore";
 
 	import type { iPageEdge } from "@open-xamu-co/ui-common-types";

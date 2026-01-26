@@ -5,9 +5,9 @@ import {
 	type DocumentReference,
 	type Query,
 } from "firebase-admin/firestore";
-import sumBy from "lodash-es/sumBy";
-import deburr from "lodash-es/deburr";
-import startCase from "lodash-es/startCase";
+import sumBy from "lodash-es/sumBy.js";
+import deburr from "lodash-es/deburr.js";
+import startCase from "lodash-es/startCase.js";
 
 import { apiLogger } from "@open-xamu-co/firebase-nuxt/server/firebase";
 import { defineConditionallyCachedEventHandler } from "@open-xamu-co/firebase-nuxt/server/cache";

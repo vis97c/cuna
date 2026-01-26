@@ -111,16 +111,30 @@ export function useMapGroupEs(group: Group): GroupEs {
  * Map proxy
  * Active definition based on makeGetProxies definitions
  */
-export function useMapProxy({ proxy, createdAt, updatedAt, lock, disabled, ...metrics }: Proxy) {
-	const score = metrics.score ?? 1;
-	const timeout = metrics.timeout ?? 1;
+export function useMapProxy({
+	proxy,
+	disabled,
+	score = 1,
+	timeout = 1,
+	timesDead = 1,
+	timesAlive = 1,
+	sessionTimeout = 1,
+}: Proxy) {
 	// Not ignored by query
 	const queryOk = score <= 2 && timeout <= 30;
-	const timesDead = metrics.timesDead ?? 1;
-	const timesAlive = metrics.timesAlive ?? 1;
 	// Percentage of times dead
 	const threshold = timesDead > timesAlive * 0.9;
-	const active = !metrics.disabled && queryOk && !threshold;
+	const active = !disabled && queryOk && !threshold;
 
-	return { metrics, proxy, active, lock, disabled, createdAt, updatedAt };
+	return {
+		proxy,
+		score: score.toFixed(2),
+		deaths: timesDead,
+		lives: timesAlive,
+		mortality: `${((timesDead / timesAlive) * 100).toFixed(2)}%`,
+		avgTimeout: timeout.toFixed(2),
+		avgSession: sessionTimeout.toFixed(2),
+		active,
+		disabled,
+	};
 }

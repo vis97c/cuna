@@ -92,7 +92,7 @@
 </template>
 
 <script setup lang="ts">
-	import debounce from "lodash-es/debounce";
+	import debounce from "lodash-es/debounce.js";
 
 	import type { tProp, tThemeModifier, tThemeTuple } from "@open-xamu-co/ui-common-types";
 	import { getDocumentId } from "@open-xamu-co/firebase-nuxt/client/resolver";

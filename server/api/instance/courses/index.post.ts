@@ -26,6 +26,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			Allow,
 			"Access-Control-Allow-Methods": Allow,
 			"Content-Type": "application/json",
+			"Cache-Control": "no-store", // Browser cache is not allowed
 		});
 
 		// Only POST, HEAD & OPTIONS are allowed

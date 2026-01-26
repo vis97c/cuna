@@ -79,6 +79,12 @@ env:
       availability:
           - BUILD
           - RUNTIME
+    # Puppeteer
+    - variable: PUPPETEER_CACHE_DIR
+      value: ".output/puppeteer"
+      availability:
+          - BUILD
+          - RUNTIME
     # Project
     - variable: NODE_ENV
       value: "production"

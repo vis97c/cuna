@@ -29,7 +29,7 @@
   "type": "module",
   "scripts": {
     "dev": "nuxt dev",
-    "gcp-build": "yarn postinstall && yarn build",
+    "gcp-build": "yarn build",
     "build": "cross-env NODE_ENV=production yarn vendor && nuxt build && node scripts/postbuild.cjs",
     "preview": "nuxt preview",
     "lint:eslint": "eslint --ext .ts,.js,.vue --ignore-path .prettierignore .",
@@ -45,9 +45,8 @@
     "firebase:emulate": "yarn build && firebase emulators:start --only apphosting",
     "firebase:indexes": "firebase firestore:indexes > firestore.indexes.json",
     "firebase:test": "firebase emulators:exec --only firestore \"node tests/firestore.js\"",
-    "build:proxies": "node scripts/proxies.cjs",
     "prepare": "node .husky/install.mjs && nuxt prepare",
-    "postinstall": "node scripts/sync-firebase-nuxt.cjs && puppeteer browsers install chrome"
+    "postinstall": "node scripts/sync-firebase-nuxt.cjs && puppeteer browsers install firefox"
   },
   "packageManager": "yarn@4.12.0",
   "engines": {
