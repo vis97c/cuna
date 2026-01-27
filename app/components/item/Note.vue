@@ -368,7 +368,8 @@
 	}
 
 	async function upvoteNote() {
-		if (!props.note.id) return;
+		// Auth check
+		if (!USER.token || !props.note.id) return;
 		if (ownVote.value === 1) {
 			// remove vote
 			ownVote.value = 0;
@@ -380,7 +381,8 @@
 		ownVote.value = 1;
 	}
 	async function downvoteNote() {
-		if (!props.note.id) return;
+		// Auth check
+		if (!USER.token || !props.note.id) return;
 		if (ownVote.value === -1) {
 			// remove vote
 			ownVote.value = 0;
