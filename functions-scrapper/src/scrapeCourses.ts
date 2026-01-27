@@ -1,4 +1,4 @@
-import { onRequest } from "firebase-functions/https";
+import { region } from "firebase-functions/v1";
 import {
 	CollectionReference,
 	DocumentReference,
@@ -145,15 +145,13 @@ interface iScrapeCoursesPayload {
  * Fetch course links from SIA if not cached
  * Index courses before returning search
  */
-export const scrapeCourses = onRequest(
-	{
-		region: "us-east1",
-		cors: false,
+export const scrapeCourses = region("us-east1")
+	.runWith({
 		maxInstances: 100,
-		memory: "2GiB",
-		timeoutSeconds: 60 * 10, // 10 minutes
-	},
-	async (req, res): Promise<void> => {
+		memory: "2GB",
+		timeoutSeconds: 60 * 9, // 9 minutes
+	})
+	.https.onRequest(async (req, res): Promise<void> => {
 		const { firebaseFirestore } = getFirebase("functions:scrapeCourses");
 		const globalLogger = makeFunctionsLogger(firebaseFirestore);
 
@@ -243,5 +241,4 @@ export const scrapeCourses = onRequest(
 
 			res.send(false);
 		}
-	}
-);
+	});

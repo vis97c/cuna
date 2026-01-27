@@ -7,7 +7,7 @@ import {
 	type DocumentReference,
 	type DocumentSnapshot,
 } from "firebase-admin/firestore";
-import { onRequest } from "firebase-functions/https";
+import { region } from "firebase-functions/v1";
 import sumBy from "lodash-es/sumBy.js";
 import deburr from "lodash-es/deburr.js";
 import startCase from "lodash-es/startCase.js";
@@ -122,15 +122,13 @@ interface iScrapeCourseGroupsPayload {
  * TODO: scrape course prerequisites
  *
  */
-export const scrapeCourseGroups = onRequest(
-	{
-		region: "us-east1",
-		cors: false,
+export const scrapeCourseGroups = region("us-east1")
+	.runWith({
 		maxInstances: 100,
-		memory: "2GiB",
-		timeoutSeconds: 60 * 10, // 10 minutes
-	},
-	async (req, res): Promise<void> => {
+		memory: "2GB",
+		timeoutSeconds: 60 * 9, // 9 minutes
+	})
+	.https.onRequest(async (req, res): Promise<void> => {
 		const { firebaseFirestore } = getFirebase("functions:scrapeCourseGroups");
 		const globalLogger = makeFunctionsLogger(firebaseFirestore);
 
@@ -297,5 +295,4 @@ export const scrapeCourseGroups = onRequest(
 
 			res.send(false);
 		}
-	}
-);
+	});

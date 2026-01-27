@@ -11,6 +11,8 @@ on:
             - feature/v2-functions
         paths:
             - "functions/**"
+            - "functions-scrapper/**"
+    workflow_dispatch:
 
 jobs:
     build_and_deploy:
