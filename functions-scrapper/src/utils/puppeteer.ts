@@ -116,7 +116,6 @@ export async function getPuppeteer(logger: tLogger, pingUrl?: string, debug?: bo
 	async function setupBrowser(args: string[] = []): Promise<Browser> {
 		// Puppeteer instance
 		return puppeteer.launch({
-			browser: "firefox",
 			headless: !debug,
 			args: [...puppeteerArgs, ...args],
 		});
