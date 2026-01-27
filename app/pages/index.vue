@@ -268,7 +268,7 @@
 		[selectedLevel, selectedPlace, USER.lastFacultySearch, USER.lastProgramSearch],
 		{ noUndef: true }
 	);
-	const { selectedTypology, typologies } = useCourseTypeOptions();
+	const { selectedTypology, typologies } = useCourseTypeOptions([USER.lastTypologySearch]);
 	const isCodeSearch = computed<boolean>(() => !!search.value && /^\d/.test(search.value));
 	const values = computed<CourseValues>(() => {
 		const payload: PartialCourseValues = {
@@ -334,11 +334,15 @@
 	};
 
 	// lifecycle
-	watch([selectedFaculty, selectedProgram], ([newFaculty, newProgram]) => {
-		if (!newFaculty || !newProgram) return;
+	watch(
+		[selectedFaculty, selectedProgram, selectedTypology],
+		([newFaculty, newProgram, newTypology]) => {
+			if (!newFaculty || !newProgram) return;
 
-		USER.setLastSearch(newFaculty, newProgram);
-	});
+			USER.setLastSearch(newFaculty, newProgram, newTypology);
+		},
+		{ immediate: false }
+	);
 </script>
 
 <style scoped lang="scss">

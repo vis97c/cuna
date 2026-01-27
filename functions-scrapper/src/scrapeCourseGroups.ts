@@ -157,7 +157,7 @@ export const scrapeCourseGroups = region("us-east1")
 				const config = instanceData?.config || {};
 				const siaMaintenanceTillAt =
 					new Date(config.siaMaintenanceTillAt as Date) || scrapedAt;
-				const { faculty, program, typology } = payload;
+				const { faculty, program } = payload;
 
 				const groupsRef: CollectionReference = courseRef.collection("groups");
 				const teachersRef: CollectionReference = instanceRef.collection("teachers");
@@ -189,6 +189,7 @@ export const scrapeCourseGroups = region("us-east1")
 					return;
 				}
 
+				const [sampleLink] = links;
 				const groupCount = links.length;
 				const spotsCount = sumBy(links, "availableSpots");
 				const newCourseData: CourseDataRef = {
@@ -198,9 +199,8 @@ export const scrapeCourseGroups = region("us-east1")
 					// Improve indexation
 					programs: FieldValue.arrayUnion(program),
 					faculties: FieldValue.arrayUnion(faculty),
+					typologies: FieldValue.arrayUnion(sampleLink.typology),
 				};
-
-				if (typology) newCourseData.typologies = FieldValue.arrayUnion(typology);
 
 				// Update course data, do not await
 				courseRef?.update(newCourseData);
@@ -263,7 +263,7 @@ export const scrapeCourseGroups = region("us-east1")
 									createdAt: Timestamp.fromDate(scrapedAt),
 									// Group variables
 									program,
-									typology,
+									// typology, already on group
 								},
 								{ merge: true }
 							),

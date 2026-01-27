@@ -19,6 +19,7 @@ import {
 	eSIALevel,
 	eSIAPlace,
 	eSIAScienceBogotaProgram,
+	eSIATypology,
 	type uSIAFaculty,
 	type uSIAProgram,
 } from "~~/functions/src/types/SIA";
@@ -67,6 +68,7 @@ export const useUserStore = defineStore("user", () => {
 		...cookieOptions,
 		default: () => eSIAScienceBogotaProgram.CC,
 	});
+	const lastTypologySearch = useState<eSIATypology | undefined>("user.lastTypologySearch");
 	/**
 	 * Include non-regular enrollment slots
 	 * PAES, PEAMA
@@ -111,6 +113,7 @@ export const useUserStore = defineStore("user", () => {
 		place.value = eSIAPlace.BOGOTÁ;
 		lastFacultySearch.value = eSIABogotaFaculty.CIENCIAS;
 		lastProgramSearch.value = eSIAScienceBogotaProgram.CC;
+		lastTypologySearch.value = undefined;
 		withNonRegular.value = false;
 	}
 	function logout() {
@@ -135,9 +138,14 @@ export const useUserStore = defineStore("user", () => {
 
 		track.value = track.value.filter((code) => code !== course.code);
 	}
-	function setLastSearch(newFaculty: uSIAFaculty, newProgram: uSIAProgram) {
+	function setLastSearch(
+		newFaculty: uSIAFaculty,
+		newProgram: uSIAProgram,
+		newTypology?: eSIATypology
+	) {
 		lastFacultySearch.value = newFaculty;
 		lastProgramSearch.value = newProgram;
+		lastTypologySearch.value = newTypology || undefined;
 	}
 	function setLevel(newLevel: eSIALevel) {
 		level.value = newLevel;
@@ -227,6 +235,7 @@ export const useUserStore = defineStore("user", () => {
 		place,
 		lastFacultySearch,
 		lastProgramSearch,
+		lastTypologySearch,
 		withNonRegular,
 		// User getters
 		canModerate,

@@ -35,11 +35,11 @@ function getHTMLElementIds(handle: ElementHandle<Element>) {
 		// Reduce courses data
 		return Array.from(rows).reduce<Record<string, HTMLCourse>>((acc, row) => {
 			const link = row.children[0].getElementsByTagName("a")[0];
-			const typologySpan = row.children[3].querySelector("span[title]");
+			const typologySpan = row.children[3].querySelector("span[title]")?.innerHTML;
 			// Map to standard typology
-			const typology = typologySpan?.innerHTML
-				? typologies[typologySpan.innerHTML]
-				: undefined;
+			const typology = typologySpan ? typologies[typologySpan] : undefined;
+
+			if (!typology) return acc;
 
 			return {
 				...acc,

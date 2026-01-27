@@ -287,17 +287,33 @@ export function useCourseProgramOptions(
 
 	// lifecycle
 	watch(
-		[faculties, () => course?.value?.faculties],
-		([newFaculties = [], courseFaculties]) => {
-			const faculties = courseFaculties?.map((value) => ({ value })) || newFaculties;
-
-			// reset
+		[faculties, () => course?.value?.id],
+		([newFaculties = []]) => {
+			// Reset for each course
 			if (noUndef) {
-				const [newDefault] = faculties;
+				const courseFaculties: iSelectOption[] = [];
 
-				if (faculties.find(({ value }) => value === USER.lastFacultySearch)) {
+				// Nothing selected yet, map valid options
+				if (course?.value?.faculties) {
+					course.value.faculties.forEach((value) => {
+						// Omit if not in list, only if already assigned
+						if (selectedFaculty.value && !newFaculties.find((v) => v.value === value)) {
+							return;
+						}
+
+						courseFaculties.push({ value });
+					});
+				}
+
+				// Preselect with indexed data
+				const [newDefault] = newFaculties;
+				const [preferedDefault = newDefault] = courseFaculties;
+
+				if (courseFaculties.find(({ value }) => value === USER.lastFacultySearch)) {
 					selectedFaculty.value = <uSIAFaculty>USER.lastFacultySearch;
-				} else if (newDefault) selectedFaculty.value = <uSIAFaculty>newDefault.value;
+				} else if (preferedDefault) {
+					selectedFaculty.value = <uSIAFaculty>preferedDefault.value;
+				}
 
 				return;
 			}
@@ -307,16 +323,38 @@ export function useCourseProgramOptions(
 		{ immediate: false }
 	);
 	watch(
-		[programs, () => course?.value?.programs],
-		([newPrograms = [], coursePrograms]) => {
-			const [newDefault] = coursePrograms?.map((value) => ({ value })) || newPrograms;
-
-			// reset
+		[programs, () => course?.value?.id],
+		([newPrograms = []]) => {
+			// Reset for each course
 			if (noUndef) {
-				if (newDefault) selectedProgram.value = <uSIAProgram>newDefault.value;
+				const coursePrograms: iSelectOption[] = [];
+
+				// Nothing selected yet, map valid options
+				if (course?.value?.programs) {
+					course.value.programs.forEach((value) => {
+						// Omit if not in list, only if already assigned
+						if (selectedFaculty.value && !newPrograms.find((v) => v.value === value)) {
+							return;
+						}
+
+						coursePrograms.push({ value });
+					});
+				}
+
+				// Preselect with indexed data
+				const [newDefault] = newPrograms;
+				const [preferedDefault = newDefault] = coursePrograms;
+
+				if (coursePrograms.find(({ value }) => value === USER.lastProgramSearch)) {
+					selectedProgram.value = <uSIAProgram>USER.lastProgramSearch;
+				} else if (preferedDefault) {
+					selectedProgram.value = <uSIAProgram>preferedDefault.value;
+				}
 
 				return;
 			}
+
+			selectedProgram.value = undefined;
 		},
 		{ immediate: false }
 	);
@@ -335,6 +373,7 @@ export function useCourseProgramOptions(
 
 /**
  * Program related options
+ * No preselection due to how hard it would be to match against the right program
  */
 export function useCourseTypeOptions(
 	[typology]: [(eSIATypology | Ref<eSIATypology | undefined>)?] = [],
@@ -344,23 +383,9 @@ export function useCourseTypeOptions(
 
 	// dynamic
 	const typologies = computed<iSelectOption[]>(() => [
-		{ value: "", alias: "CUALQUIERA" },
+		{ value: "", alias: course?.value?.id ? "TODAS MENOS LE" : "CUALQUIERA" },
 		...toOptions(eSIATypology),
 	]);
 
-	watch(
-		[typologies, () => course?.value?.typologies],
-		([newTypologies = [], courseTypologies]) => {
-			const [newDefault] = courseTypologies?.map((value) => ({ value })) || newTypologies;
-
-			// reset
-			if (newDefault) selectedTypology.value = <eSIATypology>newDefault.value;
-		},
-		{ immediate: false }
-	);
-
-	return {
-		selectedTypology,
-		typologies,
-	};
+	return { selectedTypology, typologies };
 }
