@@ -4,12 +4,12 @@
   "scripts": {
     "lint": "eslint --ext .js,.ts .",
     "build": "tsc",
+    "gcp-build": "node node_modules/puppeteer/install.mjs",
     "build:watch": "tsc --watch",
     "serve": "tsc && firebase emulators:start --only functions",
     "start": "tsc && firebase functions:shell",
     "deploy": "firebase deploy --only functions",
-    "logs": "firebase functions:log",
-    "postinstall": "npx puppeteer browsers install firefox"
+    "logs": "firebase functions:log"
   },
   "engines": {
     "node": "20"
