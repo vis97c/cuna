@@ -10,7 +10,12 @@ import {
 } from "@open-xamu-co/firebase-nuxt/server/environment";
 import { type Stylesheet, getStyleSheetPreload } from "@open-xamu-co/ui-nuxt";
 
-import { debugScrapper, debugHTTPS } from "./server/utils/enviroment";
+import {
+	debugScrapper,
+	debugHTTPS,
+	cfScrapeCoursesUrl,
+	cfScrapeCourseGroupsUrl,
+} from "./server/utils/enviroment";
 import packageJson from "./package.json" assert { type: "json" };
 
 const loaderCss = fs.readFileSync(path.resolve(__dirname, "app/assets/loader.css"), {
@@ -65,6 +70,8 @@ export default defineNuxtConfig({
 	devServer: { https: debugHTTPS.value() && { key: "server.key", cert: "server.crt" } },
 	runtimeConfig: {
 		debugScrapper: debugScrapper.value(),
+		cfScrapeCoursesUrl: cfScrapeCoursesUrl.value(),
+		cfScrapeCourseGroupsUrl: cfScrapeCourseGroupsUrl.value(),
 		public: {
 			debugHTTPS: debugHTTPS.value(),
 		},
@@ -90,30 +97,6 @@ export default defineNuxtConfig({
 			// Support firebase auth proxy for signing with redirect
 			"/__/**": {
 				proxy: `https://${firebaseConfig.value().projectId}.firebaseapp.com/__/**`,
-			},
-			// Delete instance cache
-			"/api/instance": {
-				csurf: { methodsToProtect: ["DELETE"] },
-			},
-			// Get all courses
-			"/api/instance/courses": {
-				csurf: { methodsToProtect: ["POST"] },
-			},
-			// Search & scrape SIA courses
-			"/api/instance/courses/search": {
-				csurf: { methodsToProtect: ["POST"] },
-			},
-			// Search & scrape SIA groups
-			"/api/instance/courses/:courseId/groups": {
-				csurf: { methodsToProtect: ["POST"] },
-			},
-			// Search teachers
-			"/api/instance/teachers/search": {
-				csurf: { methodsToProtect: ["POST"] },
-			},
-			// Read instance notes
-			"/api/instance/notes/**": {
-				csurf: { methodsToProtect: ["POST"] },
 			},
 		},
 		rollupConfig: {

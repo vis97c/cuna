@@ -94,7 +94,7 @@
 	}));
 
 	const coursesPage: iGetPage<Course> = (pagination) => {
-		return useCsrfQuery<iPage<Course> | undefined>("/api/instance/courses", {
+		return useQuery<iPage<Course> | undefined>("/api/instance/courses", {
 			method: "POST",
 			query: pagination,
 			headers: { "Cache-Control": "no-store" },

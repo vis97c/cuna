@@ -103,7 +103,9 @@
 
 	const USER = useUserStore();
 
-	const { levels, places } = useCourseProgramOptions([eSIALevel.PREGRADO, USER.place], true);
+	const { levels, places } = useCourseProgramOptions([eSIALevel.PREGRADO, USER.place], {
+		noUndef: true,
+	});
 
 	const withNonRegular = computed({
 		get: () => USER.withNonRegular,

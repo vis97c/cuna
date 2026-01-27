@@ -20,7 +20,7 @@ jobs:
             - checkout
             - attach_workspace:
                   at: ~/repo
-            - run: yarn set version berry
+            - run: yarn set version 4.12.0
             # Download and cache dependencies
             - restore_cache:
                   name: Restore Yarn Package Cache

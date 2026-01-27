@@ -1,13 +1,9 @@
 import {
-	FieldValue,
 	Timestamp,
 	type CollectionReference,
 	type DocumentReference,
 	type Query,
 } from "firebase-admin/firestore";
-import sumBy from "lodash-es/sumBy.js";
-import deburr from "lodash-es/deburr.js";
-import startCase from "lodash-es/startCase.js";
 
 import { apiLogger } from "@open-xamu-co/firebase-nuxt/server/firebase";
 import { defineConditionallyCachedEventHandler } from "@open-xamu-co/firebase-nuxt/server/cache";
@@ -18,128 +14,44 @@ import {
 	getOrderedQuery,
 	getQueryAsEdges,
 } from "@open-xamu-co/firebase-nuxt/server/firestore";
-
-import type {
-	CourseData,
-	ExtendedInstanceDataConfig,
-	GroupData,
-	TeacherData,
-} from "~~/functions/src/types/entities";
-import { Cyrb53 } from "~/utils/firestore";
 import { getDocumentId } from "@open-xamu-co/firebase-nuxt/client/resolver";
-import { getFirebase } from "@open-xamu-co/firebase-nuxt/functions/firebase";
+
+import type { CourseData, GroupData } from "~~/functions/src/types/entities";
+
 import type { eSIATypology, uSIAFaculty, uSIAProgram } from "~~/functions/src/types/SIA";
-import type { iGroupsPayload } from "~~/server/utils/scrape/groups";
+import type { ExtendedH3Event } from "~~/server/types";
+import type { iGroupsPayload } from "~~/functions-scrapper/src/types/scrapper";
 
 /**
- * Scrape the course groups links from SIA
+ * Trigger the course groups scrape cloud function
  */
-function makeGetCourseGroupsLinks(maxAgeMinutes: number, debug?: boolean) {
+function makeTriggerCourseGroupsScrape(maxAgeMinutes: number) {
+	const { cfScrapeCourseGroupsUrl } = useRuntimeConfig();
+
 	return defineCachedFunction(
-		async (
-			event: ExtendedH3Event,
-			courseRef: DocumentReference<CourseData>,
-			payload: iGroupsPayload
-		) => {
-			const { page, cleanup, proxy } = await getPuppeteer(event, debug);
-			const { firebaseFirestore } = getFirebase("getCourseGroupsLinks");
-			const { currentInstance } = event.context;
-			const config: ExtendedInstanceDataConfig = currentInstance?.config || {};
-			const siaOldURL = config.siaOldURL || "";
-			const siaOldPath = config.siaOldPath || "";
-			const siaOldQuery = config.siaOldQuery || "";
-			const siaOldEnpoint = siaOldURL + siaOldPath + siaOldQuery;
-			const testStartAt = new Date();
+		async (event: ExtendedH3Event, { course, ...payload }: iGroupsPayload) => {
+			const { currentInstance, currentAuth } = event.context;
 
-			try {
-				// Navigate to SIA, in less than 60 seconds
-				// Public proxies could easily throw network errors
-				const response = await retryPuppeteerOperation(() => {
-					return page.goto(siaOldEnpoint, { timeout: 1000 * 60 });
-				});
-
-				if (!response?.ok) throw new Error("Unable to reach SIA");
-			} catch (err) {
-				// Error! Get test duration in seconds
-				const testEndAt = new Date();
-				const testDuration = (testEndAt.getTime() - testStartAt.getTime()) / 1000;
-
-				// Report proxy error
-				debugFirebaseServer(event, "getCourseGroupsLinks:SIA", {
-					proxy: proxy?.proxy,
-					testDuration,
-				});
-				apiLogger(event, "getCourseGroupsLinks:SIA", err, {
-					proxy: proxy?.proxy,
-					testDuration,
-				});
-
-				if (proxy) {
-					// Update proxy score, do not await
-					firebaseFirestore.doc(proxy.path).update({
-						timesDead: FieldValue.increment(1),
-						timeout: testDuration,
-					});
-				}
-
-				await cleanup(); // Cleanup puppeteer
-
-				// Timed out errors are not logged
-				throw new Error("Unreachable");
+			if (!currentInstance || !currentAuth) {
+				throw new Error("Missing instance or authorization");
 			}
 
-			// Get course data
-			try {
-				const snapshot = await courseRef.get();
-				const course = snapshot.data();
+			const response = await $fetch(cfScrapeCourseGroupsUrl, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: { coursePath: course.id, uid: currentAuth?.uid, payload },
+			});
 
-				if (!course) throw new Error("Course not found");
+			if (!response) throw new Error("Scraping failed or omitted");
 
-				// Get groups data
-				const { links, errors } = await scrapeCourseGroupsLinks(
-					event,
-					page,
-					course,
-					payload
-				);
-
-				if (proxy) {
-					// Success! Get session duration in seconds
-					const sessionEndAt = new Date();
-					const sessionDuration = (sessionEndAt.getTime() - testStartAt.getTime()) / 1000;
-
-					// Update proxy score, do not await
-					firebaseFirestore.doc(proxy.path).update({
-						sessionTimeout: sessionDuration,
-					});
-				}
-
-				await cleanup(); // Cleanup puppeteer
-
-				// Log errors if any, do not await
-				errors.forEach((err) =>
-					apiLogger(event, `api:courses:[${courseRef.id}]:groups`, err, {
-						proxy: proxy?.proxy,
-					})
-				);
-
-				return links;
-			} catch (err) {
-				await cleanup(); // Cleanup puppeteer
-				apiLogger(event, `api:courses:[${courseRef.id}]:groups`, err, {
-					proxy: proxy?.proxy,
-				});
-
-				// Prevent caching by throwing error
-				throw err;
-			}
+			return { ...payload, course };
 		},
 		{
-			name: "getCourseGroupsLinks",
+			name: "triggerCourseGroupsScrape",
 			maxAge: 60 * maxAgeMinutes,
-			getKey(event, courseRef, { program, typology }) {
+			getKey(event, { course, program, typology }) {
 				const { currentInstanceHost } = event.context;
-				const baseHash = `${currentInstanceHost}:${getDocumentId(courseRef.id)}:${program}`;
+				const baseHash = `${currentInstanceHost}:${getDocumentId(course.id)}:${program}`;
 
 				if (!typology) return baseHash;
 
@@ -150,165 +62,12 @@ function makeGetCourseGroupsLinks(maxAgeMinutes: number, debug?: boolean) {
 	);
 }
 
-interface CourseDataRef extends Omit<CourseData, "programs" | "faculties" | "typologies"> {
-	programs: uSIAProgram[] | FieldValue;
-	faculties: uSIAFaculty[] | FieldValue;
-	typologies?: eSIATypology[] | FieldValue;
-}
-
-/**
- * Scrape the course groups from SIA
- * TODO: scrape course prerequisites
- *
- * @param event The event
- * @param courseRef The course reference
- * @param payload The payload
- * @param debug Whether to debug
- */
-async function scrapeCourseGroupsFromSIA(
-	event: ExtendedH3Event,
-	courseRef: DocumentReference<CourseData>,
-	payload: iGroupsPayload,
-	debug?: boolean
-) {
-	const scrapedAt = new Date();
-	const { currentAuth, currentInstance, currentInstanceRef, currentInstanceHost } = event.context;
-	const config: ExtendedInstanceDataConfig = currentInstance?.config || {};
-	const siaMaintenanceTillAt = new Date(config.siaMaintenanceTillAt as Date) || scrapedAt;
-	const { faculty, program, typology } = payload;
-
-	try {
-		// Check if already scraped
-		const storage = useStorage("cache");
-		const cacheKayBase = `nitro:functions:getCourseGroupsLinks:${currentInstanceHost}:${getDocumentId(courseRef.id)}:${program}`;
-		const cacheKey = typology ? `${cacheKayBase}:${typology}.json` : `${cacheKayBase}.json`;
-		const cachedGroups = await storage.getItem(cacheKey);
-
-		if (!currentAuth || !currentInstanceRef) {
-			apiLogger(event, "api:courses:groups", "Scraping groups without authentication");
-
-			throw new Error("Missing auth");
-		}
-
-		const groupsRef: CollectionReference<GroupData> = courseRef.collection("groups");
-		const teachersRef: CollectionReference<TeacherData> =
-			currentInstanceRef.collection("teachers");
-
-		// Only index if user is authenticated (Prevent abusive calls)
-		// Disable if SIA is in maintenance
-		if (!cachedGroups && siaMaintenanceTillAt <= scrapedAt) {
-			// Cache for 2 minutes by default
-			const getCourseGroupsLinks = makeGetCourseGroupsLinks(
-				config.coursesRefreshRate ?? 2,
-				debug
-			);
-			const links = await getCourseGroupsLinks(event, courseRef, payload);
-
-			if (!links.length) return; // Bypass if no links found
-
-			const groupCount = links.length;
-			const spotsCount = sumBy(links, "availableSpots");
-			const { name: courseName, code: courseCode } = (await courseRef.get())?.data() || {};
-			const newCourseData: CourseDataRef = {
-				groupCount,
-				spotsCount,
-				scrapedAt: Timestamp.fromDate(scrapedAt),
-				// Improve indexation
-				programs: FieldValue.arrayUnion(program),
-				faculties: FieldValue.arrayUnion(faculty),
-			};
-
-			if (typology) newCourseData.typologies = FieldValue.arrayUnion(typology);
-
-			// Update course data, do not await
-			courseRef?.update(newCourseData);
-
-			// Index scraped groups in parallel
-			await Promise.allSettled(
-				links.map(async ({ teachers = [], ...group }) => {
-					// Skip if missing identifier data
-					if (!group.periodStartAt || !group.periodEndAt || !group.name) return;
-
-					// Get date from string (dd/mm/yyyy)
-					const [startDay, startMonth, startYear] = (group.periodStartAt as any)
-						.split("/")
-						.map(Number);
-					const [endDay, endMonth, endYear] = (group.periodEndAt as any)
-						.split("/")
-						.map(Number);
-					// Build date objects
-					const periodStartAt = new Date(startYear, startMonth - 1, startDay);
-					const periodEndAt = new Date(endYear, endMonth - 1, endDay);
-					// Generate deduped course UID
-					// Differentiated by program and typology
-					const id = Cyrb53([
-						group.name,
-						String(periodEndAt.getTime()),
-						program,
-						group.typology,
-					]);
-					const groupRef = groupsRef.doc(String(id));
-
-					// Index teachers
-					const teachersRefs = teachers.map((teacher) => {
-						// Generate deduped teacher UID
-						const teacherId = Cyrb53([deburr(teacher)]);
-						const teacherRef = teachersRef.doc(String(teacherId));
-						const name = startCase(teacher.toLowerCase());
-
-						// Set teacher, do not await
-						teacherRef.set(
-							{
-								name,
-								coursesRefs: FieldValue.arrayUnion(courseRef),
-							},
-							{ merge: true }
-						);
-
-						return teacherRef;
-					});
-
-					// Set group, createdAt is required for queries
-					return groupRef.set(
-						{
-							...group,
-							courseName,
-							courseCode,
-							teachersRefs: FieldValue.arrayUnion(...teachersRefs),
-							scrapedAt: Timestamp.fromDate(scrapedAt),
-							periodStartAt,
-							periodEndAt,
-							// Query requirements
-							createdAt: Timestamp.fromDate(scrapedAt),
-							// Group variables
-							program,
-							typology,
-						},
-						{ merge: true }
-					);
-				})
-			);
-		}
-	} catch (err) {
-		// Throw error if not timeout, do not log
-		switch (err) {
-			case "Missing auth":
-			case "Timed out": // Scraping timed out
-			case "Unreachable": // Unable to connect within timeout
-				// Do not throw
-				break;
-			default:
-				throw createError({ statusCode: 500, statusMessage: "Group scraping failed" });
-		}
-	}
-}
-
 /**
  * Get the edges from the logs collection by courseRef
  */
 export default defineConditionallyCachedEventHandler(async (event) => {
-	const { currentInstanceRef } = event.context;
-	const { debugScrapper } = useRuntimeConfig();
+	const { currentAuth, currentInstanceRef, currentInstance, currentInstanceHost } = event.context;
+	const config = currentInstance?.config || {};
 	const Allow = "POST,HEAD";
 	let courseRef: DocumentReference<CourseData> | undefined;
 
@@ -386,14 +145,27 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		// Filter by typology
 		if (typology) query = query.where("typology", "==", typology);
 
-		// Index groups before resolving query
-		// TODO: use a count aggregator to prevent awaiting the scrape, and scrape in the background
-		await scrapeCourseGroupsFromSIA(
-			event,
-			courseRef,
-			{ faculty, program, typology },
-			debugScrapper
-		);
+		if (currentAuth && currentInstanceRef) {
+			// Check if already scraped
+			const storage = useStorage("cache");
+			const cacheKayBase = `nitro:functions:getCourseGroupsLinks:${currentInstanceHost}:${getDocumentId(courseRef.id)}:${program}`;
+			const cacheKey = typology ? `${cacheKayBase}:${typology}.json` : `${cacheKayBase}.json`;
+			const cacheDuration = config.coursesRefreshRate ?? 2;
+			const cachedGroups = await storage.getItem(cacheKey);
+
+			if (!cachedGroups) {
+				const triggerCourseGroupsScrape = makeTriggerCourseGroupsScrape(cacheDuration);
+
+				// Index groups before resolving query
+				// TODO: use a count aggregator to prevent awaiting the scrape, and scrape in the background
+				triggerCourseGroupsScrape(event, {
+					course: { id: courseId },
+					faculty,
+					program,
+					typology,
+				});
+			}
+		}
 
 		// Order at last
 		query = getOrderedQuery(event, query);

@@ -2,10 +2,10 @@ import {
 	eSIABogotaPrograms,
 	eSIAEnfermeryBogotaProgram,
 	eSIAHumanScienceBogotaProgram,
-} from "./bogota";
-import { eSIAExactSciencesManizalesProgram, eSIAManizalesPrograms } from "./manizales";
-import { eSIAMedellinPrograms, eSIAMinesMedellinProgram } from "./medellin";
-import { eSIAPalmiraPrograms } from "./palmira";
+} from "./bogota.js";
+import { eSIAExactSciencesManizalesProgram, eSIAManizalesPrograms } from "./manizales.js";
+import { eSIAMedellinPrograms, eSIAMinesMedellinProgram } from "./medellin.js";
+import { eSIAPalmiraPrograms } from "./palmira.js";
 
 /**
  * Orinoquia faculties.

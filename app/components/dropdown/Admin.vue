@@ -117,7 +117,7 @@
 	});
 	const clearInstance = debounce(async function () {
 		// Remove cache
-		await useCsrfQuery("/api/instance", { method: "DELETE" });
+		await useQuery("/api/instance", { method: "DELETE" });
 
 		INSTANCE.unsetInstance();
 		location.reload();

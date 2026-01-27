@@ -1,7 +1,7 @@
-import { eSIABogotaPrograms, eSIAEnfermeryBogotaProgram } from "./bogota";
-import { eSIAManizalesPrograms } from "./manizales";
-import { eSIAMedellinPrograms, eSIAMinesMedellinProgram } from "./medellin";
-import { eSIAPalmiraPrograms } from "./palmira";
+import { eSIABogotaPrograms, eSIAEnfermeryBogotaProgram } from "./bogota.js";
+import { eSIAManizalesPrograms } from "./manizales.js";
+import { eSIAMedellinPrograms, eSIAMinesMedellinProgram } from "./medellin.js";
+import { eSIAPalmiraPrograms } from "./palmira.js";
 
 /**
  * Caribe faculties.
