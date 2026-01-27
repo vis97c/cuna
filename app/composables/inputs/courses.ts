@@ -60,7 +60,7 @@ export function useCourseInputs(course: Course = {}): tFormInput[] {
 			name: "typology",
 			title: "Tipología del curso ",
 			placeholder: "Ej: Libre elección",
-			options: typologies,
+			options: typologies.value,
 			type: eFormType.SELECT,
 			icon: "chess-bishop",
 		}),

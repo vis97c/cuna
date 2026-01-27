@@ -65,6 +65,9 @@ F_PRIVATE_KEY=""
 F_CLIENT_EMAIL=""
 # App check, clave del sitio, público
 RECAPTCHA_ENTERPRISE_SITE_KEY="6Lf24mwqAAAAAI0jHdUu8AcmYcyqjkCwRhquwtDr"
+# Cloud functions url
+CF_SCRAPE_COURSES_URL=
+CF_SCRAPE_COURSE_GROUPS_URL=
 
 # CSRF protection (32 bytes)
 # By default csurf uses `crypto.randomBytes(22).toString("base64")`

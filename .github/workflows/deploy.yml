@@ -1,0 +1,70 @@
+# Deploy Firebase Functions
+# See: https://coffey.codes/articles/setting-up-ci-cd-for-firebase-functions-using-github-actions
+
+name: Deploy Firebase Functions
+on:
+    push:
+        branches:
+            - master
+            # Remove this
+            - feature/v2
+            - feature/v2-functions
+        paths:
+            - "functions/**"
+
+jobs:
+    build_and_deploy:
+        name: Build and Deploy
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout Repo
+              uses: actions/checkout@master
+
+            - name: Setup Node.js
+              uses: actions/setup-node@v3
+              with:
+                  node-version: "20"
+
+            - name: Setup yarn
+              run: |
+                  corepack enable
+                  yarn set version 4.12.0
+
+            - name: Install Dependencies
+              run: yarn install
+
+            - name: Create env file
+              run: |
+                  touch functions/.env
+                  echo CSURF_SECRET=${{ secrets.CSURF_SECRET }} >> functions/.env
+                  echo NODE_ENV="production" >> functions/.env
+                  echo INDEXABLE=${{ vars.INDEXABLE }} >> functions/.env
+                  echo ORIGIN=${{ vars.ORIGIN }} >> functions/.env
+                  echo COUNTRIES_API=${{ vars.COUNTRIES_API }} >> functions/.env
+                  echo INSTANCE=${{ vars.INSTANCE }} >> functions/.env
+                  echo ROOT_INSTANCE=${{ vars.INSTANCE }} >> functions/.env
+                  echo APP_NAME="Cuna" >> functions/.env
+                  echo F_API_KEY=${{ vars.F_API_KEY }} >> functions/.env
+                  echo F_AUTH_DOMAIN=${{ vars.F_AUTH_DOMAIN }} >> functions/.env
+                  echo F_PROJECT_ID=${{ vars.F_PROJECT_ID }} >> functions/.env
+                  echo F_STORAGE_BUCKET=${{ vars.F_STORAGE_BUCKET }} >> functions/.env
+                  echo F_MESSAGING_SENDER_ID=${{ vars.F_MESSAGING_SENDER_ID }} >> functions/.env
+                  echo F_APP_ID=${{ vars.F_APP_ID }} >> functions/.env
+                  echo F_MEASUREMENT_ID=${{ vars.F_MEASUREMENT_ID }} >> functions/.env
+                  echo F_PRIVATE_KEY="omitted" >> functions/.env
+                  echo F_CLIENT_EMAIL=${{ secrets.F_CLIENT_EMAIL }} >> functions/.env
+                  echo RECAPTCHA_ENTERPRISE_SITE_KEY=${{ vars.RECAPTCHA_ENTERPRISE_SITE_KEY }} >> functions/.env
+                  echo CF_SCRAPE_COURSES_URL=${{ secrets.CF_SCRAPE_COURSES_URL }} >> functions/.env
+                  echo CF_SCRAPE_COURSE_GROUPS_URL=${{ secrets.CF_SCRAPE_COURSE_GROUPS_URL }} >> functions/.env
+                  cat functions/.env
+
+            - name: Copy env file
+              run: cp functions/.env functions-scrapper/.env
+
+            - name: Deploy to Firebase
+              uses: w9jds/firebase-action@master
+              with:
+                  args: deploy --only functions
+              env:
+                  GCP_SA_KEY: ${{ secrets.F_PRIVATE_KEY }}
+                  PROJECT_ID: ${{ vars.F_PROJECT_ID }}

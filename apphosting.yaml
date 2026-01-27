@@ -3,7 +3,7 @@
 runConfig:
     minInstances: 0
     maxInstances: 100
-    memoryMiB: 2048
+    memoryMiB: 512
     timeoutSeconds: 300
 
 # Environment variables and secrets.
@@ -70,6 +70,17 @@ env:
     # App check, site key
     - variable: RECAPTCHA_ENTERPRISE_SITE_KEY
       value: "6Lf24mwqAAAAAI0jHdUu8AcmYcyqjkCwRhquwtDr"
+      availability:
+          - BUILD
+          - RUNTIME
+    # Cloud functions urls
+    - variable: CF_SCRAPE_COURSES_URL
+      secret: cfScrapeCoursesUrl
+      availability:
+          - BUILD
+          - RUNTIME
+    - variable: CF_SCRAPE_COURSE_GROUPS_URL
+      secret: cfScrapeCourseGroupsUrl
       availability:
           - BUILD
           - RUNTIME

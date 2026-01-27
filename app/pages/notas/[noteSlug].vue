@@ -56,7 +56,7 @@
 		async () => {
 			const noteApiPath = `/api/instance/notes/${noteSlug.value}`;
 
-			return useCsrfQuery(noteApiPath, {
+			return useQuery(noteApiPath, {
 				method: "POST",
 				headers: { "Cache-Control": "no-store" },
 				cache: "no-store",

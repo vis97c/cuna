@@ -72,6 +72,17 @@ env:
       availability:
           - BUILD
           - RUNTIME
+    # Cloud functions urls
+    - variable: CF_SCRAPE_COURSES_URL
+      secret: cfScrapeCoursesUrl
+      availability:
+          - BUILD
+          - RUNTIME
+    - variable: CF_SCRAPE_COURSE_GROUPS_URL
+      secret: cfScrapeCourseGroupsUrl
+      availability:
+          - BUILD
+          - RUNTIME
     # CSRF protection
     - variable: CSURF_SECRET
       secret: csurfSecret

@@ -1,22 +1,22 @@
-import type { eSIAAmazoniaFaculty, uSIAAmazoniaProgram } from "./amazonia";
-import type { eSIABogotaFaculty, uSIABogotaProgram } from "./bogota";
-import type { eSIACaribeFaculty, uSIACaribeProgram } from "./caribe";
-import type { eSIALaPazFaculty, uSIALaPazProgram } from "./la-paz";
-import type { eSIAManizalesFaculty, uSIAManizalesProgram } from "./manizales";
-import type { eSIAMedellinFaculty, uSIAMedellinProgram } from "./medellin";
-import type { eSIAOrinoquiaFaculty, uSIAOrinoquiaProgram } from "./orinoquia";
-import type { eSIAPalmiraFaculty, uSIAPalmiraProgram } from "./palmira";
-import type { eSIATumacoFaculty, uSIATumacoProgram } from "./tumaco";
+import type { eSIAAmazoniaFaculty, uSIAAmazoniaProgram } from "./amazonia.js";
+import type { eSIABogotaFaculty, uSIABogotaProgram } from "./bogota.js";
+import type { eSIACaribeFaculty, uSIACaribeProgram } from "./caribe.js";
+import type { eSIALaPazFaculty, uSIALaPazProgram } from "./la-paz.js";
+import type { eSIAManizalesFaculty, uSIAManizalesProgram } from "./manizales.js";
+import type { eSIAMedellinFaculty, uSIAMedellinProgram } from "./medellin.js";
+import type { eSIAOrinoquiaFaculty, uSIAOrinoquiaProgram } from "./orinoquia.js";
+import type { eSIAPalmiraFaculty, uSIAPalmiraProgram } from "./palmira.js";
+import type { eSIATumacoFaculty, uSIATumacoProgram } from "./tumaco.js";
 
-export * from "./bogota";
-export * from "./la-paz";
-export * from "./medellin";
-export * from "./manizales";
-export * from "./amazonia";
-export * from "./caribe";
-export * from "./orinoquia";
-export * from "./palmira";
-export * from "./tumaco";
+export * from "./bogota.js";
+export * from "./la-paz.js";
+export * from "./medellin.js";
+export * from "./manizales.js";
+export * from "./amazonia.js";
+export * from "./caribe.js";
+export * from "./orinoquia.js";
+export * from "./palmira.js";
+export * from "./tumaco.js";
 
 export enum eSIALevel {
 	PREGRADO = "PREGRADO",
@@ -24,12 +24,12 @@ export enum eSIALevel {
 }
 
 export enum eSIATypology {
-	FUND_OBLIGATORIA = "B FUND. OBLIGATORIA",
-	DISC_OBLIGATORIA = "C DISCIPLINAR OBLIGATORIA",
-	NIVELACIÓN = "E NIVELACIÓN",
-	FUND_OPTATIVA = "O FUND. OPTATIVA",
-	TRABAJO_DE_GRADO = "P TRABAJO DE GRADO",
 	DISC_OPTATIVA = "T DISCIPLINAR OPTATIVA",
+	DISC_OBLIGATORIA = "C DISCIPLINAR OBLIGATORIA",
+	FUND_OBLIGATORIA = "B FUND. OBLIGATORIA",
+	FUND_OPTATIVA = "O FUND. OPTATIVA",
+	NIVELACIÓN = "E NIVELACIÓN",
+	TRABAJO_DE_GRADO = "P TRABAJO DE GRADO",
 	LIBRE_ELECCIÓN = "L LIBRE ELECCIÓN",
 }
 

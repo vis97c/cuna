@@ -46,7 +46,7 @@
     "firebase:indexes": "firebase firestore:indexes > firestore.indexes.json",
     "firebase:test": "firebase emulators:exec --only firestore \"node tests/firestore.js\"",
     "prepare": "node .husky/install.mjs && nuxt prepare",
-    "postinstall": "node scripts/sync-firebase-nuxt.cjs && puppeteer browsers install firefox"
+    "postinstall": "node scripts/sync-firebase-nuxt.cjs"
   },
   "packageManager": "yarn@4.12.0",
   "engines": {
@@ -54,16 +54,14 @@
   },
   "workspaces": [
     "functions",
-    "legacy"
+    "functions-scrapper"
   ],
   "dependencies": {
     "@nuxt/scripts": "^0.11.2",
-    "@open-xamu-co/firebase-nuxt": "^2.0.0-next.9",
+    "@open-xamu-co/firebase-nuxt": "^2.0.0-next.10",
     "@unhead/vue": "^2.0.0-rc.13",
     "@vueuse/core": "^13.0.0",
     "lodash-es": "^4.17.21",
-    "puppeteer": "^24.36.0",
-    "undici": "^7.19.0",
     "vue": "^3.5.26",
     "vue-router": "^4.6.4"
   },

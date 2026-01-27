@@ -337,7 +337,7 @@ export function useCourseProgramOptions(
  * Program related options
  */
 export function useCourseTypeOptions(
-	[typology]: [eSIATypology?] = [],
+	[typology]: [(eSIATypology | Ref<eSIATypology | undefined>)?] = [],
 	course?: Ref<Course | null>
 ) {
 	const selectedTypology = typology && isRef(typology) ? typology : ref(typology);
