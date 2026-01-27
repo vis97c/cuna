@@ -1,4 +1,4 @@
-import { eSIAEnfermeryBogotaProgram, eSIAScienceBogotaProgram } from "./bogota";
+import { eSIAEnfermeryBogotaProgram, eSIAScienceBogotaProgram } from "./bogota.js";
 
 /**
  * Medellín faculties.

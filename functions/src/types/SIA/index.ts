@@ -1,5 +1,4 @@
-export * from "./enums";
-export * from "./explorerV1";
+export * from "./enums/index.js";
 
 export interface CoursesResponse<T> {
 	data: T[];

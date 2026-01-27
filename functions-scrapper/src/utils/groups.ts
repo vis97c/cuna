@@ -1,18 +1,21 @@
 import type { ElementHandle, Page } from "puppeteer-core";
+import type { DocumentSnapshot } from "firebase-admin/firestore";
 
 import { TimedPromise } from "@open-xamu-co/firebase-nuxt/server/guards";
-import { debugFirebaseServer } from "@open-xamu-co/firebase-nuxt/server/firestore";
 
-import type { CourseData, tWeeklySchedule } from "~~/functions/src/types/entities";
-
-import type { CourseGroupLink, ExtendedH3Event } from "./utils";
-import type { iCoursesPayload } from "./courses";
-import type { eSIATypology, uSIAFaculty, uSIAProgram } from "~~/functions/src/types/SIA";
+import {
+	SIATypologies,
+	type CourseGroupLink,
+	type iCoursesPayload,
+	type iGroupsPayload,
+} from "../types/scrapper.js";
+import { scrapeCoursesHandle, scrapeCoursesWithTypologyHandle } from "./courses.js";
+import { useHTMLElementId } from "./puppeteer.js";
 
 interface HTMLCourse {
 	id: string;
 	code: string;
-	typology?: eSIATypology;
+	typology?: string;
 }
 
 /**
@@ -51,29 +54,17 @@ function getHTMLElementIds(handle: ElementHandle<Element>) {
 }
 
 /**
- * Group scrape dynamic payload
- * Different programs could offer different groups for the same course
- * Different typologies could offer different groups for the same course
- */
-export interface iGroupsPayload {
-	faculty: uSIAFaculty;
-	program: uSIAProgram;
-	typology?: eSIATypology;
-}
-
-/**
  * Navigate the SIA to get to the course groups
  *
  * Assume scrapedWith is valid
  */
 export async function scrapeCourseGroupsLinks(
-	event: ExtendedH3Event,
+	snapshot: DocumentSnapshot,
 	page: Page,
-	course: CourseData,
-	{ faculty, program, typology }: iGroupsPayload
+	{ course, faculty, program, typology }: iGroupsPayload
 ): Promise<{ links: CourseGroupLink[]; errors: Error[] }> {
-	const { currentInstance } = event.context;
-	const { siaOldURL = "" } = currentInstance?.config || {};
+	const instanceData = snapshot.data() || {};
+	const { siaOldURL = "" } = instanceData?.config || {};
 
 	// SIA navigation is required beforehand
 	if (!page.url().includes(siaOldURL)) throw new Error("Page is not the SIA");
@@ -87,20 +78,18 @@ export async function scrapeCourseGroupsLinks(
 
 	const payload: iCoursesPayload = { level, place, faculty, program, typology };
 	// Get handle without typology
-	let handle: ElementHandle<Element> = await scrapeCoursesHandle(event, page, payload);
+	let handle: ElementHandle<Element> = await scrapeCoursesHandle(snapshot, page, payload);
 	let courses = await getHTMLElementIds(handle);
 	let courseHTML: HTMLCourse | undefined = courses[course.code];
 
 	// No match found, attempt with typology
 	if (!courseHTML && typology) {
-		handle = await scrapeCoursesWithTypologyHandle(event, page, payload);
+		handle = await scrapeCoursesWithTypologyHandle(snapshot, page, payload);
 		courses = await getHTMLElementIds(handle);
 		courseHTML = courses[course.code];
 	}
 
 	if (!courseHTML?.typology) throw new Error("Course not found in SIA");
-
-	debugFirebaseServer(event, "getCourseGroupsLinks", courseHTML);
 
 	return TimedPromise<{ links: CourseGroupLink[]; errors: Error[] }>(
 		async function (resolve, _reject) {
@@ -130,7 +119,7 @@ export async function scrapeCourseGroupsLinks(
 					const nameH2 = root.querySelector("h2.af_showDetailHeader_title-text0");
 					const fullName = trimHTML(nameH2) || "(0) No reportado";
 					const nameStartAt = fullName.indexOf(")");
-					const schedule: tWeeklySchedule = ["", "", "", "", "", "", ""];
+					const schedule: string[] = ["", "", "", "", "", "", ""];
 					let classrooms: string[] = [];
 
 					// Map schedule & classrooms

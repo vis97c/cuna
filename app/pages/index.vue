@@ -293,7 +293,7 @@
 		// Don't search if metadata is missing
 		if (!pagination?.level || !pagination?.place) return;
 
-		const page: iPage<Course> | undefined = await useCsrfQuery<iPage<Course> | undefined>(
+		const page: iPage<Course> | undefined = await useQuery<iPage<Course> | undefined>(
 			"/api/instance/courses/search",
 			{
 				method: "POST",

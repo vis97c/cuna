@@ -195,7 +195,7 @@
 	});
 
 	const notesPage: iGetPage<Note> = (pagination) => {
-		return useCsrfQuery<iPage<Note> | undefined>("/api/instance/notes", {
+		return useQuery<iPage<Note> | undefined>("/api/instance/notes", {
 			method: "POST",
 			query: pagination,
 			headers: { "Cache-Control": "no-store" },

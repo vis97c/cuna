@@ -1,85 +1,20 @@
 import type { ElementHandle, Page } from "puppeteer-core";
+import type { DocumentSnapshot } from "firebase-admin/firestore";
 
-import { debugFirebaseServer } from "@open-xamu-co/firebase-nuxt/server/firestore";
 import { TimedPromise } from "@open-xamu-co/firebase-nuxt/server/guards";
 
-import {
-	eSIAAmazoniaProgram,
-	eSIABogotaProgram,
-	eSIACaribeProgram,
-	eSIALaPazProgram,
-	eSIALevel,
-	eSIAManizalesProgram,
-	eSIAMedellinProgram,
-	eSIAOrinoquiaProgram,
-	eSIAPalmiraProgram,
-	eSIAPlace,
-	eSIATumacoProgram,
-	eSIATypology,
-	type uSIAFaculty,
-	type uSIAProgram,
-} from "~~/functions/src/types/SIA";
-
-import { type ExtendedH3Event } from "./utils";
-
-export type tCoursesSearchMode = "faculty" | "program" | "programOld";
-
-/**
- * Courses scrape dynamic payload
- */
-export interface iCoursesPayload {
-	level: eSIALevel;
-	place: eSIAPlace;
-	faculty: uSIAFaculty;
-	program: uSIAProgram;
-	typology?: eSIATypology;
-	/**
-	 * Search mode for LE typology courses
-	 * - faculty: Search by faculty
-	 * - program: Search by program
-	 * - programOld: Search by program. But place (old version)
-	 */
-	searchMode?: tCoursesSearchMode;
-}
-
-/**
- * Returns the LE program for a given place
- */
-const SIALEPrograms: Record<eSIAPlace, uSIAProgram> = {
-	[eSIAPlace.BOGOTÁ]: eSIABogotaProgram.COMPONENTE_DE_LIBRE_ELECCIÓN,
-	[eSIAPlace.MEDELLÍN]: eSIAMedellinProgram.COMPONENTE_DE_LIBRE_ELECCIÓN,
-	[eSIAPlace.PALMIRA]: eSIAPalmiraProgram.COMPONENTE_DE_LIBRE_ELECCIÓN,
-	[eSIAPlace.TUMACO]: eSIATumacoProgram.COMPONENTE_DE_LIBRE_ELECCIÓN,
-	[eSIAPlace.ORINOQUÍA]: eSIAOrinoquiaProgram.COMPONENTE_DE_LIBRE_ELECCIÓN,
-	[eSIAPlace.LA_PAZ]: eSIALaPazProgram.COMPONENTE_DE_LIBRE_ELECCIÓN,
-	[eSIAPlace.AMAZONÍA]: eSIAAmazoniaProgram.COMPONENTE_DE_LIBRE_ELECCIÓN,
-	[eSIAPlace.MANIZALES]: eSIAManizalesProgram.COMPONENTE_DE_LIBRE_ELECCIÓN,
-	[eSIAPlace.CARIBE]: eSIACaribeProgram.COMPONENTE_DE_LIBRE_ELECCIÓN,
-} as const;
-
-/**
- * From OldSIA to SIA typologies
- */
-export const SIATypologies: Record<string, eSIATypology> = {
-	"DISCIPLINAR OPTATIVA (T)": eSIATypology.DISC_OPTATIVA,
-	"DISCIPLINAR OBLIGATORIA (C)": eSIATypology.DISC_OBLIGATORIA,
-	"FUND. OBLIGATORIA (B)": eSIATypology.FUND_OBLIGATORIA,
-	"FUND. OPTATIVA (O)": eSIATypology.FUND_OPTATIVA,
-	"NIVELACIÓN (E)": eSIATypology.NIVELACIÓN,
-	"TRABAJO DE GRADO (P)": eSIATypology.TRABAJO_DE_GRADO,
-	"LIBRE ELECCIÓN (L)": eSIATypology.LIBRE_ELECCIÓN,
-} as const;
+import { eHTMLElementIds, SIALEPrograms, type iCoursesPayload } from "../types/scrapper.js";
+import { getHTMLElementOptions, useHTMLElementId, waitForSelect } from "./puppeteer.js";
 
 /**
  * Get to the courses list from sia
  */
 export async function scrapeCoursesHandle(
-	event: ExtendedH3Event,
+	snapshot: DocumentSnapshot,
 	page: Page,
 	payload: iCoursesPayload
 ): Promise<ElementHandle<Element>> {
-	const { currentInstance } = event.context;
-	const { siaOldURL = "", siaOldLevel, siaOldPlace } = currentInstance?.config || {};
+	const { siaOldURL = "", siaOldLevel, siaOldPlace } = snapshot.data()?.config || {};
 
 	// SIA navigation is required beforehand
 	if (!page.url().includes(siaOldURL)) throw new Error("Page is not the SIA");
@@ -99,14 +34,10 @@ export async function scrapeCoursesHandle(
 
 			await page.waitForSelector(useHTMLElementId(eHTMLElementIds.LEVEL), { visible: true });
 
-			debugFirebaseServer(event, "scrapeCoursesHandle:level", payload.level);
-
 			// Select level
 			await page.click(useHTMLElementId(eHTMLElementIds.LEVEL));
 			await page.select(useHTMLElementId(eHTMLElementIds.LEVEL), siaOldLevel[payload.level]);
 			await waitForSelect(page, eHTMLElementIds.PLACE);
-
-			debugFirebaseServer(event, "scrapeCoursesHandle:place", payload.place);
 
 			// Select Place
 			await page.click(useHTMLElementId(eHTMLElementIds.PLACE));
@@ -119,8 +50,6 @@ export async function scrapeCoursesHandle(
 
 			if (!facultyValue) throw reject(`No faculty found for ${payload.faculty}`);
 
-			debugFirebaseServer(event, "scrapeCoursesHandle:faculty", payload.faculty);
-
 			// Select Faculty
 			await page.click(useHTMLElementId(eHTMLElementIds.FACULTY));
 			await page.select(useHTMLElementId(eHTMLElementIds.FACULTY), facultyValue.value);
@@ -131,8 +60,6 @@ export async function scrapeCoursesHandle(
 			const programValue = programOptions.find(({ alias }) => payload.program === alias);
 
 			if (!programValue) throw reject(`No program found for ${payload.program}`);
-
-			debugFirebaseServer(event, "scrapeCoursesHandle:program", payload.program);
 
 			// Select Program
 			await page.click(useHTMLElementId(eHTMLElementIds.PROGRAM));
@@ -167,12 +94,11 @@ export async function scrapeCoursesHandle(
  * Assumes level, place, faculty and program are already selected
  */
 export async function scrapeCoursesWithTypologyHandle(
-	event: ExtendedH3Event,
+	snapshot: DocumentSnapshot,
 	page: Page,
 	payload: iCoursesPayload
 ): Promise<ElementHandle<Element>> {
-	const { currentInstance } = event.context;
-	const { siaOldTypology, siaOldPlace } = currentInstance?.config || {};
+	const { siaOldTypology, siaOldPlace } = snapshot.data()?.config || {};
 
 	return TimedPromise<ElementHandle<Element>>(
 		async (resolve, reject) => {
@@ -191,8 +117,6 @@ export async function scrapeCoursesWithTypologyHandle(
 
 			if (!typologyValue) throw reject(`No typology found for ${payload.typology}`);
 
-			debugFirebaseServer(event, "scrapeCoursesHandle:typology", payload.typology);
-
 			// Select typology, by default the system will return all but LE
 			await page.click(useHTMLElementId(eHTMLElementIds.TYPOLOGY));
 			await page.select(useHTMLElementId(eHTMLElementIds.TYPOLOGY), typologyValue.value);
@@ -200,14 +124,12 @@ export async function scrapeCoursesWithTypologyHandle(
 			// Necessary for switching between typologies
 			// await page.waitForNetworkIdle();
 
-			// Additional actions for LE
-			if (payload.typology === eSIATypology.LIBRE_ELECCIÓN) {
+			// Additional actions for LE (eSIATypology)
+			if (payload.typology === "L LIBRE ELECCIÓN") {
 				// await waitForSelect(page, eHTMLElementIds.SEARCH_LE);
 				await page.waitForSelector(useHTMLElementId(eHTMLElementIds.SEARCH_LE), {
 					visible: true,
 				});
-
-				debugFirebaseServer(event, "scrapeCoursesHandle:typology:LE", payload.place);
 
 				// Select search mode, search by program
 				await page.click(useHTMLElementId(eHTMLElementIds.SEARCH_LE));
@@ -244,12 +166,6 @@ export async function scrapeCoursesWithTypologyHandle(
 							throw reject(`No LE faculty found for ${payload.faculty}`);
 						}
 
-						debugFirebaseServer(
-							event,
-							"scrapeCoursesHandle:typology:LE:faculty",
-							payload.faculty
-						);
-
 						// Select Faculty
 						await page.click(useHTMLElementId(eHTMLElementIds.FACULTY_FACULTY_LE));
 						await page.select(
@@ -274,12 +190,6 @@ export async function scrapeCoursesWithTypologyHandle(
 						if (!leFacultyProgramValue) {
 							throw reject(`No LE program found for ${payload.program}`);
 						}
-
-						debugFirebaseServer(
-							event,
-							"scrapeCoursesHandle:typology:LE:faculty:program",
-							leFacultyProgramValue.alias
-						);
 
 						// Search by LE program
 						await page.click(useHTMLElementId(eHTMLElementIds.PROGRAM_PROGRAM_LE));
@@ -315,12 +225,6 @@ export async function scrapeCoursesWithTypologyHandle(
 						if (!leProgramValue) {
 							throw reject(`No LE program found for ${payload.program}`);
 						}
-
-						debugFirebaseServer(
-							event,
-							"scrapeCoursesHandle:typology:LE:program",
-							leProgramValue.alias
-						);
 
 						// Search by LE program
 						await page.click(useHTMLElementId(eHTMLElementIds.PROGRAM_PROGRAM_LE));

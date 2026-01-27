@@ -1,79 +1,12 @@
 import { default as puppeteer, type Browser, type Page } from "puppeteer";
-import { ProxyAgent } from "undici";
-import { DocumentReference, FieldValue } from "firebase-admin/firestore";
+import { ProxyAgent, fetch } from "undici";
+import { FieldValue } from "firebase-admin/firestore";
 
-import type { CachedH3Event, H3Context } from "@open-xamu-co/firebase-nuxt/server";
-import type { iSelectOption } from "@open-xamu-co/ui-common-types";
-import { debugFirebaseServer } from "@open-xamu-co/firebase-nuxt/server/firestore";
-import { apiLogger } from "@open-xamu-co/firebase-nuxt/server/firebase";
+import type { iSelectOption, tLogger } from "@open-xamu-co/ui-common-types";
 import { getFirebase } from "@open-xamu-co/firebase-nuxt/functions/firebase";
 
-import type { ExtendedInstance } from "~/utils/types/entities";
-import type {
-	ExtendedInstanceData,
-	ExtendedInstanceDataConfig,
-	tWeeklySchedule,
-} from "~~/functions/src/types/entities";
-import { eSIATypology } from "~~/functions/src/types/SIA";
-
-export interface ExtendedH3Context extends H3Context {
-	currentInstance?: ExtendedInstance & {
-		millis: string;
-		url: string;
-		id: string;
-	};
-	currentInstanceRef?: DocumentReference<ExtendedInstanceData>;
-}
-
-export interface ExtendedH3Event extends CachedH3Event {
-	context: ExtendedH3Context;
-}
-
-/**
- * This scraper follows sia_scrapper implementation by https://github.com/pablomancera
- *
- * @see https://github.com/pablomancera/sia_scrapper
- */
-
-export enum eHTMLElementIds {
-	LEVEL = "pt1:r1:0:soc1::content",
-	PLACE = "pt1:r1:0:soc9::content",
-	FACULTY = "pt1:r1:0:soc2::content",
-	PROGRAM = "pt1:r1:0:soc3::content",
-	TYPOLOGY = "pt1:r1:0:soc4::content",
-	NAME = "pt1:r1:0:it11::content",
-	SEARCH_LE = "pt1:r1:0:soc5::content",
-	// Search by program
-	PROGRAM_PROGRAM_LE = "pt1:r1:0:soc8::content",
-	// Search by faculty
-	FACULTY_PLACE_LE = "pt1:r1:0:soc10::content",
-	FACULTY_FACULTY_LE = "pt1:r1:0:soc6::content",
-	FACULTY_PROGRAM_LE = "pt1:r1:0:soc7::content",
-	// Results
-	SHOW = "pt1:r1:0:cb1",
-	TABLE = "pt1:r1:0:t4::db",
-}
-
-export interface CourseLink {
-	code: string;
-	credits: number;
-	typology?: eSIATypology;
-	name: string;
-	description: string;
-}
-
-export interface CourseGroupLink {
-	name: string;
-	spots: number;
-	schedule: tWeeklySchedule;
-	teachers: string[];
-	activity: string;
-	classrooms: string[];
-	periodStartAt: string;
-	periodEndAt: string;
-	availableSpots: number;
-	typology: eSIATypology;
-}
+import type { eHTMLElementIds } from "../types/scrapper.js";
+import { getProxies } from "./proxies.js";
 
 /**
  * Await por page changes after selection
@@ -175,30 +108,22 @@ function debugPage(page: Page, debug?: boolean): Page {
 
 /**
  * Puppeteer instance with proxy support
- *
- * @debug @sparticuz/chromium does not run on windows
  */
-export async function getPuppeteer(event: ExtendedH3Event, debug?: boolean) {
+export async function getPuppeteer(logger: tLogger, pingUrl?: string, debug?: boolean) {
 	const { firebaseFirestore } = getFirebase("getPuppeteer");
-	const config: ExtendedInstanceDataConfig = event.context.currentInstance?.config || {};
-	const getProxies = makeGetProxies(debug);
-	const proxiesList = await getProxies(event);
+	const proxiesList = await getProxies(logger, debug);
 
 	async function setupBrowser(args: string[] = []): Promise<Browser> {
 		// Puppeteer instance
-		const browser = await puppeteer.launch({
+		return puppeteer.launch({
 			browser: "firefox",
 			headless: !debug,
 			args: [...puppeteerArgs, ...args],
 		});
-
-		return browser;
 	}
 
 	try {
 		if (!proxiesList.length) throw new Error("No proxies found");
-
-		debugFirebaseServer(event, "getPuppeteer", { proxiesCount: proxiesList.length });
 
 		const testStartAt = new Date();
 		// Get the fastest proxy
@@ -211,14 +136,10 @@ export async function getPuppeteer(event: ExtendedH3Event, debug?: boolean) {
 					if (!proxy) throw new Error(`Missing proxy URL for "${path}"`);
 
 					const dispatcher = new ProxyAgent(proxy);
-					let ok = false;
-
-					await $fetch(config.pingUrl || "https://status.search.google.com", {
+					const signal = AbortSignal.timeout(1000 * 60); // 60 seconds
+					const { ok } = await fetch(pingUrl || "https://status.search.google.com", {
 						dispatcher,
-						onResponse({ response }) {
-							ok = response.ok;
-						},
-						timeout: 1000 * 60, // 60 seconds
+						signal,
 					});
 
 					if (!ok) throw new Error(`Proxy "${proxy}" is not working`);
@@ -226,8 +147,6 @@ export async function getPuppeteer(event: ExtendedH3Event, debug?: boolean) {
 					// Success! Get test duration in seconds
 					const testEndAt = new Date();
 					const testDuration = (testEndAt.getTime() - testStartAt.getTime()) / 1000;
-
-					debugFirebaseServer(event, "getPuppeteer:try:success", { proxy, testDuration });
 
 					// Update proxy score, do not await
 					proxyRef.update({ timesAlive: FieldValue.increment(1), timeout: testDuration });
@@ -239,8 +158,7 @@ export async function getPuppeteer(event: ExtendedH3Event, debug?: boolean) {
 					const testDuration = (testEndAt.getTime() - testStartAt.getTime()) / 1000;
 
 					// Report proxy error
-					debugFirebaseServer(event, "getPuppeteer:try:error", { proxy, testDuration });
-					apiLogger(event, "getPuppeteer:try:error", err, { proxy, testDuration });
+					logger("getPuppeteer:try:error", err, { proxy, testDuration });
 
 					// Update proxy score, do not await
 					proxyRef.update({ timesDead: FieldValue.increment(1), timeout: testDuration });
@@ -272,7 +190,6 @@ export async function getPuppeteer(event: ExtendedH3Event, debug?: boolean) {
 				url.endsWith(".svg")
 			) {
 				// Block requests to static files.
-				console.log(`[intercept] Request aborted: ${url}`);
 				request.abort();
 			} else {
 				request.continue();
@@ -281,7 +198,7 @@ export async function getPuppeteer(event: ExtendedH3Event, debug?: boolean) {
 
 		return { browser, page, cleanup, proxy: proxyItem };
 	} catch (err) {
-		apiLogger(event, "getPuppeteer:error", err);
+		logger("getPuppeteer:error", err);
 
 		const browser = await setupBrowser();
 		const page: Page = debugPage(await browser.newPage(), debug);

@@ -254,7 +254,7 @@
 		async () => {
 			const courseApiPath = `/api/instance/courses/${courseId.value}/groups`;
 
-			return useCsrfQuery(courseApiPath, {
+			return useQuery(courseApiPath, {
 				query: {
 					faculty: selectedFaculty.value,
 					program: selectedProgram.value,
