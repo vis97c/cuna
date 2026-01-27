@@ -22,10 +22,9 @@ export async function getProxies(logger: tLogger, debug?: boolean) {
 		// Get proven proxies only
 		// Get proxies with score <= 2 and timeout <= 30 seconds
 		if (!debug) {
-			query = query
-				.where("disabled", "==", false)
-				.where("score", "<=", 2)
-				.where("timeout", "<=", 30);
+			query = query.where("disabled", "==", false);
+			// .where("score", "<=", 2)
+			// .where("timeout", "<=", 30);
 		}
 
 		const proxiesSnapshot = await query.get();

@@ -834,29 +834,6 @@
       "density": "SPARSE_ALL"
     },
     {
-      "collectionGroup": "proxies",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "disabled",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "score",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "timeout",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "__name__",
-          "order": "ASCENDING"
-        }
-      ],
-      "density": "SPARSE_ALL"
-    },
-    {
       "collectionGroup": "teachers",
       "queryScope": "COLLECTION",
       "fields": [

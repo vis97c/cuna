@@ -36,6 +36,8 @@ function makeTriggerCourseGroupsScrape(maxAgeMinutes: number) {
 				throw new Error("Missing instance or authorization");
 			}
 
+			if (!course.id) throw new Error("Missing course path");
+
 			const response = await $fetch(cfScrapeCourseGroupsUrl, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
@@ -159,7 +161,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 				// Index groups before resolving query
 				// TODO: use a count aggregator to prevent awaiting the scrape, and scrape in the background
 				triggerCourseGroupsScrape(event, {
-					course: { id: courseId },
+					course: { id: courseRef.path },
 					faculty,
 					program,
 					typology,

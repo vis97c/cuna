@@ -54,6 +54,8 @@
 	} = useAsyncData<Note>(
 		`api:instance:notes:${noteSlug.value}`,
 		async () => {
+			if (!noteSlug.value) throw useCreateError("Missing note slug", 400);
+
 			const noteApiPath = `/api/instance/notes/${noteSlug.value}`;
 
 			return useQuery(noteApiPath, {

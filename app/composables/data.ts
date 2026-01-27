@@ -104,6 +104,7 @@ export function useMapGroupEs(group: Group): GroupEs {
 		horarios: group,
 		inscrito: group,
 		semestre,
+		tipología: group.typology,
 	};
 }
 

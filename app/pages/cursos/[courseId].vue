@@ -134,6 +134,7 @@
 								},
 								{ value: 'profesores', component: TableTeachersList },
 								{ value: 'horarios', component: TableWeek },
+								{ value: 'semestre', hidden: true },
 							],
 							modalProps: {
 								invertTheme: true,
@@ -219,6 +220,8 @@
 	} = useAsyncData(
 		`api:instance:all:courses:${courseId.value}`,
 		async () => {
+			if (!courseId.value) throw useCreateError("Missing course id", 400);
+
 			const courseApiPath = `/api/instance/all/courses/${courseId.value}`;
 
 			return useQuery<Course>(courseApiPath, {
@@ -252,6 +255,10 @@
 	} = useAsyncData<iPageEdge<Group>[]>(
 		courseGroupsKey.value,
 		async () => {
+			if (!courseId.value || !selectedFaculty.value || !selectedProgram.value) {
+				throw useCreateError("Missing faculty or program", 400);
+			}
+
 			const courseApiPath = `/api/instance/courses/${courseId.value}/groups`;
 
 			return useQuery(courseApiPath, {
