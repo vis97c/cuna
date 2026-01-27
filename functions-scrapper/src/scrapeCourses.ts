@@ -233,13 +233,13 @@ export const scrapeCourses = onRequest(
 						// Do not throw
 						break;
 					default:
-						throw logger("scrapeCourses", "Error scraping courses", err);
+						throw logger("functions:scrapeCourses", "Error scraping courses", err);
 				}
 
 				res.send(false);
 			}
 		} catch (err) {
-			globalLogger("scrapeCourses", "Error scraping courses", err);
+			globalLogger("functions:scrapeCourses", "Error scraping courses", err);
 
 			res.send(false);
 		}

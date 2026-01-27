@@ -283,13 +283,17 @@ export const scrapeCourseGroups = onRequest(
 						// Do not throw
 						break;
 					default:
-						throw logger("scrapeCourseGroups", "Error scraping course groups", err);
+						throw logger(
+							"functions:scrapeCourseGroups",
+							"Error scraping course groups",
+							err
+						);
 				}
 
 				res.send(false);
 			}
 		} catch (err) {
-			globalLogger("scrapeCourseGroups", "Error scraping course groups", err);
+			globalLogger("functions:scrapeCourseGroups", "Error scraping course groups", err);
 
 			res.send(false);
 		}
