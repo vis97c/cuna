@@ -3,6 +3,7 @@ import type { FirebaseDocument, FromData, GetRef } from "@open-xamu-co/firebase-
 
 import type { Teacher } from "./teacher";
 import type { CourseData, CourseLogData, GroupData } from "~~/functions/src/types/entities";
+import type { eSIATypology } from "~~/functions/src/types/SIA";
 
 /**
  * Firebase course log
@@ -54,4 +55,5 @@ export interface GroupEs {
 	inscrito: Group;
 	/** Semestre actual */
 	semestre: string;
+	tipología?: eSIATypology;
 }
