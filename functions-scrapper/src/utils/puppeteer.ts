@@ -1,4 +1,5 @@
-import { default as puppeteer, type Browser, type Page } from "puppeteer";
+import { default as puppeteer, type Browser, type Page } from "puppeteer-core";
+import chromium from "@sparticuz/chromium";
 import { ProxyAgent, fetch } from "undici";
 import { FieldValue } from "firebase-admin/firestore";
 
@@ -61,13 +62,14 @@ export function useHTMLElementId(id: string): string {
 }
 
 const puppeteerArgs = [
+	...chromium.args,
 	"--no-sandbox",
-	"--disable-setuid-sandbox",
-	"--disable-dev-shm-usage",
-	"--disable-accelerated-2d-canvas",
-	"--no-first-run",
-	"--no-zygote",
-	"--disable-gpu",
+	// "--disable-setuid-sandbox",
+	// "--disable-dev-shm-usage",
+	// "--disable-accelerated-2d-canvas",
+	// "--no-first-run",
+	// "--no-zygote",
+	// "--disable-gpu",
 ];
 
 function makeCleanup(page: Page, browser: Browser) {
@@ -116,7 +118,8 @@ export async function getPuppeteer(logger: tLogger, pingUrl?: string, debug?: bo
 	async function setupBrowser(args: string[] = []): Promise<Browser> {
 		// Puppeteer instance
 		return puppeteer.launch({
-			headless: !debug,
+			executablePath: await chromium.executablePath(),
+			headless: "shell",
 			args: [...puppeteerArgs, ...args],
 		});
 	}
