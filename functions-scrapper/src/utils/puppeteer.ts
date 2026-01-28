@@ -156,9 +156,6 @@ export async function getPuppeteer(logger: tLogger, pingUrl?: string, debug?: bo
 					const testEndAt = new Date();
 					const testDuration = (testEndAt.getTime() - testStartAt.getTime()) / 1000;
 
-					// Report proxy error
-					logger("getPuppeteer:try:error", err, { proxy, testDuration });
-
 					// Update proxy score, do not await
 					proxyRef.update({ timesDead: FieldValue.increment(1), timeout: testDuration });
 

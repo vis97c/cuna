@@ -14,7 +14,7 @@
 			:page="global ? logsPage : instanceLogsPage"
 			url="api:instance:all:logs"
 			:map-node="useMapLog"
-			:defaults="{ page: true, level: 1 }"
+			:defaults="{ page: true, level: 1, filter }"
 			:table-props="{
 				deleteNode: useDocumentDelete,
 				properties: [
@@ -28,34 +28,39 @@
 			}"
 			label="Cargando registros..."
 			no-content-message="No hay registros disponibles"
+			@refresh="emittedRefresh = $event"
 		>
 			<template #headActions="{ refreshData }">
-				<template v-if="USER.canDevelop">
-					<XamuActionButtonToggle
-						:tooltip="`${!global ? 'Mostrar' : 'Ocultar'} registros globales`"
-						:active="global"
-						round=":md-inv"
-						@click="global = !global"
-					>
-						<XamuIconFa name="globe" />
-						<XamuIconFa name="globe" />
-						<span class="--hidden-full:md-inv">Global</span>
-					</XamuActionButtonToggle>
+				<XamuModal
+					title="Emular nuevo registro"
+					:save-button="{ title: 'Emular registro' }"
+					class="--txtColor --txtAlign --txtWeight"
+					target="body"
+					invert-theme
+					@save="addEmulatedLogs"
+				>
+					<template #toggle="{ toggleModal }">
+						<XamuActionButton :theme="eColors.PRIMARY" @click="toggleModal">
+							<XamuIconFa name="clock-rotate-left" />
+							<span class="--hidden:lg-inv">Emular registros</span>
+							<XamuIconFa class="--hidden:lg" name="plus" />
+						</XamuActionButton>
+					</template>
 					<XamuInputText
 						v-model="emulatedLogCount"
 						:min="CUNA.tabletMQRange ? '1' : 1"
 						type="number"
-						class="--width-90 --width-180:md"
 					/>
-					<XamuActionButton
-						:theme="eColors.PRIMARY"
-						@click="addEmulatedLogs(refreshData)"
-					>
-						<XamuIconFa name="clock-rotate-left" />
-						<span class="--hidden:lg-inv">Emular registros</span>
-						<XamuIconFa class="--hidden:lg" name="plus" />
-					</XamuActionButton>
-				</template>
+				</XamuModal>
+				<XamuActionButtonToggle
+					:tooltip="`${!global ? 'Mostrar' : 'Ocultar'} registros globales`"
+					:active="global"
+					round
+					@click="global = !global"
+				>
+					<XamuIconFa name="globe" />
+					<XamuIconFa name="globe" />
+				</XamuActionButtonToggle>
 				<XamuActionButtonToggle
 					tooltip="Actualizar"
 					tooltip-position="right"
@@ -65,6 +70,12 @@
 					<XamuIconFa name="rotate-right" />
 					<XamuIconFa name="rotate-right" regular />
 				</XamuActionButtonToggle>
+				<XamuInputText
+					v-model="filterAt"
+					icon="filter"
+					placeholder="Omitir registros..."
+					class="--width-90 --width-220:md"
+				/>
 			</template>
 		</XamuPaginationContentTable>
 	</section>
@@ -83,13 +94,15 @@
 	definePageMeta({ title: "Registros", middleware: ["can-admin"] });
 
 	const CUNA = useCunaStore();
-	const USER = useUserStore();
 	const INSTANCE = useInstanceStore();
 	const Swal = useSwal();
 	const { appName } = useRuntimeConfig().public;
 	const route = useRoute();
 
+	const emittedRefresh = ref<() => void>();
 	const emulatedLogCount = ref(1);
+	/** Filter out logs by origin */
+	const filterAt = ref("");
 
 	/** Get global logs */
 	const global = computed({
@@ -102,23 +115,28 @@
 			});
 		},
 	});
+	const filter = computed(() => {
+		const arr = filterAt.value.split(",");
+
+		return arr.length ? arr : [];
+	});
 
 	const logsPage: iGetPage<InstanceLog> = (pagination) => {
-		return useQuery<iPage<InstanceLog> | undefined>("/api/all/logs", {
+		return useQuery<iPage<InstanceLog> | undefined>("/api/logs", {
 			query: pagination,
 			headers: { "Cache-Control": "no-store" },
 			cache: "no-store",
 		});
 	};
 	const instanceLogsPage: iGetPage<InstanceLog> = (pagination) => {
-		return useQuery<iPage<InstanceLog> | undefined>("/api/instance/all/logs", {
+		return useQuery<iPage<InstanceLog> | undefined>("/api/instance/logs", {
 			query: pagination,
 			headers: { "Cache-Control": "no-store" },
 			cache: "no-store",
 		});
 	};
 
-	async function addEmulatedLogs(willOpen: () => void) {
+	async function addEmulatedLogs(closeModal: (s?: boolean) => void, event: Event) {
 		Swal.fireLoader({
 			title: "Emulando registros...",
 			text: "Por favor no cierres esta ventana",
@@ -141,7 +159,11 @@
 				icon: "success",
 				title: "Registros emulados",
 				text: `Se han emulado ${emulatedLogCount.value} registros`,
-				willOpen, // Refresh logs
+				willOpen() {
+					emittedRefresh.value?.();
+					closeModal();
+				},
+				target: event,
 			});
 		} catch (err) {
 			// Couldn't create logs
@@ -151,6 +173,7 @@
 				icon: "error",
 				title: "Algo salió mal",
 				text: "No se pudieron crear los registros",
+				target: event,
 			});
 		}
 	}
