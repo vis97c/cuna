@@ -5,8 +5,11 @@
 				<div class="flx --flxColumn --flx-center --gap-30 --width-100">
 					<div class="txt --txtAlign-center">
 						<h1 class="--txtLineHeight-sm">Notas</h1>
-						<p class="">Encuentra notas útiles o comparte una.</p>
-						<div class="flx --flxRow --flx-center --gap-20">
+						<p v-if="USER.token" class="">Encuentra notas útiles o comparte una.</p>
+						<p v-else class="">
+							Encuentra notas útiles o regístrate para compartir una.
+						</p>
+						<div v-if="USER.token" class="flx --flxRow --flx-center --gap-20">
 							<component
 								:is="personal ? XamuActionLink : XamuActionButtonToggle"
 								@click="personal = false"
@@ -32,6 +35,8 @@
 						</div>
 					</div>
 					<XamuModal
+						v-if="USER.token"
+						id="new-note"
 						title="Nueva nota"
 						:save-button="{ title: 'Publicar nota' }"
 						class="--txtColor --txtAlign --txtWeight"
@@ -124,15 +129,7 @@
 </template>
 
 <script setup lang="ts">
-	import {
-		collectionGroup,
-		query,
-		where,
-		getDocs,
-		doc,
-		type DocumentReference,
-		type Query,
-	} from "firebase/firestore";
+	import { doc, type DocumentReference, getDoc } from "firebase/firestore";
 
 	import type {
 		iGetPage,
@@ -142,14 +139,9 @@
 		tFormInput,
 	} from "@open-xamu-co/ui-common-types";
 	import { eSizes } from "@open-xamu-co/ui-common-enums";
+	import { getDocumentId } from "@open-xamu-co/firebase-nuxt/client/resolver";
 
-	import type {
-		Note,
-		NoteRef,
-		NoteValues,
-		NoteVoteRef,
-		ExtendedInstanceMemberRef,
-	} from "~/utils/types";
+	import type { Note, NoteRef, NoteValues, NoteVoteRef } from "~/utils/types";
 
 	import { XamuActionButtonToggle, XamuActionLink } from "#components";
 
@@ -163,7 +155,7 @@
 
 	definePageMeta({
 		title: "Notas",
-		middleware: ["enabled", "auth-only"],
+		middleware: ["enabled"],
 	});
 
 	const { getResponse } = useFormInput();
@@ -331,36 +323,30 @@
 
 	// lifecycle
 	watch(
-		emittedContent,
-		async (content = [], oldContent = []) => {
+		[emittedContent, () => USER.path],
+		async ([content = [], userPath], [oldContent = []]) => {
 			if (import.meta.server || !$clientFirestore) return;
 			// Bypass if same content
-			if (!content?.length || content[0]?.updatedAt === oldContent?.[0]?.updatedAt) return;
+			if (
+				!userPath ||
+				!content?.length ||
+				content[0]?.updatedAt === oldContent?.[0]?.updatedAt
+			) {
+				return;
+			}
 
-			// Get votes for the new notes
-			const createdByRef: DocumentReference<ExtendedInstanceMemberRef> = doc(
-				$clientFirestore,
-				USER.path
-			);
-			const notePaths: string[] = content.map(({ id = "" }) => id);
-			const votesRef: Query<NoteVoteRef> = collectionGroup($clientFirestore, "votes");
-			// Get own votes for the new notes
-			const toQuery = query(
-				votesRef,
-				where("createdByRef", "==", createdByRef),
-				where("notePath", "in", notePaths)
-			);
-			const votesSnapshot = await getDocs(toQuery);
 			// Map votes within notes
-			const hydratedNotes: Note[] = content.map((note) => {
-				// Match vote with note
-				const voteSnapshot = votesSnapshot.docs.find(({ ref }) => {
-					return note.id && ref?.path?.startsWith(note.id);
-				});
-				const { vote = 0 } = voteSnapshot?.data() || {};
+			const hydratedNotes: Note[] = await Promise.all(
+				content.map(async (note) => {
+					// Get note vote
+					const id = `${note.id}/votes/${getDocumentId(userPath)}`;
+					const voteRef: DocumentReference<NoteVoteRef> = doc($clientFirestore, id);
+					const voteSnapshot = await getDoc(voteRef);
+					const { vote = 0 } = voteSnapshot?.data() || {};
 
-				return { ...note, vote };
-			});
+					return { ...note, vote };
+				})
+			);
 
 			// Hydrate nodes
 			emittedHydrateNodes.value?.(hydratedNotes);

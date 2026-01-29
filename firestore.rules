@@ -2,10 +2,6 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isAuth() {
-      return request.auth != null && request.auth.uid != null;
-    }
-
     // rol 4: Invitado (0% acceso)
     // rol 3: Usuario (25% acceso)
     // rol 2: Moderador (30% acceso)
@@ -18,7 +14,7 @@ service cloud.firestore {
 
     // developer.role = -1
     function canDevelop(instanceId) {
-      return getRole(instanceId, request.auth.uid) < 0
+      return getRole("live", request.auth.uid) < 0 || getRole(instanceId, request.auth.uid)<0
     }
 
     // admin.role = 0
@@ -84,12 +80,12 @@ service cloud.firestore {
 
     match /users/{uid} {
       // lectura unica, cualquiera
-      allow get: if isAuth();
-      // lectura multiple, desarrolladores hacia arriba
-      allow list: if canDevelop("live");
+      allow get: if request.auth != null;
+      // lectura multiple, moderadores hacia arriba
+      allow list: if canModerate("live");
       // creacion granular, cualquiera
-      allow create: if isAuth();
-      // modificacion granular, desarrolladores o propietarios
+      allow create: if request.auth != null;
+      // modificacion granular, desarrolladores hacia arriba o propietarios
       allow update: if canDevelop("live") || isOwnUser(uid);
       allow delete: if (canDevelop("live") || isOwnUser(uid)) && resource.data.lock == false;
     }
@@ -104,13 +100,15 @@ service cloud.firestore {
       allow delete: if canDevelop(instanceId) && resource.data.lock == false;
 
       match /members/{uid} {
-        // lectura explicita, moderadores hacia arriba
-        allow read: if canModerate(instanceId) || isOwnUser(uid);
-        // modificacion granular, administradores hacia arriba
-        allow create: if canAdmin(instanceId) || isOwnUser(uid);
-        // administradores no puede modificar desarrolladores
-        allow update: if canAdmin(instanceId) || isOwnUser(uid);
-        allow delete: if (canAdmin(instanceId) || isOwnUser(uid)) && resource.data.lock == false;
+        // lectura unica, cualquiera
+        allow get: if request.auth != null;
+        // lectura multiple, moderadores hacia arriba
+        allow list: if canModerate(instanceId);
+        // creacion granular, cualquiera
+        allow create: if request.auth != null;
+        // modificacion granular, desarrolladores hacia arriba o propietarios
+        allow update: if canDevelop(instanceId) || isOwnUser(uid);
+        allow delete: if (canDevelop(instanceId) || isOwnUser(uid)) && resource.data.lock == false;
 
         match /notes/{id} {
           // lectura explicita, cualquiera

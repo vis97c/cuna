@@ -50,11 +50,6 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			throw createError({ statusCode: 401, statusMessage: "Missing instance" });
 		}
 
-		// Auth is required
-		if (!currentAuth) {
-			throw createError({ statusCode: 401, statusMessage: "Missing auth" });
-		}
-
 		// Group collection
 		const notesRef = firebaseFirestore.collectionGroup("notes");
 		const params = getQuery(event);
@@ -75,6 +70,11 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		let query: Query<NoteData, Note> = notesRef;
 
 		if (personal) {
+			// Auth is required for personal notes
+			if (!currentAuth) {
+				throw createError({ statusCode: 401, statusMessage: "Missing auth" });
+			}
+
 			// Personal notes only
 			query = query.where("createdByRef", "==", currentAuthRef);
 		} else {

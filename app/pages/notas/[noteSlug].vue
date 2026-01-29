@@ -36,7 +36,7 @@
 	 * @page
 	 */
 
-	definePageMeta({ middleware: ["enabled", "auth-only"] });
+	definePageMeta({ middleware: ["enabled"] });
 
 	const route = useRoute();
 	const { $clientFirestore } = useNuxtApp();

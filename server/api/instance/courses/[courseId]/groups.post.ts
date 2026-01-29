@@ -14,62 +14,16 @@ import {
 	getOrderedQuery,
 	getQueryAsEdges,
 } from "@open-xamu-co/firebase-nuxt/server/firestore";
-import { getDocumentId } from "@open-xamu-co/firebase-nuxt/client/resolver";
 
 import type { CourseData, GroupData } from "~~/functions/src/types/entities";
 
 import type { eSIATypology, uSIAFaculty, uSIAProgram } from "~~/functions/src/types/SIA";
-import type { ExtendedH3Event } from "~~/server/types";
-import type { iGroupsPayload } from "~~/functions-scrapper/src/types/scrapper";
-
-/**
- * Trigger the course groups scrape cloud function
- */
-function makeTriggerCourseGroupsScrape(maxAgeMinutes: number) {
-	const { cfScrapeCourseGroupsUrl } = useRuntimeConfig();
-
-	return defineCachedFunction(
-		async (event: ExtendedH3Event, { course, ...payload }: iGroupsPayload) => {
-			const { currentInstance, currentAuth } = event.context;
-
-			if (!currentInstance || !currentAuth) {
-				throw new Error("Missing instance or authorization");
-			}
-
-			if (!course.id) throw new Error("Missing course path");
-
-			const response = await $fetch(cfScrapeCourseGroupsUrl, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: { coursePath: course.id, uid: currentAuth?.uid, payload },
-			});
-
-			if (!response) throw new Error("Scraping failed or omitted");
-
-			return { ...payload, course };
-		},
-		{
-			name: "triggerCourseGroupsScrape",
-			maxAge: 60 * maxAgeMinutes,
-			getKey(event, { course, program, typology }) {
-				const { currentInstanceHost } = event.context;
-				const baseHash = `${currentInstanceHost}:${getDocumentId(course.id)}:${program}`;
-
-				if (!typology) return baseHash;
-
-				// Compact hash
-				return `${baseHash}:${typology}`;
-			},
-		}
-	);
-}
 
 /**
  * Get the edges from the logs collection by courseRef
  */
 export default defineConditionallyCachedEventHandler(async (event) => {
-	const { currentAuth, currentInstanceRef, currentInstance, currentInstanceHost } = event.context;
-	const config = currentInstance?.config || {};
+	const { currentInstanceRef } = event.context;
 	const Allow = "POST,HEAD";
 	let courseRef: DocumentReference<CourseData> | undefined;
 
@@ -112,7 +66,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			throw createError({ statusCode: 400, statusMessage: "Missing faculty or program" });
 		}
 
-		debugFirebaseServer(event, "api:courses:logs:courseId", {
+		debugFirebaseServer(event, "api:courses:logs:courseId:groups", {
 			courseId,
 			program,
 			typology,
@@ -146,28 +100,6 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 
 		// Filter by typology
 		if (typology) query = query.where("typology", "==", typology);
-
-		if (currentAuth && currentInstanceRef) {
-			// Check if already scraped
-			const storage = useStorage("cache");
-			const cacheKayBase = `nitro:functions:getCourseGroupsLinks:${currentInstanceHost}:${getDocumentId(courseRef.id)}:${program}`;
-			const cacheKey = typology ? `${cacheKayBase}:${typology}.json` : `${cacheKayBase}.json`;
-			const cacheDuration = config.coursesRefreshRate ?? 2;
-			const cachedGroups = await storage.getItem(cacheKey);
-
-			if (!cachedGroups) {
-				const triggerCourseGroupsScrape = makeTriggerCourseGroupsScrape(cacheDuration);
-
-				// Index groups before resolving query
-				// TODO: use a count aggregator to prevent awaiting the scrape, and scrape in the background
-				await triggerCourseGroupsScrape(event, {
-					course: { id: courseRef.path },
-					faculty,
-					program,
-					typology,
-				});
-			}
-		}
 
 		// Order at last
 		query = getOrderedQuery(event, query);

@@ -183,7 +183,7 @@
 	 * The note belongs to the current user
 	 */
 	const isOwnNote = computed(() => {
-		return props.note.id?.startsWith(USER.path);
+		return USER.token && props.note.id?.startsWith(USER.path);
 	});
 	/** Current user vote */
 	const ownVote = computed<1 | 0 | -1>({
@@ -367,23 +367,32 @@
 		}
 	}
 
-	async function upvoteNote() {
+	async function makeVote(vote: 1 | -1) {
 		// Auth check
-		if (!USER.token || !props.note.id) return;
-		if (ownVote.value === 1) {
-			// remove vote
-			ownVote.value = 0;
+		if (!USER.token) {
+			const { value } = await Swal.fire({
+				icon: "warning",
+				title: "¡No estas registrado!",
+				text: "Debes iniciar sesión para votar",
+				showCancelButton: true,
+				showConfirmButton: true,
+				confirmButtonText: "Iniciar sesión",
+				allowOutsideClick: () => !Swal.isLoading(),
+				allowEscapeKey: () => !Swal.isLoading(),
+				customClass: {
+					confirmButton: ["bttn"],
+					cancelButton: "bttnToggle",
+				},
+				timer: undefined,
+			});
+
+			if (value) navigateTo(`/ingresar?restricted=/notas/${props.note.slug}`);
 
 			return;
 		}
 
-		// Perform upvote
-		ownVote.value = 1;
-	}
-	async function downvoteNote() {
-		// Auth check
-		if (!USER.token || !props.note.id) return;
-		if (ownVote.value === -1) {
+		if (!props.note.id) return;
+		if (ownVote.value === vote * -1) {
 			// remove vote
 			ownVote.value = 0;
 
@@ -391,7 +400,15 @@
 		}
 
 		// Perform downvote
-		ownVote.value = -1;
+		ownVote.value = vote;
+	}
+
+	async function upvoteNote() {
+		return makeVote(1);
+	}
+
+	async function downvoteNote() {
+		return makeVote(-1);
 	}
 
 	// lifecycle

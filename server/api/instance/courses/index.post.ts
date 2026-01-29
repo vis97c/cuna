@@ -17,7 +17,7 @@ import type { eSIALevel, eSIAPlace, eSIATypology } from "~~/functions/src/types/
  * Get the edges from the courses collection
  */
 export default defineConditionallyCachedEventHandler(async (event) => {
-	const { currentAuth, currentInstanceRef } = event.context;
+	const { currentInstanceRef } = event.context;
 	const Allow = "POST,HEAD";
 
 	try {
@@ -40,11 +40,6 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		// Instance is required
 		if (!currentInstanceRef) {
 			throw createError({ statusCode: 401, statusMessage: "Missing instance" });
-		}
-
-		// Require auth
-		if (!currentAuth) {
-			throw createError({ statusCode: 401, statusMessage: `Unauthorized` });
 		}
 
 		const params = getQuery(event);

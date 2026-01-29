@@ -86,7 +86,7 @@ export function useMapLog({ createdBy, updatedBy, metadata, ...log }: InstanceLo
 }
 
 export function useMapGroupEs(group: Group): GroupEs {
-	const { name, availableSpots, spots, classrooms, teachers } = group;
+	const { id, name, availableSpots, spots, classrooms, teachers } = group;
 	const endDate = new Date(group.periodEndAt || "");
 	/**
 	 * Semestre activo
@@ -97,7 +97,8 @@ export function useMapGroupEs(group: Group): GroupEs {
 	const semestre = `${endDate.getFullYear()}-${endDate.getMonth() < 6 ? 1 : 2}`;
 
 	return {
-		id: `${name}`, // hotfix to prevent it to parse as date
+		id,
+		grupo: `${name}`,
 		cupos: `${availableSpots} de ${spots}`,
 		espacios: classrooms?.filter((c) => !!c),
 		profesores: teachers,

@@ -47,7 +47,8 @@ export interface Group extends FirebaseDocument, FromData<GroupData> {}
 export interface GroupRef extends GetRef<Group> {}
 
 export interface GroupEs {
-	id: string;
+	id?: string;
+	grupo: string;
 	cupos: string;
 	espacios?: string[];
 	profesores: Teacher[];

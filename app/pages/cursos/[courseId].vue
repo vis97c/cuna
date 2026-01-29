@@ -115,8 +115,8 @@
 				<XamuLoaderContent
 					:refresh="refreshAll"
 					:content="!!groupsData.filtered.length"
-					:loading="groupsPending"
-					:errors="groupsError"
+					:loading="groupsPending || groupsScrapedPending"
+					:errors="groupsError || !groupsScraped"
 					:el="ClientOnly"
 					label="Cargando grupos desde el SIA..."
 					no-content-message="No encontramos grupos programados que coincidan"
@@ -125,7 +125,7 @@
 					<template #fallback>Cargando grupos...</template>
 					<XamuTable
 						v-bind="{
-							preferId: true,
+							deleteNode: USER.canDevelop ? useDocumentDelete : undefined,
 							properties: [
 								{
 									value: 'inscrito',
@@ -147,6 +147,7 @@
 				</XamuLoaderContent>
 				<div class="txt --txtAlign-center --txtSize-xs --txtColor-dark5 --minWidth-100">
 					<p v-if="USER.token">¿No ves tu programa? Intentalo desde el buscador.</p>
+					<p v-else>Inicia sesión para obtener cupos frescos.</p>
 				</div>
 			</XamuLoaderContent>
 		</section>
@@ -267,6 +268,30 @@
 					program: selectedProgram.value,
 					typology: selectedTypology.value,
 					level: 1, // Get teachers refs
+				},
+				method: "POST",
+				headers: { "Cache-Control": "no-store" },
+				cache: "no-store",
+			});
+		},
+		{ watch: [() => courseId.value, selectedProgram, selectedTypology], server: false }
+	);
+
+	// Scrape groups but allow showing existing groups
+	const { data: groupsScraped, pending: groupsScrapedPending } = useAsyncData<boolean>(
+		`${courseGroupsKey.value}:scraped`,
+		async () => {
+			if (!courseId.value || !selectedFaculty.value || !selectedProgram.value) {
+				throw useCreateError("Scraping missing faculty or program", 400);
+			}
+
+			const courseApiPath = `/api/instance/courses/${courseId.value}/groups-scrape`;
+
+			return useQuery(courseApiPath, {
+				query: {
+					faculty: selectedFaculty.value,
+					program: selectedProgram.value,
+					typology: selectedTypology.value,
 				},
 				method: "POST",
 				headers: { "Cache-Control": "no-store" },

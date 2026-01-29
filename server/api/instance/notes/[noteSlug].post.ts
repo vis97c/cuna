@@ -46,11 +46,6 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			throw createError({ statusCode: 401, statusMessage: "Missing instance" });
 		}
 
-		// Auth is required
-		if (!currentAuth) {
-			throw createError({ statusCode: 401, statusMessage: "Missing auth" });
-		}
-
 		// Group collection
 		const notesRef = firebaseFirestore.collectionGroup("notes");
 		const noteSlug = getRouterParam(event, "noteSlug");
@@ -75,10 +70,16 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 
 		const notesSnapshot = await query.limit(1).get();
 		const [snapshot] = notesSnapshot.docs; // get the first one if any
+		const nodeData = snapshot?.data() || {};
 
 		// Check if note exists and belongs to current instance
 		if (!snapshot?.exists || !snapshot.ref.path.startsWith(currentInstanceRef.path)) {
 			throw createError({ statusCode: 404, statusMessage: "Note not found" });
+		}
+
+		// Auth is required for personal notes
+		if (!nodeData.public && !currentAuth) {
+			throw createError({ statusCode: 401, statusMessage: "Missing auth" });
 		}
 
 		// Bypass body for HEAD requests

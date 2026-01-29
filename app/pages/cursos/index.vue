@@ -70,7 +70,7 @@
 	 * @page
 	 */
 
-	definePageMeta({ title: "Cursos", middleware: ["enabled", "auth-only"] });
+	definePageMeta({ title: "Cursos", middleware: ["enabled"] });
 
 	const USER = useUserStore();
 
