@@ -6,9 +6,6 @@ on:
     push:
         branches:
             - master
-            # Remove this
-            - feature/v2
-            - feature/v2-functions
         paths:
             - "functions/**"
             - "functions-scrapper/**"
