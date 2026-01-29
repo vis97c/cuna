@@ -12,6 +12,7 @@ import type {
 	ExtendedInstanceData,
 	ExtendedInstanceMemberData,
 	ExtendedUserData,
+	GroupData,
 	InstanceMemberAbuseData,
 } from "~~/functions/src/types/entities";
 import type { ExtendedUser } from "./user";
@@ -50,6 +51,7 @@ export interface ExtendedInstanceMember
 export interface ExtendedInstanceMemberRef extends GetRef<ExtendedInstanceMember> {
 	userRef?: DocumentReference<ExtendedUserData>;
 	rootMemberRef?: DocumentReference<ExtendedInstanceMemberData>;
+	enrolledRefs?: DocumentReference<GroupData>[];
 }
 
 /** @output Instance member abuse */

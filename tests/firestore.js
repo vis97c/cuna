@@ -148,11 +148,44 @@ try {
 
 	// Test secondary should not update auth note
 	await assertFails(
-		mainNoteRefFromSecondary.update({
-			body: "This is my note now by secondary",
-		})
+		mainNoteRefFromSecondary.update({ body: "This is my note now by secondary" })
 	);
 	logTest(14, "Secondary user should not be able to update other user's note");
+
+	// Test register a course and add a group
+	await testEnv.withSecurityRulesDisabled(async (context) => {
+		const courseRef = context
+			.firestore()
+			.collection("instances/live/courses")
+			.doc("main-course");
+
+		// Add a course
+		await assertSucceeds(courseRef.set({ name: "Main course" }));
+
+		const mainGroupRef = courseRef.collection("groups").doc("main-group");
+
+		// Add a group
+		await assertSucceeds(mainGroupRef.set({ name: "Main group" }));
+	});
+
+	const mainCourseRef = authInstanceRef.collection("courses").doc("main-course");
+	const mainGroupRef = mainCourseRef.collection("groups").doc("main-group");
+
+	// Test member can enroll in a course
+	await assertSucceeds(mainMemberRef.update({ enrolledRefs: [mainGroupRef] }));
+	logTest(15, "Member can enroll in a course");
+
+	// Test member can get their enrolled courses
+	await assertSucceeds(mainMemberRef.get());
+	logTest(16, "Member can get their enrolled courses");
+
+	const memberData = (await mainMemberRef.get()).data();
+
+	await assertSucceeds(memberData.enrolledRefs[0].get());
+	logTest(17, "Member can get their enrolled courses groups");
+
+	await assertSucceeds(memberData.userRef.get());
+	logTest(18, "Member can get their user reference");
 
 	// All test passed
 	console.log(""); // empty line

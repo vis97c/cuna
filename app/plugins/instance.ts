@@ -16,7 +16,7 @@ import {
 
 import { makeLogger } from "@open-xamu-co/firebase-nuxt/client/logger";
 
-import type { RootRef } from "@open-xamu-co/firebase-nuxt/client";
+import type { PseudoDocumentSnapshot, RootRef } from "@open-xamu-co/firebase-nuxt/client";
 import type {
 	ExtendedInstance,
 	ExtendedInstanceMemberRef,
@@ -174,12 +174,27 @@ function setupAuth(instance: ExtendedInstance) {
 		// Get fresh token & member data
 		const token = await authUser.getIdToken();
 		const memberSnapshot = await getDoc(memberRef);
+
+		const partialMemberSnapshot: PseudoDocumentSnapshot<ExtendedInstanceMemberRef> = {
+			ref: memberRef,
+			exists: memberSnapshot.exists,
+			data: () => {
+				// Remove rootMemberRef to avoid permission errors on resolveRefs
+				const { rootMemberRef, ...response } = memberSnapshot.data() || {};
+
+				return response;
+			},
+		};
+
 		// Member role required before any redirect
-		const memberData = memberSnapshot.data() || {};
+		const memberData = await resolveRefs(partialMemberSnapshot, { level: 1 });
 		let user: ExtendedUser = { name, isAnonymous, uid, email, photoURL, id: memberRef.path };
 
 		// Set session, flatten member data
-		USER.setUser({ ...user, role: memberData.role ?? 3 }, token);
+		USER.setUser(
+			{ ...user, role: memberData?.role ?? 3, enrolled: memberData?.enrolled },
+			token
+		);
 
 		// Keep user fresh
 		unsubUser = onSnapshot(
@@ -187,7 +202,7 @@ function setupAuth(instance: ExtendedInstance) {
 			async (userSnapshot) => {
 				const userData = await resolveRefs(userSnapshot);
 				const rootMemberSnapshot = await getDoc(rootMemberRef);
-				const rootMemberData = rootMemberSnapshot.data() || {};
+				const rootMemberData = await resolveRefs(rootMemberSnapshot);
 				// Smaller number means higher access role
 				const role = Math.min(rootMemberData?.role ?? 3, memberData?.role ?? 3);
 
@@ -218,7 +233,7 @@ function setupAuth(instance: ExtendedInstance) {
 				}
 
 				// Update session, flatten member data
-				USER.setUser({ ...user, role }, token);
+				USER.setUser({ ...user, role, enrolled: memberData?.enrolled }, token);
 			},
 			(err) => logger("plugins:firebase:watchUser:snapshot", err)
 		);

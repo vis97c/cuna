@@ -20,7 +20,7 @@
 						<XamuIconFa name="google" brand :size="20" />
 						<span>Inicia sesión con Google</span>
 					</XamuActionButton>
-					<p class="">Usa tu cuenta UNAL para acceder</p>
+					<p class="--txtSize-xs --txtAlign-center">Usa tu cuenta UNAL para acceder</p>
 				</form>
 			</XamuLoaderContent>
 		</section>

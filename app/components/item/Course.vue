@@ -6,7 +6,7 @@
 		:to="`/cursos/${getDocumentId(course.id)}`"
 		button
 	>
-		<p class="--txtWrap --txtAlign-left" :title="course.name">{{ course.name }}.</p>
+		<p class="--txtWrap --txtAlign-left" :title="course.name">{{ courseName }}.</p>
 		<div class="flx --flxColumn --flx-start-stretch --gap-5">
 			<div
 				class="txt --txtSize-xs --txtWrap --txtWeight-regular --txtAlign-left --gap-5 --flx"
@@ -21,8 +21,8 @@
 					</span>
 					<span v-else title="Cupos disponibles">?? cupos</span>
 				</p>
-				<p v-if="course.faculties?.length" title="Facultades">
-					{{ course.faculties.join(", ") }}.
+				<p v-if="course.faculties?.length" :title="course.faculties.join(', ')">
+					{{ course.faculties.slice(0, 2).join(", ") }}...
 				</p>
 				<p v-if="course.typologies?.length" title="Tipologías">
 					{{ course.typologies.join(", ") }}.
@@ -47,7 +47,17 @@
 	 * @component <CourseItem />
 	 */
 
-	defineProps<{ course: Course }>();
+	const props = defineProps<{ course: Course }>();
+
+	const courseName = computed(() => {
+		const name = (props.course.name || "").replaceAll(".", "");
+
+		if (name.length > 55) {
+			return name.slice(0, 55) + "..";
+		}
+
+		return name;
+	});
 </script>
 
 <style scoped lang="scss">
