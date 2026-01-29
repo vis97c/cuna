@@ -127,12 +127,10 @@ export default defineNuxtConfig({
 		},
 		readInstanceCollection: (collectionId: string, { currentAuth }: H3Context) => {
 			/** Freely listable collections */
-			const listableCollections = [];
+			const listableCollections = ["courses"];
 
 			// Auth required
 			if (currentAuth) {
-				listableCollections.push("courses");
-
 				// Auth, Allow listing if admin or above
 				if (currentAuth.role <= -1) listableCollections.push("logs");
 			}
