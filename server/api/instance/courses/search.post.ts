@@ -111,7 +111,7 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 
 		// Level, place, faculty and program are required
 		if (!level || !place || !faculty || !program) {
-			throw createError({ statusCode: 400, statusMessage: "Missing parameters" });
+			throw createError({ statusCode: 400, statusMessage: "Missing search parameters" });
 		}
 
 		debugFirebaseServer(event, "api:courses:search", {

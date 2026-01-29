@@ -89,7 +89,6 @@
 								</div>
 							</div>
 							<div
-								v-if="!isCodeSearch"
 								class="flx --flxRow-wrap --flx-start-center --gap-5 --txtSize-xs --width-100"
 							>
 								<div class="flx --flxColumn --flx-start --flx --gap-5">
@@ -123,6 +122,7 @@
 										class="--width-180 --minWidth-100"
 										:options="typologies"
 										:size="eSizes.XS"
+										:disabled="isCodeSearch"
 									/>
 								</div>
 							</div>
@@ -223,7 +223,7 @@
 	import type {
 		CourseValues,
 		CourseValuesWithCode,
-		CourseValuesWithProgram,
+		CourseValuesWithName,
 		PartialCourseValues,
 	} from "~/utils/types/values";
 
@@ -274,18 +274,18 @@
 		const payload: PartialCourseValues = {
 			level: selectedLevel.value,
 			place: selectedPlace.value,
+			faculty: selectedFaculty.value,
+			program: selectedProgram.value,
 		};
 
 		const searchValue = deburr((search.value || "").trim().toLowerCase());
 
 		if (isCodeSearch.value) return <CourseValuesWithCode>{ ...payload, code: searchValue };
 
-		return <CourseValuesWithProgram>{
+		return <CourseValuesWithName>{
 			...payload,
 			typology: selectedTypology.value,
 			name: searchValue,
-			faculty: selectedFaculty.value,
-			program: selectedProgram.value,
 		};
 	});
 

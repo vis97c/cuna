@@ -68,7 +68,7 @@
 	);
 
 	function hydrateNode(newNote: Note | null, _errors?: unknown) {
-		if (!newNote) return;
+		if (!newNote?.id) return;
 
 		note.value = { ...note.value, ...newNote };
 	}
@@ -83,7 +83,7 @@
 				// Update meta
 				route.meta.title = newNote?.name || "Nota";
 
-				if (import.meta.server || !$clientFirestore) return;
+				if (import.meta.server || !$clientFirestore || !USER.path) return;
 
 				// Get note vote
 				const id = `${newNote.id}/votes/${getDocumentId(USER.path)}`;

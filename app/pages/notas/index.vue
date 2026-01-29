@@ -103,7 +103,7 @@
 						v-slot="{ content }"
 						:page="notesPage"
 						url="api:instance:notes"
-						:defaults="{ page: true, personal }"
+						:defaults="{ page: true, personal: USER.token && personal }"
 						no-content-message="No hay notas disponibles, puedes crear una."
 						label="Cargando notas..."
 						class="flx --flxColumn --flx-start-center --maxWidth-770 --width-100 --gap-50"

@@ -17,12 +17,12 @@ export interface PartialCourseValues {
 }
 
 export type CourseValuesWithCode = PartialCourseValues & { code: string };
-export type CourseValuesWithProgram = PartialCourseValues & { program: uSIAProgram };
+export type CourseValuesWithName = PartialCourseValues & { name: string };
 
 /**
- * Code or Program
+ * Code or Name
  */
-export type CourseValues = CourseValuesWithCode | CourseValuesWithProgram;
+export type CourseValues = CourseValuesWithCode | CourseValuesWithName;
 
 export interface InstanceValues {
 	description?: string;
