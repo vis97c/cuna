@@ -189,8 +189,16 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 			}
 		} else return null;
 
-		// Check if already scraped. Omit if preindexed
-		if (currentAuth && currentInstanceRef && !config.preindexedSearch?.includes(place)) {
+		const now = new Date();
+		const siaMaintenanceTillAt = new Date((config.siaMaintenanceTillAt as Date) || now);
+
+		// Check if already scraped. Omit if preindexed or SIA is under maintenance
+		if (
+			currentAuth &&
+			currentInstanceRef &&
+			now > siaMaintenanceTillAt &&
+			!config.preindexedSearch?.includes(place)
+		) {
 			const storage = useStorage("cache");
 			const cacheValues = [level, place, faculty, program, typology];
 			const cacheHash = createHash("sha256").update(cacheValues.join(",")).digest("hex");

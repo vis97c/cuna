@@ -116,7 +116,7 @@
 					:refresh="refreshAll"
 					:content="!!groupsData.filtered.length"
 					:loading="groupsPending || groupsScrapedPending"
-					:errors="groupsError || (USER.token && !groupsScraped)"
+					:errors="groupsError || (USER.token && !CUNA.SIAMaintenance && !groupsScraped)"
 					:el="ClientOnly"
 					label="Cargando grupos desde el SIA..."
 					no-content-message="No encontramos grupos programados que coincidan"
@@ -288,7 +288,7 @@
 	} = useAsyncData<boolean>(
 		`${courseGroupsKey.value}:scraped`,
 		async () => {
-			if (!USER.token) return false;
+			if (!USER.token || CUNA.SIAMaintenance) return false;
 
 			if (!courseId.value || !selectedFaculty.value || !selectedProgram.value) {
 				throw useCreateError("Scraping missing faculty or program", 400);

@@ -32,7 +32,13 @@ export async function scrapeCoursesHandle(
 				}
 			});
 
-			await page.waitForSelector(useHTMLElementId(eHTMLElementIds.LEVEL), { visible: true });
+			try {
+				await page.waitForSelector(useHTMLElementId(eHTMLElementIds.LEVEL), {
+					visible: true,
+				});
+			} catch (error) {
+				throw reject("SIA is down or under maintenance");
+			}
 
 			// Select level
 			await page.click(useHTMLElementId(eHTMLElementIds.LEVEL));

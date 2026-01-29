@@ -123,6 +123,12 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			return "Ok";
 		}
 
+		const now = new Date();
+		const siaMaintenanceTillAt = new Date((config.siaMaintenanceTillAt as Date) || now);
+
+		// Check if SIA is under maintenance
+		if (now < siaMaintenanceTillAt) return false;
+
 		// Get groups from active academic period
 		const courseRef = currentInstanceRef.collection("courses").doc(courseId);
 
