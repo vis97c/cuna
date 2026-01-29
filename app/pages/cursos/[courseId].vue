@@ -146,7 +146,10 @@
 					/>
 				</XamuLoaderContent>
 				<div class="txt --txtAlign-center --txtSize-xs --txtColor-dark5 --minWidth-100">
-					<p v-if="USER.token">¿No ves tu programa? Intentalo desde el buscador.</p>
+					<p v-if="USER.token">
+						¿No ves cupos? Inténtalo desde otro programa, algunos cursos no mostraran
+						cupos si no pertenecen o son opcionales para tu programa.
+					</p>
 					<p v-else>Inicia sesión para obtener cupos frescos.</p>
 				</div>
 			</XamuLoaderContent>
@@ -278,7 +281,11 @@
 	);
 
 	// Scrape groups but allow showing existing groups
-	const { data: groupsScraped, pending: groupsScrapedPending } = useAsyncData<boolean>(
+	const {
+		data: groupsScraped,
+		pending: groupsScrapedPending,
+		refresh: refreshGroupsScraped,
+	} = useAsyncData<boolean>(
 		`${courseGroupsKey.value}:scraped`,
 		async () => {
 			if (!USER.token) return false;
@@ -357,6 +364,7 @@
 	function refreshAll() {
 		refreshCourse();
 		refreshGroups();
+		refreshGroupsScraped();
 	}
 
 	const removeCourse = debounce(async () => {

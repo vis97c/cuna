@@ -189,8 +189,8 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 			}
 		} else return null;
 
-		// Check if already scraped
-		if (currentAuth && currentInstanceRef) {
+		// Check if already scraped. Omit if preindexed
+		if (currentAuth && currentInstanceRef && !config.preindexedSearch?.includes(place)) {
 			const storage = useStorage("cache");
 			const cacheValues = [level, place, faculty, program, typology];
 			const cacheHash = createHash("sha256").update(cacheValues.join(",")).digest("hex");
@@ -198,7 +198,7 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 			const cacheDuration = config.coursesScrapeRate ?? 1440;
 
 			// Get cached item, do not await
-			storage.getItem(cacheKey).then((cachedLinks) => {
+			storage.getItem(cacheKey).then(async (cachedLinks) => {
 				if (cachedLinks) return;
 
 				const triggerCoursesScrape = makeTriggerCoursesScrape(cacheDuration);

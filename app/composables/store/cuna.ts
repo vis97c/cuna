@@ -27,21 +27,7 @@ export const useCunaStore = defineStore("cuna", () => {
 
 		if (!till) return false;
 
-		return till > new Date();
-	});
-	const ExplorerV1Maintenance = computed(() => {
-		const till = config.value.explorerV1MaintenanceTillAt;
-
-		if (!till) return false;
-
-		return till > new Date();
-	});
-	const ExplorerV2Maintenance = computed(() => {
-		const till = config.value.explorerV2MaintenanceTillAt;
-
-		if (!till) return false;
-
-		return till > new Date();
+		return new Date(till) > new Date();
 	});
 
 	// Actions
@@ -64,7 +50,5 @@ export const useCunaStore = defineStore("cuna", () => {
 		config,
 		maintenance,
 		SIAMaintenance,
-		ExplorerV1Maintenance,
-		ExplorerV2Maintenance,
 	};
 });

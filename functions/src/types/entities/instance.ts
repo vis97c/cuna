@@ -125,6 +125,11 @@ export interface ExtendedInstanceDataConfig extends InstanceDataConfig, OldCunaC
 	 * @example https://status.search.google.com
 	 */
 	pingUrl?: string;
+	/**
+	 * Bypass indexing of programs during search for given places
+	 * @example [eSIAPlace.BOGOTÁ]
+	 */
+	preindexedSearch?: eSIAPlace[];
 }
 
 /**
