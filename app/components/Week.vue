@@ -59,24 +59,18 @@
 									<div
 										class="flx --flxColumn --flx-start-stretch --gap-5 --minHeight-100 --bgColor-light"
 									>
-										<XamuBaseBox
+										<ItemWeek
 											v-for="group in schedule.groups"
+											v-bind="{
+												group,
+												theme: group.theme,
+												duration: group.duration,
+												highlight:
+													!!highlight && highlight !== group.courseCode,
+												title: `${getHour(schedule.startsAt)} a ${getHour(schedule.startsAt + group.duration)}`,
+											}"
 											:key="group.name"
-											:theme="group.theme"
-											:el="XamuBaseAction"
-											class="x-class --flx-center --flx --p-5 --gap-5 --txtSize-xs"
-											:disabled="highlight && highlight !== group.courseCode"
-											:to="`/cursos/${getCourseId(group)}`"
-											:title="`${getHour(schedule.startsAt)} a ${getHour(schedule.startsAt + group.duration)}`"
-											button
-										>
-											<span class="--txtWrap --txtWeight --txtAlign-center">
-												{{ group.courseName }}
-											</span>
-											<span class="--txtAlign-center">
-												{{ getShortName(group.name) }}
-											</span>
-										</XamuBaseBox>
+										/>
 									</div>
 								</li>
 							</ul>
@@ -90,8 +84,6 @@
 
 <script setup lang="ts">
 	import { eColors, eThemeColors } from "@open-xamu-co/ui-common-enums";
-
-	import { XamuBaseAction } from "#components";
 
 	import type { Group } from "~/utils/types";
 
@@ -166,26 +158,11 @@
 
 		return newHour + ampm;
 	}
-
-	function getCourseId(group: Group) {
-		const [, , , courseId] = group.id?.split("/") || [];
-
-		return courseId;
-	}
-
-	function getShortName(name?: string) {
-		const [shortName] = name?.split("-") || [];
-
-		return shortName.trim();
-	}
 </script>
 
 <style lang="scss" scoped>
 	@media only screen {
 		@layer presets {
-			.x-class {
-				border-radius: 0.5rem;
-			}
 			.x-scroll {
 				max-height: 6rem;
 				border-radius: 0.5rem;

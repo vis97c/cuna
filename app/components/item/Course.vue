@@ -52,9 +52,7 @@
 	const courseName = computed(() => {
 		const name = (props.course.name || "").replaceAll(".", "");
 
-		if (name.length > 55) {
-			return name.slice(0, 55) + "..";
-		}
+		if (name.length > 55) return name.slice(0, 55) + "..";
 
 		return name;
 	});

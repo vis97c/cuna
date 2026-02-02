@@ -117,7 +117,13 @@
 					:refresh="refreshAll"
 					:content="!!groupsData.filtered.length"
 					:loading="groupsPending || groupsScrapedPending"
-					:errors="groupsError || (USER.token && !CUNA.SIAMaintenance && !groupsScraped)"
+					:errors="
+						groupsError ||
+						(!groupsData.filtered.length &&
+							USER.token &&
+							!CUNA.SIAMaintenance &&
+							!groupsScraped)
+					"
 					:el="ClientOnly"
 					label="Cargando grupos desde el SIA..."
 					no-content-message="No encontramos grupos programados que coincidan"
