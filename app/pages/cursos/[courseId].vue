@@ -113,6 +113,7 @@
 					</div>
 				</div>
 				<XamuLoaderContent
+					v-if="groupsData.filtered.length || groupsPending || groupsScrapedPending"
 					:refresh="refreshAll"
 					:content="!!groupsData.filtered.length"
 					:loading="groupsPending || groupsScrapedPending"
@@ -145,6 +146,10 @@
 						:refresh="refreshAll"
 					/>
 				</XamuLoaderContent>
+				<XamuBoxMessage
+					v-else
+					text="No hay grupos que coincidan con tus filtros, prueba con otra facultad."
+				/>
 				<div class="txt --txtAlign-center --txtSize-xs --txtColor-dark5 --minWidth-100">
 					<p v-if="USER.token">
 						¿No ves cupos? Inténtalo desde otro programa, algunos cursos no mostraran

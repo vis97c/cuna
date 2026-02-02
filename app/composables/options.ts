@@ -99,13 +99,6 @@ export function useCourseProgramOptions(
 	const selectedFaculty = faculty && isRef(faculty) ? faculty : ref(faculty);
 	const selectedProgram = program && isRef(program) ? program : ref(program);
 
-	// Get initial faculty from search context if valid
-	// const defaultFaculty = computed<uSIAFaculty | undefined>(() => {
-	// 	if (!course.value?.faculties?.includes(USER.lastFacultySearch)) return;
-
-	// 	return USER.lastFacultySearch;
-	// });
-
 	// static
 	const levels = toOptions(eSIALevel);
 	const places = toOptions(eSIAPlace);
@@ -291,6 +284,7 @@ export function useCourseProgramOptions(
 		([newFaculties = []]) => {
 			// Reset for each course
 			if (noUndef) {
+				// Indexed course faculties
 				const courseFaculties: iSelectOption[] = [];
 
 				// Nothing selected yet, map valid options
@@ -307,7 +301,8 @@ export function useCourseProgramOptions(
 
 				// Preselect with indexed data
 				const [newDefault] = newFaculties;
-				const [preferedDefault = newDefault] = courseFaculties;
+				const [, , faculty] = course?.value?.scrapedWith || [];
+				const [preferedDefault = { value: faculty || newDefault.value }] = courseFaculties;
 
 				if (courseFaculties.find(({ value }) => value === USER.lastFacultySearch)) {
 					selectedFaculty.value = <uSIAFaculty>USER.lastFacultySearch;
@@ -343,7 +338,8 @@ export function useCourseProgramOptions(
 
 				// Preselect with indexed data
 				const [newDefault] = newPrograms;
-				const [preferedDefault = newDefault] = coursePrograms;
+				const [, , , program] = course?.value?.scrapedWith || [];
+				const [preferedDefault = { value: program || newDefault.value }] = coursePrograms;
 
 				if (coursePrograms.find(({ value }) => value === USER.lastProgramSearch)) {
 					selectedProgram.value = <uSIAProgram>USER.lastProgramSearch;

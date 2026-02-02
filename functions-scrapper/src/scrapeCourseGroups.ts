@@ -171,7 +171,13 @@ export const scrapeCourseGroups = region("us-east1")
 
 				const snapshot = await courseRef.get();
 				const course = snapshot.data();
-				const { name: courseName, code: courseCode } = course || {};
+				const {
+					name: courseName,
+					code: courseCode,
+					scrapedWith,
+					place,
+					level,
+				} = course || {};
 
 				if (!course) throw new Error("Course not found");
 
@@ -200,7 +206,19 @@ export const scrapeCourseGroups = region("us-east1")
 					programs: FieldValue.arrayUnion(program),
 					faculties: FieldValue.arrayUnion(faculty),
 					typologies: FieldValue.arrayUnion(sampleLink.typology),
+					scrapedWith,
 				};
+
+				// Add valid scrapping data
+				if (place && level) {
+					newCourseData.scrapedWith = [
+						level,
+						place,
+						faculty,
+						program,
+						sampleLink.typology,
+					];
+				}
 
 				// Update course data, do not await
 				courseRef?.update(newCourseData);
