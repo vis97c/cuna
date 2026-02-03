@@ -1,11 +1,10 @@
 # Deploy Firebase Functions
 # See: https://coffey.codes/articles/setting-up-ci-cd-for-firebase-functions-using-github-actions
 
-name: Deploy Firebase Functions
+name: "Deploy Firebase Functions"
 on:
     push:
-        branches:
-            - master
+        branches: [master]
         paths:
             - "functions/**"
             - "functions-scrapper/**"
@@ -13,7 +12,7 @@ on:
 
 jobs:
     build_and_deploy:
-        name: Build and Deploy
+        name: "Build and Deploy"
         runs-on: ubuntu-latest
         steps:
             - name: Checkout Repo
@@ -24,15 +23,15 @@ jobs:
               with:
                   node-version: "20"
 
-            - name: Setup yarn
+            - name: "Setup yarn"
               run: |
                   corepack enable
                   yarn set version 4.12.0
 
-            - name: Install Dependencies
+            - name: "Install Dependencies"
               run: yarn install
 
-            - name: Create env file
+            - name: "Create env file"
               run: |
                   touch functions/.env
                   echo CSURF_SECRET=${{ secrets.CSURF_SECRET }} >> functions/.env
@@ -57,10 +56,10 @@ jobs:
                   echo CF_SCRAPE_COURSE_GROUPS_URL=${{ secrets.CF_SCRAPE_COURSE_GROUPS_URL }} >> functions/.env
                   cat functions/.env
 
-            - name: Copy env file
+            - name: "Copy env file"
               run: cp functions/.env functions-scrapper/.env
 
-            - name: Deploy to Firebase
+            - name: "Deploy to Firebase"
               uses: w9jds/firebase-action@master
               with:
                   args: deploy --only functions
