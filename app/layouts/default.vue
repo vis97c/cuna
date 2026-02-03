@@ -6,12 +6,13 @@
 				class="x-main-banner flx --flxColumn --flx-center --gap-0 --width-100 --bgColor-secondary"
 			>
 				<div
-					class="holder flx --flx-center --flx --txtColor-light --txtSize-xs --txtSize-sm:md --pX"
+					class="flx --flx-center --flx --txtColor-light --txtSize-xs --txtSize-sm:md --pX --maxWidth-100"
 				>
 					<XamuActionLink
 						v-if="INSTANCE.current?.banner?.url"
 						:to="INSTANCE.current.banner.url"
 						:theme="eColors.LIGHT"
+						class="--display-block"
 					>
 						<span class="--txtWrap">{{ INSTANCE.current.banner.message }}</span>
 					</XamuActionLink>
