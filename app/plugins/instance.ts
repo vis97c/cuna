@@ -56,7 +56,10 @@ export default defineNuxtPlugin({
 				};
 
 				// Get current instance, prefer $fetch
-				instance = await $fetch<ExtendedInstance>("/api/instance", { headers });
+				instance = await $fetch<ExtendedInstance>("/api/instance", {
+					credentials: "omit",
+					headers,
+				});
 			}
 
 			// No instance found, launch error, do not log

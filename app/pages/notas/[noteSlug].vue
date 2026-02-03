@@ -60,6 +60,7 @@
 
 			return useQuery(noteApiPath, {
 				method: "POST",
+				credentials: "omit",
 				headers: { "Cache-Control": "no-store" },
 				cache: "no-store",
 			});

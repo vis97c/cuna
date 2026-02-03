@@ -124,6 +124,7 @@
 	const logsPage: iGetPage<InstanceLog> = (pagination) => {
 		return useQuery<iPage<InstanceLog> | undefined>("/api/logs", {
 			query: pagination,
+			credentials: "omit",
 			headers: { "Cache-Control": "no-store" },
 			cache: "no-store",
 		});
@@ -131,6 +132,7 @@
 	const instanceLogsPage: iGetPage<InstanceLog> = (pagination) => {
 		return useQuery<iPage<InstanceLog> | undefined>("/api/instance/logs", {
 			query: pagination,
+			credentials: "omit",
 			headers: { "Cache-Control": "no-store" },
 			cache: "no-store",
 		});

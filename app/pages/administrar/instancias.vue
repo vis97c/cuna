@@ -62,6 +62,7 @@
 	const instancesPage: iGetPage<ExtendedInstance> = (pagination) => {
 		return useQuery<iPage<ExtendedInstance> | undefined>("/api/all/instances", {
 			query: pagination,
+			credentials: "omit",
 			headers: { "Cache-Control": "no-store" },
 			cache: "no-store",
 		});

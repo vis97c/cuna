@@ -117,7 +117,7 @@
 	});
 	const clearInstance = debounce(async function () {
 		// Remove cache
-		await useQuery("/api/instance", { method: "DELETE" });
+		await useQuery("/api/instance", { method: "DELETE", credentials: "omit" });
 
 		INSTANCE.unsetInstance();
 		location.reload();

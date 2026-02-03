@@ -30,6 +30,7 @@ function makeTriggerCourseGroupsScrape(maxAgeMinutes: number) {
 
 			const response = await $fetch(cfScrapeCourseGroupsUrl, {
 				method: "POST",
+				credentials: "omit",
 				headers: { "Content-Type": "application/json" },
 				body: { coursePath: course.id, uid: currentAuth?.uid, payload },
 			});

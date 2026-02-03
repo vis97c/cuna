@@ -11,6 +11,7 @@ export default defineNuxtRouteMiddleware(async ({ params }) => {
 
 	await useQuery<Course>(`/api/instance/all/courses/${courseId}`, {
 		method: "HEAD",
+		credentials: "omit",
 		onResponse({ response }) {
 			statusCode = response.status;
 		},

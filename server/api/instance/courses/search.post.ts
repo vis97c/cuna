@@ -40,6 +40,7 @@ function makeTriggerCoursesScrape(maxAgeMinutes: number) {
 
 			const response = await $fetch(cfScrapeCoursesUrl, {
 				method: "POST",
+				credentials: "omit",
 				headers: { "Content-Type": "application/json" },
 				body: { instancePath: currentInstance?.id, payload },
 			});

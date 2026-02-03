@@ -297,6 +297,7 @@
 			"/api/instance/courses/search",
 			{
 				method: "POST",
+				credentials: "omit",
 				query: pagination,
 				headers: { "Cache-Control": "no-store" },
 				cache: "no-store",
