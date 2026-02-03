@@ -51,6 +51,7 @@
 	const proxiesPage: iGetPage<Proxy> = (pagination) => {
 		return useQuery<iPage<Proxy> | undefined>("/api/all/proxies", {
 			query: pagination,
+			credentials: "omit",
 			headers: { "Cache-Control": "no-store" },
 			cache: "no-store",
 		});

@@ -57,6 +57,7 @@
 	const offendersPage: iGetPage<Offender> = (pagination) => {
 		return useQuery<iPage<Offender> | undefined>("/api/all/offenders", {
 			query: pagination,
+			credentials: "omit",
 			headers: { "Cache-Control": "no-store" },
 			cache: "no-store",
 		});

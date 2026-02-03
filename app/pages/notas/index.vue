@@ -188,8 +188,9 @@
 
 	const notesPage: iGetPage<Note> = (pagination) => {
 		return useQuery<iPage<Note> | undefined>("/api/instance/notes", {
-			method: "POST",
 			query: pagination,
+			method: "POST",
+			credentials: "omit",
 			headers: { "Cache-Control": "no-store" },
 			cache: "no-store",
 		});

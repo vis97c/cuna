@@ -95,8 +95,9 @@
 
 	const coursesPage: iGetPage<Course> = (pagination) => {
 		return useQuery<iPage<Course> | undefined>("/api/instance/courses", {
-			method: "POST",
 			query: pagination,
+			method: "POST",
+			credentials: "omit",
 			headers: { "Cache-Control": "no-store" },
 			cache: "no-store",
 		});

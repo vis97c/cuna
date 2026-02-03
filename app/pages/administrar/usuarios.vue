@@ -144,6 +144,7 @@
 	const membersPage: iGetPage<ExtendedInstanceMember> = (pagination) => {
 		return useQuery<iPage<ExtendedInstanceMember> | undefined>("/api/instance/members", {
 			query: pagination,
+			credentials: "omit",
 			headers: { "Cache-Control": "no-store" },
 			cache: "no-store",
 		});

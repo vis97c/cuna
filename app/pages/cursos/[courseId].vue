@@ -240,6 +240,7 @@
 			const courseApiPath = `/api/instance/all/courses/${courseId.value}`;
 
 			return useQuery<Course>(courseApiPath, {
+				credentials: "omit",
 				headers: { "Cache-Control": "no-store" },
 				cache: "no-store",
 			});
@@ -284,6 +285,7 @@
 					level: 1, // Get teachers refs
 				},
 				method: "POST",
+				credentials: "omit",
 				headers: { "Cache-Control": "no-store" },
 				cache: "no-store",
 			});
@@ -314,6 +316,7 @@
 					typology: selectedTypology.value,
 				},
 				method: "POST",
+				credentials: "omit",
 				headers: { "Cache-Control": "no-store" },
 				cache: "no-store",
 			});
