@@ -151,10 +151,15 @@
 						// Prevent updating if values are equal
 						if (!diffValues) return { data: undefined };
 
+						const banner: InstanceBannerValues = {
+							message: diffValues.message ?? INSTANCE.current?.banner?.message ?? "",
+							url: diffValues.url ?? INSTANCE.current?.banner?.url ?? "",
+						};
+
 						// update instance
 						const [data] = await useDocumentUpdate<ExtendedInstanceRef>(
 							{ id: `instances/${getDocumentId(INSTANCE.current?.id)}` },
-							{ banner: diffValues }
+							{ banner }
 						);
 						const [updatedInstance] = Array.isArray(data) ? data : [data];
 
@@ -185,7 +190,13 @@
 				});
 				useAppLogger("pages:administrar:setBanner", errors);
 			}
-		} else Swal.fire({ icon: "success" });
+		} else {
+			Swal.fire({
+				icon: "success",
+				title: "Banner actualizado",
+				text: "El banner se actualizó correctamente",
+			});
+		}
 
 		loading.value = false;
 	});

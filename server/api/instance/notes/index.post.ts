@@ -90,8 +90,15 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 
 			// Decode bodies
 			for (let i = 0; i < page.edges.length; i++) {
+				// Omit notes from other instances
+				if (!page.edges[i].node.id.startsWith(currentInstanceRef.path)) {
+					page.edges.splice(i, 1);
+
+					continue;
+				}
+
 				try {
-					// Group collection could fail attempting to decrypt notes from other instances
+					// Decrypt body
 					page.edges[i].node.body = decrypt(
 						page.edges[i].node.body,
 						currentInstanceMillis
@@ -112,8 +119,15 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 
 		// Decode bodies
 		for (let i = 0; i < edges.length; i++) {
+			// Omit notes from other instances
+			if (!edges[i].node.id.startsWith(currentInstanceRef.path)) {
+				edges.splice(i, 1);
+
+				continue;
+			}
+
 			try {
-				// Group collection could fail attempting to decrypt notes from other instances
+				// Decrypt body
 				edges[i].node.body = decrypt(edges[i].node.body, currentInstanceMillis);
 			} catch (err) {
 				// Remove the edge if body can't be decrypted
