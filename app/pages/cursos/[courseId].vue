@@ -116,13 +116,12 @@
 					v-if="groupsData.filtered.length || groupsPending || groupsScrapedPending"
 					:refresh="refreshAll"
 					:content="!!groupsData.filtered.length"
-					:loading="groupsPending || groupsScrapedPending"
+					:loading="
+						groupsPending || (!groupsData.filtered.length && groupsScrapedPending)
+					"
 					:errors="
 						groupsError ||
-						(!groupsData.filtered.length &&
-							USER.token &&
-							!CUNA.SIAMaintenance &&
-							!groupsScraped)
+						(!groupsData.filtered.length && USER.token && !CUNA.SIAMaintenance)
 					"
 					:el="ClientOnly"
 					label="Cargando grupos desde el SIA..."
@@ -150,7 +149,20 @@
 						}"
 						:nodes="groupsData.filtered"
 						:refresh="refreshAll"
-					/>
+					>
+						<template v-if="USER.token" #headActions>
+							<XamuActionButton
+								:disabled="groupsScrapedPending || CUNA.SIAMaintenance"
+								@click="refreshGroupsScraped"
+							>
+								<span v-if="!groupsScrapedPending">Actualizar desde el SIA</span>
+								<template v-else>
+									<span>Actualizando desde el SIA</span>
+									<XamuLoader class="--opacity-03" />
+								</template>
+							</XamuActionButton>
+						</template>
+					</XamuTable>
 				</XamuLoaderContent>
 				<XamuBoxMessage
 					v-else
@@ -200,6 +212,7 @@
 
 	const estudiantesTheme = "estudiantes" as any;
 	const deactivated = ref(false);
+	const groupsScrapedPending = ref(false);
 
 	const courseId = computed(() => <string>route.params.courseId);
 	const losEstudiantesCourses = computed(() => {
@@ -276,8 +289,7 @@
 			}
 
 			const courseApiPath = `/api/instance/courses/${courseId.value}/groups`;
-
-			return useQuery(courseApiPath, {
+			const newGroups: iPageEdge<Group>[] = await useQuery(courseApiPath, {
 				query: {
 					faculty: selectedFaculty.value,
 					program: selectedProgram.value,
@@ -289,37 +301,11 @@
 				headers: { "Cache-Control": "no-store" },
 				cache: "no-store",
 			});
-		},
-		{ watch: [() => courseId.value, selectedProgram, selectedTypology], server: false }
-	);
 
-	// Scrape groups but allow showing existing groups
-	const {
-		data: groupsScraped,
-		pending: groupsScrapedPending,
-		refresh: refreshGroupsScraped,
-	} = useAsyncData<boolean>(
-		`${courseGroupsKey.value}:scraped`,
-		async () => {
-			if (!USER.token || CUNA.SIAMaintenance) return false;
+			// Trigger scrapper if missing groups, do not await
+			if (!newGroups.length) refreshGroupsScraped();
 
-			if (!courseId.value || !selectedFaculty.value || !selectedProgram.value) {
-				throw useCreateError("Scraping missing faculty or program", 400);
-			}
-
-			const courseApiPath = `/api/instance/courses/${courseId.value}/groups-scrape`;
-
-			return useQuery(courseApiPath, {
-				query: {
-					faculty: selectedFaculty.value,
-					program: selectedProgram.value,
-					typology: selectedTypology.value,
-				},
-				method: "POST",
-				credentials: "omit",
-				headers: { "Cache-Control": "no-store" },
-				cache: "no-store",
-			});
+			return newGroups;
 		},
 		{ watch: [() => courseId.value, selectedProgram, selectedTypology], server: false }
 	);
@@ -374,6 +360,36 @@
 
 		return { filtered, activity, spots };
 	});
+
+	/**
+	 * Scrape groups but allow showing existing groups
+	 */
+	async function refreshGroupsScraped() {
+		if (!USER.token || CUNA.SIAMaintenance) return false;
+
+		if (!courseId.value || !selectedFaculty.value || !selectedProgram.value) {
+			throw useCreateError("Scraping missing faculty or program", 400);
+		}
+
+		groupsScrapedPending.value = true;
+
+		const courseApiPath = `/api/instance/courses/${courseId.value}/groups-scrape`;
+		const scraped: boolean = await useQuery(courseApiPath, {
+			query: {
+				faculty: selectedFaculty.value,
+				program: selectedProgram.value,
+				typology: selectedTypology.value,
+			},
+			method: "POST",
+			credentials: "omit",
+			headers: { "Cache-Control": "no-store" },
+			cache: "no-store",
+		});
+
+		groupsScrapedPending.value = false;
+
+		return scraped;
+	}
 
 	function refreshAll() {
 		refreshCourse();
