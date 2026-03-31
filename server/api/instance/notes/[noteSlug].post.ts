@@ -66,6 +66,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			query = query.where(
 				Filter.or(
 					Filter.where("public", "==", true),
+					Filter.where("public", "==", "UNLISTED"),
 					Filter.where("createdByRef", "==", currentAuthRef)
 				)
 			);

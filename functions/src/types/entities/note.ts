@@ -15,7 +15,7 @@ export interface NoteData extends SharedData {
 	/**
 	 * Note can be shown in global feed
 	 */
-	public?: boolean;
+	public?: boolean | "UNLISTED";
 	/**
 	 * Score is hidden from users
 	 */

@@ -261,10 +261,13 @@
 		const expectedNote: Partial<NoteValues> = {
 			keywords: (props.note.keywords || []).join?.(", "),
 			body: props.note.body,
-			public: props.note.public,
+			public: 1, // True by default
 			name: props.note.name,
 			slug: props.note.slug,
 		};
+
+		if (props.note.public === "UNLISTED") expectedNote.public = 3;
+		else if (props.note.public === true) expectedNote.public = 2;
 
 		if (USER.canDevelop) {
 			expectedNote.lock = Array.isArray(props.note.lock)
@@ -281,12 +284,17 @@
 						// Prevent updating if values are equal
 						if (!diffValues) return { data: undefined };
 
-						const { keywords, ...updatedValues } = diffValues;
+						const { keywords, public: publicValue, ...updatedValues } = diffValues;
 						const updatedRef: Partial<NoteRef> = updatedValues;
 
 						if (updatedValues.slug) withSlug = true;
 						if (keywords !== undefined) {
 							updatedRef.keywords = keywords.split(",").map((k) => k.trim());
+						}
+						if (publicValue !== undefined) {
+							if (publicValue === 3) updatedRef.public = "UNLISTED";
+							else if (publicValue === 2) updatedRef.public = true;
+							else updatedRef.public = false;
 						}
 
 						// update note
