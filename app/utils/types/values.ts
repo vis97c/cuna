@@ -37,7 +37,7 @@ export interface InstanceBannerValues {
 export interface NoteValues {
 	name: string;
 	body: string;
-	public: boolean;
+	public: 1 | 2 | 3;
 	keywords?: string;
 	slug?: string;
 	lock?: boolean;

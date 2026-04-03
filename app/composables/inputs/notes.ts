@@ -1,8 +1,14 @@
-import type { tFormInput } from "@open-xamu-co/ui-common-types";
+import type { iSelectOption, tFormInput } from "@open-xamu-co/ui-common-types";
 import { FormInput } from "@open-xamu-co/ui-common-helpers";
 import { eFormType } from "@open-xamu-co/ui-common-enums";
 
 import type { Note } from "~/utils/types";
+
+export const noteVisibilityOptions: iSelectOption[] = [
+	{ alias: "Privada", value: 1 },
+	{ alias: "Publica", value: 2 },
+	{ alias: "No listada", value: 3 },
+];
 
 export function useNoteInputs(note: Note = {}): tFormInput[] {
 	const USER = useUserStore();
@@ -40,7 +46,8 @@ export function useNoteInputs(note: Note = {}): tFormInput[] {
 				name: "public",
 				title: "Nota publica",
 				placeholder: "¿Mostrar la nota a otros usuarios?",
-				type: eFormType.BOOLEAN,
+				type: eFormType.SELECT,
+				options: noteVisibilityOptions,
 			}),
 			new FormInput({
 				values: [note.slug || ""],

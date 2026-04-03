@@ -61,18 +61,11 @@
 										>
 											{{ remainingCharacters }}
 										</span>
-										<XamuActionButtonToggle
+										<XamuSelect
+											v-model="newNotePublic"
 											:disabled="!newNoteBody"
-											tag="label"
-											for="new-note-public"
-										>
-											<XamuInputToggle
-												id="new-note-public"
-												v-model="newNotePublic"
-												:size="eSizes.XS"
-												:label="newNotePublic ? 'Publico' : 'Privado'"
-											/>
-										</XamuActionButtonToggle>
+											:options="noteVisibilityOptions"
+										/>
 										<XamuActionButton
 											:disabled="!newNoteBody"
 											tooltip="Publicar nota"
@@ -138,7 +131,6 @@
 		iPage,
 		tFormInput,
 	} from "@open-xamu-co/ui-common-types";
-	import { eSizes } from "@open-xamu-co/ui-common-enums";
 	import { getDocumentId } from "@open-xamu-co/firebase-nuxt/client/resolver";
 
 	import type { Note, NoteRef, NoteValues, NoteVoteRef } from "~/utils/types";
@@ -168,7 +160,7 @@
 	const invalidNote = ref<iInvalidInput[]>([]);
 	const noteInputs = ref<tFormInput[]>(useNoteInputs());
 	const newNoteBody = ref<string>("");
-	const newNotePublic = ref<boolean>(true);
+	const newNotePublic = ref<1 | 2 | 3>(1);
 
 	// Content refs
 	const emittedRefresh = ref<() => void>();
@@ -206,6 +198,11 @@
 			await getResponse<iNodeFnResponseStream<Note>[0], NoteValues>(
 				async ({ name }) => {
 					try {
+						let publicValue: boolean | "UNLISTED" = true;
+
+						if (newNotePublic.value === 3) publicValue = "UNLISTED";
+						else if (newNotePublic.value === 2) publicValue = false;
+
 						// create note
 						const [data] = await useDocumentCreate<NoteRef, Note>(
 							`${USER.path}/notes`,
@@ -215,7 +212,7 @@
 									0,
 									CUNA.config?.notesCharactersLimit ?? 4096
 								),
-								public: newNotePublic.value,
+								public: publicValue,
 								keywords: name.trim().split(" "),
 							}
 						);
@@ -276,7 +273,7 @@
 
 					// Reset form
 					newNoteBody.value = "";
-					newNotePublic.value = true;
+					newNotePublic.value = 1;
 					closeModal?.();
 				},
 			});
