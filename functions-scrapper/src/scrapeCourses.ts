@@ -8,13 +8,13 @@ import {
 } from "firebase-admin/firestore";
 
 import type { tLogger } from "@open-xamu-co/ui-common-types";
-import { makeFunctionsLogger } from "@open-xamu-co/firebase-nuxt/functions/logger";
-import { getFirebase } from "@open-xamu-co/firebase-nuxt/functions/firebase";
 
 import { SIATypologies, type CourseLink, type iCoursesPayload } from "./types/scrapper.js";
 import { getPuppeteer, retryPuppeteerOperation } from "./utils/puppeteer.js";
 import { scrapeCoursesHandle, scrapeCoursesWithTypologyHandle } from "./utils/courses.js";
 import { Cyrb53 } from "./utils/encode.js";
+import { getFirebase } from "./utils/firebase.js";
+import { makeScrapperLogger } from "./utils/logger.js";
 
 /**
  * Get courses from SIA
@@ -153,7 +153,7 @@ export const scrapeCourses = region("us-east1")
 	})
 	.https.onRequest(async (req, res): Promise<void> => {
 		const { firebaseFirestore } = getFirebase("functions:scrapeCourses");
-		const globalLogger = makeFunctionsLogger(firebaseFirestore);
+		const globalLogger = makeScrapperLogger(firebaseFirestore);
 
 		try {
 			const scrapedAt = new Date();
@@ -174,7 +174,7 @@ export const scrapeCourses = region("us-east1")
 
 			const instanceData = instanceSnapshot.data();
 
-			const logger = makeFunctionsLogger(firebaseFirestore, instanceRef);
+			const logger = makeScrapperLogger(firebaseFirestore, instanceRef);
 
 			try {
 				const config = instanceData?.config || {};

@@ -22,12 +22,12 @@
 					<template #fallback>Cargando notas...</template>
 					<XamuPaginationContent
 						v-slot="{ content }"
+						class="flx --flxColumn --flx-start-center --gap-30 --width-100 --maxWidth-770"
 						:page="coursesPage"
 						url="api:instance:all:courses"
 						:defaults="{ page: true, ...values }"
 						no-content-message="No hay cursos guardados, puedes usar el buscador."
 						label="Cargando cursos guardados..."
-						class="flx --flxColumn --flx-start-center --gap-30 --width-100 --maxWidth-770"
 						hide-controls="single"
 						with-route
 						client
@@ -72,18 +72,18 @@
 
 	definePageMeta({ title: "Cursos", middleware: ["enabled"] });
 
-	const USER = useUserStore();
+	const SESSION = useSessionStore();
 
 	const selectedLevel = computed({
-		get: () => USER.level,
+		get: () => SESSION.level,
 		set: (value) => {
-			USER.setLevel(value);
+			SESSION.setLevel(value);
 		},
 	});
 	const selectedPlace = computed({
-		get: () => USER.place,
+		get: () => SESSION.place,
 		set: (value) => {
-			USER.setPlace(value);
+			SESSION.setPlace(value);
 		},
 	});
 	const { selectedTypology, typologies } = useCourseTypeOptions();
@@ -94,12 +94,12 @@
 	}));
 
 	const coursesPage: iGetPage<Course> = (pagination) => {
-		return useQuery<iPage<Course> | undefined>("/api/instance/courses", {
-			query: pagination,
+		return customCsrfFetch<iPage<Course> | undefined>("/api/instance/courses", {
 			method: "POST",
-			credentials: "omit",
-			headers: { "Cache-Control": "no-store" },
-			cache: "no-store",
+			query: pagination,
+			// credentials: "omit",
+			// headers: { "Cache-Control": "no-store" },
+			// cache: "no-store",
 		});
 	};
 </script>

@@ -1,13 +1,13 @@
 import type { Timestamp } from "firebase-admin/firestore";
 
-import type { SharedData } from "@open-xamu-co/firebase-nuxt/functions";
+import type { AuditData } from "./member.js";
 
 /**
  * Note
  *
  * @collection instance/notes
  */
-export interface NoteData extends SharedData {
+export interface NoteData extends AuditData {
 	name?: string;
 	/** Markdown body */
 	body?: string;
@@ -46,7 +46,7 @@ export interface NoteData extends SharedData {
  *
  * @collection instance/{instanceId}/notes/{noteId}/votes/{userId}
  */
-export interface NoteVoteData extends SharedData {
+export interface NoteVoteData extends AuditData {
 	/**
 	 * Note vote
 	 */

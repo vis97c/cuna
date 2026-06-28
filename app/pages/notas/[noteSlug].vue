@@ -26,8 +26,6 @@
 <script setup lang="ts">
 	import { getDoc, doc, type DocumentReference } from "firebase/firestore";
 
-	import { getDocumentId } from "@open-xamu-co/firebase-nuxt/client/resolver";
-
 	import type { Note, NoteVoteRef } from "~/utils/types";
 
 	/**
@@ -40,7 +38,7 @@
 
 	const route = useRoute();
 	const { $clientFirestore } = useNuxtApp();
-	const USER = useUserStore();
+	const SESSION = useSessionStore();
 
 	const noteSlug = computed(() => {
 		return route.params.noteSlug ? route.params.noteSlug : "";
@@ -58,7 +56,7 @@
 
 			const noteApiPath = `/api/instance/notes/${noteSlug.value}`;
 
-			return useQuery(noteApiPath, {
+			return customFetch(noteApiPath, {
 				method: "POST",
 				credentials: "omit",
 				headers: { "Cache-Control": "no-store" },
@@ -84,10 +82,10 @@
 				// Update meta
 				route.meta.title = newNote?.name || "Nota";
 
-				if (import.meta.server || !$clientFirestore || !USER.path) return;
+				if (import.meta.server || !$clientFirestore || !SESSION.path) return;
 
 				// Get note vote
-				const id = `${newNote.id}/votes/${getDocumentId(USER.path)}`;
+				const id = `${newNote.id}/votes/${getDocumentId(SESSION.path)}`;
 				const voteRef: DocumentReference<NoteVoteRef> = doc($clientFirestore, id);
 				const voteSnapshot = await getDoc(voteRef);
 				const { vote = 0 } = voteSnapshot.data() || {};

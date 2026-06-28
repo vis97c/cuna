@@ -5,16 +5,6 @@ import {
 	type Query,
 } from "firebase-admin/firestore";
 
-import { apiLogger } from "@open-xamu-co/firebase-nuxt/server/firebase";
-import { defineConditionallyCachedEventHandler } from "@open-xamu-co/firebase-nuxt/server/cache";
-import { getBoolean } from "@open-xamu-co/firebase-nuxt/server/guards";
-import {
-	debugFirebaseServer,
-	getEdgesPage,
-	getOrderedQuery,
-	getQueryAsEdges,
-} from "@open-xamu-co/firebase-nuxt/server/firestore";
-
 import type { CourseData, GroupData } from "~~/functions/src/types/entities";
 
 import type { eSIATypology, uSIAFaculty, uSIAProgram } from "~~/functions/src/types/SIA";
@@ -59,7 +49,6 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		const faculty = <uSIAFaculty | undefined>getQueryString("faculty", params);
 		const program = <uSIAProgram | undefined>getQueryString("program", params);
 		const typology = <eSIATypology | undefined>getQueryString("typology", params);
-		const page = getBoolean(params.page);
 
 		// Faculty & program are required
 		if (!faculty || !program) {
@@ -70,7 +59,6 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			courseId,
 			program,
 			typology,
-			page,
 		});
 
 		// Bypass body for HEAD requests
@@ -101,15 +89,9 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		// Filter by typology
 		if (typology) query = query.where("typology", "==", typology);
 
-		// Order at last
-		query = getOrderedQuery(event, query);
+		const resolver = new QueryResolver(event, query);
 
-		if (page) return getEdgesPage(event, query);
-
-		// Page limit. Prevent abusive callings (>100)
-		const first = Math.min(Number(params.first) || 10, 100);
-
-		return getQueryAsEdges(event, query.limit(first));
+		return resolver.resolve();
 	} catch (err) {
 		apiLogger(event, "api:instance:courses:courseId:groups", err, {
 			courseRef: courseRef?.path,

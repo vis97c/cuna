@@ -124,23 +124,19 @@
 <script setup lang="ts">
 	import { setDoc, doc, DocumentReference } from "firebase/firestore";
 
-	import { getDocumentId } from "@open-xamu-co/firebase-nuxt/client/resolver";
 	import { eColors, eSizes } from "@open-xamu-co/ui-common-enums";
-	import type {
-		iInvalidInput,
-		iNodeFnResponseStream,
-		tFormInput,
-	} from "@open-xamu-co/ui-common-types";
+	import type { iInvalidInput, tFormInput } from "@open-xamu-co/ui-common-types";
 
 	import type {
 		Note,
-		NoteRef,
 		NoteValues,
 		NoteVote,
 		NoteVoteRef,
-		ExtendedInstanceMember,
-		ExtendedInstanceMemberRef,
+		Member,
+		MemberRef,
+		NoteInput,
 	} from "~/utils/types";
+	import type { NoteData } from "~~/functions/src/types/entities";
 
 	/**
 	 * Item de note
@@ -168,7 +164,7 @@
 		refresh?: (...args: any[]) => any;
 	}>();
 
-	const USER = useUserStore();
+	const SESSION = useSessionStore();
 	const { getResponse } = useFormInput();
 	const Swal = useSwal();
 	const route = useRoute();
@@ -183,7 +179,7 @@
 	 * The note belongs to the current user
 	 */
 	const isOwnNote = computed(() => {
-		return USER.token && props.note.id?.startsWith(USER.path);
+		return SESSION.token && props.note.id?.startsWith(SESSION.path);
 	});
 	/** Current user vote */
 	const ownVote = computed<1 | 0 | -1>({
@@ -213,12 +209,12 @@
 			if (!$clientFirestore) throw new Error("Firestore client not found");
 
 			// Vote id, user uid as vote identifier
-			const id = `${props.note.id}/votes/${getDocumentId(USER.path)}`;
+			const id = `${props.note.id}/votes/${getDocumentId(SESSION.path)}`;
 			const voteRef: DocumentReference<NoteVoteRef, NoteVote> = doc($clientFirestore, id);
-			const createdByRef: DocumentReference<
-				ExtendedInstanceMemberRef,
-				ExtendedInstanceMember
-			> = doc($clientFirestore, USER.path);
+			const createdByRef: DocumentReference<MemberRef, Member> = doc(
+				$clientFirestore,
+				SESSION.path
+			);
 
 			// Create or update vote, do not await
 			setDoc(
@@ -269,14 +265,14 @@
 		if (props.note.public === "UNLISTED") expectedNote.public = 3;
 		else if (props.note.public === true) expectedNote.public = 2;
 
-		if (USER.canDevelop) {
+		if (SESSION.canDevelop) {
 			expectedNote.lock = Array.isArray(props.note.lock)
 				? !!props.note.lock.length
 				: props.note.lock;
 		}
 
 		const { response, invalidInputs, withErrors, validationHadErrors, errors } =
-			await getResponse<iNodeFnResponseStream<Note>[0], NoteValues>(
+			await getResponse<{ id?: string }, NoteValues>(
 				async (values) => {
 					try {
 						const diffValues = getValuesDiff(values, expectedNote);
@@ -285,7 +281,7 @@
 						if (!diffValues) return { data: undefined };
 
 						const { keywords, public: publicValue, ...updatedValues } = diffValues;
-						const updatedRef: Partial<NoteRef> = updatedValues;
+						const updatedRef: Partial<NoteInput> = updatedValues;
 
 						if (updatedValues.slug) withSlug = true;
 						if (keywords !== undefined) {
@@ -298,13 +294,9 @@
 						}
 
 						// update note
-						const [data] = await useDocumentUpdate<NoteRef, Note>(
-							props.note,
-							updatedRef
-						);
-						const [updatedNote] = Array.isArray(data) ? data : [data];
+						const [data] = await useDocumentUpdate<NoteData>(props.note, updatedRef);
 
-						if (typeof updatedNote !== "object") return { errors: "Missing data" };
+						if (typeof data !== "object") return { errors: "Missing data" };
 
 						return { data };
 					} catch (errors) {
@@ -377,7 +369,7 @@
 
 	async function makeVote(vote: 1 | -1) {
 		// Auth check
-		if (!USER.token) {
+		if (!SESSION.token) {
 			const { value } = await Swal.fire({
 				icon: "warning",
 				title: "¡No estas registrado!",

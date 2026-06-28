@@ -1,5 +1,11 @@
-import type { CoursesResponse } from "./";
-import type { eSIALevel, eSIAPlace, eSIATypology, uSIAFaculty, uSIAProgram } from "./enums";
+import type { CoursesResponse } from "./index.js";
+import type {
+	eSIALevel,
+	eSIAPlace,
+	eSIATypology,
+	uSIAFaculty,
+	uSIAProgram,
+} from "./enums/index.js";
 
 /**
  * Interface representing a SIA Faculty data.

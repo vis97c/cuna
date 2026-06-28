@@ -35,8 +35,6 @@
 	</XamuBaseBox>
 </template>
 <script setup lang="ts">
-	import { getDocumentId } from "@open-xamu-co/firebase-nuxt/client/resolver";
-
 	import type { Course } from "~/utils/types";
 
 	import { XamuBaseAction } from "#components";

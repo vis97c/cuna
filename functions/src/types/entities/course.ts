@@ -1,9 +1,10 @@
 import type { DocumentReference, Timestamp } from "firebase-admin/firestore";
 
-import type { LogData, SharedData } from "@open-xamu-co/firebase-nuxt/functions";
-
-import type { eSIALevel, eSIAPlace, eSIATypology, uSIAFaculty, uSIAProgram } from "../SIA";
-import type { TeacherData } from "./teacher";
+import type { eSIALevel, eSIAPlace, eSIATypology, uSIAFaculty, uSIAProgram } from "../SIA/index.js";
+import type { TeacherData } from "./teacher.js";
+import type { LogData } from "./log.js";
+import type { SearchData } from "./base.js";
+import type { AuditData } from "./member.js";
 
 /**
  * Scraped with info
@@ -32,8 +33,7 @@ export interface CourseLogData extends LogData {
  * Why number records?
  * @see https://stackoverflow.com/a/52969138
  */
-export interface CourseData extends SharedData {
-	name?: string;
+export interface CourseData extends SearchData {
 	description?: string;
 	alternativeNames?: string[];
 	/** Used as firebase id */
@@ -49,18 +49,6 @@ export interface CourseData extends SharedData {
 	programs?: uSIAProgram[];
 	/** @automation */
 	losEstudiantesCode?: string;
-	/**
-	 * Soundex indexes, used for search
-	 * @automation @search
-	 * @example ["A160", "A162", "H200", "H230", "A162 E000"]
-	 */
-	indexes?: string[];
-	/**
-	 * Weighted indexes, used for search ranking
-	 * @automation @search
-	 * @example ["0:A160", "1:A162", "1:H200", "2:H230", "3:A162 E000"]
-	 */
-	indexesWeights?: string[];
 	/**
 	 * Array as object to be searcheable
 	 * @search
@@ -97,7 +85,7 @@ export type tWeeklySchedule = [string?, string?, string?, string?, string?, stri
  * Interface representing a SIA Group data.
  * Diferentiated by program and typology
  */
-export interface GroupData extends SharedData {
+export interface GroupData extends AuditData {
 	name?: string;
 	/** Total number of available spots. */
 	spots?: number;

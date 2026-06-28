@@ -3,9 +3,14 @@
  *
  * @middleware
  */
-export default defineNuxtRouteMiddleware(async () => {
-	const USER = useUserStore();
+export default defineNuxtRouteMiddleware(({ query }) => {
+	const SESSION = useSessionStore();
 
 	// User is authenticated
-	if (USER.token) return navigateTo("/", { redirectCode: 302 });
+	if (SESSION.token) {
+		return navigateTo(
+			{ path: "/", query: { ...query, rdr: "guest-only" } },
+			{ redirectCode: 302 }
+		);
+	}
 });

@@ -1,18 +1,7 @@
 import { Filter, type Query } from "firebase-admin/firestore";
 import { createHash } from "node:crypto";
 
-import { defineConditionallyCachedEventHandler } from "@open-xamu-co/firebase-nuxt/server/cache";
-import { apiLogger } from "@open-xamu-co/firebase-nuxt/server/firebase";
-import { getBoolean } from "@open-xamu-co/firebase-nuxt/server/guards";
-import {
-	debugFirebaseServer,
-	getEdgesPage,
-	getOrderedQuery,
-	getQueryAsEdges,
-} from "@open-xamu-co/firebase-nuxt/server/firestore";
-import { getWords, soundexEs } from "@open-xamu-co/firebase-nuxt/functions/search";
-
-import type { CourseData, ExtendedInstanceDataConfig } from "~~/functions/src/types/entities";
+import type { CourseData, InstanceDataConfig } from "~~/functions/src/types/entities";
 import type {
 	eSIALevel,
 	eSIAPlace,
@@ -20,9 +9,10 @@ import type {
 	uSIAProgram,
 	eSIATypology,
 } from "~~/functions/src/types/SIA";
-import { getQueryString } from "~~/server/utils/params";
 import type { iCoursesPayload, tCoursesSearchMode } from "~~/functions-scrapper/src/types/scrapper";
-import type { ExtendedH3Event } from "~~/server/types";
+import type { H3Context } from "~~/server/types";
+import { getQueryString } from "~~/server/utils/params";
+import { getWords, soundexEs } from "~~/functions/src/utils/search";
 
 /**
  * Triggers courses scrape from SIA
@@ -31,10 +21,10 @@ function makeTriggerCoursesScrape(maxAgeMinutes: number) {
 	const { cfScrapeCoursesUrl } = useRuntimeConfig();
 
 	return defineCachedFunction(
-		async (event: ExtendedH3Event, payload: iCoursesPayload) => {
-			const { currentInstance, currentAuth } = event.context;
+		async (event, payload: iCoursesPayload) => {
+			const { currentInstance, currentMember } = <H3Context>event.context;
 
-			if (!currentInstance || !currentAuth) {
+			if (!currentInstance || !currentMember) {
 				throw new Error("Missing instance or authorization");
 			}
 
@@ -73,8 +63,9 @@ function makeTriggerCoursesScrape(maxAgeMinutes: number) {
  * @see https://es.stackoverflow.com/questions/316170/c%c3%b3mo-hacer-una-consulta-del-tipo-like-en-firebase
  */
 export default defineConditionallyCachedEventHandler(async function (event) {
-	const { currentAuth, currentInstanceRef, currentInstance, currentInstanceHost } = event.context;
-	const config: ExtendedInstanceDataConfig = currentInstance?.config || {};
+	const { currentMember, currentInstanceRef, currentInstance, currentInstanceHost } =
+		event.context;
+	const config: InstanceDataConfig = currentInstance?.config || {};
 	const Allow = "POST,HEAD";
 
 	try {
@@ -100,7 +91,6 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 		}
 
 		const params = getQuery(event);
-		const page = getBoolean(params.page);
 		const name = getQueryString("name", params);
 		const code = getQueryString("code", params);
 		const level = <eSIALevel | undefined>getQueryString("level", params);
@@ -124,7 +114,6 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 			program,
 			typology,
 			searchMode,
-			page,
 		});
 
 		// Bypass body for HEAD requests
@@ -195,7 +184,7 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 
 		// Check if already scraped. Omit if preindexed or SIA is under maintenance
 		if (
-			currentAuth &&
+			currentMember &&
 			currentInstanceRef &&
 			now > siaMaintenanceTillAt &&
 			!config.preindexedSearch?.includes(place)
@@ -220,15 +209,9 @@ export default defineConditionallyCachedEventHandler(async function (event) {
 			});
 		}
 
-		// order at last
-		query = getOrderedQuery(event, query);
+		const resolver = new QueryResolver(event, query);
 
-		if (page) return getEdgesPage(event, query);
-
-		// Page limit. Prevent abusive callings (>100)
-		const first = Math.min(Number(params.first) || 10, 100);
-
-		return getQueryAsEdges(event, query.limit(first));
+		return resolver.resolve();
 	} catch (err) {
 		apiLogger(event, "api:courses:search", err);
 

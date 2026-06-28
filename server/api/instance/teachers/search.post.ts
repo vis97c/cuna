@@ -1,16 +1,7 @@
 import type { CollectionReference, Query } from "firebase-admin/firestore";
 
-import { defineConditionallyCachedEventHandler } from "@open-xamu-co/firebase-nuxt/server/cache";
-import { apiLogger } from "@open-xamu-co/firebase-nuxt/server/firebase";
-import {
-	debugFirebaseServer,
-	getEdgesPage,
-	getOrderedQuery,
-	getQueryAsEdges,
-} from "@open-xamu-co/firebase-nuxt/server/firestore";
-import { getBoolean } from "@open-xamu-co/firebase-nuxt/server/guards";
-import { getWords, soundexEs } from "@open-xamu-co/firebase-nuxt/functions/search";
 import type { CourseData } from "~~/functions/src/types/entities";
+import { getWords, soundexEs } from "~~/functions/src/utils/search";
 
 /**
  * Search for teachers by name
@@ -18,7 +9,7 @@ import type { CourseData } from "~~/functions/src/types/entities";
  * @see https://es.stackoverflow.com/questions/316170/c%c3%b3mo-hacer-una-consulta-del-tipo-like-en-firebase
  */
 export default defineConditionallyCachedEventHandler(async (event) => {
-	const { currentAuth, currentInstanceRef } = event.context;
+	const { currentMember, currentInstanceRef } = event.context;
 	const Allow = "POST,HEAD";
 
 	try {
@@ -43,7 +34,6 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		}
 
 		const params = getQuery(event);
-		const page = getBoolean(params.page);
 		const name = getQueryString("name", params);
 		const courses = Array.isArray(params.courses) ? params.courses : [params.courses];
 		const coursesRefs: CollectionReference<CourseData> =
@@ -53,7 +43,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		debugFirebaseServer(event, "api:teachers", params);
 
 		// Require auth
-		if (!currentAuth) throw createError({ statusCode: 401, statusMessage: `Missing auth` });
+		if (!currentMember) throw createError({ statusCode: 401, statusMessage: `Missing auth` });
 
 		// Bypass body for HEAD requests
 		// Since we always return an array or an object, we can just return 200
@@ -90,15 +80,9 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			query = query.where("coursesRefs", "array-contains-any", refs);
 		} else return null;
 
-		// order at last
-		query = getOrderedQuery(event, query);
+		const resolver = new QueryResolver(event, query);
 
-		if (page) return getEdgesPage(event, query);
-
-		// Page limit. Prevent abusive callings (>100)
-		const first = Math.min(Number(params.first) || 10, 100);
-
-		return getQueryAsEdges(event, query.limit(first));
+		return resolver.resolve();
 	} catch (err) {
 		apiLogger(event, "api:teachers", err);
 

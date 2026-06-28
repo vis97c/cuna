@@ -12,7 +12,7 @@
 						<XamuActionButtonToggle
 							tooltip="Limpiar mi horario"
 							round
-							@click="USER.clearEnrolled"
+							@click="SESSION.clearEnrolled"
 						>
 							<XamuIconFa name="broom" />
 							<XamuIconFa name="broom" regular />
@@ -22,7 +22,7 @@
 				<div class="--pX-5 --width-100">
 					<hr />
 				</div>
-				<Week :enrolled-groups="Object.values(USER.enrolled)" />
+				<Week :enrolled-groups="Object.values(SESSION.enrolled)" />
 			</div>
 		</template>
 	</XamuDropdown>
@@ -31,5 +31,5 @@
 <script setup lang="ts">
 	defineProps<{ enrolledCount: number }>();
 
-	const USER = useUserStore();
+	const SESSION = useSessionStore();
 </script>

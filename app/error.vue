@@ -18,10 +18,10 @@
 										Reintentar
 									</XamuActionLink>
 									<XamuActionLink
-										v-if="USER.token"
+										v-if="SESSION.token"
 										@click="
 											clearError();
-											USER.unsetSession();
+											SESSION.unsetSession();
 										"
 									>
 										Cerrar sesión y reintentar
@@ -54,7 +54,7 @@
 	});
 
 	const INSTANCE = useInstanceStore();
-	const USER = useUserStore();
+	const SESSION = useSessionStore();
 	const route = useRoute();
 	const { indexable } = useRuntimeConfig().public;
 

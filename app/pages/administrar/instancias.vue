@@ -27,6 +27,7 @@
 			}"
 			label="Cargando instancias..."
 			no-content-message="No hay instancias disponibles"
+			client
 		>
 			<template #headActions="{ refreshData }">
 				<XamuActionButtonToggle
@@ -46,7 +47,7 @@
 <script setup lang="ts">
 	import type { iGetPage, iPage } from "@open-xamu-co/ui-common-types";
 
-	import type { ExtendedInstance } from "~/utils/types";
+	import type { Instance } from "~/utils/types";
 
 	import { ValueLocation } from "#components";
 
@@ -59,8 +60,9 @@
 
 	const { appName } = useRuntimeConfig().public;
 
-	const instancesPage: iGetPage<ExtendedInstance> = (pagination) => {
-		return useQuery<iPage<ExtendedInstance> | undefined>("/api/all/instances", {
+	const instancesPage: iGetPage<Instance> = (pagination) => {
+		return customCsrfFetch<iPage<Instance> | undefined>("/api/admin/instances", {
+			method: "POST",
 			query: pagination,
 			credentials: "omit",
 			headers: { "Cache-Control": "no-store" },
@@ -68,7 +70,7 @@
 		});
 	};
 
-	function mapInstance(node: ExtendedInstance) {
+	function mapInstance(node: Instance) {
 		const { instagramId, tiktokId, twitterId, facebookId, ...instance } = useMapInstance(node);
 
 		return {

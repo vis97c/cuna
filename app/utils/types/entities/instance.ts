@@ -1,60 +1,17 @@
-import { DocumentReference } from "firebase/firestore";
+import type { InstanceData, InstanceDataConfig } from "~~/functions/src/types/entities";
 
-import type {
-	FromData,
-	GetRef,
-	Instance,
-	InstanceMember,
-	SharedDocument,
-} from "@open-xamu-co/firebase-nuxt/client";
+import type { InputFromData, OutputFromData, RefFromData } from "./base";
 
-import type {
-	ExtendedInstanceData,
-	ExtendedInstanceMemberData,
-	ExtendedUserData,
-	GroupData,
-	InstanceMemberAbuseData,
-} from "~~/functions/src/types/entities";
-import type { ExtendedUser } from "./user";
-import type { Group } from "./course";
-
-/**
- * App instance
- * @output
- * @overload
- */
-export interface ExtendedInstance extends Omit<Instance, "config">, FromData<ExtendedInstanceData> {
-	ownedBy?: ExtendedInstanceMember;
-}
-
-/**
- * This one goes to the database
- *
- * @input Omit automation
- */
-export interface ExtendedInstanceRef extends GetRef<ExtendedInstance> {
-	ownedByRef?: DocumentReference<ExtendedInstanceMemberData>;
-}
-
-/**
- * Instance member
- * @output
- * @overload
- */
-export interface ExtendedInstanceMember
-	extends InstanceMember, FromData<ExtendedInstanceMemberData> {
-	user?: ExtendedUser;
-	rootMember?: ExtendedInstanceMember;
-	enrolled?: Group[];
-}
+/** @output App instance data */
+export interface Instance extends OutputFromData<InstanceData> {}
+/** @output App instance with client refs */
+export interface InstanceRef extends RefFromData<InstanceData> {}
 /** @input Omit automation */
-export interface ExtendedInstanceMemberRef extends GetRef<ExtendedInstanceMember> {
-	userRef?: DocumentReference<ExtendedUserData>;
-	rootMemberRef?: DocumentReference<ExtendedInstanceMemberData>;
-	enrolledRefs?: DocumentReference<GroupData>[];
-}
+export interface InstanceInput extends InputFromData<InstanceData> {}
 
-/** @output Instance member abuse */
-export interface InstanceMemberAbuse extends SharedDocument, FromData<InstanceMemberAbuseData> {}
+/** @output Instance config data */
+export interface InstanceConfig extends OutputFromData<InstanceDataConfig> {}
+/** @output Instance config with client refs */
+export interface InstanceConfigRef extends RefFromData<InstanceDataConfig> {}
 /** @input Omit automation */
-export interface InstanceMemberAbuseRef extends GetRef<InstanceMemberAbuse> {}
+export interface InstanceConfigInput extends InputFromData<InstanceDataConfig> {}

@@ -1,8 +1,7 @@
 import kebabCase from "lodash-es/kebabCase.js";
 
-import { getFirebase } from "@open-xamu-co/firebase-nuxt/functions/firebase";
-
-import type { ExtendedInstanceData } from "../types/entities/index.js";
+import type { InstanceData } from "../types/entities/index.js";
+import { getFirebase } from "./firebase.js";
 
 /**
  * Hits "los estudiantes" to check if the slug is valid
@@ -12,11 +11,11 @@ import type { ExtendedInstanceData } from "../types/entities/index.js";
  */
 export async function getLESlug(
 	value = "",
-	buildBasePath: (c: ExtendedInstanceData) => string
+	buildBasePath: (c: InstanceData) => string
 ): Promise<string> {
 	const { firebaseFirestore } = getFirebase("getLESlug");
 	const instanceRef = firebaseFirestore.collection("instances").doc("live");
-	const instance = <ExtendedInstanceData>(await instanceRef.get()).data() || {};
+	const instance = <InstanceData>(await instanceRef.get()).data() || {};
 	const pathLE = buildBasePath(instance);
 	const slugValues = kebabCase(value).split("-");
 	let isValidUrl = false;

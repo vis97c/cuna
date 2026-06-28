@@ -49,7 +49,7 @@
 			}"
 			:table-props="{
 				deleteNode: useDocumentDelete,
-				updateNode: USER.canAdmin ? updateMember : undefined,
+				updateNode: SESSION.canAdmin ? updateMember : undefined,
 				properties: [
 					{ value: 'locationCountry', hidden: true },
 					{ value: 'locationState', hidden: true },
@@ -71,6 +71,7 @@
 			}"
 			label="Cargando miembros..."
 			no-content-message="Parece que no hay miembros disponibles en este momento. Puede tratarse de un error."
+			client
 		>
 			<template #headActions="{ refreshData, createNodeAndRefresh }">
 				<XamuActionButton :theme="eColors.PRIMARY" @click="createNodeAndRefresh">
@@ -102,11 +103,10 @@
 </template>
 
 <script setup lang="ts">
-	import type { iGetPage, iNodeFnResponseStream, iPage } from "@open-xamu-co/ui-common-types";
-	import type { Resolve } from "@open-xamu-co/firebase-nuxt/client";
+	import type { iGetPage, iNodeFnResponse, iPage } from "@open-xamu-co/ui-common-types";
 	import { eColors } from "@open-xamu-co/ui-common-enums";
 
-	import type { ExtendedInstanceMember } from "~/utils/types";
+	import type { Member, Resolve } from "~/utils/types";
 
 	import { ValueCellphone, ValueID, ValueLocation } from "#components";
 
@@ -121,12 +121,12 @@
 	});
 
 	const Swal = useSwal();
-	const USER = useUserStore();
+	const SESSION = useSessionStore();
 	const route = useRoute();
 
 	// Create & update user
-	const createResolve = ref<Resolve<ExtendedInstanceMember, []>>();
-	const updateResolve = ref<Resolve<ExtendedInstanceMember>>();
+	const createResolve = ref<Resolve<Member, []>>();
+	const updateResolve = ref<Resolve<Member>>();
 
 	/** Show guest users */
 	const guest = computed({
@@ -141,8 +141,9 @@
 		},
 	});
 
-	const membersPage: iGetPage<ExtendedInstanceMember> = (pagination) => {
-		return useQuery<iPage<ExtendedInstanceMember> | undefined>("/api/instance/members", {
+	const membersPage: iGetPage<Member> = (pagination) => {
+		return customCsrfFetch<iPage<Member> | undefined>("/api/admin/instance/members", {
+			method: "POST",
 			query: pagination,
 			credentials: "omit",
 			headers: { "Cache-Control": "no-store" },
@@ -152,16 +153,14 @@
 
 	// Member, node methods
 	function createMember() {
-		return new Promise<undefined | boolean | iNodeFnResponseStream<ExtendedInstanceMember>>(
-			(resolve) => {
-				// save resolve, so the promise can be resolved later
-				createResolve.value = [resolve];
-			}
-		);
+		return new Promise<undefined | boolean | iNodeFnResponse<Member>>((resolve) => {
+			// save resolve, so the promise can be resolved later
+			createResolve.value = [resolve];
+		});
 	}
-	function updateMember(member: ExtendedInstanceMember) {
+	function updateMember(member: Member) {
 		const role = member?.role ?? 3;
-		const sessionRole = USER.user?.role ?? 3;
+		const sessionRole = SESSION.member?.role ?? 3;
 
 		// Prevent updating users with higher or equal role
 		if (role <= sessionRole) {
@@ -174,15 +173,13 @@
 			return;
 		}
 
-		return new Promise<undefined | boolean | iNodeFnResponseStream<ExtendedInstanceMember>>(
-			(resolve) => {
-				// save resolve, so the promise can be resolved later
-				updateResolve.value = [resolve, member];
-			}
-		);
+		return new Promise<undefined | boolean | iNodeFnResponse<Member>>((resolve) => {
+			// save resolve, so the promise can be resolved later
+			updateResolve.value = [resolve, member];
+		});
 	}
 
-	function mapBuyer(node: ExtendedInstanceMember) {
+	function mapBuyer(node: Member) {
 		return {
 			...useMapMember(node),
 			role: node.role,

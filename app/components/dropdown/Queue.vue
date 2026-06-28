@@ -11,12 +11,12 @@
 						<XamuActionButtonToggle
 							:theme="invertedTheme"
 							:size="eSizes.SM"
-							@click="CUNA.clearQueue()"
+							@click="APP.clearQueue()"
 						>
 							Limpiar
 						</XamuActionButtonToggle>
 					</li>
-					<li v-for="item in CUNA.queue" :key="item.id" class="box --pX-10 --pY-5">
+					<li v-for="item in APP.queue" :key="item.id" class="box --pX-10 --pY-5">
 						<div class="txt --gap-5 --width-220">
 							<div>
 								<p class="--txtSize-xs">{{ item.id }}</p>
@@ -45,5 +45,5 @@
 	defineProps<{ theme?: tThemeTuple | tProp<tThemeModifier> }>();
 	defineOptions({ name: "DropdownQueue" });
 
-	const CUNA = useCunaStore();
+	const APP = useAppStore();
 </script>

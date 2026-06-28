@@ -20,6 +20,7 @@
 			}"
 			label="Cargando ofensores..."
 			no-content-message="No hay ofensores registrados"
+			client
 		>
 			<template #headActions="{ refreshData }">
 				<XamuActionButtonToggle
@@ -49,7 +50,8 @@
 	definePageMeta({ title: "Proxies", middleware: ["can-develop"] });
 
 	const proxiesPage: iGetPage<Proxy> = (pagination) => {
-		return useQuery<iPage<Proxy> | undefined>("/api/all/proxies", {
+		return customCsrfFetch<iPage<Proxy> | undefined>("/api/admin/proxies", {
+			method: "POST",
 			query: pagination,
 			credentials: "omit",
 			headers: { "Cache-Control": "no-store" },

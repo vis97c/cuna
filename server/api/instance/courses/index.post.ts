@@ -1,15 +1,5 @@
 import { Filter, Query } from "firebase-admin/firestore";
 
-import { defineConditionallyCachedEventHandler } from "@open-xamu-co/firebase-nuxt/server/cache";
-import { apiLogger } from "@open-xamu-co/firebase-nuxt/server/firebase";
-import {
-	debugFirebaseServer,
-	getEdgesPage,
-	getOrderedQuery,
-	getQueryAsEdges,
-} from "@open-xamu-co/firebase-nuxt/server/firestore";
-import { getBoolean } from "@open-xamu-co/firebase-nuxt/server/guards";
-
 import type { CourseData } from "~~/functions/src/types/entities";
 import type { eSIALevel, eSIAPlace, eSIATypology } from "~~/functions/src/types/SIA";
 
@@ -43,7 +33,6 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		}
 
 		const params = getQuery(event);
-		const page = getBoolean(params.page);
 		const level = <eSIALevel | undefined>getQueryString("level", params);
 		const place = <eSIAPlace | undefined>getQueryString("place", params);
 		const typology = <eSIATypology | undefined>getQueryString("typology", params);
@@ -81,15 +70,9 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			);
 		}
 
-		// Order at last
-		query = getOrderedQuery(event, query);
+		const resolver = new QueryResolver(event, query);
 
-		if (page) return getEdgesPage(event, query);
-
-		// Page limit. Prevent abusive callings (>100)
-		const first = Math.min(Number(params.first) || 10, 100);
-
-		return getQueryAsEdges(event, query.limit(first));
+		return resolver.resolve();
 	} catch (err) {
 		apiLogger(event, "api:instance:courses", err);
 

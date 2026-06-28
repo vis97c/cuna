@@ -1,11 +1,12 @@
 import type { Timestamp as adminTimestamp } from "firebase-admin/firestore";
 import type { Timestamp as clientTimestamp } from "firebase/firestore";
 
-import type { ExtendedInstanceDataConfig } from "~~/functions/src/types/entities";
+import type { InstanceDataConfig } from "~~/functions/src/types/entities";
 
-export function safeInstanceConfig(
-	config?: ExtendedInstanceDataConfig
-): ExtendedInstanceDataConfig {
+/**
+ * Prevent exposing non serializable data
+ */
+export function safeInstanceConfig(config?: InstanceDataConfig): InstanceDataConfig {
 	const { siaMaintenanceTillAt, explorerV1MaintenanceTillAt, explorerV2MaintenanceTillAt } =
 		config || {};
 

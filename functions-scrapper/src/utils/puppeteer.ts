@@ -4,10 +4,10 @@ import { ProxyAgent, fetch } from "undici";
 import { FieldValue } from "firebase-admin/firestore";
 
 import type { iSelectOption, tLogger } from "@open-xamu-co/ui-common-types";
-import { getFirebase } from "@open-xamu-co/firebase-nuxt/functions/firebase";
 
 import type { eHTMLElementIds } from "../types/scrapper.js";
 import { getProxies } from "./proxies.js";
+import { getFirebase } from "./firebase.js";
 
 /**
  * Await por page changes after selection

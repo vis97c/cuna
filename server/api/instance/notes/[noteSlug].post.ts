@@ -1,16 +1,9 @@
 import { Filter, type Query } from "firebase-admin/firestore";
 
-import {
-	debugFirebaseServer,
-	resolveServerDocumentRefs,
-} from "@open-xamu-co/firebase-nuxt/server/firestore";
-import { apiLogger } from "@open-xamu-co/firebase-nuxt/server/firebase";
-import { decrypt } from "@open-xamu-co/firebase-nuxt/functions/encrypt";
-import { defineConditionallyCachedEventHandler } from "@open-xamu-co/firebase-nuxt/server/cache";
-import { getFirebase } from "@open-xamu-co/firebase-nuxt/functions/firebase";
-
 import type { NoteData } from "~~/functions/src/types/entities";
 import type { Note } from "~/utils/types";
+import { decrypt } from "~~/functions/src/utils/encrypt";
+import { getFirebase } from "~~/functions/src/utils/firebase";
 
 /**
  * Get a note using its slug
@@ -20,7 +13,7 @@ import type { Note } from "~/utils/types";
  */
 export default defineConditionallyCachedEventHandler(async (event) => {
 	const { firebaseFirestore } = getFirebase("api:instance:members:notes");
-	const { currentAuth, currentAuthRef, currentInstanceRef, currentInstanceMillis } =
+	const { currentMember, currentMemberRef, currentInstanceRef, currentInstanceMillis } =
 		event.context;
 	const Allow = "POST,HEAD";
 
@@ -61,13 +54,13 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		query = query.where("slug", "==", noteSlug);
 
 		// Auth is required for personal notes
-		if (currentAuth) {
+		if (currentMember) {
 			// Show note if public or if user is owner
 			query = query.where(
 				Filter.or(
 					Filter.where("public", "==", true),
 					Filter.where("public", "==", "UNLISTED"),
-					Filter.where("createdByRef", "==", currentAuthRef)
+					Filter.where("createdByRef", "==", currentMemberRef)
 				)
 			);
 		} else {
@@ -90,7 +83,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			return "Ok";
 		}
 
-		const note = await resolveServerDocumentRefs(event, snapshot);
+		const note = await resolveServerRefs(event, snapshot);
 
 		// Decode note body using instance timestamp
 		const body = decrypt(note?.body || "", currentInstanceMillis);

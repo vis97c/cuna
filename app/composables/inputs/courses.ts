@@ -6,17 +6,17 @@ import type { Course, Group } from "~/utils/types";
 import { eSIALevel } from "~~/functions/src/types/SIA";
 
 export function useCourseInputs(course: Course = {}): tFormInput[] {
-	const USER = useUserStore();
+	const SESSION = useSessionStore();
 	const { selectedFaculty, faculties, programs } = useCourseProgramOptions([
 		eSIALevel.PREGRADO,
-		USER.place,
-		USER.lastFacultySearch,
-		USER.lastProgramSearch,
+		SESSION.place,
+		SESSION.lastFacultySearch,
+		SESSION.lastProgramSearch,
 	]);
 	const { typologies } = useCourseTypeOptions();
 	const facultyInput = new FormInput(
 		{
-			values: [course?.faculty || USER.lastFacultySearch],
+			values: [course?.faculty || SESSION.lastFacultySearch],
 			name: "faculty",
 			required: true,
 			title: "Facultad del curso (Sede Bogotá)",
@@ -43,7 +43,7 @@ export function useCourseInputs(course: Course = {}): tFormInput[] {
 	);
 
 	const programInput = new FormInput({
-		values: [course?.program || USER.lastProgramSearch],
+		values: [course?.program || SESSION.lastProgramSearch],
 		name: "program",
 		title: "Programa del curso (Sede Bogotá)",
 		placeholder: "Ej: Ciencias de la computación",
@@ -84,7 +84,7 @@ export function useCourseInputs(course: Course = {}): tFormInput[] {
 			icon: "hashtag",
 		}),
 		new FormInput({
-			values: [USER.place],
+			values: [SESSION.place],
 			name: "place",
 			type: eFormType.HIDDEN,
 		}),
@@ -128,7 +128,7 @@ export function useGroupInputs(group: Group = {}): tFormInput[] {
 			required: true,
 		}),
 		new FormInput({
-			values: group?.teachers || [""],
+			values: group?.teachers?.map((teacher) => teacher.id || "") || [""],
 			name: "teachers",
 			title: "Docentes",
 			placeholder: "Ej: Jaimito Perez Sosa",

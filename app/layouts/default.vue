@@ -60,7 +60,7 @@
 						<ul class="flx --flxRow --flx-end-center --gap-10 --gap:sm --gap-30:md">
 							<li
 								v-if="INSTANCE.current?.instagramId"
-								:class="{ '--hidden-full:sm-inv': USER.canModerate }"
+								:class="{ '--hidden-full:sm-inv': SESSION.canModerate }"
 							>
 								<XamuActionLink
 									tooltip="Síguenos para estar al tanto de las novedades"
@@ -83,38 +83,60 @@
 									</span>
 								</XamuActionLink>
 							</li>
-							<li v-if="!USER.user">
-								<XamuActionButtonLink
-									to="/ingresar"
-									tooltip="Ir a la iniciar sesion"
-									round=":sm-inv"
-									as-toggle
-								>
-									<XamuIconFa name="user-circle" class="" />
-									<XamuIconFa name="user-circle" class="--hidden-full:md" />
-									<span class="--hidden-full:sm-inv">Iniciar sesión</span>
-								</XamuActionButtonLink>
-							</li>
+							<template v-if="!SESSION.member">
+								<li>
+									<XamuActionButtonLink
+										to="/ingresar"
+										tooltip="Ir a la iniciar sesion"
+										round=":sm-inv"
+										as-toggle
+									>
+										<XamuIconFa name="user-circle" class="" />
+										<XamuIconFa name="user-circle" class="--hidden-full:md" />
+										<span class="--hidden-full:sm-inv">Iniciar sesión</span>
+									</XamuActionButtonLink>
+								</li>
+								<li>
+									<XamuDropdown
+										:position="['bottom', 'right']"
+										classes="flx --flxColumn --flx-start-stretch --gap-10:md"
+										invert-theme
+									>
+										<template #toggle="{ setModel }">
+											<XamuActionButtonToggle
+												tooltip="Ver filtros de búsqueda"
+												tooltip-position="left"
+												round
+												@click="setModel()"
+											>
+												<XamuIconFa name="magnifying-glass" />
+												<XamuIconFa name="magnifying-glass" />
+											</XamuActionButtonToggle>
+										</template>
+										<DropdownSearchFilters />
+									</XamuDropdown>
+								</li>
+							</template>
 							<template v-else>
-								<li v-if="CUNA.queue.length">
+								<li v-if="APP.queue.length">
 									<DropdownQueue v-slot="{ setModel }">
 										<li>
 											<XamuActionButtonToggle
-												:round="!CUNA.activeQueue.length"
+												:round="!APP.activeQueue.length"
 												tooltip="Ver tareas"
 												tooltip-position="left"
 												@click="setModel()"
 											>
 												<XamuIconFa name="list-check" />
 												<XamuIconFa name="list-check" />
-												<span v-if="CUNA.activeQueue.length">
+												<span v-if="APP.activeQueue.length">
 													Procesando...
 												</span>
 											</XamuActionButtonToggle>
 										</li>
 									</DropdownQueue>
 								</li>
-								<li v-if="USER.token && enrolledCount">
+								<li v-if="SESSION.token && enrolledCount">
 									<DropdownEnrollment
 										v-slot="{ setModel, model }"
 										v-bind="{ enrolledCount }"
@@ -131,7 +153,7 @@
 									</DropdownEnrollment>
 								</li>
 								<li>
-									<DropdownUser v-slot="{ setModel, model }">
+									<DropdownMember v-slot="{ setModel, model }">
 										<XamuActionLink
 											aria-label="Ver opciones de usuario"
 											tooltip="Ver opciones de usuario"
@@ -142,22 +164,22 @@
 											@click="setModel()"
 										>
 											<span class="--hidden:sm-inv">
-												{{ USER.userName || "Sin nombre" }}
+												{{ SESSION.userName || "Sin nombre" }}
 											</span>
 											<figure
-												v-if="USER.user?.photoURL"
+												v-if="SESSION.member?.photoURL"
 												class="avatar --size-sm --bdr"
 											>
 												<XamuBaseImg
-													:src="USER.user.photoURL"
-													:alt="`Foto de perfil ${USER.userName || 'Sin nombre'}`"
+													:src="SESSION.member.photoURL"
+													:alt="`Foto de perfil ${SESSION.userName || 'Sin nombre'}`"
 												/>
 											</figure>
 											<XamuIconFa indicator name="chevron-down" />
 										</XamuActionLink>
-									</DropdownUser>
+									</DropdownMember>
 								</li>
-								<li v-if="USER.canDevelop">
+								<li v-if="SESSION.canDevelop">
 									<DropdownAdmin v-slot="{ setModel, model }">
 										<li>
 											<XamuActionLink
@@ -181,12 +203,15 @@
 				</ul>
 			</nav>
 			<main class="x-main-inner">
-				<div v-if="CUNA.maintenance && !USER.canModerate && !isLoginPage" class="view">
+				<div
+					v-if="INSTANCE.maintenance && !SESSION.canModerate && !isLoginPage"
+					class="view"
+				>
 					<div class="view-item --flx-center --minHeightVh-100 --bgColor-light">
 						<div class="holder flx --flxColumn --flx-center">
 							<div class="txt --txtAlign-center --width-100">
 								<h2>Disculpa las molestias :(</h2>
-								<p>{{ CUNA.maintenance }}</p>
+								<p>{{ INSTANCE.maintenance }}</p>
 							</div>
 						</div>
 					</div>
@@ -219,12 +244,12 @@
 	 * @layout admin layer
 	 */
 
-	const CUNA = useCunaStore();
+	const APP = useAppStore();
 	const INSTANCE = useInstanceStore();
-	const USER = useUserStore();
+	const SESSION = useSessionStore();
 	const route = useRoute();
 
-	const enrolledCount = computed(() => USER.enrolled.length);
+	const enrolledCount = computed(() => SESSION.enrolled.length);
 	const isLoginPage = computed(() => route.path === "/ingresar");
 </script>
 

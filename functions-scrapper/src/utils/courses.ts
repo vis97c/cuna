@@ -1,10 +1,9 @@
 import type { ElementHandle, Page } from "puppeteer-core";
 import type { DocumentSnapshot } from "firebase-admin/firestore";
 
-import { TimedPromise } from "@open-xamu-co/firebase-nuxt/server/guards";
-
 import { eHTMLElementIds, SIALEPrograms, type iCoursesPayload } from "../types/scrapper.js";
 import { getHTMLElementOptions, useHTMLElementId, waitForSelect } from "./puppeteer.js";
+import { TimedPromise } from "./guards.js";
 
 /**
  * Get to the courses list from sia

@@ -5,11 +5,11 @@
 				<div class="flx --flxColumn --flx-center --gap-30 --width-100">
 					<div class="txt --txtAlign-center">
 						<h1 class="--txtLineHeight-sm">Notas</h1>
-						<p v-if="USER.token" class="">Encuentra notas útiles o comparte una.</p>
+						<p v-if="SESSION.token" class="">Encuentra notas útiles o comparte una.</p>
 						<p v-else class="">
 							Encuentra notas útiles o regístrate para compartir una.
 						</p>
-						<div v-if="USER.token" class="flx --flxRow --flx-center --gap-20">
+						<div v-if="SESSION.token" class="flx --flxRow --flx-center --gap-20">
 							<component
 								:is="personal ? XamuActionLink : XamuActionButtonToggle"
 								@click="personal = false"
@@ -23,7 +23,7 @@
 								Mis notas
 							</component>
 							<XamuActionButtonToggle
-								v-if="USER.canDevelop"
+								v-if="SESSION.canDevelop"
 								tooltip="Actualizar"
 								tooltip-position="right"
 								round
@@ -35,7 +35,7 @@
 						</div>
 					</div>
 					<XamuModal
-						v-if="USER.token"
+						v-if="SESSION.token"
 						id="new-note"
 						title="Nueva nota"
 						:save-button="{ title: 'Publicar nota' }"
@@ -96,7 +96,7 @@
 						v-slot="{ content }"
 						:page="notesPage"
 						url="api:instance:notes"
-						:defaults="{ page: true, personal: USER.token && personal }"
+						:defaults="{ page: true, personal: SESSION.token && personal }"
 						no-content-message="No hay notas disponibles, puedes crear una."
 						label="Cargando notas..."
 						class="flx --flxColumn --flx-start-center --maxWidth-770 --width-100 --gap-50"
@@ -124,18 +124,12 @@
 <script setup lang="ts">
 	import { doc, type DocumentReference, getDoc } from "firebase/firestore";
 
-	import type {
-		iGetPage,
-		iInvalidInput,
-		iNodeFnResponseStream,
-		iPage,
-		tFormInput,
-	} from "@open-xamu-co/ui-common-types";
-	import { getDocumentId } from "@open-xamu-co/firebase-nuxt/client/resolver";
+	import type { iGetPage, iInvalidInput, iPage, tFormInput } from "@open-xamu-co/ui-common-types";
 
-	import type { Note, NoteRef, NoteValues, NoteVoteRef } from "~/utils/types";
+	import type { Note, NoteValues, NoteVoteRef } from "~/utils/types";
 
 	import { XamuActionButtonToggle, XamuActionLink } from "#components";
+	import type { NoteData } from "~~/functions/src/types/entities";
 
 	type HydrateNodes = (newContent: Note[] | null, newErrors?: unknown) => void;
 
@@ -152,8 +146,8 @@
 
 	const { getResponse } = useFormInput();
 	const Swal = useSwal();
-	const CUNA = useCunaStore();
-	const USER = useUserStore();
+	const INSTANCE = useInstanceStore();
+	const SESSION = useSessionStore();
 	const { $clientFirestore } = useNuxtApp();
 
 	// Form refs
@@ -173,13 +167,13 @@
 	const personal = ref<boolean>(false);
 
 	const remainingCharacters = computed(() => {
-		const limit = CUNA.config?.notesCharactersLimit ?? 4096;
+		const limit = INSTANCE.config?.notesCharactersLimit ?? 4096;
 
 		return limit - newNoteBody.value.length;
 	});
 
 	const notesPage: iGetPage<Note> = (pagination) => {
-		return useQuery<iPage<Note> | undefined>("/api/instance/notes", {
+		return customFetch<iPage<Note> | undefined>("/api/instance/notes", {
 			query: pagination,
 			method: "POST",
 			credentials: "omit",
@@ -195,7 +189,7 @@
 
 	async function createNote(closeModal: () => void, event: Event) {
 		const { response, invalidInputs, withErrors, validationHadErrors, errors } =
-			await getResponse<iNodeFnResponseStream<Note>[0], NoteValues>(
+			await getResponse<{ id?: string }, NoteValues>(
 				async ({ name }) => {
 					try {
 						let publicValue: boolean | "UNLISTED" = true;
@@ -204,21 +198,17 @@
 						else if (newNotePublic.value === 2) publicValue = false;
 
 						// create note
-						const [data] = await useDocumentCreate<NoteRef, Note>(
-							`${USER.path}/notes`,
-							{
-								name,
-								body: newNoteBody.value.slice(
-									0,
-									CUNA.config?.notesCharactersLimit ?? 4096
-								),
-								public: publicValue,
-								keywords: name.trim().split(" "),
-							}
-						);
-						const [createdNote] = Array.isArray(data) ? data : [data];
+						const [data] = await useDocumentCreate<NoteData>(`${SESSION.path}/notes`, {
+							name,
+							body: newNoteBody.value.slice(
+								0,
+								INSTANCE.config?.notesCharactersLimit ?? 4096
+							),
+							public: publicValue,
+							keywords: name.trim().split(" "),
+						});
 
-						if (typeof createdNote !== "object") return { errors: "Missing data" };
+						if (typeof data !== "object") return { errors: "Missing data" };
 
 						return { data };
 					} catch (errors) {
@@ -321,7 +311,7 @@
 
 	// lifecycle
 	watch(
-		[emittedContent, () => USER.path],
+		[emittedContent, () => SESSION.path],
 		async ([content = [], userPath], [oldContent = []]) => {
 			if (import.meta.server || !$clientFirestore) return;
 			// Bypass if same content

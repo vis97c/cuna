@@ -3,12 +3,17 @@
  *
  * @middleware
  */
-export default defineNuxtRouteMiddleware(() => {
-	const USER = useUserStore();
+export default defineNuxtRouteMiddleware(({ path }) => {
+	const SESSION = useSessionStore();
 
-	// bypass rdr if token is expired
-	if (USER.expiredToken) return;
+	// Bypass rdr if token is expired
+	if (SESSION.expiredToken) return;
 
 	// User cannot moderate
-	if (!USER.canModerate) return navigateTo({ path: "/" });
+	if (!SESSION.canModerate) {
+		// Avoid infinite redirect
+		if (path === "/") return;
+
+		return navigateTo({ path: "/", query: { rdr: "can-moderate" } });
+	}
 });

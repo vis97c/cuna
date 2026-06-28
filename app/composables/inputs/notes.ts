@@ -11,7 +11,7 @@ export const noteVisibilityOptions: iSelectOption[] = [
 ];
 
 export function useNoteInputs(note: Note = {}): tFormInput[] {
-	const USER = useUserStore();
+	const SESSION = useSessionStore();
 
 	const inputs: tFormInput[] = [
 		new FormInput({
@@ -60,7 +60,7 @@ export function useNoteInputs(note: Note = {}): tFormInput[] {
 		);
 
 		// Admin only
-		if (USER.canDevelop) {
+		if (SESSION.canDevelop) {
 			inputs.push(
 				new FormInput({
 					values: [note.lock ?? false],

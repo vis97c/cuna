@@ -27,13 +27,13 @@
 						>
 							<XamuIconFa name="github" brand />
 						</XamuActionLink>
-						<span v-if="CUNA.config?.version">
-							{{ CUNA.config.version }} Powered by
+						<span v-if="INSTANCE.config?.version">
+							{{ INSTANCE.config.version }} Powered by
 							<a href="https://xamu.com.co" target="_blank">Xamu.</a>
 						</span>
 					</div>
 				</div>
-				<div v-if="CUNA.SIAMaintenance" class="txt --txtAlign-center --gap-10">
+				<div v-if="INSTANCE.SIAMaintenance" class="txt --txtAlign-center --gap-10">
 					<h4>El SIA se encuentra en mantenimiento</h4>
 					<p class="--txtSize-sm --txtColor-dark5">
 						Puedes explorar los cursos previamente guardados, pero el buscador estará
@@ -41,13 +41,13 @@
 					</p>
 					<p
 						class="--txtSize-xs --txtColor-dark5"
-						:title="CUNA.config?.siaMaintenanceTillAt?.toString()"
+						:title="INSTANCE.config?.siaMaintenanceTillAt?.toString()"
 					>
 						Volveremos a la normalidad {{ SIAMaintenanceTillAt }}.
 					</p>
 				</div>
 				<div
-					v-else-if="!USER.token && route.path != '/ingresar'"
+					v-else-if="!SESSION.token && route.path != '/ingresar'"
 					class="txt --txtAlign-center --gap-10"
 				>
 					<h4>Modo lectura</h4>
@@ -131,6 +131,7 @@
 					<XamuPaginationContent
 						v-if="search && search.trim().length >= 3"
 						v-slot="{ content }"
+						class="flx --flxColumn --flx-start-center --gap-30 --width-100 --maxWidth-770"
 						:page="coursesSearchPage"
 						url="api:instance:courses:search"
 						:defaults="{ page: true, ...values }"
@@ -144,7 +145,6 @@
 						hide-controls="single"
 						with-route
 						client
-						class="flx --flxColumn --flx-start-center --gap-30 --width-100 --maxWidth-770"
 						@refresh="(e) => (emittedRefresh = e)"
 					>
 						<div class="txt">
@@ -167,7 +167,7 @@
 							/>
 						</div>
 					</XamuPaginationContent>
-					<div v-else-if="USER.token" class="flx --flxColumn --flx-center --width-100">
+					<div v-else-if="SESSION.token" class="flx --flxColumn --flx-center --width-100">
 						<div class="txt">
 							<h3 class="--txtColor-dark5">Otros recursos</h3>
 						</div>
@@ -203,7 +203,7 @@
 					</div>
 				</ClientOnly>
 				<div class="txt --txtAlign-center --txtSize-xs --txtColor-dark5 --minWidth-100">
-					<p v-if="USER.token">
+					<p v-if="SESSION.token">
 						Visita cada curso para obtener los cupos en tiempo real desde el SIA.
 					</p>
 					<p>No dudes en reportar cualquier problema o sugerencia a nuestro instagram.</p>
@@ -237,8 +237,8 @@
 		title: "Buscador de cursos",
 	});
 
-	const CUNA = useCunaStore();
-	const USER = useUserStore();
+	const INSTANCE = useInstanceStore();
+	const SESSION = useSessionStore();
 	const route = useRoute();
 
 	const calculadoraTheme = "calculadora" as any;
@@ -248,27 +248,27 @@
 	const emittedRefresh = ref<() => void>();
 
 	const SIAMaintenanceTillAt = computed(() => {
-		const date = new Date(CUNA.config?.siaMaintenanceTillAt || new Date());
+		const date = new Date(INSTANCE.config?.siaMaintenanceTillAt || new Date());
 
 		return useTimeAgo(date);
 	});
 	const selectedLevel = computed({
-		get: () => USER.level,
+		get: () => SESSION.level,
 		set: (value) => {
-			USER.setLevel(value);
+			SESSION.setLevel(value);
 		},
 	});
 	const selectedPlace = computed({
-		get: () => USER.place,
+		get: () => SESSION.place,
 		set: (value) => {
-			USER.setPlace(value);
+			SESSION.setPlace(value);
 		},
 	});
 	const { selectedFaculty, selectedProgram, faculties, programs } = useCourseProgramOptions(
-		[selectedLevel, selectedPlace, USER.lastFacultySearch, USER.lastProgramSearch],
+		[selectedLevel, selectedPlace, SESSION.lastFacultySearch, SESSION.lastProgramSearch],
 		{ noUndef: true }
 	);
-	const { selectedTypology, typologies } = useCourseTypeOptions([USER.lastTypologySearch]);
+	const { selectedTypology, typologies } = useCourseTypeOptions([SESSION.lastTypologySearch]);
 	const isCodeSearch = computed<boolean>(() => !!search.value && /^\d/.test(search.value));
 	const values = computed<CourseValues>(() => {
 		const payload: PartialCourseValues = {
@@ -293,12 +293,12 @@
 		// Don't search if metadata is missing
 		if (!pagination?.level || !pagination?.place) return;
 
-		const page: iPage<Course> | undefined = await useQuery<iPage<Course> | undefined>(
+		const page: iPage<Course> | undefined = await customCsrfFetch<iPage<Course> | undefined>(
 			"/api/instance/courses/search",
 			{
 				method: "POST",
-				credentials: "omit",
 				query: pagination,
+				credentials: "omit",
 				headers: { "Cache-Control": "no-store" },
 				cache: "no-store",
 			}
@@ -340,7 +340,7 @@
 		([newFaculty, newProgram, newTypology]) => {
 			if (!newFaculty || !newProgram) return;
 
-			USER.setLastSearch(newFaculty, newProgram, newTypology);
+			SESSION.setLastSearch(newFaculty, newProgram, newTypology);
 		},
 		{ immediate: false }
 	);

@@ -1,19 +1,9 @@
 import type { Query } from "firebase-admin/firestore";
 
-import { defineConditionallyCachedEventHandler } from "@open-xamu-co/firebase-nuxt/server/cache";
-import { getBoolean } from "@open-xamu-co/firebase-nuxt/server/guards";
-import {
-	debugFirebaseServer,
-	getEdgesPage,
-	getOrderedQuery,
-	getQueryAsEdges,
-} from "@open-xamu-co/firebase-nuxt/server/firestore";
-import { apiLogger } from "@open-xamu-co/firebase-nuxt/server/firebase";
-import { decrypt } from "@open-xamu-co/firebase-nuxt/functions/encrypt";
-import { getFirebase } from "@open-xamu-co/firebase-nuxt/functions/firebase";
-
 import type { NoteData } from "~~/functions/src/types/entities";
 import type { Note } from "~/utils/types";
+import { getFirebase } from "~~/functions/src/utils/firebase";
+import { decrypt } from "~~/functions/src/utils/encrypt";
 
 /**
  * Get edges from the "notes" collection.
@@ -24,7 +14,7 @@ import type { Note } from "~/utils/types";
  */
 export default defineConditionallyCachedEventHandler(async (event) => {
 	const { firebaseFirestore } = getFirebase("api:instance:members:notes");
-	const { currentAuth, currentAuthRef, currentInstanceRef, currentInstanceMillis } =
+	const { currentMember, currentMemberRef, currentInstanceRef, currentInstanceMillis } =
 		event.context;
 	const Allow = "POST,HEAD";
 
@@ -53,7 +43,6 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		// Group collection
 		const notesRef = firebaseFirestore.collectionGroup("notes");
 		const params = getQuery(event);
-		const asPage = getBoolean(params.page);
 		const personal = getBoolean(params.personal);
 
 		debugFirebaseServer(event, "api:instance:members:notes", params);
@@ -71,72 +60,66 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 
 		if (personal) {
 			// Auth is required for personal notes
-			if (!currentAuth) {
+			if (!currentMember) {
 				throw createError({ statusCode: 401, statusMessage: "Missing auth" });
 			}
 
 			// Personal notes only
-			query = query.where("createdByRef", "==", currentAuthRef);
+			query = query.where("createdByRef", "==", currentMemberRef);
 		} else {
 			// Public notes only
 			query = query.where("public", "==", true);
 		}
 
-		// order at last
-		query = getOrderedQuery(event, query);
+		const resolver = new QueryResolver(event, query);
+		const results = await resolver.resolve();
 
-		if (asPage) {
-			const page = await getEdgesPage(event, query);
-
+		if (!Array.isArray(results)) {
 			// Decode bodies
-			for (let i = 0; i < page.edges.length; i++) {
+			for (let i = 0; i < results.edges.length; i++) {
 				// Omit notes from other instances
-				if (!page.edges[i].node.id.startsWith(currentInstanceRef.path)) {
-					page.edges.splice(i, 1);
+				if (!results.edges[i].node.id.startsWith(currentInstanceRef.path)) {
+					results.edges.splice(i, 1);
 
 					continue;
 				}
 
 				try {
 					// Decrypt body
-					page.edges[i].node.body = decrypt(
-						page.edges[i].node.body,
+					results.edges[i].node.body = decrypt(
+						results.edges[i].node.body,
 						currentInstanceMillis
 					);
 				} catch (err) {
 					// Remove the edge if body can't be decrypted
-					page.edges.splice(i, 1);
+					results.edges.splice(i, 1);
 					apiLogger(event, "api:instance:members:notes:page:decode", err);
 				}
 			}
 
-			return page;
+			return results;
 		}
 
-		// Page limit. Prevent abusive callings (>100)
-		const first = Math.min(Number(params.first) || 10, 100);
-		const edges = await getQueryAsEdges(event, query.limit(first));
-
 		// Decode bodies
-		for (let i = 0; i < edges.length; i++) {
+		for (let i = 0; i < results.length; i++) {
 			// Omit notes from other instances
-			if (!edges[i].node.id.startsWith(currentInstanceRef.path)) {
-				edges.splice(i, 1);
+			if (!results[i].node.id.startsWith(currentInstanceRef.path)) {
+				results.splice(i, 1);
 
 				continue;
 			}
 
 			try {
 				// Decrypt body
-				edges[i].node.body = decrypt(edges[i].node.body, currentInstanceMillis);
+				results[i].node.body = decrypt(results[i].node.body, currentInstanceMillis);
 			} catch (err) {
 				// Remove the edge if body can't be decrypted
-				edges.splice(i, 1);
+				results.splice(i, 1);
 				apiLogger(event, "api:instance:members:notes:edges:decode", err);
 			}
 		}
 
-		return edges;
+		return results;
 	} catch (err) {
 		apiLogger(event, "api:instance:members:notes", err);
 
