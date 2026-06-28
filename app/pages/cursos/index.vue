@@ -94,12 +94,12 @@
 	}));
 
 	const coursesPage: iGetPage<Course> = (pagination) => {
-		return customCsrfFetch<iPage<Course> | undefined>("/api/instance/courses", {
+		return customFetch<iPage<Course> | undefined>("/api/instance/courses", {
 			method: "POST",
 			query: pagination,
-			// credentials: "omit",
-			// headers: { "Cache-Control": "no-store" },
-			// cache: "no-store",
+			credentials: "omit",
+			headers: { "Cache-Control": "no-store" },
+			cache: "no-store",
 		});
 	};
 </script>

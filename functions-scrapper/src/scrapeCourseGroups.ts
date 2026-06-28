@@ -240,13 +240,7 @@ export const scrapeCourseGroups = region("us-east1")
 						const periodStartAt = new Date(startYear, startMonth - 1, startDay);
 						const periodEndAt = new Date(endYear, endMonth - 1, endDay);
 						// Generate deduped course UID
-						// Differentiated by program and typology
-						const id = Cyrb53([
-							group.name,
-							String(periodEndAt.getTime()),
-							program,
-							group.typology,
-						]);
+						const id = Cyrb53([group.name, String(periodEndAt.getTime())]);
 						const groupRef = groupsRef.doc(String(id));
 
 						// Index teachers

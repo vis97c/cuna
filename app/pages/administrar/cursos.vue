@@ -97,7 +97,7 @@
 	}
 
 	const coursesPage: iGetPage<Course> = (query) => {
-		return customCsrfFetch<iPage<Course> | undefined>("/api/admin/instance/courses", {
+		return customFetch<iPage<Course> | undefined>("/api/admin/instance/courses", {
 			method: "POST",
 			query,
 			credentials: "omit",
@@ -108,7 +108,7 @@
 
 	function makeCourseLogsPage(course: Course): iGetPage<Course> {
 		return function (query) {
-			return customCsrfFetch<iPage<Course> | undefined>(
+			return customFetch<iPage<Course> | undefined>(
 				`/api/admin/instance/courses/${getDocumentId(course.id)}/logs`,
 				{
 					method: "POST",

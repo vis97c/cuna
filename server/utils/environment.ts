@@ -101,12 +101,6 @@ export const firebaseConfig = {
 };
 
 /**
- * CSurf encryption secret
- * Required for CSRF protected routes
- */
-export const csurfSecret = defineString("CSURF_SECRET");
-
-/**
  * Public runtime config
  */
 export const publicRuntimeConfig = {

@@ -61,7 +61,7 @@
 	const { appName } = useRuntimeConfig().public;
 
 	const instancesPage: iGetPage<Instance> = (pagination) => {
-		return customCsrfFetch<iPage<Instance> | undefined>("/api/admin/instances", {
+		return customFetch<iPage<Instance> | undefined>("/api/admin/instances", {
 			method: "POST",
 			query: pagination,
 			credentials: "omit",

@@ -293,7 +293,7 @@
 		// Don't search if metadata is missing
 		if (!pagination?.level || !pagination?.place) return;
 
-		const page: iPage<Course> | undefined = await customCsrfFetch<iPage<Course> | undefined>(
+		const page: iPage<Course> | undefined = await customFetch<iPage<Course> | undefined>(
 			"/api/instance/courses/search",
 			{
 				method: "POST",

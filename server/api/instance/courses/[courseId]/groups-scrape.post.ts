@@ -37,7 +37,8 @@ function makeTriggerCourseGroupsScrape(maxAgeMinutes: number) {
 			maxAge: 60 * maxAgeMinutes,
 			getKey(event, { course, program, typology }) {
 				const { currentInstanceHost } = event.context;
-				const baseHash = `${currentInstanceHost}:${getDocumentId(course.id)}:${program}`;
+				const courseId = (course.id || "").split("/").pop();
+				const baseHash = `${currentInstanceHost}:${courseId}:${program}`;
 
 				if (!typology) return baseHash;
 
@@ -129,7 +130,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 
 		// Check if already scraped
 		const storage = useStorage("cache");
-		const cacheKayBase = `nitro:functions:getCourseGroupsLinks:${currentInstanceHost}:${getDocumentId(courseRef.id)}:${program}`;
+		const cacheKayBase = `nitro:functions:getCourseGroupsLinks:${currentInstanceHost}:${courseId}:${program}`;
 		const cacheKey = typology ? `${cacheKayBase}:${typology}.json` : `${cacheKayBase}.json`;
 		const cacheDuration = config.coursesRefreshRate ?? 2;
 		const cachedGroups = await storage.getItem(cacheKey);

@@ -142,7 +142,7 @@
 	});
 
 	const membersPage: iGetPage<Member> = (pagination) => {
-		return customCsrfFetch<iPage<Member> | undefined>("/api/admin/instance/members", {
+		return customFetch<iPage<Member> | undefined>("/api/admin/instance/members", {
 			method: "POST",
 			query: pagination,
 			credentials: "omit",

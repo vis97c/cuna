@@ -50,7 +50,7 @@
 	definePageMeta({ title: "Proxies", middleware: ["can-develop"] });
 
 	const proxiesPage: iGetPage<Proxy> = (pagination) => {
-		return customCsrfFetch<iPage<Proxy> | undefined>("/api/admin/proxies", {
+		return customFetch<iPage<Proxy> | undefined>("/api/admin/proxies", {
 			method: "POST",
 			query: pagination,
 			credentials: "omit",

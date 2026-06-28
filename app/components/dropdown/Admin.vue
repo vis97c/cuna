@@ -116,7 +116,7 @@
 	});
 	const clearInstance = debounce(async function () {
 		// Remove cache
-		await customCsrfFetch("/api/instance/cache", { method: "DELETE" });
+		await customFetch("/api/instance/cache", { method: "DELETE" });
 
 		INSTANCE.unsetInstance();
 		location.reload();

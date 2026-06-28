@@ -252,13 +252,14 @@
 		refresh: refreshCourse,
 		error: courseError,
 	} = useAsyncData(
-		`api:instance:all:courses:${courseId.value}`,
+		`api:instance:courses:${courseId.value}`,
 		async () => {
 			if (!courseId.value) throw useCreateError("Missing course id", 400);
 
-			const courseApiPath = `/api/instance/all/courses/${courseId.value}`;
+			const courseApiPath = `/api/instance/courses/${courseId.value}`;
 
 			return customFetch<Course>(courseApiPath, {
+				method: "POST",
 				credentials: "omit",
 				headers: { "Cache-Control": "no-store" },
 				cache: "no-store",
@@ -296,13 +297,13 @@
 
 			const courseApiPath = `/api/instance/courses/${courseId.value}/groups`;
 			const newGroups: iPageEdge<Group>[] = await customFetch(courseApiPath, {
+				method: "POST",
 				query: {
 					faculty: selectedFaculty.value,
 					program: selectedProgram.value,
 					typology: selectedTypology.value,
 					level: 1, // Get teachers refs
 				},
-				method: "POST",
 				credentials: "omit",
 				headers: { "Cache-Control": "no-store" },
 				cache: "no-store",
@@ -313,7 +314,7 @@
 
 			return newGroups;
 		},
-		{ watch: [() => courseId.value, selectedProgram, selectedTypology], server: false }
+		{ watch: [courseId, selectedProgram, selectedTypology], server: false }
 	);
 
 	/**
@@ -451,44 +452,46 @@
 				route.meta.title = name;
 				route.meta.description = description;
 				route.meta.keywords = alternativeNames.join(", ");
+			}
+		},
+		{ immediate: true }
+	);
+	watch(
+		courseId,
+		(newCourseId) => {
+			unsub();
 
-				if (
-					import.meta.server ||
-					!SESSION.token ||
-					!$clientFirestore ||
-					!$resolveClientRefs
-				) {
-					return;
+			if (import.meta.server || !$clientFirestore || !$resolveClientRefs) return;
+
+			const courseRef: DocumentReference<CourseData> = doc(
+				$clientFirestore,
+				INSTANCE.path,
+				"courses",
+				newCourseId
+			);
+
+			// Hydrate course from firebase (Scraped server side)
+			unsub = onSnapshot(courseRef, async (snapshot) => {
+				// prevent hydration if not active
+				if (deactivated.value) return;
+				if (!snapshot.exists()) {
+					unsub();
+
+					throw showError({
+						statusCode: 404,
+						statusMessage: "El curso que buscas fue eliminado.",
+					});
 				}
 
-				const courseRef: DocumentReference<CourseData> = doc(
-					$clientFirestore,
-					newCourse.id
-				);
+				const courseData = await $resolveClientRefs(snapshot);
 
-				// Hydrate course from firebase (Scraped server side)
-				unsub = onSnapshot(courseRef, async (snapshot) => {
-					// prevent hydration if not active
-					if (deactivated.value) return;
-					if (!snapshot.exists()) {
-						unsub();
+				// Hydrate course
+				if (courseData?.id) {
+					course.value = courseData;
 
-						throw showError({
-							statusCode: 404,
-							statusMessage: "El curso que buscas fue eliminado.",
-						});
-					}
-
-					const courseData = await $resolveClientRefs(snapshot);
-
-					// Hydrate course
-					if (courseData?.id) {
-						course.value = courseData;
-
-						refreshGroups();
-					}
-				});
-			}
+					refreshGroups();
+				}
+			});
 		},
 		{ immediate: true }
 	);

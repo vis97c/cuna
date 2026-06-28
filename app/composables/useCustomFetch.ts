@@ -56,16 +56,3 @@ export async function customFetch<T, R extends NitroFetchRequest = NitroFetchReq
 
 	return $fetch<T>(url, options);
 }
-
-/**
- * Fetch wrapper with csrf token
- */
-export async function customCsrfFetch<T, R extends NitroFetchRequest = NitroFetchRequest>(
-	url: Extract<R, string>,
-	baseOptions?: NitroFetchOptions<R>
-) {
-	const { $csrfFetch } = useNuxtApp();
-	const { responseType, ...options } = await getQueryOptions(baseOptions);
-
-	return $csrfFetch<T>(url, options);
-}

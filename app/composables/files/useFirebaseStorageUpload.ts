@@ -56,7 +56,7 @@ export default async function useFirebaseStorageUpload(
 	const counterSnapshot = await getDoc(counterRef);
 	const { current = 0, createdByRef = updatedByRef } = counterSnapshot.data() || {};
 	// Get custom auth token for the worker
-	const authToken: string = await customCsrfFetch("/api/instance/auth", { method: "POST" });
+	const authToken: string = await customFetch("/api/instance/auth", { method: "POST" });
 	// App check token
 	const { token: appCheckToken } = await getToken($clientAppCheck);
 

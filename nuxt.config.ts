@@ -16,7 +16,6 @@ import {
 	cfScrapeCourseGroupsUrl,
 	production,
 	firebaseConfig,
-	csurfSecret,
 } from "./server/utils/environment";
 import packageJson from "./package.json" with { type: "json" };
 
@@ -108,8 +107,8 @@ export default defineNuxtConfig({
 			preprocessorOptions: {
 				scss: {
 					additionalData: `
-						@use "assets/overrides";
-						@use "@open-xamu-co/ui-styles/src/utils/module" as xamu;`,
+																																																																																																																																																																																																@use "assets/overrides";
+																																																																																																																																																																																																@use "@open-xamu-co/ui-styles/src/utils/module" as xamu;`,
 				},
 			},
 		},
@@ -123,26 +122,6 @@ export default defineNuxtConfig({
 			"/__/**": {
 				proxy: `https://${firebaseConfig.value().projectId}.firebaseapp.com/__/**`,
 			},
-			// Delete instance cache
-			"/api/instance/cache": {
-				// @ts-expect-error Issue with @nuxt/csurf types
-				csurf: { methodsToProtect: ["DELETE"] },
-			},
-			// Get auth token
-			"/api/instance/auth": {
-				// @ts-expect-error Issue with @nuxt/csurf types
-				csurf: { methodsToProtect: ["POST"] },
-			},
-			// Admin routes
-			"/api/instance/courses/**": {
-				// @ts-expect-error Issue with @nuxt/csurf types
-				csurf: { methodsToProtect: ["POST"] },
-			},
-			// Admin routes
-			"/api/admin/**": {
-				// @ts-expect-error Issue with @nuxt/csurf types
-				csurf: { methodsToProtect: ["POST"] },
-			},
 		},
 		publicAssets: [
 			{
@@ -153,7 +132,7 @@ export default defineNuxtConfig({
 	},
 	/** Global CSS */
 	css,
-	modules: ["nuxt-csurf", "@open-xamu-co/ui-nuxt", "@nuxt/image", "@pinia/nuxt", "@nuxt/scripts"],
+	modules: ["@open-xamu-co/ui-nuxt", "@nuxt/image", "@pinia/nuxt", "@nuxt/scripts"],
 	xamu: {
 		locale,
 		lang: "es",
@@ -168,10 +147,6 @@ export default defineNuxtConfig({
 		providers: {
 			firebase: { provider: "app/providers/firebase" },
 		},
-	},
-	csurf: {
-		// Required for CSRF protected routes
-		encryptSecret: csurfSecret.value(),
 	},
 	scripts: {
 		registry: { googleAnalytics: { id: firebaseConfig.value().measurementId } },

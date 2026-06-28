@@ -57,7 +57,7 @@
 	definePageMeta({ title: "Ofensores", middleware: ["can-develop"] });
 
 	const offendersPage: iGetPage<Offender> = (pagination) => {
-		return customCsrfFetch<iPage<Offender> | undefined>("/api/admin/offenders", {
+		return customFetch<iPage<Offender> | undefined>("/api/admin/offenders", {
 			method: "POST",
 			query: pagination,
 			credentials: "omit",

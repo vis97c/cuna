@@ -9,7 +9,7 @@ export default defineNuxtRouteMiddleware(async ({ params }) => {
 	const courseId = <string>params.courseId;
 	let statusCode: number | undefined;
 
-	await customFetch<Course>(`/api/instance/all/courses/${courseId}`, {
+	await customFetch<Course>(`/api/instance/courses/${courseId}`, {
 		method: "HEAD",
 		credentials: "omit",
 		onResponse({ response }) {

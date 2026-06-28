@@ -124,7 +124,7 @@
 	});
 
 	const logsPage: iGetPage<Log> = (pagination) => {
-		return customCsrfFetch<iPage<Log> | undefined>("/api/admin/logs", {
+		return customFetch<iPage<Log> | undefined>("/api/admin/logs", {
 			method: "POST",
 			query: pagination,
 			credentials: "omit",
@@ -133,7 +133,7 @@
 		});
 	};
 	const instanceLogsPage: iGetPage<Log> = (pagination) => {
-		return customCsrfFetch<iPage<Log> | undefined>("/api/admin/instance/logs", {
+		return customFetch<iPage<Log> | undefined>("/api/admin/instance/logs", {
 			method: "POST",
 			query: pagination,
 			credentials: "omit",
