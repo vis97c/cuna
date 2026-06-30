@@ -5,7 +5,7 @@
 				<h2>Registros</h2>
 				<p class="--txtSize-lg:md">
 					Supervisa los registros
-					{{ global ? "globales" : `de ${appName}` }}
+					{{ global ? "globales" : `de ${INSTANCE.current?.name || appName}` }}
 				</p>
 			</div>
 		</div>

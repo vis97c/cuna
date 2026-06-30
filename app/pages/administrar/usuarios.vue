@@ -38,9 +38,9 @@
 		</div>
 		<XamuPaginationContentTable
 			:page="membersPage"
-			url="api:instance:members"
+			:url="urlKey"
 			:map-node="mapBuyer"
-			:defaults="{ page: true, level: 1, guest }"
+			:defaults="{ page: true, level: 1, name: filterByMemberName, roles }"
 			:create-node="createMember"
 			:swal="{
 				createdTitle: 'Usuario creado exitosamente',
@@ -70,7 +70,11 @@
 				},
 			}"
 			label="Cargando miembros..."
-			no-content-message="Parece que no hay miembros disponibles en este momento. Puede tratarse de un error."
+			:no-content-message="
+				filterByMemberName
+					? 'Ningún miembro coincide con el filtro.'
+					: 'Parece que no hay miembros disponibles en este momento. Puede tratarse de un error.'
+			"
 			client
 		>
 			<template #headActions="{ refreshData, createNodeAndRefresh }">
@@ -89,6 +93,12 @@
 					<XamuIconFa name="user-group" />
 					<span class="--hidden-full:sm-inv">Invitados</span>
 				</XamuActionButtonToggle>
+				<XamuInputText
+					v-model="filterByMemberName"
+					icon="filter"
+					placeholder="Filtrar por nombre..."
+					class="--width-90 --width-220:sm"
+				/>
 				<XamuActionButtonToggle tooltip="Actualizar" round @click="refreshData">
 					<XamuIconFa name="rotate-right" />
 					<XamuIconFa name="rotate-right" regular />
@@ -103,12 +113,18 @@
 </template>
 
 <script setup lang="ts">
-	import type { iGetPage, iNodeFnResponse, iPage } from "@open-xamu-co/ui-common-types";
+	import type {
+		iGetPage,
+		iNodeFnResponse,
+		iPage,
+		iPagination,
+	} from "@open-xamu-co/ui-common-types";
 	import { eColors } from "@open-xamu-co/ui-common-enums";
 
 	import type { Member, Resolve } from "~/utils/types";
 
 	import { ValueCellphone, ValueID, ValueLocation } from "#components";
+	import { eMemberRole } from "~~/functions/src/types/entities";
 
 	/**
 	 * Admin members page
@@ -141,10 +157,61 @@
 		},
 	});
 
-	const membersPage: iGetPage<Member> = (pagination) => {
+	/**
+	 * Filter by member name
+	 * @get Get the member name from the route query
+	 * @set Set the member name in the route query
+	 */
+	const filterByMemberName = computed<string>({
+		get: () => route.query.name?.toString()?.replaceAll("+", " ") || "",
+		set: (value) => {
+			return navigateTo({ query: { ...route.query, name: value.replaceAll(" ", "+") } });
+		},
+	});
+
+	/** Deduplicate asyncData payloads */
+	const urlKey = computed(() => {
+		let key = "api:instance:members";
+
+		if (guest.value) {
+			key += `?guest=${1}`;
+
+			if (filterByMemberName.value) {
+				key += `&name=${filterByMemberName.value}`;
+			}
+		} else if (filterByMemberName.value) {
+			key += `?name=${filterByMemberName.value}`;
+		}
+
+		return key;
+	});
+
+	/**
+	 * Roles to manage
+	 */
+	const roles = computed(() => {
+		if (guest.value) return [eMemberRole.GUEST];
+
+		const accept = [eMemberRole.ADMIN, eMemberRole.EDITOR, eMemberRole.MODERATOR];
+
+		if (SESSION.canDevelop) accept.push(eMemberRole.DEVELOPER);
+
+		return accept;
+	});
+
+	const membersPage: iGetPage<Member> = (
+		pagination?: iPagination & { name?: string },
+		signal?: AbortSignal
+	) => {
+		// filter only if name has 3 or more characters
+		if (pagination?.name && pagination.name.length < 3) {
+			delete pagination.name;
+		}
+
 		return customFetch<iPage<Member> | undefined>("/api/admin/instance/members", {
 			method: "POST",
 			query: pagination,
+			signal,
 			credentials: "omit",
 			headers: { "Cache-Control": "no-store" },
 			cache: "no-store",

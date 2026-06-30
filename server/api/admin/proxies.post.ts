@@ -40,7 +40,10 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			throw createError({ statusCode: 401, statusMessage: "Insufficient permissions" });
 		}
 
-		debugFirebaseServer(event, "api:admin:instance:proxies");
+		const params = getQuery(event);
+		const orderBy = params.orderBy;
+
+		debugFirebaseServer(event, "api:admin:instance:proxies", { orderBy });
 
 		// Bypass body for HEAD requests
 		// Since we always return an array or an object, we can just return 200
@@ -52,7 +55,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		}
 
 		const query: CollectionReference | Query = firebaseFirestore.collection("proxies");
-		const resolver = new QueryResolver(event, query);
+		const resolver = new QueryResolver(event, query, !orderBy ? ["score", "asc"] : undefined);
 
 		return resolver.resolve();
 	} catch (err) {

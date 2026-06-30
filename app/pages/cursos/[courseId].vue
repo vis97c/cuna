@@ -290,7 +290,7 @@
 		error: groupsError,
 	} = useAsyncData<iPageEdge<Group>[]>(
 		courseGroupsKey.value,
-		async () => {
+		async (_, { signal }) => {
 			if (!courseId.value || !selectedFaculty.value || !selectedProgram.value) {
 				throw useCreateError("Missing faculty or program", 400);
 			}
@@ -304,13 +304,14 @@
 					typology: selectedTypology.value,
 					level: 1, // Get teachers refs
 				},
+				signal,
 				credentials: "omit",
 				headers: { "Cache-Control": "no-store" },
 				cache: "no-store",
 			});
 
 			// Trigger scrapper if missing groups, do not await
-			if (!newGroups.length) refreshGroupsScraped();
+			if (!newGroups.length) refreshGroupsScraped(signal);
 
 			return newGroups;
 		},
@@ -371,7 +372,7 @@
 	/**
 	 * Scrape groups but allow showing existing groups
 	 */
-	async function refreshGroupsScraped() {
+	async function refreshGroupsScraped(signal?: AbortSignal) {
 		if (!SESSION.token || INSTANCE.SIAMaintenance) return false;
 
 		if (!courseId.value || !selectedFaculty.value || !selectedProgram.value) {
@@ -388,6 +389,7 @@
 				typology: selectedTypology.value,
 			},
 			method: "POST",
+			signal,
 			credentials: "omit",
 			headers: { "Cache-Control": "no-store" },
 			cache: "no-store",

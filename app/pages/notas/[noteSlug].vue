@@ -56,13 +56,14 @@
 		error: noteError,
 	} = useAsyncData<Note>(
 		`api:instance:notes:${noteSlug.value}`,
-		async () => {
+		async (_, { signal }) => {
 			if (!noteSlug.value) throw useCreateError("Missing note slug", 400);
 
 			const noteApiPath = `/api/instance/notes/${noteSlug.value}`;
 
 			return customFetch(noteApiPath, {
 				method: "POST",
+				signal,
 				credentials: "omit",
 				headers: { "Cache-Control": "no-store" },
 				cache: "no-store",

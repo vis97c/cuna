@@ -12,7 +12,10 @@
 			:map-node="useMapProxy"
 			:defaults="{ page: true }"
 			:table-props="{
-				properties: [{ value: 'lock', hidden: true }],
+				properties: [
+					{ value: 'lock', hidden: true },
+					{ value: 'proxy', component: ({ value }) => h('span', value) },
+				],
 				modalProps: {
 					invertTheme: true,
 					class: '--txtColor',
