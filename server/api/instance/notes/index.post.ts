@@ -71,15 +71,14 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			// Public notes only
 			query = query.where("public", "==", true);
 
+			// Linked notes can only be public
 			if (linkedNoteSlug) {
 				// Same as /api/instance/notes/[noteSlug].post
-				const notesSnapshot = await firebaseFirestore
-					.collectionGroup("notes")
-					.where("instanceRef", "==", currentInstanceRef)
+				const linkedNotesSnapshot = await query
 					.where("slug", "==", linkedNoteSlug)
 					.limit(1)
 					.get();
-				const [snapshot] = notesSnapshot.docs;
+				const [snapshot] = linkedNotesSnapshot.docs;
 
 				// Check if linked note exists
 				if (!snapshot?.exists) {
