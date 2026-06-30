@@ -10,6 +10,7 @@ import { getFirebase } from "../utils/firebase.js";
 import { onCreated, onUpdated, onDeleted } from "../utils/event.js";
 import { offenderLogger } from "../utils/logger.js";
 import { makeGetSlug } from "../utils/slugs.js";
+import { getWeightedSearchIndexes } from "../utils/search.js";
 
 export * from "./members.js";
 export * from "./teachers.js";
@@ -32,22 +33,23 @@ export const onCreatedInstance = onCreated<InstanceData>(
 		const { firebaseFirestore } = getFirebase("onCreatedInstance");
 
 		try {
-			const { createdByRef, slug, name = "" } = created.data();
+			const { slug, name = "", updatedByRef } = created.data();
+			// Get search indexes
+			const { indexes, indexesWeights } = getWeightedSearchIndexes(name);
 
-			if (createdByRef) {
-				const ownedByRef = membersRef.doc(createdByRef.id);
-
-				// Get current role to prevent override
-				const ownedByData = (await ownedByRef.get()).data();
-				const { role = eMemberRole.ADMIN } = ownedByData || {};
+			if (updatedByRef) {
+				const ownedByRef = membersRef.doc(updatedByRef.id);
 
 				// Set owner role, do not await
-				ownedByRef.set({ role: Math.min(role, eMemberRole.ADMIN) });
+				ownedByRef.set({ role: eMemberRole.ADMIN });
 			}
 
-			const newSlug = await getInstanceSlug(firebaseFirestore, slug || name);
-
-			return { slug: newSlug, ownedByRef: createdByRef };
+			return {
+				indexes,
+				indexesWeights,
+				slug: await getInstanceSlug(firebaseFirestore, slug || name),
+				ownedByRef: updatedByRef,
+			};
 		} catch (err) {
 			logger("functions:instances:onCreatedInstance", err);
 
@@ -83,7 +85,7 @@ export const onUpdatedInstance = onUpdated<InstanceData>(
 
 		try {
 			const existingData = existing.data();
-			let { slug, name = "", lock } = updated.data();
+			let { slug, name = "", lock, indexes, indexesWeights } = updated.data();
 
 			// Conditionally update slug
 			if (
@@ -93,7 +95,15 @@ export const onUpdatedInstance = onUpdated<InstanceData>(
 				slug = await getInstanceSlug(firebaseFirestore, name, existingData.slug);
 			}
 
-			return { slug };
+			// Get fresh search indexes
+			if (existingData.name !== name) {
+				const updatedIndexes = getWeightedSearchIndexes(name);
+
+				indexes = updatedIndexes.indexes;
+				indexesWeights = updatedIndexes.indexesWeights;
+			}
+
+			return { slug, indexes, indexesWeights };
 		} catch (err) {
 			logger("functions:instances:onUpdatedInstance", err);
 

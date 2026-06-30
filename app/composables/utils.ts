@@ -11,18 +11,6 @@ export function valuesAreEqual<V extends Record<string, any>>(
 	return keys.filter((k) => k in values).every((k) => isEqual(values[k], expectedValues[k]));
 }
 
-export function useImagePath(
-	path?: string,
-	preset: "avatar" | "small" | "medium" | "large" = "avatar"
-) {
-	if (!path || path === "/sample-loading.png") return "/sample-loading.png";
-	else if (path.startsWith("/api/media/images")) return path;
-	else if (path.startsWith("/firebase")) path = path.replace("/firebase", "/api/media/images");
-	else path = `/api/media/images/${path}/${preset}.webp`;
-
-	return `${path}?temp=${Date.now()}`;
-}
-
 /**
  * Count spots
  * Conditionally omit non-regular enrollment spots

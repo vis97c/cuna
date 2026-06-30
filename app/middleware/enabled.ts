@@ -8,7 +8,10 @@ export default defineNuxtRouteMiddleware(() => {
 	const SESSION = useSessionStore();
 
 	// Instance is disabled
-	if (!SESSION.canDevelop && INSTANCE.current?.disabledAt) {
-		return navigateTo("/deshabilitado", { redirectCode: 302 });
+	if (!SESSION.canDevelop && INSTANCE.current?.disabled) {
+		return navigateTo(
+			{ path: "/deshabilitado", query: { rdr: "enabled" } },
+			{ redirectCode: 302 }
+		);
 	}
 });

@@ -54,7 +54,6 @@ export interface MemberData extends AuditData, SearchData {
 	emailVerified?: boolean | null;
 	/** @deprecated Get email from auth platform instead */
 	email?: string | null;
-	name?: string;
 	/** Member bio */
 	description?: string;
 	// Location data
@@ -65,8 +64,6 @@ export interface MemberData extends AuditData, SearchData {
 	address?: string;
 	// Character data
 	role?: eMemberRole;
-	/** @automated unique slug */
-	slug?: string;
 	// Behavior data
 	/** @automated Member is banned until given date */
 	bannedUntilAt?: false | Timestamp;

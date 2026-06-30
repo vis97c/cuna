@@ -202,10 +202,8 @@ export async function useDocumentClone<
 	if (!source) return [false];
 
 	// Conditionally inject member information
-	if (SESSION.token) {
-		const memberId = getDocumentId(SESSION.path);
-		const memberPath = `${INSTANCE.path}/members/${memberId}`;
-		const clonedByRef = memberId ? doc($clientFirestore, memberPath) : undefined;
+	if (SESSION.path) {
+		const clonedByRef = doc($clientFirestore, SESSION.path);
 
 		partialRef.createdByRef = partialRef.updatedByRef = clonedByRef;
 	}

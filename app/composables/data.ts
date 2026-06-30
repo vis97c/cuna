@@ -10,6 +10,18 @@ export const markdownExample =
 	"[Enlace](https://cuna.com.co)\n\n" +
 	"![Imagen](https://cuna.com.co/images/seo.png)";
 
+export function useImagePath(
+	path?: string,
+	preset: "avatar" | "small" | "medium" | "large" = "avatar"
+) {
+	if (!path || path === "/sample-loading.png") return "/sample-loading.png";
+	else if (path.startsWith("/api/media/images")) return path;
+	else if (path.startsWith("/firebase")) path = path.replace("/firebase", "/api/media/images");
+	else path = `/api/media/images/${path}/${preset}.webp`;
+
+	return `${path}?temp=${Date.now()}`;
+}
+
 export function useRoleName(role = 3) {
 	let roleName = "Invitado";
 

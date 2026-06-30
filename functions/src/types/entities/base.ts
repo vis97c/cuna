@@ -40,4 +40,6 @@ export interface SearchData extends FirebaseData {
 	 * @example ["0:A160", "1:A162", "1:H200", "2:H230", "3:A162 E000"]
 	 */
 	indexesWeights?: string[];
+	/** @automated unique slug */
+	slug?: string;
 }

@@ -2,14 +2,14 @@ import type { DocumentReference, Timestamp } from "firebase-admin/firestore";
 
 import type { AuditData } from "./member.js";
 import type { InstanceData } from "./instance.js";
+import type { SearchData } from "./base.js";
 
 /**
  * Note
  *
  * @collection instance/notes
  */
-export interface NoteData extends AuditData {
-	name?: string;
+export interface NoteData extends AuditData, SearchData {
 	/** Markdown body */
 	body?: string;
 	keywords?: string[];
@@ -21,8 +21,6 @@ export interface NoteData extends AuditData {
 	 * Score is hidden from users
 	 */
 	hideScore?: boolean;
-	/** @automated unique slug */
-	slug?: string;
 	/** @automated Last encode date */
 	encodedAt?: Timestamp;
 	/**

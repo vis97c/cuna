@@ -3,6 +3,7 @@ import type { DocumentReference, Timestamp as adminTimestamp } from "firebase-ad
 
 import type { eSIALevel, eSIAPlace, eSIATypology } from "../SIA/index.js";
 import type { AuditData, MemberData } from "./member.js";
+import type { SearchData } from "./base.js";
 
 /**
  * Old config for migration
@@ -130,9 +131,8 @@ export interface InstanceDataConfig extends OldCunaConfig {
 /**
  * App instance
  */
-export interface InstanceData extends AuditData {
+export interface InstanceData extends AuditData, SearchData {
 	// details
-	name?: string;
 	description?: string;
 	keywords?: string[];
 	/** SEO Image */
@@ -171,8 +171,6 @@ export interface InstanceData extends AuditData {
 	ownedByRef?: DocumentReference<MemberData>;
 	/** @automated instance disabled date */
 	disabledAt?: adminTimestamp | false;
-	/** @automated unique slug */
-	slug?: string;
 	/** @cached gateway key available */
 	withGatewayKey?: boolean;
 	/** @automated @searchable */

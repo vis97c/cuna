@@ -31,6 +31,8 @@ export function getFirebase(at = "Unknown", appOptions?: AppOptions) {
 
 		return { firebaseApp, firebaseFirestore, firebaseAuth, firebaseStorage };
 	} catch (err: any) {
+		console.log(err);
+
 		throw new Error(`Could not initialize Firebase Admin SDK, ${err.message}, at: ${at}`);
 	}
 }

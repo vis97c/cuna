@@ -8,7 +8,6 @@ import { doc, DocumentReference, onSnapshot, setDoc, type Unsubscribe } from "fi
 
 import type { Instance, InstanceRef, MemberRef, Member } from "~/utils/types";
 import { eMemberRole } from "~~/functions/src/types/entities";
-import { eCacheControl } from "~~/functions/src/types/enums";
 
 /**
  * Setup instance
@@ -23,6 +22,7 @@ export default defineNuxtPlugin({
 	dependsOn: ["pinia", "firebase-setup"],
 	async setup() {
 		const INSTANCE = useInstanceStore();
+		const { cache } = useRuntimeConfig().public;
 		const route = useRoute();
 		const unattended = "/desatendido";
 		let instance: Instance | undefined = INSTANCE.current;
@@ -33,7 +33,7 @@ export default defineNuxtPlugin({
 				// Inject request headers
 				const headers = {
 					...useRequestHeaders(), // Get headers from server (required for instance)
-					"Cache-Control": eCacheControl.FREQUENT,
+					"Cache-Control": cache.frequent,
 				};
 
 				// Get current instance, prefer $fetch

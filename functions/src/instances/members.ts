@@ -118,7 +118,6 @@ export const onDeletedMember = onDeleted<MemberData>(
 	"instances/members",
 	async (deletedDoc, { logger }) => {
 		const { firebaseFirestore } = getFirebase("onDeletedMember");
-
 		const instanceRef: DocumentReference<InstanceData> | null = deletedDoc.ref.parent.parent;
 
 		try {
