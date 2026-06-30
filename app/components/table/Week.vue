@@ -14,7 +14,7 @@
 		</template>
 		<template #default>
 			<Week
-				:enrolled-groups="enrolled ? USER.enrolled : [value, ...USER.enrolled]"
+				:enrolled-groups="enrolled ? SESSION.enrolled : [value, ...SESSION.enrolled]"
 				:highlight="!enrolled ? value.courseCode : ''"
 			/>
 		</template>
@@ -34,24 +34,24 @@
 
 	const props = defineProps<{ value: Group }>();
 
-	const USER = useUserStore();
+	const SESSION = useSessionStore();
 
 	const enrolled = computed({
 		get() {
-			return USER.enrolled.some(({ id }) => id === props.value.id);
+			return SESSION.enrolled.some(({ id }) => id === props.value.id);
 		},
 		set(enroll) {
 			if (!props.value) return;
 
-			if (enroll) return USER.enroll(props.value);
+			if (enroll) return SESSION.enroll(props.value);
 
-			USER.unenroll(props.value);
+			SESSION.unenroll(props.value);
 		},
 	});
 	const enrolledMessage = computed(() => {
-		if (!USER.token) return ""; // Require session
+		if (!SESSION.token) return ""; // Require session
 		if (enrolled.value) return "Quitar del horario";
-		if (USER.enrolled.some(({ id }) => id === props.value.id)) {
+		if (SESSION.enrolled.some(({ id }) => id === props.value.id)) {
 			return "Reemplazar grupo";
 		}
 

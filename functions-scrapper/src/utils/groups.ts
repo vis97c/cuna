@@ -1,8 +1,6 @@
 import type { ElementHandle, Page } from "puppeteer-core";
 import type { DocumentSnapshot } from "firebase-admin/firestore";
 
-import { TimedPromise } from "@open-xamu-co/firebase-nuxt/server/guards";
-
 import {
 	SIATypologies,
 	type CourseGroupLink,
@@ -11,6 +9,7 @@ import {
 } from "../types/scrapper.js";
 import { scrapeCoursesHandle, scrapeCoursesWithTypologyHandle } from "./courses.js";
 import { useHTMLElementId } from "./puppeteer.js";
+import { TimedPromise } from "./guards.js";
 
 interface HTMLCourse {
 	id: string;

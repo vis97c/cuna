@@ -28,18 +28,18 @@
 		value: Group;
 	}>();
 
-	const USER = useUserStore();
+	const SESSION = useSessionStore();
 
 	const enrolled = computed({
 		get() {
-			return USER.enrolled.some(({ id }) => id === props.value.id);
+			return SESSION.enrolled.some(({ id }) => id === props.value.id);
 		},
 		set(enroll) {
 			if (!props.value) return;
 
-			if (enroll) return USER.enroll(props.value);
+			if (enroll) return SESSION.enroll(props.value);
 
-			USER.unenroll(props.value);
+			SESSION.unenroll(props.value);
 		},
 	});
 </script>

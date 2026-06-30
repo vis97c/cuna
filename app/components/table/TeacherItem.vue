@@ -5,14 +5,14 @@
 			title="Editar slug de los estudiantes"
 			:theme="estudiantesTheme"
 			:save-button="{ title: 'Editar slug' }"
-			:hide="unassigned || !teacherData.id || !USER.canModerate"
+			:hide="unassigned || !teacherData.id || !SESSION.canModerate"
 			invert-theme
 			@close="() => closeAddSlug()"
 			@save="addSlug"
 		>
 			<template #toggle="{ toggleModal }">
 				<XamuActionLink
-					v-if="!unassigned && teacherData.id && USER.canModerate"
+					v-if="!unassigned && teacherData.id && SESSION.canModerate"
 					:theme="estudiantesTheme"
 					tooltip="Ver detalles del docente"
 					@click="toggleModal"
@@ -65,7 +65,7 @@
 	import { FirebaseError } from "firebase/app";
 	import deburr from "lodash-es/deburr.js";
 
-	import type { iInvalidInput, iNodeFnResponseStream } from "@open-xamu-co/ui-common-types";
+	import type { iInvalidInput } from "@open-xamu-co/ui-common-types";
 	import type { tFormInput } from "@open-xamu-co/ui-common-types";
 
 	import type { Teacher, TeacherRef } from "~/utils/types";
@@ -80,13 +80,13 @@
 		teacher: string | Teacher;
 	}>();
 
-	const CUNA = useCunaStore();
-	const USER = useUserStore();
+	const INSTANCE = useInstanceStore();
+	const SESSION = useSessionStore();
 	const { getResponse } = useFormInput();
 	const Swal = useSwal();
 
 	const losEstudiantesProfessors = computed(() => {
-		const config = CUNA.config || {};
+		const config = INSTANCE.config || {};
 		const { losEstudiantesUrl = "", losEstudiantesProfessorsPath = "" } = config;
 
 		return `${losEstudiantesUrl}${losEstudiantesProfessorsPath}`;
@@ -119,7 +119,7 @@
 	/** Add slug to teacher */
 	async function addSlug(willOpen: () => void, event: Event) {
 		const { invalidInputs, withErrors, validationHadErrors, errors } = await getResponse<
-			iNodeFnResponseStream<Teacher>[0],
+			{ id?: string },
 			Teacher
 		>(
 			async ({ losEstudiantesSlug = "" }) => {
@@ -130,9 +130,8 @@
 					const [data] = await useDocumentUpdate<TeacherRef>(teacherData.value, {
 						losEstudiantesSlug,
 					});
-					const [updatedTeacher] = Array.isArray(data) ? data : [data];
 
-					if (typeof updatedTeacher !== "object") return { errors: "Missing data" };
+					if (typeof data !== "object") return { errors: "Missing data" };
 
 					updatedSlug.value = losEstudiantesSlug;
 

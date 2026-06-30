@@ -1,13 +1,14 @@
-import type { Timestamp } from "firebase-admin/firestore";
+import type { DocumentReference, Timestamp } from "firebase-admin/firestore";
 
-import type { SharedData } from "@open-xamu-co/firebase-nuxt/functions";
+import type { AuditData } from "./member.js";
+import type { InstanceData } from "./instance.js";
 
 /**
  * Note
  *
  * @collection instance/notes
  */
-export interface NoteData extends SharedData {
+export interface NoteData extends AuditData {
 	name?: string;
 	/** Markdown body */
 	body?: string;
@@ -39,6 +40,21 @@ export interface NoteData extends SharedData {
 	 * @automated @cached
 	 */
 	downvotes?: number;
+	/**
+	 * Linked notes count
+	 * @automated
+	 */
+	linkedNotesCount?: number;
+	/**
+	 * Parent note reference
+	 * @automation Be able to link notes
+	 */
+	linkedNoteRef?: DocumentReference<NoteData>;
+	/**
+	 * Instance reference
+	 * @automation Be able to filter collectionGroups by instance
+	 */
+	instanceRef?: DocumentReference<InstanceData>;
 }
 
 /**
@@ -46,7 +62,7 @@ export interface NoteData extends SharedData {
  *
  * @collection instance/{instanceId}/notes/{noteId}/votes/{userId}
  */
-export interface NoteVoteData extends SharedData {
+export interface NoteVoteData extends AuditData {
 	/**
 	 * Note vote
 	 */

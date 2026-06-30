@@ -108,16 +108,16 @@
 	 */
 	definePageMeta({ title: "Administrar" });
 
-	const USER = useUserStore();
+	const SESSION = useSessionStore();
 	const { firebaseConfig, appName } = useRuntimeConfig().public;
 
 	function greetUser() {
 		const currentHour = new Date().getHours();
 
 		// 18:00 to 06:00
-		if (currentHour >= 18 || currentHour < 6) return `Buenas noches ${USER.userName}`;
+		if (currentHour >= 18 || currentHour < 6) return `Buenas noches ${SESSION.userName}`;
 
-		return `Buen dia ${USER.userName}`;
+		return `Buen dia ${SESSION.userName}`;
 	}
 </script>
 

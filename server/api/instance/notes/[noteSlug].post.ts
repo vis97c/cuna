@@ -1,16 +1,9 @@
 import { Filter, type Query } from "firebase-admin/firestore";
 
-import {
-	debugFirebaseServer,
-	resolveServerDocumentRefs,
-} from "@open-xamu-co/firebase-nuxt/server/firestore";
-import { apiLogger } from "@open-xamu-co/firebase-nuxt/server/firebase";
-import { decrypt } from "@open-xamu-co/firebase-nuxt/functions/encrypt";
-import { defineConditionallyCachedEventHandler } from "@open-xamu-co/firebase-nuxt/server/cache";
-import { getFirebase } from "@open-xamu-co/firebase-nuxt/functions/firebase";
-
 import type { NoteData } from "~~/functions/src/types/entities";
 import type { Note } from "~/utils/types";
+import { decrypt } from "~~/functions/src/utils/encrypt";
+import { getFirebase } from "~~/functions/src/utils/firebase";
 
 /**
  * Get a note using its slug
@@ -20,7 +13,7 @@ import type { Note } from "~/utils/types";
  */
 export default defineConditionallyCachedEventHandler(async (event) => {
 	const { firebaseFirestore } = getFirebase("api:instance:members:notes");
-	const { currentAuth, currentAuthRef, currentInstanceRef, currentInstanceMillis } =
+	const { currentMember, currentMemberRef, currentInstanceRef, currentInstanceMillis } =
 		event.context;
 	const Allow = "POST,HEAD";
 
@@ -47,7 +40,9 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		}
 
 		// Group collection
-		const notesRef = firebaseFirestore.collectionGroup("notes");
+		const notesRef = firebaseFirestore
+			.collectionGroup("notes")
+			.where("instanceRef", "==", currentInstanceRef);
 		const noteSlug = getRouterParam(event, "noteSlug");
 
 		debugFirebaseServer(event, "api:instance:members:notes:[noteSlug]", noteSlug);
@@ -56,18 +51,19 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			throw createError({ statusCode: 400, statusMessage: "noteSlug is required" });
 		}
 
-		let query: Query<NoteData, Note> = notesRef;
+		let query: Query<NoteData, Note> = notesRef.where("instanceRef", "==", currentInstanceRef);
 
+		// Match against slug
 		query = query.where("slug", "==", noteSlug);
 
 		// Auth is required for personal notes
-		if (currentAuth) {
+		if (currentMember) {
 			// Show note if public or if user is owner
 			query = query.where(
 				Filter.or(
 					Filter.where("public", "==", true),
 					Filter.where("public", "==", "UNLISTED"),
-					Filter.where("createdByRef", "==", currentAuthRef)
+					Filter.where("createdByRef", "==", currentMemberRef)
 				)
 			);
 		} else {
@@ -77,8 +73,8 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		const notesSnapshot = await query.limit(1).get();
 		const [snapshot] = notesSnapshot.docs; // get the first one if any
 
-		// Check if note exists and belongs to current instance
-		if (!snapshot?.exists || !snapshot.ref.path.startsWith(currentInstanceRef.path)) {
+		// Check if note exists
+		if (!snapshot?.exists) {
 			throw createError({ statusCode: 404, statusMessage: "Note not found" });
 		}
 
@@ -90,7 +86,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			return "Ok";
 		}
 
-		const note = await resolveServerDocumentRefs(event, snapshot);
+		const note = await resolveServerRefs(event, snapshot);
 
 		// Decode note body using instance timestamp
 		const body = decrypt(note?.body || "", currentInstanceMillis);

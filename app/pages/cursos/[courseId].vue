@@ -9,7 +9,10 @@
 				label="Cargando curso..."
 				no-content-message="No se encontró el curso"
 			>
-				<div v-if="USER.token" class="flx --flxRow-wrap --flx-between-center --width-100">
+				<div
+					v-if="SESSION.token"
+					class="flx --flxRow-wrap --flx-between-center --width-100"
+				>
 					<div class="flx --flxRow-wrap --flx-start-center">
 						<XamuActionButton
 							:theme="estudiantesTheme"
@@ -26,7 +29,7 @@
 							<XamuIconFa name="refresh" />
 						</XamuActionButton>
 						<XamuActionButton
-							v-if="USER.canDevelop"
+							v-if="SESSION.canDevelop"
 							tooltip="¿Se indexo con errores?"
 							:theme="eColors.DANGER"
 							@click="removeCourse"
@@ -45,7 +48,7 @@
 						</p>
 						<p v-if="course?.updatedAt" class="--txtSize-xs --txtColor-dark5">
 							<span>Actualizado {{ useTimeAgo(new Date(course.updatedAt)) }}</span>
-							<span v-if="USER.canDevelop && course.scrapedAt">
+							<span v-if="SESSION.canDevelop && course.scrapedAt">
 								⋅ SIA {{ useTimeAgo(new Date(course.scrapedAt)) }}
 							</span>
 						</p>
@@ -121,7 +124,7 @@
 					"
 					:errors="
 						groupsError ||
-						(!groupsData.filtered.length && USER.token && !CUNA.SIAMaintenance)
+						(!groupsData.filtered.length && SESSION.token && !INSTANCE.SIAMaintenance)
 					"
 					:el="ClientOnly"
 					label="Cargando grupos desde el SIA..."
@@ -131,12 +134,12 @@
 					<template #fallback>Cargando grupos...</template>
 					<XamuTable
 						v-bind="{
-							deleteNode: USER.canDevelop ? useDocumentDelete : undefined,
+							deleteNode: SESSION.canDevelop ? useDocumentDelete : undefined,
 							properties: [
 								{
 									value: 'inscrito',
 									component: TableEnroll,
-									hidden: !USER.token,
+									hidden: !SESSION.token,
 								},
 								{ value: 'profesores', component: TableTeachersList },
 								{ value: 'horarios', component: TableWeek },
@@ -150,9 +153,9 @@
 						:nodes="groupsData.filtered"
 						:refresh="refreshAll"
 					>
-						<template v-if="USER.token" #headActions>
+						<template v-if="SESSION.token" #headActions>
 							<XamuActionButton
-								:disabled="groupsScrapedPending || CUNA.SIAMaintenance"
+								:disabled="groupsScrapedPending || INSTANCE.SIAMaintenance"
 								@click="refreshGroupsScraped"
 							>
 								<span v-if="!groupsScrapedPending">Actualizar desde el SIA</span>
@@ -169,7 +172,7 @@
 					text="No hay grupos que coincidan con tus filtros, prueba con otra facultad."
 				/>
 				<div class="txt --txtAlign-center --txtSize-xs --txtColor-dark5 --minWidth-100">
-					<p v-if="USER.token">
+					<p v-if="SESSION.token">
 						¿No ves cupos? Inténtalo desde otro programa, algunos cursos no mostraran
 						cupos si no pertenecen o son opcionales para tu programa.
 					</p>
@@ -192,6 +195,7 @@
 
 	import { TableTeachersList, TableEnroll, TableWeek, ClientOnly } from "#components";
 	import { eSIATypology } from "~~/functions/src/types/SIA";
+	import type { CourseData } from "~~/functions/src/types/entities";
 
 	/**
 	 * Course page
@@ -201,9 +205,8 @@
 
 	definePageMeta({ middleware: ["course-exists"] });
 
-	const CUNA = useCunaStore();
-	const USER = useUserStore();
-	const router = useRouter();
+	const INSTANCE = useInstanceStore();
+	const SESSION = useSessionStore();
 	const route = useRoute();
 	const Swal = useSwal();
 	const { $clientFirestore, $resolveClientRefs } = useNuxtApp();
@@ -216,27 +219,30 @@
 
 	const courseId = computed(() => <string>route.params.courseId);
 	const losEstudiantesCourses = computed(() => {
-		const config = CUNA.config || {};
+		const config = INSTANCE.config || {};
 		const { losEstudiantesUrl = "", losEstudiantesCoursesPath = "" } = config;
 
 		return `${losEstudiantesUrl}${losEstudiantesCoursesPath}`;
 	});
 	/** Place without "sede" */
 	const placeOnly = computed(() => {
-		const [, placeOnly] = deburr(USER.place).toLowerCase().replace(" de la", "").split("sede ");
+		const [, placeOnly] = deburr(SESSION.place)
+			.toLowerCase()
+			.replace(" de la", "")
+			.split("sede ");
 
 		return placeOnly;
 	});
 	const selectedLevel = computed({
-		get: () => USER.level,
+		get: () => SESSION.level,
 		set: (value) => {
-			USER.setLevel(value);
+			SESSION.setLevel(value);
 		},
 	});
 	const selectedPlace = computed({
-		get: () => USER.place,
+		get: () => SESSION.place,
 		set: (value) => {
-			USER.setPlace(value);
+			SESSION.setPlace(value);
 		},
 	});
 
@@ -246,13 +252,14 @@
 		refresh: refreshCourse,
 		error: courseError,
 	} = useAsyncData(
-		`api:instance:all:courses:${courseId.value}`,
+		`api:instance:courses:${courseId.value}`,
 		async () => {
 			if (!courseId.value) throw useCreateError("Missing course id", 400);
 
-			const courseApiPath = `/api/instance/all/courses/${courseId.value}`;
+			const courseApiPath = `/api/instance/courses/${courseId.value}`;
 
-			return useQuery<Course>(courseApiPath, {
+			return customFetch<Course>(courseApiPath, {
+				method: "POST",
 				credentials: "omit",
 				headers: { "Cache-Control": "no-store" },
 				cache: "no-store",
@@ -289,14 +296,14 @@
 			}
 
 			const courseApiPath = `/api/instance/courses/${courseId.value}/groups`;
-			const newGroups: iPageEdge<Group>[] = await useQuery(courseApiPath, {
+			const newGroups: iPageEdge<Group>[] = await customFetch(courseApiPath, {
+				method: "POST",
 				query: {
 					faculty: selectedFaculty.value,
 					program: selectedProgram.value,
 					typology: selectedTypology.value,
 					level: 1, // Get teachers refs
 				},
-				method: "POST",
 				credentials: "omit",
 				headers: { "Cache-Control": "no-store" },
 				cache: "no-store",
@@ -307,7 +314,7 @@
 
 			return newGroups;
 		},
-		{ watch: [() => courseId.value, selectedProgram, selectedTypology], server: false }
+		{ watch: [courseId, selectedProgram, selectedTypology], server: false }
 	);
 
 	/**
@@ -343,7 +350,7 @@
 
 			// Filter by user preferences
 			if (
-				(!USER.withNonRegular && nonRegular) ||
+				(!SESSION.withNonRegular && nonRegular) ||
 				(withThisPlace && !isThisPlace) ||
 				(withOtherPlaces && !isOtherPlace)
 			) {
@@ -365,7 +372,7 @@
 	 * Scrape groups but allow showing existing groups
 	 */
 	async function refreshGroupsScraped() {
-		if (!USER.token || CUNA.SIAMaintenance) return false;
+		if (!SESSION.token || INSTANCE.SIAMaintenance) return false;
 
 		if (!courseId.value || !selectedFaculty.value || !selectedProgram.value) {
 			throw useCreateError("Scraping missing faculty or program", 400);
@@ -374,7 +381,7 @@
 		groupsScrapedPending.value = true;
 
 		const courseApiPath = `/api/instance/courses/${courseId.value}/groups-scrape`;
-		const scraped: boolean = await useQuery(courseApiPath, {
+		const scraped: boolean = await customFetch(courseApiPath, {
 			query: {
 				faculty: selectedFaculty.value,
 				program: selectedProgram.value,
@@ -398,7 +405,7 @@
 	}
 
 	const removeCourse = debounce(async () => {
-		if (!USER.canModerate || !course.value?.id) return;
+		if (!SESSION.canModerate || !course.value?.id) return;
 
 		const { value } = await Swal.firePrevent({
 			title: "Eliminar curso",
@@ -420,7 +427,7 @@
 				icon: "success",
 			});
 
-			return router.push("/");
+			return navigateTo("/");
 		}
 
 		Swal.fire({
@@ -445,36 +452,46 @@
 				route.meta.title = name;
 				route.meta.description = description;
 				route.meta.keywords = alternativeNames.join(", ");
+			}
+		},
+		{ immediate: true }
+	);
+	watch(
+		courseId,
+		(newCourseId) => {
+			unsub();
 
-				if (import.meta.server || !USER.token || !$clientFirestore || !$resolveClientRefs) {
-					return;
+			if (import.meta.server || !$clientFirestore || !$resolveClientRefs) return;
+
+			const courseRef: DocumentReference<CourseData> = doc(
+				$clientFirestore,
+				INSTANCE.path,
+				"courses",
+				newCourseId
+			);
+
+			// Hydrate course from firebase (Scraped server side)
+			unsub = onSnapshot(courseRef, async (snapshot) => {
+				// prevent hydration if not active
+				if (deactivated.value) return;
+				if (!snapshot.exists()) {
+					unsub();
+
+					throw showError({
+						statusCode: 404,
+						statusMessage: "El curso que buscas fue eliminado.",
+					});
 				}
 
-				const courseRef: DocumentReference<Course> = doc($clientFirestore, newCourse.id);
+				const courseData = await $resolveClientRefs(snapshot);
 
-				// Hydrate course from firebase (Scraped server side)
-				unsub = onSnapshot(courseRef, async (snapshot) => {
-					// prevent hydration if not active
-					if (deactivated.value) return;
-					if (!snapshot.exists()) {
-						unsub();
+				// Hydrate course
+				if (courseData?.id) {
+					course.value = courseData;
 
-						throw showError({
-							statusCode: 404,
-							statusMessage: "El curso que buscas fue eliminado.",
-						});
-					}
-
-					const courseData = await $resolveClientRefs(snapshot);
-
-					// Hydrate course
-					if (courseData?.id) {
-						course.value = courseData;
-
-						refreshGroups();
-					}
-				});
-			}
+					refreshGroups();
+				}
+			});
 		},
 		{ immediate: true }
 	);

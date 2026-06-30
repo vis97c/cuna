@@ -7,7 +7,7 @@
 		<template #toggle="toggleScope">
 			<slot v-bind="toggleScope"></slot>
 		</template>
-		<template v-if="USER.token && USER.canDevelop" #default="{ invertedTheme, setModel }">
+		<template v-if="SESSION.token && SESSION.canDevelop" #default="{ invertedTheme, setModel }">
 			<nav
 				class="dropdown-item list flx --flxColumn --gap-20 --minWidth-180 --maxWidth-100 --txtColor"
 			>
@@ -95,7 +95,6 @@
 	import debounce from "lodash-es/debounce.js";
 
 	import type { tProp, tThemeModifier, tThemeTuple } from "@open-xamu-co/ui-common-types";
-	import { getDocumentId } from "@open-xamu-co/firebase-nuxt/client/resolver";
 
 	/**
 	 * Admin dropdown
@@ -104,7 +103,7 @@
 	defineProps<{ theme?: tThemeTuple | tProp<tThemeModifier> }>();
 	defineOptions({ name: "DropdownAdminInstance" });
 
-	const USER = useUserStore();
+	const SESSION = useSessionStore();
 	const INSTANCE = useInstanceStore();
 
 	const toggleLoadedClass = debounce(function (toggleModal?: (v?: boolean) => void) {
@@ -117,7 +116,7 @@
 	});
 	const clearInstance = debounce(async function () {
 		// Remove cache
-		await useQuery("/api/instance", { method: "DELETE", credentials: "omit" });
+		await customFetch("/api/instance/cache", { method: "DELETE" });
 
 		INSTANCE.unsetInstance();
 		location.reload();

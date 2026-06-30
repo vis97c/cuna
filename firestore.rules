@@ -78,18 +78,6 @@ service cloud.firestore {
       allow delete: if canDevelop("live") && resource.data.lock == false;
     }
 
-    match /users/{uid} {
-      // lectura unica, cualquiera
-      allow get: if request.auth != null;
-      // lectura multiple, moderadores hacia arriba
-      allow list: if canModerate("live");
-      // creacion granular, cualquiera
-      allow create: if request.auth != null;
-      // modificacion granular, desarrolladores hacia arriba o propietarios
-      allow update: if canDevelop("live") || isOwnUser(uid);
-      allow delete: if (canDevelop("live") || isOwnUser(uid)) && resource.data.lock == false;
-    }
-
     match /instances/{instanceId} {
       // lectura explicita, cualquiera
       allow read: if true;

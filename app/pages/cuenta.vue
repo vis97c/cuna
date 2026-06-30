@@ -3,7 +3,7 @@
 		<section class="view-item --minHeightVh-100 --bgColor-light">
 			<div class="holder">
 				<div class="txt --gap-10 --width-100">
-					<h2>{{ USER.userName || "Sin nombre" }}</h2>
+					<h2>{{ SESSION.userName || "Sin nombre" }}</h2>
 				</div>
 				<div class="txt --gap-10 --width-100">
 					<div class="txt --gap-0">
@@ -12,8 +12,8 @@
 							Datos proporcionados por Google a partir del correo institucional.
 						</p>
 					</div>
-					<p>Nombre completo: {{ USER.user?.name }}</p>
-					<p>Correo institucional: {{ USER.user?.email }}</p>
+					<p>Nombre completo: {{ SESSION.member?.name }}</p>
+					<p>Correo institucional: {{ email }}</p>
 				</div>
 				<div class="txt --gap-10 --width-100">
 					<div class="txt --gap-0">
@@ -22,7 +22,7 @@
 							Considera ponerte en contacto con Cuna si presentas dudas o problemas.
 						</p>
 					</div>
-					<XamuActionButton :theme="eColors.DANGER" @click="USER.remove">
+					<XamuActionButton :theme="eColors.DANGER" @click="SESSION.remove">
 						<XamuIconFa name="trash-can" />
 						<span>Eliminar cuenta</span>
 					</XamuActionButton>
@@ -53,5 +53,8 @@
 		middleware: ["auth-only"],
 	});
 
-	const USER = useUserStore();
+	const SESSION = useSessionStore();
+	const { $clientAuth } = useNuxtApp();
+
+	const email = computed(() => $clientAuth?.currentUser?.email);
 </script>

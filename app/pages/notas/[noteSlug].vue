@@ -1,32 +1,35 @@
 <!-- eslint-disable vue/no-v-html -->
 <template>
 	<div id="notes-entry" class="view --gap-none --width-100 --minHeight-100">
-		<section class="view-item --minHeightVh-100 --bgColor-light">
-			<ClientOnly>
-				<template #fallback>Cargando nota...</template>
-				<XamuLoaderContent
-					:loading="notePending"
-					:content="!notePending"
-					label="Cargando nota..."
-					class="holder flx --flxColumn --flx-center"
-				>
-					<ItemNote
-						v-if="note"
-						:note="note"
-						:refresh="noteRefresh"
-						:hydrate-node="hydrateNode"
-						class="--width-100"
-					/>
-				</XamuLoaderContent>
-			</ClientOnly>
-		</section>
+		<XamuLoaderContent
+			el="section"
+			:loading="notePending"
+			:content="!notePending"
+			label="Cargando nota..."
+			class="view-item --minHeightVh-100 --bgColor-light"
+		>
+			<div v-if="note" class="holder flx --flxColumn --flx-center --gap-50">
+				<ItemNote
+					:note="note"
+					:refresh="noteRefresh"
+					:hydrate-node="hydrateNode"
+					class="--width-100"
+				/>
+				<PaginationNotes :linked-note="note">
+					<div class="txt --txtAlign-center">
+						<h3 class="--txtLineHeight-sm">Respuestas</h3>
+						<p class="--txtSize-sm">
+							Puedes revisa las respuestas de la nota o ayudar a otros dejando una.
+						</p>
+					</div>
+				</PaginationNotes>
+			</div>
+		</XamuLoaderContent>
 	</div>
 </template>
 
 <script setup lang="ts">
 	import { getDoc, doc, type DocumentReference } from "firebase/firestore";
-
-	import { getDocumentId } from "@open-xamu-co/firebase-nuxt/client/resolver";
 
 	import type { Note, NoteVoteRef } from "~/utils/types";
 
@@ -40,7 +43,7 @@
 
 	const route = useRoute();
 	const { $clientFirestore } = useNuxtApp();
-	const USER = useUserStore();
+	const SESSION = useSessionStore();
 
 	const noteSlug = computed(() => {
 		return route.params.noteSlug ? route.params.noteSlug : "";
@@ -58,7 +61,7 @@
 
 			const noteApiPath = `/api/instance/notes/${noteSlug.value}`;
 
-			return useQuery(noteApiPath, {
+			return customFetch(noteApiPath, {
 				method: "POST",
 				credentials: "omit",
 				headers: { "Cache-Control": "no-store" },
@@ -84,10 +87,10 @@
 				// Update meta
 				route.meta.title = newNote?.name || "Nota";
 
-				if (import.meta.server || !$clientFirestore || !USER.path) return;
+				if (import.meta.server || !$clientFirestore || !SESSION.path) return;
 
 				// Get note vote
-				const id = `${newNote.id}/votes/${getDocumentId(USER.path)}`;
+				const id = `${newNote.id}/votes/${getDocumentId(SESSION.path)}`;
 				const voteRef: DocumentReference<NoteVoteRef> = doc($clientFirestore, id);
 				const voteSnapshot = await getDoc(voteRef);
 				const { vote = 0 } = voteSnapshot.data() || {};

@@ -23,6 +23,7 @@
 			}"
 			label="Cargando cursos..."
 			no-content-message="No hay cursos disponibles"
+			client
 		>
 			<template #headActions="{ refreshData }">
 				<XamuActionButtonToggle
@@ -71,7 +72,6 @@
 </template>
 
 <script setup lang="ts">
-	import { getDocumentId } from "@open-xamu-co/firebase-nuxt/client/resolver";
 	import type { iGetPage, iPage } from "@open-xamu-co/ui-common-types";
 
 	import type { Course } from "~/utils/types";
@@ -97,7 +97,8 @@
 	}
 
 	const coursesPage: iGetPage<Course> = (query) => {
-		return useQuery<iPage<Course> | undefined>("/api/instance/all/courses", {
+		return customFetch<iPage<Course> | undefined>("/api/admin/instance/courses", {
+			method: "POST",
 			query,
 			credentials: "omit",
 			headers: { "Cache-Control": "no-store" },
@@ -107,9 +108,10 @@
 
 	function makeCourseLogsPage(course: Course): iGetPage<Course> {
 		return function (query) {
-			return useQuery<iPage<Course> | undefined>(
-				`/api/instance/courses/${getDocumentId(course.id)}/logs`,
+			return customFetch<iPage<Course> | undefined>(
+				`/api/admin/instance/courses/${getDocumentId(course.id)}/logs`,
 				{
+					method: "POST",
 					query,
 					credentials: "omit",
 					headers: { "Cache-Control": "no-store" },

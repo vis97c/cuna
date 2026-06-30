@@ -1,0 +1,247 @@
+import { FieldValue, Timestamp, type DocumentReference } from "firebase-admin/firestore";
+
+import type { InstanceData, NoteData, NoteVoteData } from "../types/entities/index.js";
+import { encrypt } from "../utils/encrypt.js";
+import { onCreated, onUpdated, onDeleted } from "../utils/event.js";
+import { getFirebase } from "../utils/firebase.js";
+import { makeGetSlug } from "../utils/slugs.js";
+
+const getNoteSlug = makeGetSlug("notes");
+
+/**
+ * Create note
+ *
+ * @docType instance
+ * @event created
+ */
+export const onCreatedNote = onCreated<NoteData>(
+	"instances/members/notes",
+	async (created, { logger, createdAt }) => {
+		const { firebaseFirestore } = getFirebase("onCreatedNote");
+		const memberRef: DocumentReference<InstanceData> | null = created.ref.parent.parent;
+		const instanceRef: DocumentReference<InstanceData> | null | undefined =
+			memberRef?.parent.parent;
+
+		try {
+			if (!instanceRef || !memberRef) {
+				throw new Error(`Missing instance or member at: "${created.ref.path}"`);
+			}
+
+			let {
+				slug,
+				name,
+				keywords = name?.trim().split(" "),
+				body = "",
+				encodedAt,
+				linkedNoteRef,
+			} = created.data();
+			const newSlug = await getNoteSlug(firebaseFirestore, name);
+
+			// Encode new unencoded body
+			if (!encodedAt) {
+				const instance = (await instanceRef.get()).data();
+				const millis = instance?.createdAt?.toMillis(); // ToMillis for consistency
+
+				// Encode secret using instance timestamp
+				body = encrypt(body, String(millis));
+				encodedAt = Timestamp.fromDate(createdAt);
+			}
+
+			const voteRef = created.ref.collection("votes").doc(memberRef.id);
+
+			// Create author vote, do not await
+			voteRef.set({ vote: 1, notePath: created.ref.path, internal: true });
+			// If there is a linked note, increment the linked notes count
+			linkedNoteRef?.update({ linkedNotesCount: FieldValue.increment(1) });
+
+			return { slug: slug || newSlug, body, encodedAt, keywords, instanceRef };
+		} catch (err) {
+			logger("functions:instances:members:onCreatedNote", err);
+
+			throw err;
+		}
+	},
+	{
+		defaults: {
+			score: 1,
+			upvotes: 1, // Author upvote
+			downvotes: 0,
+			public: false,
+			hideScore: false,
+			lock: false,
+			linkedNotesCount: 0,
+		},
+	}
+);
+/**
+ * Update note
+ *
+ * @docType instance
+ * @event updated
+ */
+export const onUpdatedNote = onUpdated<NoteData>(
+	"instances/members/notes",
+	async (updated, existing, { updatedAt, logger }) => {
+		const { firebaseFirestore } = getFirebase("onUpdatedNote");
+		const memberRef: DocumentReference<InstanceData> | null = updated.ref.parent.parent;
+		const instanceRef: DocumentReference<InstanceData> | null | undefined =
+			memberRef?.parent.parent;
+
+		try {
+			if (!instanceRef) throw new Error(`Missing instance at: "${updated.ref.path}"`);
+
+			const existingData = existing.data();
+			let {
+				slug = "",
+				body = "",
+				encodedAt = Timestamp.fromDate(updatedAt),
+				lock,
+			} = updated.data();
+
+			// Validate slug if slug has changed
+			if (existingData.slug !== slug) {
+				// Update slug if unlocked
+				if (!lock) slug = await getNoteSlug(firebaseFirestore, slug, existingData.slug);
+			}
+
+			// Encode updated body
+			if (
+				existingData.body !== body &&
+				(!existingData.encodedAt || existingData.encodedAt.isEqual(encodedAt))
+			) {
+				const instance = (await instanceRef.get()).data();
+				const millis = instance?.createdAt?.toMillis(); // ToMillis for consistency
+
+				// Encode secret using instance timestamp
+				body = encrypt(body, String(millis));
+				encodedAt = Timestamp.fromDate(updatedAt);
+			}
+
+			return { slug, body, encodedAt };
+		} catch (err) {
+			logger("functions:instances:members:onUpdatedNote", err);
+
+			throw err;
+		}
+	}
+);
+/**
+ * Delete timestamp
+ * Remove related note votes
+ *
+ * @docType note
+ * @event deleted
+ */
+export const onDeletedNote = onDeleted("instances/members/notes", async (deletedDoc) => {
+	const votesRef = deletedDoc.ref.collection("votes");
+	const votesSnapshot = await votesRef.get();
+	const { linkedNoteRef } = deletedDoc.data();
+
+	// If there is a linked note, decrement the linked notes count
+	linkedNoteRef?.update({ linkedNotesCount: FieldValue.increment(-1) });
+	// Delete related votes
+	votesSnapshot.forEach((doc) => doc.ref.delete());
+});
+
+/**
+ * Create note vote
+ *
+ * @docType instance
+ * @event created
+ */
+export const onCreatedNoteVote = onCreated<NoteVoteData>(
+	"instances/members/notes/votes",
+	async (created, { logger }) => {
+		const noteRef = created.ref.parent.parent;
+		const { vote = 0, internal } = created.data();
+
+		if (internal) return;
+
+		try {
+			// Parent note is required
+			if (!noteRef) throw new Error("Missing note ref");
+
+			// Delete invalid vote
+			if (vote !== 1 && vote !== -1) throw new Error("Invalid vote");
+
+			/** Total change in score. */
+			const delta = vote;
+			/** Change in upvote count. */
+			const upvotesDelta = vote === 1 ? 1 : 0;
+			/** Change in downvote count. */
+			const downvotesDelta = vote === -1 ? 1 : 0;
+			// Perform batch operations
+			const voteBatch = created.ref.firestore.batch();
+
+			// Setup transactions
+			voteBatch.update(noteRef, {
+				upvotes: FieldValue.increment(upvotesDelta),
+				downvotes: FieldValue.increment(downvotesDelta),
+				score: FieldValue.increment(delta),
+			});
+
+			// Commit batch
+			await voteBatch.commit();
+
+			return { notePath: noteRef.path };
+		} catch (err) {
+			logger("functions:instances:members:onCreatedNoteVote", err);
+
+			throw err;
+		}
+	},
+	{
+		defaults: {
+			lock: true,
+		},
+	}
+);
+/**
+ * Update note vote.
+ * Calculate deltas & update note.
+ *
+ * @docType instance
+ * @event updated
+ */
+export const onUpdatedNoteVote = onUpdated<NoteVoteData>(
+	"instances/members/notes/votes",
+	async (updated, existing, { logger }) => {
+		const noteRef = updated.ref.parent.parent;
+
+		try {
+			// Parent note is required
+			if (!noteRef) throw new Error("Missing note ref");
+
+			const oldVote = existing.data()?.vote ?? 0;
+			const vote = updated.data()?.vote ?? 0;
+
+			// Omit if vote is the same
+			if (vote === oldVote) return;
+
+			// Calculate deltas
+			const delta = vote - oldVote;
+			const upvotesDelta = oldVote === 1 ? -1 : vote === 1 ? 1 : 0;
+			const downvotesDelta = oldVote === -1 ? -1 : vote === -1 ? 1 : 0;
+
+			// Perform batch operations
+			const voteBatch = updated.ref.firestore.batch();
+
+			// Setup transactions
+			voteBatch.update(noteRef, {
+				upvotes: FieldValue.increment(upvotesDelta),
+				downvotes: FieldValue.increment(downvotesDelta),
+				score: FieldValue.increment(delta),
+			});
+
+			// Eliminar voto si se quitó
+			if (vote === 0) voteBatch.delete(updated.ref);
+
+			// Commit batch
+			await voteBatch.commit();
+		} catch (err) {
+			logger("functions:instances:members:onUpdatedNoteVote", err);
+
+			throw err;
+		}
+	}
+);

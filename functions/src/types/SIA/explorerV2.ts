@@ -1,4 +1,4 @@
-import { eSIALevel, eSIAPlace, eSIATypology } from "./enums";
+import { eSIALevel, eSIAPlace, eSIATypology } from "./enums/index.js";
 
 export const eExplorerV2Level = {
 	[eSIALevel.PREGRADO]: 1,

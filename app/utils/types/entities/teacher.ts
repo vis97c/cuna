@@ -1,14 +1,9 @@
-import type { FirebaseDocument, FromData, GetRef } from "@open-xamu-co/firebase-nuxt/client";
-
 import type { TeacherData } from "~~/functions/src/types/entities";
+import type { OutputFromData, RefFromData, InputFromData } from "./base";
 
-/**
- * SIA Teacher
- */
-export interface Teacher extends FirebaseDocument, FromData<TeacherData> {}
-/**
- * This one goes to the database
- *
- * Omit automation
- */
-export interface TeacherRef extends GetRef<Teacher> {}
+/** @output Teacher data */
+export interface Teacher extends OutputFromData<TeacherData> {}
+/** @input Teacher with client refs */
+export interface TeacherRef extends RefFromData<TeacherData> {}
+/** @input This one goes to the database */
+export interface TeacherInput extends InputFromData<TeacherData> {}

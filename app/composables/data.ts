@@ -1,14 +1,8 @@
-import type { InstanceLog, Offender } from "@open-xamu-co/firebase-nuxt/client";
-
-import type {
-	ExtendedInstance,
-	ExtendedInstanceMember,
-	ExtendedUser,
-	Group,
-	GroupEs,
-	Proxy,
-} from "~/utils/types";
-import { eMemberRole } from "~~/functions/src/enums";
+import type { Instance, Member, Group, GroupEs, Proxy, MemberAbuse } from "~/utils/types";
+import type { OutputFromData } from "~/utils/types/entities/base";
+import type { Log, Offender } from "~/utils/types/entities/log";
+import { eMemberRole, type AuditData } from "~~/functions/src/types/entities";
+import type { SearchData } from "~~/functions/src/types/entities/base";
 
 export const markdownExample =
 	"# Título\n\n" +
@@ -29,64 +23,76 @@ export function useRoleName(role = 3) {
 	return roleName;
 }
 
-export function useMapUser({
-	instances = [],
-	isAnonymous,
+function useMapAudit({
 	createdBy,
 	updatedBy,
-	...user
-}: ExtendedUser) {
-	const USER = useUserStore();
+	deletedBy,
+	lock,
+	...data
+}: OutputFromData<AuditData>) {
+	if (createdBy) data.createdBy = useMapMember(createdBy);
+	if (updatedBy) data.updatedBy = useMapMember(updatedBy);
+	if (deletedBy) data.deletedBy = useMapMember(deletedBy);
 
-	if (createdBy) user.createdBy = useMapMember(createdBy);
-	if (updatedBy) user.updatedBy = useMapMember(updatedBy);
-	if (USER.canDevelop) user.instances = instances.map(useMapInstance);
+	return data;
+}
 
-	return user;
+/**
+ * Clean search data from searcheable entities
+ */
+function useMapSearch({ indexes, indexesWeights, ...searchData }: OutputFromData<SearchData>) {
+	return useMapAudit(searchData);
 }
 
 export function useMapMember({
-	role,
-	user = {},
-	rootMember = {},
+	address,
+	bannedUntilAt,
+	cellphoneIndicative,
+	cellphoneNumber,
+	description,
+	documentNumber,
+	documentType,
+	emailVerified,
+	isAnonymous,
+	level,
+	locationCity,
+	locationCountry,
+	locationState,
+	zip,
 	...member
-}: ExtendedInstanceMember) {
-	return { ...useMapUser(user), ...member, role: useRoleName(rootMember.role ?? role ?? 3) };
+}: Member) {
+	const SESSION = useSessionStore();
+
+	if (!SESSION.canModerate) delete member.role;
+
+	return useMapSearch(member);
 }
 
-export function useMapInstance({
-	createdBy,
-	updatedBy,
-	ownedBy,
-	banner = {},
-	...instance
-}: ExtendedInstance) {
-	if (createdBy) instance.createdBy = useMapMember(createdBy);
-	if (updatedBy) instance.updatedBy = useMapMember(updatedBy);
-	if (ownedBy) instance.ownedBy = useMapMember(ownedBy);
+export function useMapMemberAbuse({ commitedBy, ...memberAbuse }: MemberAbuse) {
+	return useMapAudit({
+		...memberAbuse,
+		commitedBy: commitedBy ? useMapMember(commitedBy) : undefined,
+	});
+}
 
-	return {
+export function useMapInstance({ ownedBy, banner = {}, ...instance }: Instance) {
+	return useMapAudit({
 		...instance,
+		ownedBy: ownedBy ? useMapMember(ownedBy) : undefined,
 		banner: { message: banner.message, url: banner.url },
-	};
+	});
 }
 
-export function useMapOffender({ createdBy, updatedBy, lastLog, ...offender }: Offender) {
-	offender.createdBy = createdBy ? useMapMember(createdBy) : undefined;
-	offender.updatedBy = updatedBy ? useMapMember(updatedBy) : undefined;
-
-	return { ...offender, lastLog };
+export function useMapOffender({ lastLog, ...offender }: Offender) {
+	return useMapAudit({ ...offender, lastLog: lastLog ? useMapLog(lastLog) : undefined });
 }
 
-export function useMapLog({ createdBy, updatedBy, metadata, ...log }: InstanceLog) {
-	log.createdBy = createdBy ? useMapMember(createdBy) : undefined;
-	log.updatedBy = updatedBy ? useMapMember(updatedBy) : undefined;
-
-	return { ...log, metadata };
+export function useMapLog({ metadata, ...log }: Log) {
+	return useMapAudit({ ...log, metadata });
 }
 
 export function useMapGroupEs(group: Group): GroupEs {
-	const { id, name, availableSpots, spots, classrooms, teachers } = group;
+	const { id, name, availableSpots, spots, classrooms, teachers = [] } = group;
 	const endDate = new Date(group.periodEndAt || "");
 	/**
 	 * Semestre activo

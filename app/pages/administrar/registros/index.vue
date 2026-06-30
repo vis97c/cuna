@@ -28,13 +28,14 @@
 			}"
 			label="Cargando registros..."
 			no-content-message="No hay registros disponibles"
+			client
 			@refresh="emittedRefresh = $event"
 		>
 			<template #headActions="{ refreshData }">
 				<XamuModal
 					title="Emular nuevo registro"
 					:save-button="{ title: 'Emular registro' }"
-					class="--txtColor --txtAlign --txtWeight"
+					class="--txtColor --txtAlign --minWidth-480:md --maxWidth-720:md"
 					target="body"
 					invert-theme
 					@save="addEmulatedLogs"
@@ -48,7 +49,7 @@
 					</template>
 					<XamuInputText
 						v-model="emulatedLogCount"
-						:min="CUNA.tabletMQRange ? '1' : 1"
+						:min="APP.tabletMQRange ? '1' : 1"
 						type="number"
 					/>
 				</XamuModal>
@@ -83,8 +84,9 @@
 
 <script setup lang="ts">
 	import type { iGetPage, iPage } from "@open-xamu-co/ui-common-types";
-	import type { InstanceLog, InstanceLogRef } from "@open-xamu-co/firebase-nuxt/client";
 	import { eColors } from "@open-xamu-co/ui-common-enums";
+	import type { Log } from "~/utils/types/entities/log";
+	import type { LogData } from "~~/functions/src/types/entities";
 
 	/**
 	 * Admin/Developer logs page
@@ -93,7 +95,7 @@
 	 */
 	definePageMeta({ title: "Registros", middleware: ["can-admin"] });
 
-	const CUNA = useCunaStore();
+	const APP = useAppStore();
 	const INSTANCE = useInstanceStore();
 	const Swal = useSwal();
 	const { appName } = useRuntimeConfig().public;
@@ -121,16 +123,18 @@
 		return arr.length ? arr : [];
 	});
 
-	const logsPage: iGetPage<InstanceLog> = (pagination) => {
-		return useQuery<iPage<InstanceLog> | undefined>("/api/logs", {
+	const logsPage: iGetPage<Log> = (pagination) => {
+		return customFetch<iPage<Log> | undefined>("/api/admin/logs", {
+			method: "POST",
 			query: pagination,
 			credentials: "omit",
 			headers: { "Cache-Control": "no-store" },
 			cache: "no-store",
 		});
 	};
-	const instanceLogsPage: iGetPage<InstanceLog> = (pagination) => {
-		return useQuery<iPage<InstanceLog> | undefined>("/api/instance/logs", {
+	const instanceLogsPage: iGetPage<Log> = (pagination) => {
+		return customFetch<iPage<Log> | undefined>("/api/admin/instance/logs", {
+			method: "POST",
 			query: pagination,
 			credentials: "omit",
 			headers: { "Cache-Control": "no-store" },
@@ -146,16 +150,18 @@
 
 		try {
 			const arr = Array.from({ length: emulatedLogCount.value }, (_, index) => index + 1);
-			const logsCollectionPath = global.value ? "logs" : `${INSTANCE.id}/logs`;
+			const logsCollectionPath = global.value ? "logs" : `${INSTANCE.path}/logs`;
 
-			// Run sequentially
-			for (const index of arr) {
-				await useDocumentCreate<InstanceLogRef>(logsCollectionPath, {
-					at: "administrar:registros:addEmulatedLogs",
-					message: `Registro emulado #${index} de ${emulatedLogCount.value}`,
-					code: "test",
-				});
-			}
+			// Run in parallel
+			await Promise.all(
+				arr.map((index) =>
+					useDocumentCreate<LogData>(logsCollectionPath, {
+						at: "administrar:registros:addEmulatedLogs",
+						message: `Registro emulado #${index} de ${emulatedLogCount.value}`,
+						code: "test",
+					})
+				)
+			);
 
 			Swal.fire({
 				icon: "success",

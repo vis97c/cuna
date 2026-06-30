@@ -1,17 +1,8 @@
 import type { Timestamp as clientTimestamp } from "firebase/firestore";
 import type { DocumentReference, Timestamp as adminTimestamp } from "firebase-admin/firestore";
 
-import type {
-	InstanceData,
-	InstanceDataConfig,
-	InstanceMemberData,
-	SharedData,
-} from "@open-xamu-co/firebase-nuxt/functions";
-
-import type { eSIALevel, eSIAPlace, eSIATypology } from "../SIA";
-import type { ExtendedUserData } from "./user";
-import type { eMemberRole } from "../../enums";
-import type { GroupData } from "./course";
+import type { eSIALevel, eSIAPlace, eSIATypology } from "../SIA/index.js";
+import type { AuditData, MemberData } from "./member.js";
 
 /**
  * Old config for migration
@@ -55,7 +46,7 @@ interface OldCunaConfig {
 	explorerV2CoursesURL?: string;
 }
 
-export interface ExtendedInstanceDataConfig extends InstanceDataConfig, OldCunaConfig {
+export interface InstanceDataConfig extends OldCunaConfig {
 	/** Cuna version */
 	version?: string;
 	/**
@@ -130,12 +121,16 @@ export interface ExtendedInstanceDataConfig extends InstanceDataConfig, OldCunaC
 	 * @example [eSIAPlace.BOGOTÁ]
 	 */
 	preindexedSearch?: eSIAPlace[];
+	/**
+	 * When tenants are enabled, domains are required
+	 */
+	domains?: string[];
 }
 
 /**
  * App instance
  */
-export interface ExtendedInstanceData extends InstanceData {
+export interface InstanceData extends AuditData {
 	// details
 	name?: string;
 	description?: string;
@@ -155,7 +150,7 @@ export interface ExtendedInstanceData extends InstanceData {
 	/**
 	 * Api, flexible if endpoints do change
 	 */
-	config?: ExtendedInstanceDataConfig;
+	config?: InstanceDataConfig;
 	/**
 	 * Feature flags
 	 */
@@ -173,44 +168,17 @@ export interface ExtendedInstanceData extends InstanceData {
 	/** Custom css */
 	css?: string;
 	/** @automated instance owner */
-	ownedByRef?: DocumentReference<ExtendedUserData>;
+	ownedByRef?: DocumentReference<MemberData>;
 	/** @automated instance disabled date */
 	disabledAt?: adminTimestamp | false;
 	/** @automated unique slug */
 	slug?: string;
 	/** @cached gateway key available */
 	withGatewayKey?: boolean;
-}
-
-/**
- * Instance member
- *
- * @collection instances/members
- */
-export interface ExtendedInstanceMemberData extends InstanceMemberData {
-	role?: eMemberRole;
-	/**
-	 * Enrolled courses (codes)
-	 */
-	enrolledRefs?: DocumentReference<GroupData>[];
-	userRef?: DocumentReference<ExtendedUserData>;
-	/** Could be non existent */
-	rootMemberRef?: DocumentReference<ExtendedInstanceMemberData>;
-	/** @automated User is banned */
-	bannedAt?: adminTimestamp;
-}
-
-/**
- * Store abuse
- * Keep track of abussive behavior by users
- *
- * This should not represent a ban, userData.bannedAt should do that
- *
- * @collection instance/members/abuses
- */
-export interface InstanceMemberAbuseData extends SharedData {
-	at?: string;
-	message?: string;
-	/** Who commited the abuse */
-	commitedByRef?: DocumentReference<ExtendedUserData>;
+	/** @automated @searchable */
+	membersCount?: number;
+	/** @automated @searchable */
+	coursesCount?: number;
+	/** @automated @searchable */
+	notesCount?: number;
 }

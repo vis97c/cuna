@@ -1,13 +1,16 @@
-import type { SharedDocument, FromData, GetRef } from "@open-xamu-co/firebase-nuxt/client";
-
 import type { NoteData, NoteVoteData } from "~~/functions/src/types/entities";
+import type { InputFromData, OutputFromData, RefFromData } from "./base";
 
-/** @output Note  */
-export interface Note extends SharedDocument, FromData<NoteData> {}
-/** @input Omit automation */
-export interface NoteRef extends GetRef<Note> {}
+/** @output Note data */
+export interface Note extends OutputFromData<NoteData> {}
+/** @input Note with client refs */
+export interface NoteRef extends RefFromData<NoteData> {}
+/** @input This one goes to the database */
+export interface NoteInput extends InputFromData<NoteData> {}
 
-/** @output Note vote  */
-export interface NoteVote extends SharedDocument, FromData<NoteVoteData> {}
-/** @input Omit automation */
-export interface NoteVoteRef extends GetRef<NoteVote> {}
+/** @output NoteVote data*/
+export interface NoteVote extends OutputFromData<NoteVoteData> {}
+/** @input NoteVote with client refs */
+export interface NoteVoteRef extends RefFromData<NoteVoteData> {}
+/** @input This one goes to the database */
+export interface NoteVoteInput extends InputFromData<NoteVoteData> {}

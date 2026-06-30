@@ -4,28 +4,11 @@ import {
 	onIdTokenChanged,
 	signInWithCredential,
 } from "firebase/auth";
-import {
-	deleteField,
-	doc,
-	DocumentReference,
-	getDoc,
-	onSnapshot,
-	setDoc,
-	type Unsubscribe,
-} from "firebase/firestore";
+import { doc, DocumentReference, onSnapshot, setDoc, type Unsubscribe } from "firebase/firestore";
 
-import { makeLogger } from "@open-xamu-co/firebase-nuxt/client/logger";
-
-import type { PseudoDocumentSnapshot, RootRef } from "@open-xamu-co/firebase-nuxt/client";
-import type {
-	ExtendedInstance,
-	ExtendedInstanceMemberRef,
-	ExtendedUserRef,
-	ExtendedUser,
-	ExtendedInstanceRef,
-} from "~/utils/types";
-import { eCacheControl } from "@open-xamu-co/firebase-nuxt/functions/enums";
-import { safeInstanceConfig } from "~/utils/firestore";
+import type { Instance, InstanceRef, MemberRef, Member } from "~/utils/types";
+import { eMemberRole } from "~~/functions/src/types/entities";
+import { eCacheControl } from "~~/functions/src/types/enums";
 
 /**
  * Setup instance
@@ -39,12 +22,10 @@ export default defineNuxtPlugin({
 	name: "instance",
 	dependsOn: ["pinia", "firebase-setup"],
 	async setup() {
-		const ROOT = useRootStore();
 		const INSTANCE = useInstanceStore();
 		const route = useRoute();
-		const { rootInstanceId } = useRuntimeConfig().public;
 		const unattended = "/desatendido";
-		let instance: ExtendedInstance | undefined = INSTANCE.current;
+		let instance: Instance | undefined = INSTANCE.current;
 
 		try {
 			// Get fresh instance
@@ -56,7 +37,7 @@ export default defineNuxtPlugin({
 				};
 
 				// Get current instance, prefer $fetch
-				instance = await $fetch<ExtendedInstance>("/api/instance", {
+				instance = await $fetch<Instance>("/api/instance", {
 					credentials: "omit",
 					headers,
 				});
@@ -64,23 +45,26 @@ export default defineNuxtPlugin({
 
 			// No instance found, launch error, do not log
 			if (!instance?.id) throw new Error("Instance not found");
-			else if (instance?.id === `ìnstances/${rootInstanceId}`) ROOT.setRoot(instance); // Same as root
 
 			// Set instance, await for SSR
 			await INSTANCE.setInstance(instance);
 
 			// Restore navigation
-			if (route?.path === unattended) navigateTo("/", { redirectCode: 302 });
-			else if (import.meta.client) setupAuth(instance);
+			if (route?.path === unattended) {
+				await navigateTo({ path: "/", query: { rdr: "instance" } }, { redirectCode: 302 });
+			} else if (import.meta.client) setupAuth(instance);
 		} catch (err) {
 			// Instance not found, Go to unnatended
 			INSTANCE.unsetInstance();
 
 			// Go to unnatended
 			if (route?.path !== unattended) {
-				const query = { restricted: encodeURI(route?.fullPath) };
+				const restricted = encodeURI(route?.fullPath);
 
-				navigateTo({ path: unattended, query }, { redirectCode: 302 });
+				await navigateTo(
+					{ path: unattended, query: { restricted, rdr: "instance" } },
+					{ redirectCode: 302 }
+				);
 			}
 		}
 	},
@@ -92,42 +76,36 @@ export default defineNuxtPlugin({
  * 1. Setup session on client
  * 2. Get fresh instance for power users
  */
-function setupAuth(instance: ExtendedInstance) {
-	const ROOT = useRootStore();
+function setupAuth(instance: Instance) {
 	const INSTANCE = useInstanceStore();
-	const USER = useUserStore();
-	const { rootInstanceId } = useRuntimeConfig().public;
+	const SESSION = useSessionStore();
 	const route = useRoute();
 
-	const {
-		$clientFirestore: firestore,
-		$clientAuth: auth,
-		$resolveClientRefs: resolveRefs,
-	} = useNuxtApp();
+	const { $clientFirestore, $clientAuth, $resolveClientRefs } = useNuxtApp();
 
 	/**
 	 * Setup session on client
 	 * Instance comes from middleware
 	 */
-	if (!instance?.id || !firestore || !auth || !resolveRefs) return;
+	if (!instance?.id || !$clientFirestore || !$clientAuth || !$resolveClientRefs) return;
 
-	let unsubUser: Unsubscribe;
+	let unsubMember: Unsubscribe;
 
-	const logger = makeLogger({ instanceId: instance.id, loggerFirestore: firestore });
-	const instanceRef: DocumentReference<ExtendedInstanceRef> = doc(firestore, instance.id);
+	const logger = makeLogger({ instanceId: instance.id, loggerFirestore: $clientFirestore });
+	const instanceRef: DocumentReference<InstanceRef> = doc($clientFirestore, instance.id);
 
 	/**
 	 * Setup user on every token refresh
 	 * Get fresh token & role before any redirect
 	 */
-	onIdTokenChanged(auth, async (authUser) => {
-		unsubUser?.();
+	onIdTokenChanged($clientAuth, async (authUser) => {
+		unsubMember?.();
 
 		if (!authUser) {
 			// Attempt checking redirect result
 			// Setup is required for: https://console.cloud.google.com/auth/clients
 			try {
-				const result = await getRedirectResult(auth, GoogleAuthProvider);
+				const result = await getRedirectResult($clientAuth, GoogleAuthProvider);
 
 				if (!result) throw new Error("No redirect result");
 
@@ -135,199 +113,174 @@ function setupAuth(instance: ExtendedInstance) {
 
 				if (!credential) throw new Error("No credentials");
 
-				const { user } = await signInWithCredential(auth, credential);
+				const { user } = await signInWithCredential($clientAuth, credential);
 
 				authUser = user;
 			} catch (err) {
 				const middleware = route.meta?.middleware;
 
 				// Clear session
-				USER.unsetSession();
+				SESSION.unsetSession();
 
 				// Redirect to login if current route requires auth
 				if (Array.isArray(middleware) && middleware.includes("auth-only")) {
 					const restricted = encodeURI(route?.fullPath);
 
 					// Rdr with restricted path
-					navigateTo({ path: "/ingresar", query: { restricted } }, { redirectCode: 302 });
+					await navigateTo(
+						{ path: "/ingresar", query: { restricted, rdr: "auth" } },
+						{ redirectCode: 302 }
+					);
 				}
 
 				return;
 			}
 		}
 
-		const { uid, displayName: name, email, photoURL, isAnonymous } = authUser;
-		const userRef: DocumentReference<ExtendedUserRef> = doc(firestore, "users", uid);
-		const rootInstanceRef: DocumentReference<RootRef> = doc(
-			firestore,
-			"instances",
-			rootInstanceId
-		);
-		const memberRef: DocumentReference<ExtendedInstanceMemberRef> = doc(
-			instanceRef,
-			"members",
-			uid
-		);
-		const rootMemberRef: DocumentReference<ExtendedInstanceMemberRef> = doc(
-			rootInstanceRef,
-			"members",
-			uid
-		);
-
-		// Get fresh token & member data
+		const {
+			uid,
+			displayName: userName,
+			photoURL: userPhotoURL,
+			isAnonymous,
+			emailVerified,
+		} = authUser;
+		const memberRef: DocumentReference<MemberRef> = doc(instanceRef, "members", uid);
+		// Get fresh token
 		const token = await authUser.getIdToken();
-		const memberSnapshot = await getDoc(memberRef);
-
-		const partialMemberSnapshot: PseudoDocumentSnapshot<ExtendedInstanceMemberRef> = {
-			ref: memberRef,
-			exists: memberSnapshot.exists,
-			data: () => {
-				// Remove rootMemberRef to avoid permission errors on resolveRefs
-				const { rootMemberRef, ...response } = memberSnapshot.data() || {};
-
-				return response;
-			},
-		};
-
-		// Member role required before any redirect
-		const memberData = await resolveRefs(partialMemberSnapshot, { level: 1 });
-		let user: ExtendedUser = { name, isAnonymous, uid, email, photoURL, id: memberRef.path };
 
 		// Set session, flatten member data
-		USER.setUser(
-			{ ...user, role: memberData?.role ?? 3, enrolled: memberData?.enrolled },
+		SESSION.setMember(
+			{
+				uid,
+				isAnonymous,
+				emailVerified,
+				photoURL: userPhotoURL,
+				role: eMemberRole.GUEST,
+				name: userName || "",
+			},
 			token
 		);
 
-		// Keep user fresh
-		unsubUser = onSnapshot(
-			userRef,
-			async (userSnapshot) => {
-				const userData = await resolveRefs(userSnapshot);
-				const rootMemberSnapshot = await getDoc(rootMemberRef);
-				const rootMemberData = await resolveRefs(rootMemberSnapshot);
-				// Smaller number means higher access role
-				const role = Math.min(rootMemberData?.role ?? 3, memberData?.role ?? 3);
+		// Keep member fresh
+		unsubMember = onSnapshot(
+			memberRef,
+			async (memberSnapshot) => {
+				const memberData = await $resolveClientRefs(memberSnapshot, { level: 1 }, true);
+				const member: Member = {
+					...memberData,
+					uid,
+					isAnonymous,
+					// email,
+					emailVerified,
+					photoURL: memberData?.photoURL ?? userPhotoURL,
+					role: memberData?.role ?? eMemberRole.GUEST,
+					name: memberData?.name || userName || "",
+				};
 
-				user = { ...userData, uid, email, photoURL, id: memberRef.path };
+				// Update session, flatten member data
+				SESSION.setMember({ ...member, id: memberRef.path }, token);
 
-				// Sync firestore user & member.
-				if (!memberSnapshot.exists() || user.email !== email || role !== memberData?.role) {
-					try {
-						// Set new user, do not await
-						setDoc(userRef, user, { merge: true });
-						// Set new member, do not await
-						setDoc(
-							memberRef,
-							{
-								userRef,
-								// Unset if not root member
-								rootMemberRef: rootMemberSnapshot.exists()
-									? rootMemberRef
-									: deleteField(),
-								role,
-							},
-							{ merge: true }
+				const bannedUntil = member?.bannedUntilAt ? new Date(member.bannedUntilAt) : null;
+				const isBanned = bannedUntil ? bannedUntil > new Date() : false;
+
+				if (isBanned) {
+					if (route.path !== "/suspendido") {
+						await navigateTo(
+							{ path: "/suspendido", query: { rdr: "auth" } },
+							{ redirectCode: 302 }
 						);
-					} catch (err) {
-						// Log user/member error
-						logger("plugins:firebase:watchUser", "Error setting user/member", err);
+					}
+
+					return;
+				} else if (route.path === "/suspendido") {
+					await navigateTo({ path: "/", query: { rdr: "auth" } }, { redirectCode: 302 });
+				} else if (route.path === "/ingresar") {
+					// Handle auth rdr
+					const { restricted } = route.query;
+					const rdr = typeof restricted === "string" && decodeURI(restricted);
+
+					if (rdr) {
+						try {
+							// Prevent open redirect
+							const url = new URL(rdr);
+
+							// Someone is trying to redirect to a different domain
+							logger?.("plugins:firebase:authRdr", "Open redirect detected", url);
+						} catch (err) {
+							// This is the expected behavior
+							// Redirect if rdr is relative path
+							if (route.path !== rdr) {
+								await navigateTo(
+									{ path: rdr, query: { rdr: "auth" } },
+									{ redirectCode: 302 }
+								);
+							}
+						}
+					} else {
+						await navigateTo(
+							{ path: "/", query: { rdr: "auth" } },
+							{ redirectCode: 302 }
+						);
 					}
 				}
 
-				// Update session, flatten member data
-				USER.setUser({ ...user, role, enrolled: memberData?.enrolled }, token);
+				// Bypass sync if user is fresh
+				if (
+					memberSnapshot.exists() &&
+					userPhotoURL === memberData?.photoURL &&
+					emailVerified === memberData?.emailVerified
+				) {
+					return;
+				}
+
+				try {
+					// Prevent role override
+					const { role, ...newMember } = member;
+
+					// Set new member, do not await
+					setDoc(memberRef, { ...newMember, createdByRef: memberRef }, { merge: true });
+				} catch (err) {
+					// Log user/member error
+					logger("plugins:firebase:watchUser", "Error setting user/member", err);
+				}
 			},
 			(err) => logger("plugins:firebase:watchUser:snapshot", err)
 		);
-
-		// Handle auth rdr
-		const { restricted } = route.query;
-		const rdr = typeof restricted === "string" && decodeURI(restricted);
-
-		if (rdr) {
-			try {
-				// Prevent open redirect
-				const url = new URL(rdr);
-
-				// Someone is trying to redirect to a different domain
-				logger?.("plugins:firebase:authRdr", "Open redirect detected", url);
-			} catch (err) {
-				// This is the expected behavior
-				// Redirect if rdr is relative path
-				if (route.path !== rdr) navigateTo(rdr, { redirectCode: 302 });
-			}
-		} else if (route.path === "/ingresar") navigateTo("/", { redirectCode: 302 });
 	});
 
 	let unsubInstance: Unsubscribe;
-	let unsubRoot: Unsubscribe;
 
 	/**
 	 * Keep instance fresh for power users
 	 * Power users can modify instances, keep them fresh
 	 */
 	watch(
-		() => USER.canModerate,
+		() => SESSION.canModerate,
 		(canModerate) => {
 			unsubInstance?.();
-			unsubRoot?.();
 
-			if (!canModerate || !instance?.id || !firestore || !resolveRefs) return;
+			if (!canModerate || !instance?.id || !$clientFirestore || !$resolveClientRefs) {
+				return;
+			}
 
 			const logger = makeLogger({
 				instanceId: instance.id,
-				loggerFirestore: firestore,
+				loggerFirestore: $clientFirestore,
 			});
-			const instanceRef: DocumentReference<ExtendedInstanceRef, ExtendedInstance> = doc(
-				firestore,
+			const instanceRef: DocumentReference<InstanceRef, Instance> = doc(
+				$clientFirestore,
 				instance.id
 			);
-			const rootInstanceRef: DocumentReference<RootRef> = doc(
-				firestore,
-				"instances",
-				rootInstanceId
-			);
-
-			// Keep root fresh if not current instance
-			if (instance.id !== `ìnstances/${rootInstanceId}`) {
-				unsubRoot = onSnapshot(
-					rootInstanceRef,
-					async (snapshot) => {
-						try {
-							const freshRoot = await resolveRefs(snapshot, { level: 1 });
-
-							ROOT.setRoot({
-								...freshRoot,
-								config: safeInstanceConfig(freshRoot?.config),
-							});
-						} catch (err) {
-							logger("plugins:firebase:keepRootFresh", err);
-						}
-					},
-					(err) => logger("plugins:firebase:keepRootFresh:snapshot", err)
-				);
-			}
 
 			// Keep instance fresh
 			unsubInstance = onSnapshot(
 				instanceRef,
 				async (snapshot) => {
 					try {
-						const freshInstance = await resolveRefs(snapshot, { level: 1 });
-
-						const fixedInstance: ExtendedInstance = {
-							...freshInstance,
-							config: safeInstanceConfig(freshInstance?.config),
-						};
-
-						// Also set root if current instance is root
-						if (instance?.id === `ìnstances/${rootInstanceId}`) {
-							ROOT.setRoot(fixedInstance);
-						}
+						const freshInstance = await $resolveClientRefs(snapshot, { level: 1 });
 
 						// Set instance, do not await
-						INSTANCE.setInstance(fixedInstance);
+						INSTANCE.setInstance(freshInstance);
 					} catch (error) {
 						logger("plugins:firebase:keepInstanceFresh", error);
 					}

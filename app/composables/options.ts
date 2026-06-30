@@ -93,7 +93,7 @@ export function useCourseProgramOptions(
 	] = [],
 	{ noUndef, course }: { noUndef?: boolean; course?: Ref<Course | null> } = {}
 ) {
-	const USER = useUserStore();
+	const SESSION = useSessionStore();
 	const selectedLevel = level && isRef(level) ? level : ref(level);
 	const selectedPlace = place && isRef(place) ? place : ref(place);
 	const selectedFaculty = faculty && isRef(faculty) ? faculty : ref(faculty);
@@ -304,8 +304,8 @@ export function useCourseProgramOptions(
 				const [, , faculty] = course?.value?.scrapedWith || [];
 				const [preferedDefault = { value: faculty || newDefault.value }] = courseFaculties;
 
-				if (courseFaculties.find(({ value }) => value === USER.lastFacultySearch)) {
-					selectedFaculty.value = <uSIAFaculty>USER.lastFacultySearch;
+				if (courseFaculties.find(({ value }) => value === SESSION.lastFacultySearch)) {
+					selectedFaculty.value = <uSIAFaculty>SESSION.lastFacultySearch;
 				} else if (preferedDefault) {
 					selectedFaculty.value = <uSIAFaculty>preferedDefault.value;
 				}
@@ -341,8 +341,8 @@ export function useCourseProgramOptions(
 				const [, , , program] = course?.value?.scrapedWith || [];
 				const [preferedDefault = { value: program || newDefault.value }] = coursePrograms;
 
-				if (coursePrograms.find(({ value }) => value === USER.lastProgramSearch)) {
-					selectedProgram.value = <uSIAProgram>USER.lastProgramSearch;
+				if (coursePrograms.find(({ value }) => value === SESSION.lastProgramSearch)) {
+					selectedProgram.value = <uSIAProgram>SESSION.lastProgramSearch;
 				} else if (preferedDefault) {
 					selectedProgram.value = <uSIAProgram>preferedDefault.value;
 				}

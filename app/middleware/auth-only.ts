@@ -3,11 +3,20 @@
  *
  * @middleware
  */
-export default defineNuxtRouteMiddleware(({ fullPath }) => {
-	const USER = useUserStore();
+export default defineNuxtRouteMiddleware(({ query, fullPath }) => {
+	const SESSION = useSessionStore();
 
-	if (USER.token || USER.expiredToken) return;
+	const bannedUntil = SESSION.member?.bannedUntilAt
+		? new Date(SESSION.member.bannedUntilAt)
+		: null;
+	const isBanned = bannedUntil ? bannedUntil > new Date() : false;
+
+	if (isBanned) return navigateTo({ path: "/suspendido", query: { rdr: "auth-only" } });
+	if (SESSION.token || SESSION.expiredToken) return;
 
 	// User is not authenticated
-	return navigateTo({ path: "/ingresar", query: { restricted: encodeURI(fullPath) } });
+	return navigateTo({
+		path: "/ingresar",
+		query: { ...query, restricted: encodeURI(fullPath), rdr: "auth-only" },
+	});
 });

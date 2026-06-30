@@ -13,13 +13,13 @@ import deburr from "lodash-es/deburr.js";
 import startCase from "lodash-es/startCase.js";
 
 import type { tLogger } from "@open-xamu-co/ui-common-types";
-import { getFirebase } from "@open-xamu-co/firebase-nuxt/functions/firebase";
-import { makeFunctionsLogger } from "@open-xamu-co/firebase-nuxt/functions/logger";
 
 import type { iGroupsPayload } from "./types/scrapper.js";
 import { getPuppeteer, retryPuppeteerOperation } from "./utils/puppeteer.js";
 import { Cyrb53 } from "./utils/encode.js";
 import { scrapeCourseGroupsLinks } from "./utils/groups.js";
+import { getFirebase } from "./utils/firebase.js";
+import { makeScrapperLogger } from "./utils/logger.js";
 
 interface CourseDataRef {
 	[x: string]: any;
@@ -130,7 +130,7 @@ export const scrapeCourseGroups = region("us-east1")
 	})
 	.https.onRequest(async (req, res): Promise<void> => {
 		const { firebaseFirestore } = getFirebase("functions:scrapeCourseGroups");
-		const globalLogger = makeFunctionsLogger(firebaseFirestore);
+		const globalLogger = makeScrapperLogger(firebaseFirestore);
 
 		try {
 			const scrapedAt = new Date();
@@ -151,7 +151,7 @@ export const scrapeCourseGroups = region("us-east1")
 			if (!instanceRef || !instanceSnapshot?.exists) throw new Error("Instance not found");
 
 			const instanceData = instanceSnapshot.data();
-			const logger = makeFunctionsLogger(firebaseFirestore, instanceRef);
+			const logger = makeScrapperLogger(firebaseFirestore, instanceRef);
 
 			try {
 				const config = instanceData?.config || {};
@@ -240,13 +240,7 @@ export const scrapeCourseGroups = region("us-east1")
 						const periodStartAt = new Date(startYear, startMonth - 1, startDay);
 						const periodEndAt = new Date(endYear, endMonth - 1, endDay);
 						// Generate deduped course UID
-						// Differentiated by program and typology
-						const id = Cyrb53([
-							group.name,
-							String(periodEndAt.getTime()),
-							program,
-							group.typology,
-						]);
+						const id = Cyrb53([group.name, String(periodEndAt.getTime())]);
 						const groupRef = groupsRef.doc(String(id));
 
 						// Index teachers

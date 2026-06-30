@@ -24,20 +24,53 @@ export type CourseValuesWithName = PartialCourseValues & { name: string };
  */
 export type CourseValues = CourseValuesWithCode | CourseValuesWithName;
 
+/**
+ * Values from useInstanceInputs
+ */
 export interface InstanceValues {
+	name: string;
 	description?: string;
 	keywords?: string;
+	slogan: string;
+	email: string;
+	whatsappNumber: string;
+	whatsappIndicative: `${string}+${number}`;
+	whatsappText: string;
+	locationCity: string;
+	locationState: string;
+	locationCountry: string;
+	address: string;
+	facebookId: string;
+	instagramId: string;
+	tiktokId: string;
+	twitterId: string;
+	slug?: string;
+	lock?: boolean;
 }
 
-export interface InstanceBannerValues {
-	message: string;
+/**
+ * Values from useInstanceConfigInputs
+ */
+export interface InstanceConfigValues {
 	url: string;
+	domains: string;
 }
 
+/**
+ * Values from useInstanceBannerInputs
+ */
+export interface InstanceBannerValues {
+	bannerMessage: string;
+	bannerUrl: string;
+}
+
+/**
+ * Values from useNoteInputs
+ */
 export interface NoteValues {
 	name: string;
 	body: string;
-	public: 1 | 2 | 3;
+	public: boolean | 1 | 2 | 3;
 	keywords?: string;
 	slug?: string;
 	lock?: boolean;

@@ -1,10 +1,11 @@
-import type { SharedData } from "@open-xamu-co/firebase-nuxt/functions";
+import type { AuditData } from "./member";
 
-export * from "./course";
-export * from "./instance";
-export * from "./user";
-export * from "./teacher";
-export * from "./note";
+export * from "./course.js";
+export * from "./instance.js";
+export * from "./member.js";
+export * from "./teacher.js";
+export * from "./note.js";
+export * from "./log.js";
 
 /**
  * Proxy
@@ -12,7 +13,7 @@ export * from "./note";
  *
  * @collection proxies
  */
-export interface ProxyData extends SharedData {
+export interface ProxyData extends AuditData {
 	/**
 	 * The proxy address
 	 * @example socks4://68.71.249.153:48606

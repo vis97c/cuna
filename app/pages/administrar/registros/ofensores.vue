@@ -25,6 +25,7 @@
 			}"
 			label="Cargando ofensores..."
 			no-content-message="No hay ofensores registrados"
+			client
 		>
 			<template #headActions="{ refreshData }">
 				<XamuActionButtonToggle
@@ -43,7 +44,8 @@
 
 <script setup lang="ts">
 	import type { iGetPage, iPage } from "@open-xamu-co/ui-common-types";
-	import type { Offender } from "@open-xamu-co/firebase-nuxt/client";
+
+	import type { Offender } from "~/utils/types/entities/log";
 
 	import { ValueIP } from "#components";
 
@@ -55,7 +57,8 @@
 	definePageMeta({ title: "Ofensores", middleware: ["can-develop"] });
 
 	const offendersPage: iGetPage<Offender> = (pagination) => {
-		return useQuery<iPage<Offender> | undefined>("/api/all/offenders", {
+		return customFetch<iPage<Offender> | undefined>("/api/admin/offenders", {
+			method: "POST",
 			query: pagination,
 			credentials: "omit",
 			headers: { "Cache-Control": "no-store" },

@@ -1,22 +1,23 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import type { H3Context } from "@open-xamu-co/firebase-nuxt/server";
-import {
-	debugCSS,
-	debugNuxt,
-	production,
-	firebaseConfig,
-} from "@open-xamu-co/firebase-nuxt/server/environment";
+import { locale } from "./app/utils/locale";
+
 import { type Stylesheet, getStyleSheetPreload } from "@open-xamu-co/ui-nuxt";
 
 import {
+	publicRuntimeConfig,
+	port,
+	debugCSS,
+	debugNuxt,
 	debugScrapper,
 	debugHTTPS,
 	cfScrapeCoursesUrl,
 	cfScrapeCourseGroupsUrl,
-} from "./server/utils/enviroment";
-import packageJson from "./package.json" assert { type: "json" };
+	production,
+	firebaseConfig,
+} from "./server/utils/environment";
+import packageJson from "./package.json" with { type: "json" };
 
 const loaderCss = fs.readFileSync(path.resolve(__dirname, "app/assets/loader.css"), {
 	encoding: "utf8",
@@ -31,12 +32,29 @@ const stylesheets: Stylesheet[] = [
 // compile on runtime when debuggin CSS
 debugCSS.value() ? css.push("assets/vendor.scss") : stylesheets.push("/dist/vendor.min.css?k=1");
 
-// Metadata
-const withResolutions = "resolutions" in packageJson && debugNuxt.value();
+const alias: Record<string, string> = {};
+
+// Fix Vue dedupe issue when linking packages
+if ("resolutions" in packageJson) {
+	const componentsKey = "@open-xamu-co/ui-components-vue";
+	const componentsPath = (packageJson.resolutions as any)[componentsKey];
+
+	if (componentsPath) {
+		alias[componentsKey] = path.resolve(componentsPath?.replace("portal:/", ""));
+	}
+}
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
 	compatibilityDate: "2025-03-02",
+	devtools: {
+		enabled: debugNuxt.value(),
+		timeline: { enabled: debugNuxt.value() },
+	},
+	experimental: {
+		asyncContext: true,
+		viewTransition: true,
+	},
 	// Follow nuxt 4 directory structure
 	srcDir: "./app",
 	serverDir: "./server",
@@ -67,12 +85,17 @@ export default defineNuxtConfig({
 			noscript: [{ innerHTML: "This app requires javascript to work" }],
 		},
 	},
-	devServer: { https: debugHTTPS.value() && { key: "server.key", cert: "server.crt" } },
+	devServer: {
+		https: debugHTTPS.value() && { key: "server.key", cert: "server.crt" },
+		host: "0.0.0.0",
+		port: port.value(),
+	},
 	runtimeConfig: {
 		debugScrapper: debugScrapper.value(),
 		cfScrapeCoursesUrl: cfScrapeCoursesUrl.value(),
 		cfScrapeCourseGroupsUrl: cfScrapeCourseGroupsUrl.value(),
 		public: {
+			...publicRuntimeConfig.value(),
 			debugHTTPS: debugHTTPS.value(),
 		},
 	},
@@ -84,14 +107,15 @@ export default defineNuxtConfig({
 			preprocessorOptions: {
 				scss: {
 					additionalData: `
-						@use "assets/overrides";
-						@use "@open-xamu-co/ui-styles/src/utils/module" as xamu;`,
+																																																																																																																																																																																																@use "assets/overrides";
+																																																																																																																																																																																																@use "@open-xamu-co/ui-styles/src/utils/module" as xamu;`,
 				},
 			},
 		},
-		server: { fs: { strict: !withResolutions } },
+		server: { fs: { strict: "resolutions" in packageJson } },
 	},
 	nitro: {
+		compressPublicAssets: true,
 		preset: "firebase_app_hosting",
 		routeRules: {
 			// Support firebase auth proxy for signing with redirect
@@ -99,43 +123,29 @@ export default defineNuxtConfig({
 				proxy: `https://${firebaseConfig.value().projectId}.firebaseapp.com/__/**`,
 			},
 		},
-		rollupConfig: {
-			external: withResolutions
-				? [
-						"firebase-admin/app",
-						"firebase-admin/firestore",
-						"firebase-admin/auth",
-						"firebase-admin/storage",
-					]
-				: undefined,
-		},
+		publicAssets: [
+			{
+				dir: "./public",
+				maxAge: 60 * 60 * 24 * 365, // 1 year
+			},
+		],
 	},
 	/** Global CSS */
 	css,
-	modules: ["@open-xamu-co/firebase-nuxt", "@nuxt/scripts"],
-	firebaseNuxt: {
-		readCollection: (collectionId: string, { currentAuth }: H3Context) => {
-			/** Freely listable collections */
-			const listableCollections = [];
-
-			// Auth, Allow listing if admin or above
-			if (currentAuth && currentAuth.role <= -1) {
-				listableCollections.push("logs", "instances", "offenders", "proxies");
-			}
-
-			return listableCollections.includes(collectionId);
-		},
-		readInstanceCollection: (collectionId: string, { currentAuth }: H3Context) => {
-			/** Freely listable collections */
-			const listableCollections = ["courses"];
-
-			// Auth required
-			if (currentAuth) {
-				// Auth, Allow listing if admin or above
-				if (currentAuth.role <= -1) listableCollections.push("logs");
-			}
-
-			return listableCollections.includes(collectionId);
+	modules: ["@open-xamu-co/ui-nuxt", "@nuxt/image", "@pinia/nuxt", "@nuxt/scripts"],
+	xamu: {
+		locale,
+		lang: "es",
+		country: "CO",
+		imageHosts: ["lh3.googleusercontent.com"],
+		imagePlaceholder: "/sample-missing.png",
+		disableCSSMeta: true,
+	},
+	image: {
+		provider: "firebase",
+		domains: ["firebasestorage.googleapis.com"],
+		providers: {
+			firebase: { provider: "app/providers/firebase" },
 		},
 	},
 	scripts: {

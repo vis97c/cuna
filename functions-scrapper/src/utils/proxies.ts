@@ -1,7 +1,8 @@
 import { CollectionReference, Query } from "firebase-admin/firestore";
 
 import type { tLogger } from "@open-xamu-co/ui-common-types";
-import { getFirebase } from "@open-xamu-co/firebase-nuxt/functions/firebase";
+
+import { getFirebase } from "./firebase.js";
 
 interface ExtendedProxyData {
 	[key: string]: any;

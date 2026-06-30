@@ -1,50 +1,28 @@
-import type { DocumentReference, FieldValue } from "firebase/firestore";
-import type { FirebaseDocument, FromData, GetRef } from "@open-xamu-co/firebase-nuxt/client";
-
 import type { Teacher } from "./teacher";
 import type { CourseData, CourseLogData, GroupData } from "~~/functions/src/types/entities";
 import type { eSIATypology } from "~~/functions/src/types/SIA";
+import type { OutputFromData, RefFromData, InputFromData } from "./base";
 
-/**
- * Firebase course log
- */
-export interface CourseLog extends FirebaseDocument, FromData<CourseLogData> {
-	course?: Course;
-}
-/** This one goes to the database */
-export interface CourseLogRef extends GetRef<CourseLog> {
-	courseRef?: DocumentReference | FieldValue;
-}
+/** @output CourseLog data */
+export interface CourseLog extends OutputFromData<CourseLogData> {}
+/** @input CourseLog with client refs */
+export interface CourseLogRef extends RefFromData<CourseLogData> {}
+/** @input This one goes to the database */
+export interface CourseLogInput extends InputFromData<CourseLogData> {}
 
-/**
- * SIA Course
- */
-export interface Course extends FirebaseDocument, FromData<CourseData> {
-	groups?: Group[];
-	unreported?: Group[];
-	/** @automated Last scrape date */
-	scrapedAt?: string | Date;
-}
-/**
- * This one goes to the database
- *
- * Omit automation
- */
-export interface CourseRef extends GetRef<Course, "scrapedAt"> {
-	/** @automated Last scrape date */
-	scrapedAt?: Date;
-}
+/** @output Course data */
+export interface Course extends OutputFromData<CourseData> {}
+/** @input Course with client refs */
+export interface CourseRef extends RefFromData<CourseData> {}
+/** @input This one goes to the database */
+export interface CourseInput extends InputFromData<CourseData> {}
 
-/**
- * SIA Group
- */
-export interface Group extends FirebaseDocument, FromData<GroupData> {}
-/**
- * This one goes to the database
- *
- * Omit automation
- */
-export interface GroupRef extends GetRef<Group> {}
+/** @output Group data */
+export interface Group extends OutputFromData<GroupData> {}
+/** @input Group with client refs */
+export interface GroupRef extends RefFromData<GroupData> {}
+/** @input This one goes to the database */
+export interface GroupInput extends InputFromData<GroupData> {}
 
 export interface GroupEs {
 	id?: string;

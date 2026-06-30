@@ -11,7 +11,7 @@ export const noteVisibilityOptions: iSelectOption[] = [
 ];
 
 export function useNoteInputs(note: Note = {}): tFormInput[] {
-	const USER = useUserStore();
+	const SESSION = useSessionStore();
 
 	const inputs: tFormInput[] = [
 		new FormInput({
@@ -40,33 +40,50 @@ export function useNoteInputs(note: Note = {}): tFormInput[] {
 				name: "keywords",
 				title: "Términos clave (separados por comas)",
 				placeholder: "Ej: Hombre, usurpación",
-			}),
-			new FormInput({
-				values: [note.public ?? false],
-				name: "public",
-				title: "Nota publica",
-				placeholder: "¿Mostrar la nota a otros usuarios?",
-				type: eFormType.SELECT,
-				options: noteVisibilityOptions,
-			}),
-			new FormInput({
-				values: [note.slug || ""],
-				name: "slug",
-				required: true,
-				title: "Slug de la nota",
-				placeholder: "Ej: mi-nota",
-				icon: "box",
 			})
 		);
 
 		// Admin only
-		if (USER.canDevelop) {
+		if (SESSION.canDevelop) {
 			inputs.push(
+				new FormInput({
+					values: [note.slug || ""],
+					name: "slug",
+					required: true,
+					title: "Slug de la nota",
+					placeholder: "Ej: mi-nota",
+					icon: "box",
+				}),
 				new FormInput({
 					values: [note.lock ?? false],
 					name: "lock",
 					title: "Nota bloqueada",
 					placeholder: "¿Bloquear slug y no eliminar?",
+					type: eFormType.BOOLEAN,
+				})
+			);
+
+			if (!note.linkedNote) {
+				// Linked notes should always be public
+				inputs.push(
+					new FormInput({
+						values: [note.public ?? false],
+						name: "public",
+						title: "Nota publica",
+						placeholder: "¿Mostrar la nota a otros usuarios?",
+						type: eFormType.SELECT,
+						options: noteVisibilityOptions,
+					})
+				);
+			}
+		} else if (!note.linkedNote) {
+			// Linked notes should always be public
+			inputs.push(
+				new FormInput({
+					values: [note.public === true],
+					name: "public",
+					title: "Nota publica",
+					placeholder: "¿Mostrar la nota a otros usuarios?",
 					type: eFormType.BOOLEAN,
 				})
 			);

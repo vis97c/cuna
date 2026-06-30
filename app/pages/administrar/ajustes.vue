@@ -43,11 +43,11 @@
 <script setup lang="ts">
 	import { debounce } from "lodash-es";
 
-	import type { iInvalidInput, iNodeFnResponseStream } from "@open-xamu-co/ui-common-types";
-	import { getDocumentId } from "@open-xamu-co/firebase-nuxt/client/resolver";
+	import type { iInvalidInput } from "@open-xamu-co/ui-common-types";
 
 	import type { InstanceBannerValues, InstanceValues } from "~/utils/types/values";
-	import type { ExtendedInstance, ExtendedInstanceRef } from "~/utils/types";
+	import type { Instance, InstanceRef } from "~/utils/types";
+	import type { InstanceData } from "~~/functions/src/types/entities";
 
 	/**
 	 * Admin root page
@@ -67,7 +67,7 @@
 	const invalidBanner = ref<iInvalidInput[]>([]);
 	const bannerInputs = ref(markRaw(useInstanceBannerInputs(INSTANCE.current)));
 
-	// const instanceConfig = computed(() => CUNA.config || {});
+	// const instanceConfig = computed(() => INSTANCE.config || {});
 
 	const setInstance = debounce(async () => {
 		const mergeInputs = instanceSEOInputs.value;
@@ -80,37 +80,33 @@
 		loading.value = true;
 
 		const { response, invalidInputs, withErrors, validationHadErrors, errors } =
-			await getResponse<iNodeFnResponseStream<ExtendedInstance>[0], InstanceValues>(
-				async (values) => {
-					try {
-						const diffValues = getValuesDiff(values, expectedInstance);
+			await getResponse<{ id?: string }, InstanceValues>(async (values) => {
+				try {
+					const diffValues = getValuesDiff(values, expectedInstance);
 
-						// Prevent updating if values are equal
-						if (!diffValues) return { data: undefined };
+					// Prevent updating if values are equal
+					if (!diffValues) return { data: undefined };
 
-						const { keywords, ...updatedValues } = diffValues;
-						const updatedRef: Partial<ExtendedInstanceRef> = updatedValues;
+					const { keywords, ...updatedValues } = diffValues;
+					const updatedRef: Partial<InstanceRef> = updatedValues;
 
-						if (keywords !== undefined) {
-							updatedRef.keywords = keywords.split(",").map((k) => k.trim());
-						}
-
-						// update instance
-						const [data] = await useDocumentUpdate<ExtendedInstanceRef>(
-							{ id: `instances/${getDocumentId(INSTANCE.current?.id)}` },
-							updatedRef
-						);
-						const [updatedInstance] = Array.isArray(data) ? data : [data];
-
-						if (typeof updatedInstance !== "object") return { errors: "Missing data" };
-
-						return { data };
-					} catch (errors) {
-						return { errors };
+					if (keywords !== undefined) {
+						updatedRef.keywords = keywords.split(",").map((k) => k.trim());
 					}
-				},
-				mergeInputs
-			);
+
+					// update instance
+					const [data] = await useDocumentUpdate<InstanceData>(
+						{ id: `instances/${getDocumentId(INSTANCE.current?.id)}` },
+						updatedRef
+					);
+
+					if (typeof data !== "object") return { errors: "Missing data" };
+
+					return { data };
+				} catch (errors) {
+					return { errors };
+				}
+			}, mergeInputs);
 
 		invalidInstance.value = invalidInputs;
 
@@ -136,42 +132,39 @@
 
 	const setBanner = debounce(async () => {
 		const expectedBanner: Partial<InstanceBannerValues> = {
-			message: INSTANCE.current?.banner?.message || "",
-			url: INSTANCE.current?.banner?.url || "",
+			bannerMessage: INSTANCE.current?.banner?.message || "",
+			bannerUrl: INSTANCE.current?.banner?.url || "",
 		};
 
 		loading.value = true;
 
 		const { response, invalidInputs, withErrors, validationHadErrors, errors } =
-			await getResponse<iNodeFnResponseStream<ExtendedInstance>[0], InstanceBannerValues>(
-				async (values) => {
-					try {
-						const diffValues = getValuesDiff(values, expectedBanner);
+			await getResponse<{ id?: string }, InstanceBannerValues>(async (values) => {
+				try {
+					const diffValues = getValuesDiff(values, expectedBanner);
 
-						// Prevent updating if values are equal
-						if (!diffValues) return { data: undefined };
+					// Prevent updating if values are equal
+					if (!diffValues) return { data: undefined };
 
-						const banner: InstanceBannerValues = {
-							message: diffValues.message ?? INSTANCE.current?.banner?.message ?? "",
-							url: diffValues.url ?? INSTANCE.current?.banner?.url ?? "",
-						};
+					const banner: Instance["banner"] = {
+						message:
+							diffValues.bannerMessage ?? INSTANCE.current?.banner?.message ?? "",
+						url: diffValues.bannerUrl ?? INSTANCE.current?.banner?.url ?? "",
+					};
 
-						// update instance
-						const [data] = await useDocumentUpdate<ExtendedInstanceRef>(
-							{ id: `instances/${getDocumentId(INSTANCE.current?.id)}` },
-							{ banner }
-						);
-						const [updatedInstance] = Array.isArray(data) ? data : [data];
+					// update instance
+					const [data] = await useDocumentUpdate<InstanceData>(
+						{ id: `instances/${getDocumentId(INSTANCE.current?.id)}` },
+						{ banner }
+					);
 
-						if (typeof updatedInstance !== "object") return { errors: "Missing data" };
+					if (typeof data !== "object") return { errors: "Missing data" };
 
-						return { data };
-					} catch (errors) {
-						return { errors };
-					}
-				},
-				bannerInputs.value
-			);
+					return { data };
+				} catch (errors) {
+					return { errors };
+				}
+			}, bannerInputs.value);
 
 		invalidBanner.value = invalidInputs;
 

@@ -1,16 +1,9 @@
 import { type DocumentReference } from "firebase-admin/firestore";
 
-import { apiLogger } from "@open-xamu-co/firebase-nuxt/server/firebase";
-import { defineConditionallyCachedEventHandler } from "@open-xamu-co/firebase-nuxt/server/cache";
-import { getBoolean } from "@open-xamu-co/firebase-nuxt/server/guards";
-import { debugFirebaseServer } from "@open-xamu-co/firebase-nuxt/server/firestore";
-import { getDocumentId } from "@open-xamu-co/firebase-nuxt/client/resolver";
-
 import type { CourseData } from "~~/functions/src/types/entities";
-
 import type { eSIATypology, uSIAFaculty, uSIAProgram } from "~~/functions/src/types/SIA";
-import type { ExtendedH3Event } from "~~/server/types";
 import type { iGroupsPayload } from "~~/functions-scrapper/src/types/scrapper";
+import type { H3Context } from "~~/server/types";
 
 /**
  * Trigger the course groups scrape cloud function
@@ -19,10 +12,10 @@ function makeTriggerCourseGroupsScrape(maxAgeMinutes: number) {
 	const { cfScrapeCourseGroupsUrl } = useRuntimeConfig();
 
 	return defineCachedFunction(
-		async (event: ExtendedH3Event, { course, ...payload }: iGroupsPayload) => {
-			const { currentInstance, currentAuth } = event.context;
+		async (event, { course, ...payload }: iGroupsPayload) => {
+			const { currentInstance, currentMember } = <H3Context>event.context;
 
-			if (!currentInstance || !currentAuth) {
+			if (!currentInstance || !currentMember) {
 				throw new Error("Missing instance or authorization");
 			}
 
@@ -32,7 +25,7 @@ function makeTriggerCourseGroupsScrape(maxAgeMinutes: number) {
 				method: "POST",
 				credentials: "omit",
 				headers: { "Content-Type": "application/json" },
-				body: { coursePath: course.id, uid: currentAuth?.uid, payload },
+				body: { coursePath: course.id, uid: currentMember?.uid, payload },
 			});
 
 			if (!response) throw new Error("Scraping failed or omitted");
@@ -44,7 +37,8 @@ function makeTriggerCourseGroupsScrape(maxAgeMinutes: number) {
 			maxAge: 60 * maxAgeMinutes,
 			getKey(event, { course, program, typology }) {
 				const { currentInstanceHost } = event.context;
-				const baseHash = `${currentInstanceHost}:${getDocumentId(course.id)}:${program}`;
+				const courseId = (course.id || "").split("/").pop();
+				const baseHash = `${currentInstanceHost}:${courseId}:${program}`;
 
 				if (!typology) return baseHash;
 
@@ -60,7 +54,8 @@ function makeTriggerCourseGroupsScrape(maxAgeMinutes: number) {
  * Scrape SIA
  */
 export default defineConditionallyCachedEventHandler(async (event) => {
-	const { currentAuth, currentInstanceRef, currentInstance, currentInstanceHost } = event.context;
+	const { currentMember, currentInstanceRef, currentInstance, currentInstanceHost } =
+		event.context;
 	const config = currentInstance?.config || {};
 	const Allow = "POST,HEAD";
 	let courseRef: DocumentReference<CourseData> | undefined;
@@ -82,7 +77,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			return sendNoContent(event);
 		}
 
-		if (!currentAuth) {
+		if (!currentMember) {
 			throw createError({ statusCode: 401, statusMessage: "Missing authorization" });
 		}
 
@@ -135,7 +130,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 
 		// Check if already scraped
 		const storage = useStorage("cache");
-		const cacheKayBase = `nitro:functions:getCourseGroupsLinks:${currentInstanceHost}:${getDocumentId(courseRef.id)}:${program}`;
+		const cacheKayBase = `nitro:functions:getCourseGroupsLinks:${currentInstanceHost}:${courseId}:${program}`;
 		const cacheKey = typology ? `${cacheKayBase}:${typology}.json` : `${cacheKayBase}.json`;
 		const cacheDuration = config.coursesRefreshRate ?? 2;
 		const cachedGroups = await storage.getItem(cacheKey);
