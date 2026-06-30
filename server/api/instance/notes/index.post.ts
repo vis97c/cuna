@@ -44,6 +44,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		const notesRef = firebaseFirestore.collectionGroup("notes");
 		const params = getQuery(event);
 		const personal = getBoolean(params.personal);
+		const linkedNoteSlug = getQueryString("linkedNoteSlug", params);
 
 		debugFirebaseServer(event, "api:instance:members:notes", params);
 
@@ -56,7 +57,7 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			return "Ok";
 		}
 
-		let query: Query<NoteData, Note> = notesRef;
+		let query: Query<NoteData, Note> = notesRef.where("instanceRef", "==", currentInstanceRef);
 
 		if (personal) {
 			// Auth is required for personal notes
@@ -69,6 +70,24 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		} else {
 			// Public notes only
 			query = query.where("public", "==", true);
+
+			if (linkedNoteSlug) {
+				// Same as /api/instance/notes/[noteSlug].post
+				const notesSnapshot = await firebaseFirestore
+					.collectionGroup("notes")
+					.where("instanceRef", "==", currentInstanceRef)
+					.where("slug", "==", linkedNoteSlug)
+					.limit(1)
+					.get();
+				const [snapshot] = notesSnapshot.docs;
+
+				// Check if linked note exists
+				if (!snapshot?.exists) {
+					throw createError({ statusCode: 404, statusMessage: "Note not found" });
+				}
+
+				query = query.where("linkedNoteRef", "==", snapshot.ref);
+			}
 		}
 
 		const resolver = new QueryResolver(event, query);

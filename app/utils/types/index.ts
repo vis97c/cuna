@@ -6,6 +6,7 @@ export * from "./entities";
 export * from "./values";
 export * from "./scraping";
 export * from "./firestore";
+export * from "./fetching";
 
 /**
  * Resolve promise with a new or updated firebase document
@@ -15,11 +16,6 @@ export type Resolve<
 	P extends [V?, ...any[]] = [V],
 	E extends Record<string, any> = Record<string, any>,
 > = [(v?: boolean | iNodeFnResponse<V, E>) => void, ...P];
-
-export interface CountriesResponse<T> {
-	error: null | string;
-	data: T;
-}
 
 export interface Country {
 	name: string;

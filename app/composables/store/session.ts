@@ -96,6 +96,7 @@ export const useSessionStore = defineStore("session", () => {
 	});
 
 	// Getters
+	/** The member auth platform uid */
 	const id = computed(() => {
 		return getDocumentId(member.value?.id);
 	});

@@ -40,7 +40,9 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		}
 
 		// Group collection
-		const notesRef = firebaseFirestore.collectionGroup("notes");
+		const notesRef = firebaseFirestore
+			.collectionGroup("notes")
+			.where("instanceRef", "==", currentInstanceRef);
 		const noteSlug = getRouterParam(event, "noteSlug");
 
 		debugFirebaseServer(event, "api:instance:members:notes:[noteSlug]", noteSlug);
@@ -49,8 +51,9 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 			throw createError({ statusCode: 400, statusMessage: "noteSlug is required" });
 		}
 
-		let query: Query<NoteData, Note> = notesRef;
+		let query: Query<NoteData, Note> = notesRef.where("instanceRef", "==", currentInstanceRef);
 
+		// Match against slug
 		query = query.where("slug", "==", noteSlug);
 
 		// Auth is required for personal notes
@@ -70,8 +73,8 @@ export default defineConditionallyCachedEventHandler(async (event) => {
 		const notesSnapshot = await query.limit(1).get();
 		const [snapshot] = notesSnapshot.docs; // get the first one if any
 
-		// Check if note exists and belongs to current instance
-		if (!snapshot?.exists || !snapshot.ref.path.startsWith(currentInstanceRef.path)) {
+		// Check if note exists
+		if (!snapshot?.exists) {
 			throw createError({ statusCode: 404, statusMessage: "Note not found" });
 		}
 

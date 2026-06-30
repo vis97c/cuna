@@ -61,36 +61,48 @@
 						></div>
 					</section>
 					<div class="flx --flxRow --flx-between-center --width-100">
-						<div
-							class="x-votes"
-							:class="{
-								'--bgColor-success1 --txtColor-success': ownVote === 1,
-								'--bgColor-danger1 --txtColor-danger': ownVote === -1,
-							}"
-						>
-							<XamuActionLink
-								:theme="eColors.SUCCESS"
-								:tooltip="ownVote === 1 ? 'Quitar voto' : 'Votar +1'"
-								class="x-vote --up"
-								@click="upvoteNote"
+						<div class="flx --flxRow --flx-start-center">
+							<div
+								class="x-votes"
+								:class="{
+									'--bgColor-success1 --txtColor-success': ownVote === 1,
+									'--bgColor-danger1 --txtColor-danger': ownVote === -1,
+								}"
 							>
-								<XamuIconFa name="caret-up" :size="20" />
-							</XamuActionLink>
-							<span v-if="!note.hideScore">{{ note.score }}</span>
-							<XamuIconFa
-								v-else
-								name="eye-slash"
-								title="Votación oculta"
-								force-regular
-							/>
-							<XamuActionLink
-								:theme="eColors.DANGER"
-								:tooltip="ownVote === -1 ? 'Quitar voto' : 'Votar -1'"
-								class="x-vote --down"
-								@click="downvoteNote"
+								<XamuActionLink
+									:theme="eColors.SUCCESS"
+									:tooltip="ownVote === 1 ? 'Quitar voto' : 'Votar +1'"
+									class="x-vote --up"
+									@click="upvoteNote"
+								>
+									<XamuIconFa name="caret-up" :size="20" />
+								</XamuActionLink>
+								<span v-if="!note.hideScore">{{ note.score }}</span>
+								<XamuIconFa
+									v-else
+									name="eye-slash"
+									title="Votación oculta"
+									force-regular
+								/>
+								<XamuActionLink
+									:theme="eColors.DANGER"
+									:tooltip="ownVote === -1 ? 'Quitar voto' : 'Votar -1'"
+									class="x-vote --down"
+									@click="downvoteNote"
+								>
+									<XamuIconFa name="caret-down" :size="20" />
+								</XamuActionLink>
+							</div>
+							<XamuActionButton
+								:to="`/notas/${note.slug}`"
+								tooltip="Ver respuestas"
+								:round="!note.linkedNotesCount"
 							>
-								<XamuIconFa name="caret-down" :size="20" />
-							</XamuActionLink>
+								<span v-if="note.linkedNotesCount">
+									{{ note.linkedNotesCount }}
+								</span>
+								<XamuIconFa name="share" />
+							</XamuActionButton>
 						</div>
 						<XamuActionButton
 							v-if="isOwnNote"
@@ -124,8 +136,8 @@
 <script setup lang="ts">
 	import { setDoc, doc, DocumentReference } from "firebase/firestore";
 
-	import { eColors, eSizes } from "@open-xamu-co/ui-common-enums";
 	import type { iInvalidInput, tFormInput } from "@open-xamu-co/ui-common-types";
+	import { eColors, eSizes } from "@open-xamu-co/ui-common-enums";
 
 	import type {
 		Note,
@@ -241,7 +253,7 @@
 
 	function close() {
 		invalidNote.value = [];
-		noteInputs.value = useNoteInputs();
+		noteInputs.value = [];
 	}
 	function makeNoteInputs() {
 		const inputs = useNoteInputs(props.note);
@@ -283,14 +295,22 @@
 						const { keywords, public: publicValue, ...updatedValues } = diffValues;
 						const updatedRef: Partial<NoteInput> = updatedValues;
 
-						if (updatedValues.slug) withSlug = true;
+						if (updatedValues.slug || updatedValues.name) withSlug = true;
 						if (keywords !== undefined) {
 							updatedRef.keywords = keywords.split(",").map((k) => k.trim());
 						}
 						if (publicValue !== undefined) {
-							if (publicValue === 3) updatedRef.public = "UNLISTED";
-							else if (publicValue === 2) updatedRef.public = true;
-							else updatedRef.public = false;
+							// 'UNLISTED' is only available for power users
+							if (typeof publicValue === "boolean") {
+								// When public is boolean, it means it's coming from the toggle switch
+								// The value is true if the switch is on (public), and false if it's off (private)
+								updatedRef.public = publicValue;
+							} else {
+								// When public is a number, it means it's coming from the select dropdown
+								if (publicValue === 3) updatedRef.public = "UNLISTED";
+								else if (publicValue === 2) updatedRef.public = true;
+								else updatedRef.public = false;
+							}
 						}
 
 						// update note
@@ -309,9 +329,7 @@
 
 		invalidNote.value = invalidInputs;
 
-		const [updatedNote, ...stream] = Array.isArray(response) ? response : [response];
-
-		if (!withErrors && updatedNote) {
+		if (!withErrors && response) {
 			// Succesful request
 			Swal.fire({
 				title: "Nota actualizada exitosamente",
@@ -319,27 +337,10 @@
 				icon: "success",
 				willOpen() {
 					// Update existing node. Prefer hydration over refreshing
-					if (typeof updatedNote === "object" && updatedNote.id && props.hydrateNode) {
-						props.hydrateNode({ ...props.note, ...updatedNote });
+					if (typeof response === "object" && response.id && props.hydrateNode) {
+						props.hydrateNode({ ...props.note, ...response });
 
-						// Hydration stream, do not await
-						Promise.allSettled(
-							stream.map(async (next) => {
-								const updated = await next;
-
-								// Bypass hydration
-								if (!updated || deactivated.value) return;
-								if (typeof updated === "object" && updated.id) {
-									if (withSlug) return navigateTo(`/notas/${updated.slug}`);
-
-									props.hydrateNode?.({
-										...props.note,
-										...updatedNote,
-										...updated,
-									});
-								}
-							})
-						);
+						if (withSlug && route.path !== "/notas") return navigateTo("/notas");
 					} else if (!props.hydrateNode) props.refresh?.();
 
 					closeModal?.();

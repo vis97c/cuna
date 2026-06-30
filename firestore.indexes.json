@@ -1007,12 +1007,39 @@
           "order": "ASCENDING"
         },
         {
+          "fieldPath": "instanceRef",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "createdAt",
           "order": "DESCENDING"
         },
         {
           "fieldPath": "__name__",
           "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "notes",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "createdByRef",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "instanceRef",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "slug",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "ASCENDING"
         }
       ],
       "density": "SPARSE_ALL"
@@ -1041,6 +1068,14 @@
       "queryScope": "COLLECTION_GROUP",
       "fields": [
         {
+          "fieldPath": "instanceRef",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "linkedNoteRef",
+          "order": "ASCENDING"
+        },
+        {
           "fieldPath": "public",
           "order": "ASCENDING"
         },
@@ -1059,6 +1094,33 @@
       "collectionGroup": "notes",
       "queryScope": "COLLECTION_GROUP",
       "fields": [
+        {
+          "fieldPath": "instanceRef",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "public",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        },
+        {
+          "fieldPath": "__name__",
+          "order": "DESCENDING"
+        }
+      ],
+      "density": "SPARSE_ALL"
+    },
+    {
+      "collectionGroup": "notes",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "instanceRef",
+          "order": "ASCENDING"
+        },
         {
           "fieldPath": "public",
           "order": "ASCENDING"

@@ -1,25 +1,30 @@
 <!-- eslint-disable vue/no-v-html -->
 <template>
 	<div id="notes-entry" class="view --gap-none --width-100 --minHeight-100">
-		<section class="view-item --minHeightVh-100 --bgColor-light">
-			<ClientOnly>
-				<template #fallback>Cargando nota...</template>
-				<XamuLoaderContent
-					:loading="notePending"
-					:content="!notePending"
-					label="Cargando nota..."
-					class="holder flx --flxColumn --flx-center"
-				>
-					<ItemNote
-						v-if="note"
-						:note="note"
-						:refresh="noteRefresh"
-						:hydrate-node="hydrateNode"
-						class="--width-100"
-					/>
-				</XamuLoaderContent>
-			</ClientOnly>
-		</section>
+		<XamuLoaderContent
+			el="section"
+			:loading="notePending"
+			:content="!notePending"
+			label="Cargando nota..."
+			class="view-item --minHeightVh-100 --bgColor-light"
+		>
+			<div v-if="note" class="holder flx --flxColumn --flx-center --gap-50">
+				<ItemNote
+					:note="note"
+					:refresh="noteRefresh"
+					:hydrate-node="hydrateNode"
+					class="--width-100"
+				/>
+				<PaginationNotes :linked-note="note">
+					<div class="txt --txtAlign-center">
+						<h3 class="--txtLineHeight-sm">Respuestas</h3>
+						<p class="--txtSize-sm">
+							Puedes revisa las respuestas de la nota o ayudar a otros dejando una.
+						</p>
+					</div>
+				</PaginationNotes>
+			</div>
+		</XamuLoaderContent>
 	</div>
 </template>
 

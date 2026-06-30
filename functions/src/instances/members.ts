@@ -54,7 +54,7 @@ export const onCreatedMember = onCreated<MemberData>(
 			locationCity: "",
 			level: 1,
 			role: eMemberRole.GUEST,
-			lock: true,
+			lock: false,
 			bannedUntilAt: false,
 			requestedDeletionAt: false,
 			// Auth platform

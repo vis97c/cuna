@@ -33,6 +33,7 @@ export const onCreatedNote = onCreated<NoteData>(
 				keywords = name?.trim().split(" "),
 				body = "",
 				encodedAt,
+				linkedNoteRef,
 			} = created.data();
 			const newSlug = await getNoteSlug(firebaseFirestore, name);
 
@@ -50,8 +51,10 @@ export const onCreatedNote = onCreated<NoteData>(
 
 			// Create author vote, do not await
 			voteRef.set({ vote: 1, notePath: created.ref.path, internal: true });
+			// If there is a linked note, increment the linked notes count
+			linkedNoteRef?.update({ linkedNotesCount: FieldValue.increment(1) });
 
-			return { slug: slug || newSlug, body, encodedAt, keywords };
+			return { slug: slug || newSlug, body, encodedAt, keywords, instanceRef };
 		} catch (err) {
 			logger("functions:instances:members:onCreatedNote", err);
 
@@ -66,6 +69,7 @@ export const onCreatedNote = onCreated<NoteData>(
 			public: false,
 			hideScore: false,
 			lock: false,
+			linkedNotesCount: 0,
 		},
 	}
 );
@@ -131,7 +135,10 @@ export const onUpdatedNote = onUpdated<NoteData>(
 export const onDeletedNote = onDeleted("instances/members/notes", async (deletedDoc) => {
 	const votesRef = deletedDoc.ref.collection("votes");
 	const votesSnapshot = await votesRef.get();
+	const { linkedNoteRef } = deletedDoc.data();
 
+	// If there is a linked note, decrement the linked notes count
+	linkedNoteRef?.update({ linkedNotesCount: FieldValue.increment(-1) });
 	// Delete related votes
 	votesSnapshot.forEach((doc) => doc.ref.delete());
 });

@@ -19,9 +19,9 @@ jobs:
               uses: actions/checkout@master
 
             - name: Setup Node.js
-              uses: actions/setup-node@v3
+              uses: actions/setup-node@v6
               with:
-                  node-version: "20"
+                  node-version: "24"
 
             - name: "Setup yarn"
               run: |
@@ -30,6 +30,8 @@ jobs:
 
             - name: "Install Dependencies"
               run: yarn install
+              env:
+                  YARN_ENABLE_IMMUTABLE_INSTALLS: "false"
 
             - name: "Create env file"
               run: |
@@ -40,7 +42,6 @@ jobs:
                   echo ORIGIN=${{ vars.ORIGIN }} >> functions/.env
                   echo COUNTRIES_API=${{ vars.COUNTRIES_API }} >> functions/.env
                   echo INSTANCE=${{ vars.INSTANCE }} >> functions/.env
-                  echo ROOT_INSTANCE=${{ vars.INSTANCE }} >> functions/.env
                   echo APP_NAME="Cuna" >> functions/.env
                   echo F_API_KEY=${{ vars.F_API_KEY }} >> functions/.env
                   echo F_AUTH_DOMAIN=${{ vars.F_AUTH_DOMAIN }} >> functions/.env

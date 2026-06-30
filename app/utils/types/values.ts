@@ -70,7 +70,7 @@ export interface InstanceBannerValues {
 export interface NoteValues {
 	name: string;
 	body: string;
-	public: 1 | 2 | 3;
+	public: boolean | 1 | 2 | 3;
 	keywords?: string;
 	slug?: string;
 	lock?: boolean;

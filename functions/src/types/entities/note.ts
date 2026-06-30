@@ -1,6 +1,7 @@
-import type { Timestamp } from "firebase-admin/firestore";
+import type { DocumentReference, Timestamp } from "firebase-admin/firestore";
 
 import type { AuditData } from "./member.js";
+import type { InstanceData } from "./instance.js";
 
 /**
  * Note
@@ -39,6 +40,21 @@ export interface NoteData extends AuditData {
 	 * @automated @cached
 	 */
 	downvotes?: number;
+	/**
+	 * Linked notes count
+	 * @automated
+	 */
+	linkedNotesCount?: number;
+	/**
+	 * Parent note reference
+	 * @automation Be able to link notes
+	 */
+	linkedNoteRef?: DocumentReference<NoteData>;
+	/**
+	 * Instance reference
+	 * @automation Be able to filter collectionGroups by instance
+	 */
+	instanceRef?: DocumentReference<InstanceData>;
 }
 
 /**
