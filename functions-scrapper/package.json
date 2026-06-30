@@ -19,6 +19,7 @@
   "main": "lib/index.js",
   "dependencies": {
     "@sparticuz/chromium": "^143.0.4",
+    "accept-language-parser": "^1.5.0",
     "firebase-admin": "^14.0.0",
     "firebase-functions": "^7.2.5",
     "google-auth-library": "latest",
@@ -28,6 +29,7 @@
   },
   "devDependencies": {
     "@open-xamu-co/ui-common-types": "^4.0.0-next.8",
+    "@types/accept-language-parser": "^1.5.8",
     "@types/lodash-es": "^4",
     "firebase-functions-test": "latest",
     "typescript": "^6.0.3"
