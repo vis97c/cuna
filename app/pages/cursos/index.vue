@@ -70,7 +70,11 @@
 	 * @page
 	 */
 
-	definePageMeta({ title: "Cursos", middleware: ["enabled"] });
+	definePageMeta({
+		title: "Cursos",
+		description: "Explora libremente los cursos de la UNAL.",
+		middleware: ["enabled"],
+	});
 
 	const SESSION = useSessionStore();
 

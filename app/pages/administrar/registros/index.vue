@@ -35,7 +35,7 @@
 				<XamuModal
 					title="Emular nuevo registro"
 					:save-button="{ title: 'Emular registro' }"
-					class="--txtColor --txtAlign --txtWeight"
+					class="--txtColor --txtAlign --minWidth-480:md --maxWidth-720:md"
 					target="body"
 					invert-theme
 					@save="addEmulatedLogs"

@@ -3,7 +3,7 @@
 		v-if="node?.image"
 		title="Imagen"
 		:subtitle="node?.name"
-		class="--txtColor --txtAlign --txtWeight --minWidth-480:md --maxWidth-720:md"
+		class="--txtColor --txtAlign --minWidth-480:md --maxWidth-720:md"
 		:class="$attrs.class"
 		target="body"
 		:theme="[eColors.LIGHT, eColors.DARK]"

@@ -35,11 +35,12 @@
 						</div>
 					</div>
 					<XamuModal
-						v-if="SESSION.token"
 						id="new-note"
 						title="Nueva nota"
-						:save-button="{ title: 'Publicar nota' }"
-						class="--txtColor --txtAlign --txtWeight"
+						:save-button="{
+							title: !SESSION.token ? 'Ingresar a Cuna' : 'Publicar nota',
+						}"
+						class="--txtColor --txtAlign --minWidth-480:md --maxWidth-720:md"
 						invert-theme
 						@close="close"
 						@save="createNote"
@@ -62,6 +63,7 @@
 											{{ remainingCharacters }}
 										</span>
 										<XamuSelect
+											v-if="SESSION.token"
 											v-model="newNotePublic"
 											:disabled="!newNoteBody"
 											:options="noteVisibilityOptions"
@@ -81,8 +83,12 @@
 							</div>
 						</template>
 						<template #default="{ model, invertedTheme }">
+							<div v-if="!SESSION.token" class="txt --gap-5">
+								<p>¡Espera un momento!</p>
+								<h3>Debes iniciar sesión para crear una nota</h3>
+							</div>
 							<XamuForm
-								v-if="model"
+								v-else-if="model"
 								v-model="noteInputs"
 								v-model:invalid="invalidNote"
 								:theme="invertedTheme"
@@ -141,6 +147,8 @@
 
 	definePageMeta({
 		title: "Notas",
+		description:
+			"Encuentra apuntes, tips, consejos u otros recursos para tus estudios. O comparte los tuyos y ayuda a tus compañeros.",
 		middleware: ["enabled"],
 	});
 
@@ -188,6 +196,15 @@
 	}
 
 	async function createNote(closeModal: () => void, event: Event) {
+		if (!SESSION.token) {
+			closeModal();
+
+			return navigateTo({
+				path: "/ingresar",
+				query: { restricted: encodeURI("/notas"), rdr: "create-note" },
+			});
+		}
+
 		const { response, invalidInputs, withErrors, validationHadErrors, errors } =
 			await getResponse<{ id?: string }, NoteValues>(
 				async ({ name }) => {

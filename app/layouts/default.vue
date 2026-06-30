@@ -104,13 +104,13 @@
 									>
 										<template #toggle="{ setModel }">
 											<XamuActionButtonToggle
-												tooltip="Ver filtros de búsqueda"
+												tooltip="Ver filtros de contenido"
 												tooltip-position="left"
 												round
 												@click="setModel()"
 											>
-												<XamuIconFa name="magnifying-glass" />
-												<XamuIconFa name="magnifying-glass" />
+												<XamuIconFa name="filter" />
+												<XamuIconFa name="filter" />
 											</XamuActionButtonToggle>
 										</template>
 										<DropdownSearchFilters />

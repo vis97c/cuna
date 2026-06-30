@@ -167,7 +167,7 @@
 							/>
 						</div>
 					</XamuPaginationContent>
-					<div v-else-if="SESSION.token" class="flx --flxColumn --flx-center --width-100">
+					<div v-else class="flx --flxColumn --flx-center --width-100">
 						<div class="txt">
 							<h3 class="--txtColor-dark5">Otros recursos</h3>
 						</div>

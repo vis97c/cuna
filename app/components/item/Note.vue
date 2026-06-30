@@ -3,7 +3,7 @@
 	<XamuModal
 		title="Actualizar nota existente"
 		:save-button="{ title: 'Actualizar nota' }"
-		class="--txtColor --txtAlign --txtWeight"
+		class="--txtColor --txtAlign --minWidth-480:md --maxWidth-720:md"
 		target="body"
 		invert-theme
 		@close="close"
