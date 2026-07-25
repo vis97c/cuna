@@ -3,18 +3,18 @@
 		<div class="grd --grdColumns-auto2:md --flx-start-center">
 			<div class="txt">
 				<div>
-					<h3>{{ appName }}</h3>
 					<h2>Panel de control</h2>
+					<p class="--txtSize-lg">{{ appName }}</p>
 				</div>
 				<p>Accede fácilmente a la configuración e información de {{ appName }}.</p>
 			</div>
 			<div
 				class="--pLeft-50:md flx --flxRow --flx-start-center --height-100 --hidden-full:md-inv"
 			>
-				<div class="--pLeft-50:md txt --txtColor-dark5">
+				<div class="--pLeft-50:md txt">
 					<div>
-						<h3 class="--txtColor-light">Saludos</h3>
-						<h2>{{ greetUser() }}</h2>
+						<h3 class="--txtSize-xl:md">Saludos</h3>
+						<p class="--txtSize-lg">{{ greetUser() }}</p>
 					</div>
 					<p>¡Nos encanta tenerte devuelta!</p>
 				</div>

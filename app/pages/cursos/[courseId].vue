@@ -83,7 +83,7 @@
 				</div>
 				<div class="flx --flxRow-wrap --flx-center --gap-5 --txtSize-xs">
 					<div class="flx --flxColumn --flx-start --gap-5 --width-100 --maxWidth-220">
-						<p class="">Facultad</p>
+						<label for="faculty">Facultad</label>
 						<XamuSelect
 							id="faculty"
 							v-model="selectedFaculty"
@@ -94,7 +94,7 @@
 						/>
 					</div>
 					<div class="flx --flxColumn --flx-start --gap-5 --width-100 --maxWidth-220">
-						<p class="">Programa</p>
+						<label for="program">Programa</label>
 						<XamuSelect
 							id="program"
 							v-model="selectedProgram"
@@ -105,7 +105,7 @@
 						/>
 					</div>
 					<div class="flx --flxColumn --flx-start --gap-5 --width-100 --maxWidth-220">
-						<p class="">Tipología</p>
+						<label for="typology">Tipología</label>
 						<XamuSelect
 							id="typology"
 							v-model="selectedTypology"

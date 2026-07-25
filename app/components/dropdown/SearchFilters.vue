@@ -5,10 +5,20 @@
 				<p class="--txtSize-xs">Buscador</p>
 			</li>
 			<li>
-				<XamuSelect v-model="selectedLevel" :options="levels" class="--txtAlign-center" />
+				<XamuSelect
+					v-model="selectedLevel"
+					:options="levels"
+					aria-label="Nivel educativo"
+					class="--txtAlign-center"
+				/>
 			</li>
 			<li>
-				<XamuSelect v-model="selectedPlace" :options="places" class="--txtAlign-center" />
+				<XamuSelect
+					v-model="selectedPlace"
+					:options="places"
+					aria-label="Sede universitaria"
+					class="--txtAlign-center"
+				/>
 			</li>
 			<li class="flx --flxColumn --flx-start --gap-5">
 				<XamuInputToggle v-model="withNonRegular" label="Incluir cupos PAES y PEAMA" />
@@ -18,6 +28,8 @@
 						href="https://pregrado.unal.edu.co/paes"
 						title="Programa de admisión especial"
 						target="_blank"
+						rel="noopener noreferrer"
+						aria-label="PAES, Programa de admisión especial (se abre en una pestaña nueva)"
 					>
 						PAES
 					</a>
@@ -26,6 +38,8 @@
 						href="https://pregrado.unal.edu.co/peama"
 						title="Programa de admisión especial y movilidad académica"
 						target="_blank"
+						rel="noopener noreferrer"
+						aria-label="PEAMA, Programa de admisión especial y movilidad académica (se abre en una pestaña nueva)"
 					>
 						PEAMA,
 					</a>

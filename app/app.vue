@@ -14,7 +14,8 @@
 				</section>
 			</div>
 		</template>
-		<main class="x-root">
+		<div class="x-root">
+			<a href="#main-content" class="x-skip-link --hidden">Saltar al contenido principal</a>
 			<XamuBaseErrorBoundary at="App:Layout">
 				<template #fallback="{ errors }">
 					<div class="view">
@@ -58,7 +59,7 @@
 				:duration="5000"
 				color="rgb(var(--rgb-primary))"
 			/>
-		</main>
+		</div>
 	</XamuBaseErrorBoundary>
 </template>
 

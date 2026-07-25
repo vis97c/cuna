@@ -8,7 +8,7 @@
 					<div
 						class="flx --flxColumn --flx-start --gap-5 --width-100 --maxWidth-220 --txtSize-xs"
 					>
-						<p class="">Tipología</p>
+						<label for="typology">Tipología</label>
 						<XamuSelect
 							id="typology"
 							v-model="selectedTypology"
@@ -19,7 +19,7 @@
 					</div>
 				</div>
 				<ClientOnly>
-					<template #fallback>Cargando notas...</template>
+					<template #fallback>Cargando cursos...</template>
 					<XamuPaginationContent
 						v-slot="{ content }"
 						class="flx --flxColumn --flx-start-center --gap-30 --width-100 --maxWidth-770"

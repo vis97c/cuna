@@ -21,8 +21,8 @@
 					class: '--txtColor',
 				},
 			}"
-			label="Cargando ofensores..."
-			no-content-message="No hay ofensores registrados"
+			label="Cargando proxies..."
+			no-content-message="No hay proxies registrados"
 			client
 		>
 			<template #headActions="{ refreshData }">

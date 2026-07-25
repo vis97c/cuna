@@ -51,6 +51,7 @@
 						v-model="emulatedLogCount"
 						:min="APP.tabletMQRange ? '1' : 1"
 						type="number"
+						aria-label="Cantidad de registros a emular"
 					/>
 				</XamuModal>
 				<XamuActionButtonToggle
@@ -75,6 +76,7 @@
 					v-model="filterAt"
 					icon="filter"
 					placeholder="Omitir registros..."
+					aria-label="Omitir registros"
 					class="--width-90 --width-220:md"
 				/>
 			</template>

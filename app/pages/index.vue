@@ -29,7 +29,9 @@
 						</XamuActionLink>
 						<span v-if="INSTANCE.config?.version">
 							{{ INSTANCE.config.version }} Powered by
-							<a href="https://xamu.com.co" target="_blank">Xamu.</a>
+							<a href="https://xamu.com.co" target="_blank" rel="noopener noreferrer">
+								Xamu.
+							</a>
 						</span>
 					</div>
 				</div>
@@ -77,11 +79,13 @@
 										autocomplete="off"
 										icon="magnifying-glass"
 										:size="eSizes.LG"
+										aria-label="Buscar curso por nombre o código"
 										class="--minWidth-100"
 									/>
 									<XamuActionLink
 										v-if="search"
 										class="x-search-reset"
+										aria-label="Limpiar búsqueda"
 										@click="() => (search = '')"
 									>
 										<XamuIconFa name="xmark" :size="20" />
@@ -92,7 +96,7 @@
 								class="flx --flxRow-wrap --flx-start-center --gap-5 --txtSize-xs --width-100"
 							>
 								<div class="flx --flxColumn --flx-start --flx --gap-5">
-									<p class="">Facultad</p>
+									<label for="faculty">Facultad</label>
 									<XamuSelect
 										id="faculty"
 										v-model="selectedFaculty"
@@ -103,7 +107,7 @@
 									/>
 								</div>
 								<div class="flx --flxColumn --flx-start --flx --gap-5">
-									<p class="">Programa</p>
+									<label for="program">Programa</label>
 									<XamuSelect
 										id="program"
 										v-model="selectedProgram"
@@ -115,7 +119,7 @@
 									/>
 								</div>
 								<div class="flx --flxColumn --flx-start --flx --gap-5">
-									<p class="">Tipología</p>
+									<label for="typology">Tipología</label>
 									<XamuSelect
 										id="typology"
 										v-model="selectedTypology"

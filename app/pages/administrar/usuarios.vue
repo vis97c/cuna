@@ -97,6 +97,7 @@
 					v-model="filterByMemberName"
 					icon="filter"
 					placeholder="Filtrar por nombre..."
+					aria-label="Filtrar usuarios por nombre"
 					class="--width-90 --width-220:sm"
 				/>
 				<XamuActionButtonToggle tooltip="Actualizar" round @click="refreshData">

@@ -9,7 +9,7 @@ import { getDocumentId } from "./resolver";
 import type { LogRef } from "./types/entities/log";
 
 interface iMakeLogger {
-	instanceId?: string;
+	instancePath?: string;
 	uid?: string;
 	loggerFirestore?: Firestore;
 }
@@ -19,15 +19,12 @@ interface iMakeLogger {
  * No circular dependencies or nuxt context
  * Conditionally log user data
  */
-export function makeLogger({ instanceId, uid, loggerFirestore }: iMakeLogger = {}): tLogger {
+export function makeLogger({ instancePath, uid, loggerFirestore }: iMakeLogger = {}): tLogger {
 	return async function (...args) {
 		try {
 			// Ids only
-			instanceId = getDocumentId(instanceId);
-			uid = getDocumentId(uid);
-
-			const instancePath = `instances/${instanceId}`;
-			const memberPath = `${instancePath}/members/${uid}`;
+			const memberId = getDocumentId(uid);
+			const memberPath = `${instancePath}/members/${memberId}`;
 			let logData: LogRef | LogData;
 
 			if (import.meta.server) {
@@ -60,17 +57,17 @@ export function makeLogger({ instanceId, uid, loggerFirestore }: iMakeLogger = {
 						contextHits: Number(contextHits),
 						contextSource,
 					});
-				} catch (error) {
+				} catch (err) {
 					logData = getLog(...args, { errorMessage: "Could not get server metadata" });
 				}
 
 				// Prevent server (firebase) imports from being injected into the client
 				const { getServerFirebase } = await import("../../server/utils/firebase");
 				const { firebaseFirestore } = getServerFirebase("makeLogger");
-				const at = instanceId ? firebaseFirestore.doc(instancePath) : firebaseFirestore;
+				const at = instancePath ? firebaseFirestore.doc(instancePath) : firebaseFirestore;
 
 				// Inject author
-				if (instanceId && uid) {
+				if (instancePath && uid) {
 					const createdByRef = firebaseFirestore.doc(memberPath);
 
 					logData.createdByRef = logData.updatedByRef = createdByRef;
@@ -87,11 +84,11 @@ export function makeLogger({ instanceId, uid, loggerFirestore }: iMakeLogger = {
 
 				const logsRef = collection(
 					loggerFirestore,
-					instanceId ? `${instancePath}/logs` : "logs"
+					instancePath ? `${instancePath}/logs` : "logs"
 				);
 
 				// Inject author
-				if (instanceId && uid) {
+				if (instancePath && uid) {
 					const createdByRef = doc(loggerFirestore, memberPath);
 
 					// Admin SDK DocumentReference is not assignable to client SDK DocumentReference

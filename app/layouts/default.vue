@@ -19,7 +19,7 @@
 					<p v-else class="--txtAlign-center">{{ INSTANCE.current.banner.message }}</p>
 				</div>
 			</header>
-			<nav class="x-main-nav">
+			<nav class="x-main-nav" aria-label="Navegación principal">
 				<ul
 					class="holder flx --flxRow --flx-between-center --gap-10 --gap:sm --gap-30:md --height-100"
 				>
@@ -202,7 +202,7 @@
 					</li>
 				</ul>
 			</nav>
-			<main class="x-main-inner">
+			<main id="main-content" tabindex="-1" class="x-main-inner">
 				<div
 					v-if="INSTANCE.maintenance && !SESSION.canModerate && !isLoginPage"
 					class="view"
@@ -225,7 +225,14 @@
 					<div class="txt --txtSize-xs --txtAlign-center">
 						<p>
 							Made with ❤️ by
-							<a href="https://github.com/vis97c" target="_blank">V.</a>
+							<a
+								href="https://github.com/vis97c"
+								target="_blank"
+								rel="noopener noreferrer"
+								aria-label="V. (se abre en una nueva pestaña)"
+							>
+								V.
+							</a>
 							©{{ new Date().getFullYear() }}, All rights reserved.
 						</p>
 					</div>

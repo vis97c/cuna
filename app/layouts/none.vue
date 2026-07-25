@@ -1,5 +1,5 @@
 <template>
-	<main ref="layoutRef" class="x-layout scrollable">
+	<main id="main-content" ref="layoutRef" tabindex="-1" class="x-layout scrollable">
 		<slot></slot>
 	</main>
 </template>

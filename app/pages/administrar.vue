@@ -26,111 +26,113 @@
 					</div>
 				</XamuBaseBox> -->
 				<!-- ENDS: Panel alerts -->
-				<ul class="flx --flxRow-wrap --flx-start-center --gap-10 --gap:md">
-					<li>
-						<XamuActionButtonToggle
-							to="/administrar"
-							tooltip="Panel de control"
-							tooltip-as-text
-							tooltip-position="bottom"
-							round
-						>
-							<XamuIconFa name="star-of-life" />
-							<XamuIconFa name="star-of-life" regular />
-						</XamuActionButtonToggle>
-					</li>
-					<li>
-						<XamuActionButtonToggle to="/administrar/cursos" round=":sm-inv">
-							<XamuIconFa name="book" />
-							<XamuIconFa name="book" regular />
-							<span class="--hidden-full:sm-inv">Cursos</span>
-						</XamuActionButtonToggle>
-					</li>
-					<li>
-						<XamuActionButtonToggle to="/administrar/instancias" round=":sm-inv">
-							<XamuIconFa name="at" />
-							<XamuIconFa name="at" regular />
-							<span class="--hidden-full:sm-inv">Instancias</span>
-						</XamuActionButtonToggle>
-					</li>
-					<li>
-						<XamuDropdown
-							:theme="[eColors.LIGHT, eColors.SECONDARY]"
-							:position="['bottom', 'center']"
-						>
-							<template #toggle="{ setModel, model }">
-								<XamuActionLink @click="setModel()">
-									<XamuActionButtonToggle
-										tooltip="Ver menu de registros"
-										tooltip-as-text
-										tooltip-position="bottom"
-										:active="model"
-										round=":sm-inv"
+				<nav aria-label="Navegación del panel de administración">
+					<ul class="flx --flxRow-wrap --flx-start-center --gap-10 --gap:md">
+						<li>
+							<XamuActionButtonToggle
+								to="/administrar"
+								tooltip="Panel de control"
+								tooltip-as-text
+								tooltip-position="bottom"
+								round
+							>
+								<XamuIconFa name="star-of-life" />
+								<XamuIconFa name="star-of-life" regular />
+							</XamuActionButtonToggle>
+						</li>
+						<li>
+							<XamuActionButtonToggle to="/administrar/cursos" round=":sm-inv">
+								<XamuIconFa name="book" />
+								<XamuIconFa name="book" regular />
+								<span class="--hidden-full:sm-inv">Cursos</span>
+							</XamuActionButtonToggle>
+						</li>
+						<li>
+							<XamuActionButtonToggle to="/administrar/instancias" round=":sm-inv">
+								<XamuIconFa name="at" />
+								<XamuIconFa name="at" regular />
+								<span class="--hidden-full:sm-inv">Instancias</span>
+							</XamuActionButtonToggle>
+						</li>
+						<li>
+							<XamuDropdown
+								:theme="[eColors.LIGHT, eColors.SECONDARY]"
+								:position="['bottom', 'center']"
+							>
+								<template #toggle="{ setModel, model }">
+									<XamuActionLink @click="setModel()">
+										<XamuActionButtonToggle
+											tooltip="Ver menu de registros"
+											tooltip-as-text
+											tooltip-position="bottom"
+											:active="model"
+											round=":sm-inv"
+										>
+											<XamuIconFa name="shield" />
+											<XamuIconFa name="shield" regular />
+											<span class="--hidden-full:sm-inv">Seguimiento</span>
+										</XamuActionButtonToggle>
+										<XamuIconFa indicator name="chevron-down" />
+									</XamuActionLink>
+								</template>
+								<template #default="{ invertedTheme }">
+									<nav
+										class="list flx --flxColumn --gap-20 --width-max --maxWidth-100 --txtColor"
 									>
-										<XamuIconFa name="shield" />
-										<XamuIconFa name="shield" regular />
-										<span class="--hidden-full:sm-inv">Seguimiento</span>
-									</XamuActionButtonToggle>
-									<XamuIconFa indicator name="chevron-down" />
-								</XamuActionLink>
-							</template>
-							<template #default="{ invertedTheme }">
-								<nav
-									class="list flx --flxColumn --gap-20 --width-max --maxWidth-100 --txtColor"
-								>
-									<ul class="list-group --minWidth-90 --maxWidth-220">
-										<li>
-											<p class="--txtSize-xs --txtTransform-upper">
-												Administrar
-											</p>
-										</li>
-										<li>
-											<XamuActionLink
-												to="/administrar/registros"
-												:theme="invertedTheme"
-											>
-												<XamuIconFa name="clock-rotate-left" />
-												<span>Registros</span>
-											</XamuActionLink>
-										</li>
-										<li>
-											<XamuActionLink
-												to="/administrar/registros/ofensores"
-												:theme="invertedTheme"
-											>
-												<XamuIconFa name="skull" />
-												<span>Ofensores</span>
-											</XamuActionLink>
-										</li>
-										<li>
-											<XamuActionLink
-												to="/administrar/registros/proxies"
-												:theme="invertedTheme"
-											>
-												<XamuIconFa name="door-open" />
-												<span>Proxies</span>
-											</XamuActionLink>
-										</li>
-									</ul>
-								</nav>
-							</template>
-						</XamuDropdown>
-					</li>
-					<li>
-						<XamuActionButtonToggle to="/administrar/usuarios">
-							<XamuIconFa name="users" />
-							<XamuIconFa name="users" regular />
-							<span>Usuarios</span>
-						</XamuActionButtonToggle>
-					</li>
-					<li>
-						<XamuActionButtonToggle to="/administrar/ajustes">
-							<XamuIconFa name="cog" />
-							<XamuIconFa name="cog" regular />
-							<span>Ajustes</span>
-						</XamuActionButtonToggle>
-					</li>
-				</ul>
+										<ul class="list-group --minWidth-90 --maxWidth-220">
+											<li>
+												<p class="--txtSize-xs --txtTransform-upper">
+													Administrar
+												</p>
+											</li>
+											<li>
+												<XamuActionLink
+													to="/administrar/registros"
+													:theme="invertedTheme"
+												>
+													<XamuIconFa name="clock-rotate-left" />
+													<span>Registros</span>
+												</XamuActionLink>
+											</li>
+											<li>
+												<XamuActionLink
+													to="/administrar/registros/ofensores"
+													:theme="invertedTheme"
+												>
+													<XamuIconFa name="skull" />
+													<span>Ofensores</span>
+												</XamuActionLink>
+											</li>
+											<li>
+												<XamuActionLink
+													to="/administrar/registros/proxies"
+													:theme="invertedTheme"
+												>
+													<XamuIconFa name="door-open" />
+													<span>Proxies</span>
+												</XamuActionLink>
+											</li>
+										</ul>
+									</nav>
+								</template>
+							</XamuDropdown>
+						</li>
+						<li>
+							<XamuActionButtonToggle to="/administrar/usuarios">
+								<XamuIconFa name="users" />
+								<XamuIconFa name="users" regular />
+								<span>Usuarios</span>
+							</XamuActionButtonToggle>
+						</li>
+						<li>
+							<XamuActionButtonToggle to="/administrar/ajustes">
+								<XamuIconFa name="cog" />
+								<XamuIconFa name="cog" regular />
+								<span>Ajustes</span>
+							</XamuActionButtonToggle>
+						</li>
+					</ul>
+				</nav>
 				<div class="flx --flxColumn --flx-center-stretch --flx-fill">
 					<NuxtPage />
 				</div>
