@@ -1,10 +1,10 @@
 import { FieldValue, Timestamp, type DocumentReference } from "firebase-admin/firestore";
 
-import type { InstanceData, NoteData, NoteVoteData } from "../types/entities/index.js";
-import { encrypt } from "../utils/encrypt.js";
-import { onCreated, onUpdated, onDeleted } from "../utils/event.js";
-import { getFirebase } from "../utils/firebase.js";
-import { makeGetSlug } from "../utils/slugs.js";
+import type { InstanceData, NoteData, NoteVoteData } from "../types/entities/index.ts";
+import { encrypt } from "../utils/encrypt.ts";
+import { onCreated, onUpdated, onDeleted } from "../utils/event.ts";
+import { getFirebase } from "../utils/firebase.ts";
+import { makeGetSlug } from "../utils/slugs.ts";
 
 const getNoteSlug = makeGetSlug("notes");
 

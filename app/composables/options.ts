@@ -69,8 +69,8 @@ import {
 	eSIAMiningOrinoquiaProgram,
 	eSIANaturalSciencesOrinoquiaProgram,
 	eSIANursingOrinoquiaProgram,
-} from "~~/functions/src/types/SIA";
-import type { Course } from "~/utils/types";
+} from "~~/functions/src/types/SIA/index.ts";
+import type { Course } from "~/utils/types/index.ts";
 
 function toOptions(enumLike: object, scope?: string[]): iSelectOption[] {
 	return Object.values(enumLike).reduce<iSelectOption[]>((acc, value) => {
@@ -91,7 +91,7 @@ export function useCourseProgramOptions(
 		(uSIAFaculty | Ref<uSIAFaculty | undefined>)?,
 		(uSIAProgram | Ref<uSIAProgram | undefined>)?,
 	] = [],
-	{ noUndef, course }: { noUndef?: boolean; course?: Ref<Course | null> } = {}
+	{ noUndef, course }: { noUndef?: boolean; course?: Ref<Course | null | undefined> } = {}
 ) {
 	const SESSION = useSessionStore();
 	const selectedLevel = level && isRef(level) ? level : ref(level);
@@ -373,7 +373,7 @@ export function useCourseProgramOptions(
  */
 export function useCourseTypeOptions(
 	[typology]: [(eSIATypology | Ref<eSIATypology | undefined>)?] = [],
-	course?: Ref<Course | null>
+	course?: Ref<Course | null | undefined>
 ) {
 	const selectedTypology = typology && isRef(typology) ? typology : ref(typology);
 

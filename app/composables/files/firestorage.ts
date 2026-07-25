@@ -1,7 +1,7 @@
 import { type DocumentReference, setDoc } from "firebase/firestore";
 
-import type { NoteRef } from "~/utils/types";
-import useFirebaseStorageUpload from "./useFirebaseStorageUpload";
+import type { NoteRef } from "~/utils/types/index.ts";
+import useFirebaseStorageUpload from "./useFirebaseStorageUpload.ts";
 
 export async function uploadNoteImage(
 	ref: DocumentReference<NoteRef>,

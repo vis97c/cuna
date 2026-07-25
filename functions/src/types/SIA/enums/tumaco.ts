@@ -1,7 +1,7 @@
-import { eSIABogotaPrograms, eSIAEnfermeryBogotaProgram, eSIALawBogotaProgram } from "./bogota.js";
-import { eSIAManagementManizalesProgram, eSIAManizalesPrograms } from "./manizales.js";
-import { eSIAMedellinPrograms } from "./medellin.js";
-import { eSIAPalmiraPrograms } from "./palmira.js";
+import { eSIABogotaPrograms, eSIAEnfermeryBogotaProgram, eSIALawBogotaProgram } from "./bogota.ts";
+import { eSIAManagementManizalesProgram, eSIAManizalesPrograms } from "./manizales.ts";
+import { eSIAMedellinPrograms } from "./medellin.ts";
+import { eSIAPalmiraPrograms } from "./palmira.ts";
 
 /**
  * Tumaco faculties.

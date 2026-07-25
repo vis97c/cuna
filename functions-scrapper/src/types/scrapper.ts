@@ -23,6 +23,15 @@ export enum eHTMLElementIds {
 	TABLE = "pt1:r1:0:t4::db",
 }
 
+export interface iSIAConfig {
+	siaOldURL?: string;
+	siaOldPath?: string;
+	siaOldQuery?: string;
+	siaOldLevel?: Record<string, string>;
+	siaOldPlace?: Record<string, string>;
+	siaOldTypology?: Record<string, string>;
+}
+
 export interface CourseLink {
 	code: string;
 	credits: number;

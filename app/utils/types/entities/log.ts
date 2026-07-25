@@ -1,8 +1,8 @@
 import type { DocumentReference } from "firebase/firestore";
 
-import type { LogData, OffenderData } from "~~/functions/src/types/entities";
+import type { LogData, OffenderData } from "~~/functions/src/types/entities/index.ts";
 
-import type { InputFromData, OutputFromData, RefFromData } from "./base";
+import type { InputFromData, OutputFromData, RefFromData } from "./base.ts";
 
 /** @output Log data */
 export interface Log extends OutputFromData<LogData> {}

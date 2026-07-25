@@ -1,7 +1,7 @@
-import type { LogData, OffenderData } from "./types/entities/index.js";
-import { onCreated, onUpdated } from "./utils/event.js";
-import { getFirebase } from "./utils/firebase.js";
-import { offenderLogger } from "./utils/logger.js";
+import type { LogData, OffenderData } from "./types/entities/index.ts";
+import { onCreated, onUpdated } from "./utils/event.ts";
+import { getFirebase } from "./utils/firebase.ts";
+import { offenderLogger } from "./utils/logger.ts";
 
 /**
  * Create timestamp

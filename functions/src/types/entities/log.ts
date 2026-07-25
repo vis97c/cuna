@@ -1,6 +1,6 @@
 import type { DocumentReference } from "firebase-admin/firestore";
 
-import type { AuditData } from "./member.js";
+import type { AuditData } from "./member.ts";
 
 /**
  * General log entity

@@ -1,6 +1,6 @@
 import type { CollectionReference, DocumentSnapshot } from "firebase-admin/firestore";
 
-import type { InstanceData } from "~~/functions/src/types/entities";
+import type { InstanceData } from "~~/functions/src/types/entities/index.ts";
 
 import type { H3Context } from "../types";
 import { debugFirebaseServer } from "./firestore";

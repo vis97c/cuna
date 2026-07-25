@@ -20,7 +20,7 @@
 <script setup lang="ts">
 	import { eThemeColors } from "@open-xamu-co/ui-common-enums";
 
-	import type { Group } from "~/utils/types";
+	import type { Group } from "~/utils/types/index.ts";
 
 	import { XamuBaseAction } from "#components";
 
@@ -51,7 +51,7 @@
 	function getGroupName(name?: string) {
 		const [shortName] = name?.split("-") || [];
 
-		return shortName.trim();
+		return shortName?.trim();
 	}
 </script>
 

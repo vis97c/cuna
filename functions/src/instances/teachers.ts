@@ -1,7 +1,7 @@
-import type { InstanceData, TeacherData } from "../types/entities/index.js";
-import { getLESlug } from "../utils/data.js";
-import { onCreated, onUpdated } from "../utils/event.js";
-import { getWeightedSearchIndexes } from "../utils/search.js";
+import type { InstanceData, TeacherData } from "../types/entities/index.ts";
+import { getLESlug } from "../utils/data.ts";
+import { onCreated, onUpdated } from "../utils/event.ts";
+import { getWeightedSearchIndexes } from "../utils/search.ts";
 
 function getLEPath({ config = {} }: InstanceData): string {
 	const { losEstudiantesUrl = "", losEstudiantesProfessorsPath = "" } = config;

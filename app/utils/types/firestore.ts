@@ -1,8 +1,8 @@
 import type { iPagination, tLogger } from "@open-xamu-co/ui-common-types";
 
-import type { FirebaseData } from "~~/functions/src/types/entities/base";
+import type { FirebaseData } from "~~/functions/src/types/entities/base.ts";
 
-import type { OutputFromData } from "./entities/base";
+import type { OutputFromData } from "./entities/base.ts";
 
 export interface PseudoDocumentSnapshot<
 	T extends FirebaseData,

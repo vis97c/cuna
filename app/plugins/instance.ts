@@ -6,8 +6,8 @@ import {
 } from "firebase/auth";
 import { doc, DocumentReference, onSnapshot, setDoc, type Unsubscribe } from "firebase/firestore";
 
-import type { Instance, InstanceRef, MemberRef, Member } from "~/utils/types";
-import { eMemberRole } from "~~/functions/src/types/entities";
+import type { Instance, InstanceRef, MemberRef, Member } from "~/utils/types/index.ts";
+import { eMemberRole } from "~~/functions/src/types/entities/index.ts";
 
 /**
  * Setup instance
@@ -91,7 +91,7 @@ function setupAuth(instance: Instance) {
 
 	let unsubMember: Unsubscribe;
 
-	const logger = makeLogger({ instanceId: instance.id, loggerFirestore: $clientFirestore });
+	const logger = makeLogger({ instancePath: instance.id, loggerFirestore: $clientFirestore });
 	const instanceRef: DocumentReference<InstanceRef> = doc($clientFirestore, instance.id);
 
 	/**
@@ -264,7 +264,7 @@ function setupAuth(instance: Instance) {
 			}
 
 			const logger = makeLogger({
-				instanceId: instance.id,
+				instancePath: instance.id,
 				loggerFirestore: $clientFirestore,
 			});
 			const instanceRef: DocumentReference<InstanceRef, Instance> = doc(

@@ -1,11 +1,11 @@
-import { eSIABogotaPrograms, eSIAHumanScienceBogotaProgram } from "./bogota.js";
-import { eSIAExactSciencesManizalesProgram, eSIAManizalesPrograms } from "./manizales.js";
+import { eSIABogotaPrograms, eSIAHumanScienceBogotaProgram } from "./bogota.ts";
+import { eSIAExactSciencesManizalesProgram, eSIAManizalesPrograms } from "./manizales.ts";
 import {
 	eSIAArchitectureMedellinProgram,
 	eSIAMedellinPrograms,
 	eSIAMinesMedellinProgram,
-} from "./medellin.js";
-import { eSIAPalmiraPrograms } from "./palmira.js";
+} from "./medellin.ts";
+import { eSIAPalmiraPrograms } from "./palmira.ts";
 
 /**
  * Amazonia faculties.

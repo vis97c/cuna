@@ -44,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-	import { debounce } from "lodash-es";
+	import debounce from "lodash-es/debounce";
 
 	import type { tProp, tThemeModifier, tThemeTuple } from "@open-xamu-co/ui-common-types";
 	import { eColors } from "@open-xamu-co/ui-common-enums";

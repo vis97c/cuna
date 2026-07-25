@@ -2,8 +2,8 @@ import { onObjectFinalized } from "firebase-functions/v2/storage";
 import { getStorage } from "firebase-admin/storage";
 import sharp from "sharp";
 
-import { getFirebase } from "./utils/firebase.js";
-import { makeFunctionsLogger } from "./utils/logger.js";
+import { getFirebase } from "./utils/firebase.ts";
+import { makeFunctionsLogger } from "./utils/logger.ts";
 
 /**
  * Resize buffer

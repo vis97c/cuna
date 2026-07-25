@@ -1,6 +1,6 @@
 import { Query } from "firebase-admin/firestore";
 
-import type { CourseData } from "~~/functions/src/types/entities";
+import type { CourseData } from "~~/functions/src/types/entities/index.ts";
 
 /**
  * Get the edges from the courses collection

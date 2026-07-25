@@ -1,7 +1,7 @@
-const path = require("path");
+const path = require("node:path");
 
 /**
- * @type {import("puppeteer").Configuration}
+ * @type {import("puppeteer-core").Configuration}
  */
 module.exports = {
 	// Changes the cache location for Puppeteer.

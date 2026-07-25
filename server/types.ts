@@ -7,8 +7,8 @@ import type {
 	H3EventContext,
 } from "h3";
 
-import type { Instance, Member } from "~/utils/types";
-import type { InstanceData } from "~~/functions/src/types/entities";
+import type { Instance, Member } from "~/utils/types/index.ts";
+import type { InstanceData } from "~~/functions/src/types/entities/index.ts";
 
 export interface H3Context extends H3EventContext {
 	currentInstance?: Instance & { millis: number; url: string; id: string };

@@ -4,7 +4,7 @@ import type {
 	eSIATypology,
 	uSIAFaculty,
 	uSIAProgram,
-} from "~~/functions/src/types/SIA";
+} from "~~/functions/src/types/SIA/index.ts";
 
 export interface PartialCourseValues {
 	name?: string;

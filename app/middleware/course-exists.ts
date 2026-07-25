@@ -1,4 +1,4 @@
-import type { Course } from "~/utils/types";
+import type { Course } from "~/utils/types/index.ts";
 
 /**
  * Auths into the store

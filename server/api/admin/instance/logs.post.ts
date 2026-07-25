@@ -1,6 +1,6 @@
 import type { CollectionReference, Query } from "firebase-admin/firestore";
 
-import { eMemberRole } from "~~/functions/src/types/entities";
+import { eMemberRole } from "~~/functions/src/types/entities/index.ts";
 
 /**
  * Get the edges from the "instance/logs" collection.

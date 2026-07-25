@@ -1,10 +1,10 @@
 import type { DocumentReference, Timestamp } from "firebase-admin/firestore";
 
-import type { eSIALevel, eSIAPlace, eSIATypology, uSIAFaculty, uSIAProgram } from "../SIA/index.js";
-import type { TeacherData } from "./teacher.js";
-import type { LogData } from "./log.js";
-import type { SearchData } from "./base.js";
-import type { AuditData } from "./member.js";
+import type { eSIALevel, eSIAPlace, eSIATypology, uSIAFaculty, uSIAProgram } from "../SIA/index.ts";
+import type { TeacherData } from "./teacher.ts";
+import type { LogData } from "./log.ts";
+import type { SearchData } from "./base.ts";
+import type { AuditData } from "./member.ts";
 
 /**
  * Scraped with info

@@ -1,6 +1,6 @@
-import { isEqual } from "lodash-es";
+import isEqual from "lodash-es/isEqual";
 
-import type { Group } from "~/utils/types";
+import type { Group } from "~/utils/types/index.ts";
 
 export function valuesAreEqual<V extends Record<string, any>>(
 	values: V,

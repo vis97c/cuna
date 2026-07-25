@@ -2,11 +2,11 @@ import { getFirestore, collection, addDoc, Firestore, doc } from "firebase/fires
 
 import type { tLogger } from "@open-xamu-co/ui-common-types";
 
-import type { LogData } from "~~/functions/src/types/entities";
-import { getLog } from "~~/functions/src/utils/logs";
+import type { LogData } from "~~/functions/src/types/entities/index.ts";
+import { getLog } from "~~/functions/src/utils/logs.ts";
 
-import { getDocumentId } from "./resolver";
-import type { LogRef } from "./types/entities/log";
+import { getDocumentId } from "./resolver.ts";
+import type { LogRef } from "./types/entities/log.ts";
 
 interface iMakeLogger {
 	instancePath?: string;
@@ -29,7 +29,7 @@ export function makeLogger({ instancePath, uid, loggerFirestore }: iMakeLogger =
 
 			if (import.meta.server) {
 				try {
-					const { useEvent } = await import("nitropack/runtime");
+					const { useEvent } = await import("nitro/runtime");
 					const { getRequestHeaders } = await import("h3");
 					// Set server metadata
 					const event = useEvent();

@@ -5,8 +5,8 @@ import type {
 	Timestamp as ClientTimestamp,
 } from "firebase/firestore";
 
-import type { FirebaseData } from "~~/functions/src/types/entities/base";
-import type { MemberInput } from "./member";
+import type { FirebaseData } from "~~/functions/src/types/entities/base.ts";
+import type { MemberInput } from "./member.ts";
 
 /**
  * Transforms admin document reference to client document data

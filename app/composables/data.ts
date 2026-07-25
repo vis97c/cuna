@@ -1,8 +1,8 @@
-import type { Instance, Member, Group, GroupEs, Proxy, MemberAbuse } from "~/utils/types";
-import type { OutputFromData } from "~/utils/types/entities/base";
-import type { Log, Offender } from "~/utils/types/entities/log";
-import { eMemberRole, type AuditData } from "~~/functions/src/types/entities";
-import type { SearchData } from "~~/functions/src/types/entities/base";
+import type { Instance, Member, Group, GroupEs, Proxy, MemberAbuse } from "~/utils/types.ts";
+import type { OutputFromData } from "~/utils/types/entities/base.ts";
+import type { Log, Offender } from "~/utils/types/entities/log.ts";
+import { eMemberRole, type AuditData } from "~~/functions/src/types/entities/index.ts";
+import type { SearchData } from "~~/functions/src/types/entities/base.ts";
 
 export const markdownExample =
 	"# Título\n\n" +

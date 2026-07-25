@@ -1,6 +1,6 @@
 import type { DocumentReference } from "firebase-admin/firestore";
 
-import type { MemberData } from "../types/entities/index.js";
+import type { MemberData } from "../types/entities/index.ts";
 
 export function getAnonymizedMember(memberRef: DocumentReference<MemberData>) {
 	return {

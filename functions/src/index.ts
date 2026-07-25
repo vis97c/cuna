@@ -1,10 +1,10 @@
-import type { ProxyData } from "./types/entities/index.js";
-import { onCreated, onUpdated } from "./utils/event.js";
+import type { ProxyData } from "./types/entities/index.ts";
+import { onCreated, onUpdated } from "./utils/event.ts";
 
-export * from "./auth.js";
-export * from "./logs.js";
-export * from "./instances/index.js";
-export * from "./storage.js";
+export * from "./auth.ts";
+export * from "./logs.ts";
+export * from "./instances/index.ts";
+export * from "./storage.ts";
 
 /**
  * Create timestamp

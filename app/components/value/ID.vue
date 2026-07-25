@@ -6,7 +6,7 @@
 </template>
 
 <script setup lang="ts">
-	import { eIdDocumentType } from "~~/functions/src/types/entities";
+	import { eIdDocumentType } from "~~/functions/src/types/entities/index.ts";
 
 	/**
 	 * Value user document

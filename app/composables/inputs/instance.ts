@@ -2,7 +2,7 @@ import type { tFormInput } from "@open-xamu-co/ui-common-types";
 import { eFormType } from "@open-xamu-co/ui-common-enums";
 import { FormInput } from "@open-xamu-co/ui-common-helpers";
 
-import type { Instance } from "~/utils/types";
+import type { Instance } from "~/utils/types/index.ts";
 
 export function useInstanceSEOInputs(instance: Instance = {}): tFormInput[] {
 	return [

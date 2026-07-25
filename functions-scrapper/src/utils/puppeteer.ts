@@ -5,9 +5,9 @@ import { FieldValue } from "firebase-admin/firestore";
 
 import type { iSelectOption, tLogger } from "@open-xamu-co/ui-common-types";
 
-import type { eHTMLElementIds } from "../types/scrapper.js";
-import { getProxies } from "./proxies.js";
-import { getFirebase } from "./firebase.js";
+import type { eHTMLElementIds } from "../types/scrapper.ts";
+import { getProxies } from "./proxies.ts";
+import { getFirebase } from "./firebase.ts";
 
 /**
  * Await por page changes after selection

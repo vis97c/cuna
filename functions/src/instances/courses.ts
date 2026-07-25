@@ -1,10 +1,10 @@
 import { FieldValue } from "firebase-admin/firestore";
-import deburr from "lodash-es/deburr.js";
+import deburr from "lodash-es/deburr";
 
-import { onCreated, onDeleted, onUpdated } from "../utils/event.js";
-import { getWeightedSearchIndexes } from "../utils/search.js";
-import type { CourseData, InstanceData, GroupData } from "../types/entities/index.js";
-import { getLESlug } from "../utils/data.js";
+import { onCreated, onDeleted, onUpdated } from "../utils/event.ts";
+import { getWeightedSearchIndexes } from "../utils/search.ts";
+import type { CourseData, InstanceData, GroupData } from "../types/entities/index.ts";
+import { getLESlug } from "../utils/data.ts";
 
 function getLEPath({ config = {} }: InstanceData): string {
 	const { losEstudiantesUrl = "", losEstudiantesCoursesPath = "" } = config;

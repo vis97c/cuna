@@ -1,7 +1,14 @@
-import type { EventHandlerRequest, EventHandlerResponse } from "h3";
+import type {
+	EventHandler,
+	EventHandlerRequest,
+	EventHandlerResponse,
+	EventHandlerWithFetch,
+} from "h3";
+import { defineCachedHandler } from "nitro/cache";
+import { defineHandler } from "nitro";
 
-import type { CachedEventHandler, CachedH3Event } from "../types";
-import { eMemberRole } from "~~/functions/src/types/entities";
+import type { CachedEventHandler, CachedH3Event } from "../types.ts";
+import { eMemberRole } from "~~/functions/src/types/entities/index.ts";
 
 interface CachedEventHandlerOptions<T extends EventHandlerRequest = EventHandlerRequest> {
 	/** Optional key generator */
@@ -27,10 +34,10 @@ export const defineConditionallyCachedEventHandler = <
 	T extends EventHandlerRequest,
 	D extends EventHandlerResponse = EventHandlerResponse,
 >(
-	handler: CachedEventHandler<T, D>,
+	handler: EventHandler<T, D>,
 	{ getKey, instanceOnly = true, methodOnly = true }: CachedEventHandlerOptions<T> = {}
-): CachedEventHandler<T, D> => {
-	const cachedHandler = defineCachedEventHandler(handler, {
+): EventHandlerWithFetch<T, D> => {
+	const cachedHandler = defineCachedHandler(handler, {
 		maxAge: 30, // 30 seconds
 		getKey(event: CachedH3Event<T>) {
 			// Prefix with instance host if available
@@ -44,7 +51,7 @@ export const defineConditionallyCachedEventHandler = <
 		},
 	});
 
-	return defineEventHandler<T>(async (event: CachedH3Event<T>) => {
+	return defineHandler<T>((event: CachedH3Event<T>) => {
 		const { currentMember } = event.context;
 
 		// Bypass cache for admin purposes

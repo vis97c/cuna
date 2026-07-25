@@ -1,7 +1,11 @@
-import type { FirebaseData } from "~~/functions/src/types/entities/base";
+import type { FirebaseData } from "~~/functions/src/types/entities/base.ts";
 
-import type { PseudoDocumentSnapshot, PseudoDocumentReference, iSnapshotConfig } from "./types";
-import type { OutputFromData } from "./types/entities/base";
+import type {
+	PseudoDocumentSnapshot,
+	PseudoDocumentReference,
+	iSnapshotConfig,
+} from "./types/index.ts";
+import type { OutputFromData } from "./types/entities/base.ts";
 
 /** Cached document */
 interface iCachedDocument<

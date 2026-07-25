@@ -62,7 +62,7 @@
 	import type { iGetPage, iPage } from "@open-xamu-co/ui-common-types";
 	import { eSizes } from "@open-xamu-co/ui-common-enums";
 
-	import type { Course, PartialCourseValues } from "~/utils/types";
+	import type { Course, PartialCourseValues } from "~/utils/types/index.ts";
 
 	/**
 	 * Course page

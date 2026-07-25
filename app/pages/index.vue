@@ -2,12 +2,13 @@
 	<div id="landing" class="view">
 		<section class="view-item --minHeightVh-100 --bgColor-light">
 			<div class="holder flx --flxColumn --flx-center">
-				<div class="txt --txtAlign-center --txtColor-dark5 --gap-5">
+				<div class="txt --txtAlign-center --gap-5">
 					<h1 class="--txtLineHeight-sm">
 						<XamuActionLink to="/" class="no--override no--route --gap">
 							<span class="--txtLineHeight-sm">cuna</span>
 							<XamuIconFa name="chess-knight" :size="10" />
 						</XamuActionLink>
+						<span class="--txtSize-md --txtColor-primary --mLeft-5">Web</span>
 					</h1>
 					<div class="flx --flxRow --flx-center --gap-10">
 						<p>Visor de cursos UNAL</p>
@@ -20,7 +21,7 @@
 							<XamuIconFa name="circle-info" />
 						</XamuActionLink>
 					</div>
-					<div class="flx --flxRow --flx-center --gap-10 --txtSize-xs">
+					<div class="flx --flxRow --flx-center --gap-10 --txtSize-xs --txtColor-dark5">
 						<XamuActionLink
 							href="https://github.com/vis97c/cuna"
 							tooltip="Código fuente. GNU GPL v3"
@@ -186,6 +187,13 @@
 								</li>
 								<li class="x-fit">
 									<XamuBoxAction
+										to="/descargar"
+										icon="download"
+										label="Cuna Desktop"
+									/>
+								</li>
+								<li class="x-fit">
+									<XamuBoxAction
 										:theme="calculadoraTheme"
 										to="https://calc-unal.vercel.app?from=cuna.com.co"
 										icon="calculator"
@@ -218,18 +226,18 @@
 </template>
 
 <script setup lang="ts">
-	import deburr from "lodash-es/deburr.js";
+	import deburr from "lodash-es/deburr";
 
 	import type { iGetPage, iPage } from "@open-xamu-co/ui-common-types";
 	import { eSizes, eColors } from "@open-xamu-co/ui-common-enums";
 
-	import type { Course } from "~/utils/types";
+	import type { Course } from "~/utils/types/index.ts";
 	import type {
 		CourseValues,
 		CourseValuesWithCode,
 		CourseValuesWithName,
 		PartialCourseValues,
-	} from "~/utils/types/values";
+	} from "~/utils/types/values.ts";
 
 	/**
 	 * Landing page

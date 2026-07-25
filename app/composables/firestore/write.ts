@@ -13,9 +13,9 @@ import set from "lodash-es/set";
 
 import type { iNodeFnResponse } from "@open-xamu-co/ui-common-types";
 
-import type { iSnapshotConfig } from "~/utils/types";
-import type { InputFromData, OutputFromData, RefFromData } from "~/utils/types/entities/base";
-import type { AuditData } from "~~/functions/src/types/entities";
+import type { iSnapshotConfig } from "~/utils/types/index.ts";
+import type { InputFromData, OutputFromData, RefFromData } from "~/utils/types/entities/base.ts";
+import type { AuditData } from "~~/functions/src/types/entities/index.ts";
 
 interface iUseDocumentOptions extends iSnapshotConfig {
 	omitLoggings?: boolean;

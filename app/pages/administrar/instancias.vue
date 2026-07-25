@@ -47,7 +47,7 @@
 <script setup lang="ts">
 	import type { iGetPage, iPage } from "@open-xamu-co/ui-common-types";
 
-	import type { Instance } from "~/utils/types";
+	import type { Instance } from "~/utils/types/index.ts";
 
 	import { ValueLocation } from "#components";
 

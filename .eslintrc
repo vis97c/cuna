@@ -19,6 +19,12 @@
 				"destructuring": "all"
 			}
 		],
+		"@typescript-eslint/no-empty-object-type": [
+			"error",
+			{
+				"allowInterfaces": "always"
+			}
+		],
 		"@typescript-eslint/no-unused-expressions": "off",
 		"@typescript-eslint/no-require-imports": "off",
 		"@typescript-eslint/no-unused-vars": [

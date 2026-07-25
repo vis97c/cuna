@@ -64,6 +64,7 @@
 </template>
 
 <script setup lang="ts">
+	import type { ReactiveHead } from "@unhead/vue";
 	import { eColors } from "@open-xamu-co/ui-common-enums";
 
 	const INSTANCE = useInstanceStore();
@@ -84,7 +85,7 @@
 		if (Array.isArray(route.meta.keywords)) keywords = route.meta.keywords;
 
 		const keywordsString = keywords.join(", ");
-		const meta: Record<string, string>[] = [
+		const meta: ReactiveHead["meta"] = [
 			// Default meta
 			{ name: "description", content: description },
 			{ name: "keywords", content: keywordsString },
@@ -101,7 +102,7 @@
 			{ name: "twitter:description", content: description },
 			{ name: "twitter:image", content: image },
 		];
-		const link: Record<string, string>[] = [
+		const link: ReactiveHead["link"] = [
 			// Canonical
 			{ rel: "canonical", href: url },
 		];

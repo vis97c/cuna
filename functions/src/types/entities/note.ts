@@ -1,8 +1,8 @@
 import type { DocumentReference, Timestamp } from "firebase-admin/firestore";
 
-import type { AuditData } from "./member.js";
-import type { InstanceData } from "./instance.js";
-import type { SearchData } from "./base.js";
+import type { AuditData } from "./member.ts";
+import type { InstanceData } from "./instance.ts";
+import type { SearchData } from "./base.ts";
 
 /**
  * Note

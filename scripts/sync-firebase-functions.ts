@@ -1,7 +1,8 @@
+import fs from "node:fs";
+import process from "node:process";
+
 // Skip update in production and CI
 if (process.env.NODE_ENV === "production" || process.env.CI === "true") process.exit(0);
-
-const fs = require("fs");
 
 /**
  * Syncs the version for firebase functions and scrapper packages
@@ -11,6 +12,7 @@ try {
 	const packageJson = JSON.parse(fs.readFileSync("package.json", "utf8"));
 	const firebaseAdminVersion = packageJson.dependencies["firebase-admin"];
 	const firebaseFunctionsVersion = packageJson.dependencies["firebase-functions"];
+	const puppeteerCoreVersion = packageJson.devDependencies["puppeteer-core"];
 	const uiCommonTypesVersion = packageJson.devDependencies["@open-xamu-co/ui-common-types"];
 	// Get package.json for functions and functions-scrapper
 	const functionsPackageJson = JSON.parse(fs.readFileSync("functions/package.json", "utf8"));
@@ -24,6 +26,7 @@ try {
 	functionsPackageJson.devDependencies["@open-xamu-co/ui-common-types"] = uiCommonTypesVersion;
 	scrapperPackageJson.dependencies["firebase-admin"] = firebaseAdminVersion;
 	scrapperPackageJson.dependencies["firebase-functions"] = firebaseFunctionsVersion;
+	scrapperPackageJson.devDependencies["puppeteer-core"] = puppeteerCoreVersion;
 	scrapperPackageJson.devDependencies["@open-xamu-co/ui-common-types"] = uiCommonTypesVersion;
 
 	// Rewrite files

@@ -184,18 +184,18 @@
 </template>
 
 <script setup lang="ts">
-	import debounce from "lodash-es/debounce.js";
-	import deburr from "lodash-es/deburr.js";
+	import debounce from "lodash-es/debounce";
+	import deburr from "lodash-es/deburr";
 	import { doc, DocumentReference, onSnapshot, type Unsubscribe } from "firebase/firestore";
 
 	import type { iPageEdge } from "@open-xamu-co/ui-common-types";
 	import { eColors, eSizes } from "@open-xamu-co/ui-common-enums";
 
-	import type { Course, Group, GroupEs } from "~/utils/types";
+	import type { Course, Group, GroupEs } from "~/utils/types/index.ts";
 
 	import { TableTeachersList, TableEnroll, TableWeek, ClientOnly } from "#components";
-	import { eSIATypology } from "~~/functions/src/types/SIA";
-	import type { CourseData } from "~~/functions/src/types/entities";
+	import { eSIATypology } from "~~/functions/src/types/SIA/index.ts";
+	import type { CourseData } from "~~/functions/src/types/entities/index.ts";
 
 	/**
 	 * Course page

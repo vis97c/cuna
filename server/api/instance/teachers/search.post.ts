@@ -1,6 +1,6 @@
 import type { CollectionReference, Query } from "firebase-admin/firestore";
 
-import type { CourseData } from "~~/functions/src/types/entities";
+import type { CourseData } from "~~/functions/src/types/entities/index.ts";
 import { getWords, soundexEs } from "~~/functions/src/utils/search";
 
 /**

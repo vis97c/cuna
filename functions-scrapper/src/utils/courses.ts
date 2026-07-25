@@ -1,27 +1,35 @@
 import type { ElementHandle, Page } from "puppeteer-core";
-import type { DocumentSnapshot } from "firebase-admin/firestore";
 
-import { eHTMLElementIds, SIALEPrograms, type iCoursesPayload } from "../types/scrapper.js";
-import { getHTMLElementOptions, useHTMLElementId, waitForSelect } from "./puppeteer.js";
-import { TimedPromise } from "./guards.js";
+import {
+	eHTMLElementIds,
+	SIALEPrograms,
+	SIATypologies,
+	type CourseLink,
+	type iCoursesPayload,
+	type iSIAConfig,
+} from "../types/scrapper.ts";
+import { getHTMLElementOptions, useHTMLElementId, waitForSelect } from "./puppeteer.ts";
+import { TimedPromise } from "./guards.ts";
 
 /**
  * Get to the courses list from sia
  */
 export async function scrapeCoursesHandle(
-	snapshot: DocumentSnapshot,
+	config: iSIAConfig,
 	page: Page,
 	payload: iCoursesPayload
 ): Promise<ElementHandle<Element>> {
-	const { siaOldURL = "", siaOldLevel, siaOldPlace } = snapshot.data()?.config || {};
+	const { siaOldURL = "", siaOldLevel, siaOldPlace } = config || {};
 
 	// SIA navigation is required beforehand
-	if (!page.url().includes(siaOldURL)) throw new Error("Page is not the SIA");
+	if (siaOldURL && !page.url().includes(siaOldURL)) throw new Error("Page is not the SIA");
 
 	return TimedPromise<ElementHandle<Element>>(
 		async function (resolve, reject) {
-			if (!siaOldLevel?.[payload.level] || !siaOldPlace?.[payload.place]) {
-				throw reject("Missing place or level lists");
+			if (siaOldLevel && siaOldPlace) {
+				if (!siaOldLevel[payload.level] || !siaOldPlace[payload.place]) {
+					throw reject("Missing place or level lists");
+				}
 			}
 
 			await page.evaluate(() => {
@@ -35,18 +43,24 @@ export async function scrapeCoursesHandle(
 				await page.waitForSelector(useHTMLElementId(eHTMLElementIds.LEVEL), {
 					visible: true,
 				});
-			} catch (error) {
+			} catch (err) {
 				throw reject("SIA is down or under maintenance");
 			}
 
 			// Select level
 			await page.click(useHTMLElementId(eHTMLElementIds.LEVEL));
-			await page.select(useHTMLElementId(eHTMLElementIds.LEVEL), siaOldLevel[payload.level]);
+			await page.select(
+				useHTMLElementId(eHTMLElementIds.LEVEL),
+				siaOldLevel?.[payload.level] ?? payload.level
+			);
 			await waitForSelect(page, eHTMLElementIds.PLACE);
 
 			// Select Place
 			await page.click(useHTMLElementId(eHTMLElementIds.PLACE));
-			await page.select(useHTMLElementId(eHTMLElementIds.PLACE), siaOldPlace[payload.place]);
+			await page.select(
+				useHTMLElementId(eHTMLElementIds.PLACE),
+				siaOldPlace?.[payload.place] ?? payload.place
+			);
 			await waitForSelect(page, eHTMLElementIds.FACULTY);
 
 			// Get faculty options
@@ -99,19 +113,21 @@ export async function scrapeCoursesHandle(
  * Assumes level, place, faculty and program are already selected
  */
 export async function scrapeCoursesWithTypologyHandle(
-	snapshot: DocumentSnapshot,
+	config: iSIAConfig,
 	page: Page,
 	payload: iCoursesPayload
 ): Promise<ElementHandle<Element>> {
-	const { siaOldTypology, siaOldPlace } = snapshot.data()?.config || {};
+	const { siaOldTypology, siaOldPlace } = config || {};
 
 	return TimedPromise<ElementHandle<Element>>(
 		async (resolve, reject) => {
 			// Attempt to load courses by typology
 			if (!payload.typology) throw reject("Missing typology");
 
-			if (!siaOldTypology?.[payload.typology] || !siaOldPlace?.[payload.place]) {
-				throw reject("Missing typology or place list");
+			if (siaOldTypology && siaOldPlace) {
+				if (!siaOldTypology[payload.typology] || !siaOldPlace[payload.place]) {
+					throw reject("Missing typology or place list");
+				}
 			}
 
 			// Get typology options
@@ -151,7 +167,7 @@ export async function scrapeCoursesWithTypologyHandle(
 						await page.click(useHTMLElementId(eHTMLElementIds.FACULTY_PLACE_LE));
 						await page.select(
 							useHTMLElementId(eHTMLElementIds.FACULTY_PLACE_LE),
-							siaOldPlace[payload.place]
+							siaOldPlace?.[payload.place] ?? payload.place
 						);
 						await page.waitForSelector(
 							useHTMLElementId(eHTMLElementIds.FACULTY_FACULTY_LE),
@@ -266,4 +282,41 @@ export async function scrapeCoursesWithTypologyHandle(
 			timeout: 1000 * 30, // 30 seconds timeout
 		}
 	);
+}
+
+/**
+ * Extract course links from a table handle
+ */
+export function parseCoursesTable(coursesHandle: ElementHandle<Element>): Promise<CourseLink[]> {
+	return coursesHandle.evaluate((table, typologies) => {
+		const tbody = table?.querySelector("tbody");
+
+		if (tbody?.tagName !== "TBODY") return [];
+
+		return Array.from(tbody?.children).reduce<CourseLink[]>((acc, row) => {
+			const link = row.children[0].getElementsByTagName("a")[0];
+			const code = link?.innerHTML.trim() || "";
+			const nameSpan = row.children[1].querySelector("span[title]");
+			const creditSpan = row.children[2].querySelector("span[title]");
+			const typologySpan = row.children[3].querySelector("span[title]");
+			const descriptionSpan = row.children[4].querySelector("span[title]");
+			const typology = typologySpan?.innerHTML
+				? typologies[typologySpan.innerHTML]
+				: undefined;
+			const existingIndex = acc.findIndex((course) => course.code === code);
+
+			if (existingIndex !== -1) return acc;
+
+			return [
+				...acc,
+				{
+					code,
+					name: nameSpan?.innerHTML || "",
+					credits: Number(creditSpan?.innerHTML || 0),
+					typology,
+					description: descriptionSpan?.innerHTML || "",
+				},
+			];
+		}, []);
+	}, SIATypologies);
 }

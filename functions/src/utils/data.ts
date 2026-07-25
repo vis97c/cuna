@@ -1,7 +1,7 @@
-import kebabCase from "lodash-es/kebabCase.js";
+import kebabCase from "lodash-es/kebabCase";
 
-import type { InstanceData } from "../types/entities/index.js";
-import { getFirebase } from "./firebase.js";
+import type { InstanceData } from "../types/entities/index.ts";
+import { getFirebase } from "./firebase.ts";
 
 /**
  * Hits "los estudiantes" to check if the slug is valid

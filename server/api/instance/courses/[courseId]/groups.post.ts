@@ -5,9 +5,9 @@ import {
 	type Query,
 } from "firebase-admin/firestore";
 
-import type { CourseData, GroupData } from "~~/functions/src/types/entities";
+import type { CourseData, GroupData } from "~~/functions/src/types/entities/index.ts";
 
-import type { eSIATypology, uSIAFaculty, uSIAProgram } from "~~/functions/src/types/SIA";
+import type { eSIATypology, uSIAFaculty, uSIAProgram } from "~~/functions/src/types/SIA/index.ts";
 
 /**
  * Get the edges from the logs collection by courseRef

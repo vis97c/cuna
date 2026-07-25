@@ -36,5 +36,7 @@
       "scss",
       "vue"
    ],
-   "stylelint.packageManager": "yarn"
+   "stylelint.packageManager": "yarn",
+   "deno.enable": true,
+   "deno.lint": true
 }

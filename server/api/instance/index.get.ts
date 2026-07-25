@@ -1,4 +1,6 @@
-import type { H3Context } from "~~/server/types";
+import { defineEventHandler } from "h3";
+
+import type { H3Context } from "~~/server/types.ts";
 
 /**
  * Get the current instance if it exists
@@ -7,7 +9,7 @@ import type { H3Context } from "~~/server/types";
  *
  * @auth guest
  */
-export default defineEventHandler(async (event) => {
+export default defineEventHandler((event) => {
 	const { currentInstance } = <H3Context>event.context;
 
 	try {

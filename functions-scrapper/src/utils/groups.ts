@@ -1,15 +1,15 @@
 import type { ElementHandle, Page } from "puppeteer-core";
-import type { DocumentSnapshot } from "firebase-admin/firestore";
 
 import {
 	SIATypologies,
 	type CourseGroupLink,
 	type iCoursesPayload,
 	type iGroupsPayload,
-} from "../types/scrapper.js";
-import { scrapeCoursesHandle, scrapeCoursesWithTypologyHandle } from "./courses.js";
-import { useHTMLElementId } from "./puppeteer.js";
-import { TimedPromise } from "./guards.js";
+	type iSIAConfig,
+} from "../types/scrapper.ts";
+import { scrapeCoursesHandle, scrapeCoursesWithTypologyHandle } from "./courses.ts";
+import { useHTMLElementId } from "./puppeteer.ts";
+import { TimedPromise } from "./guards.ts";
 
 interface HTMLCourse {
 	id: string;
@@ -58,15 +58,14 @@ function getHTMLElementIds(handle: ElementHandle<Element>) {
  * Assume scrapedWith is valid
  */
 export async function scrapeCourseGroupsLinks(
-	snapshot: DocumentSnapshot,
+	config: iSIAConfig,
 	page: Page,
 	{ course, faculty, program, typology }: iGroupsPayload
 ): Promise<{ links: CourseGroupLink[]; errors: Error[] }> {
-	const instanceData = snapshot.data() || {};
-	const { siaOldURL = "" } = instanceData?.config || {};
+	const { siaOldURL = "" } = config || {};
 
 	// SIA navigation is required beforehand
-	if (!page.url().includes(siaOldURL)) throw new Error("Page is not the SIA");
+	if (siaOldURL && !page.url().includes(siaOldURL)) throw new Error("Page is not the SIA");
 
 	const [level, place] = course.scrapedWith || [];
 
@@ -77,13 +76,13 @@ export async function scrapeCourseGroupsLinks(
 
 	const payload: iCoursesPayload = { level, place, faculty, program, typology };
 	// Get handle without typology
-	let handle: ElementHandle<Element> = await scrapeCoursesHandle(snapshot, page, payload);
+	let handle: ElementHandle<Element> = await scrapeCoursesHandle(config, page, payload);
 	let courses = await getHTMLElementIds(handle);
 	let courseHTML: HTMLCourse | undefined = courses[course.code];
 
 	// No match found, attempt with typology
 	if (!courseHTML && typology) {
-		handle = await scrapeCoursesWithTypologyHandle(snapshot, page, payload);
+		handle = await scrapeCoursesWithTypologyHandle(config, page, payload);
 		courses = await getHTMLElementIds(handle);
 		courseHTML = courses[course.code];
 	}

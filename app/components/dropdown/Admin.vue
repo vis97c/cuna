@@ -92,7 +92,7 @@
 </template>
 
 <script setup lang="ts">
-	import debounce from "lodash-es/debounce.js";
+	import debounce from "lodash-es/debounce";
 
 	import type { tProp, tThemeModifier, tThemeTuple } from "@open-xamu-co/ui-common-types";
 

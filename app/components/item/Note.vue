@@ -147,8 +147,8 @@
 		Member,
 		MemberRef,
 		NoteInput,
-	} from "~/utils/types";
-	import type { NoteData } from "~~/functions/src/types/entities";
+	} from "~/utils/types/index.ts";
+	import type { NoteData } from "~~/functions/src/types/entities/index.ts";
 
 	/**
 	 * Item de note

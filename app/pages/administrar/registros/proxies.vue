@@ -43,7 +43,7 @@
 <script setup lang="ts">
 	import type { iGetPage, iPage } from "@open-xamu-co/ui-common-types";
 
-	import type { Proxy } from "~/utils/types";
+	import type { Proxy } from "~/utils/types/index.ts";
 
 	/**
 	 * Proxies page

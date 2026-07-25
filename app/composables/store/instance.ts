@@ -1,7 +1,7 @@
 import { defineStore, skipHydrate } from "pinia";
 import { computed } from "vue";
 
-import type { Instance, InstanceConfig } from "~/utils/types";
+import type { Instance, InstanceConfig } from "~/utils/types/index.ts";
 
 export interface City {
 	state?: { name: string };
@@ -50,7 +50,7 @@ export const useInstanceStore = defineStore("instance", () => {
 		if (!instance) return;
 
 		const url = instance.url;
-		const logger = makeLogger({ instanceId: path.value });
+		const logger = makeLogger({ instancePath: path.value });
 		const { locationCountry, locationState, locationCity } = instance;
 
 		current.value = { ...instance, url };

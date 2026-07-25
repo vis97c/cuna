@@ -1,7 +1,7 @@
 import type { DocumentReference, Timestamp } from "firebase-admin/firestore";
 
-import type { FirebaseData, SearchData } from "./base.js";
-import type { GroupData } from "./course.js";
+import type { FirebaseData, SearchData } from "./base.ts";
+import type { GroupData } from "./course.ts";
 
 export enum eIdDocumentType {
 	/** Cédula de ciudadanía */

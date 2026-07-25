@@ -1,11 +1,11 @@
-import type { ProxyData } from "~~/functions/src/types/entities";
-import type { OutputFromData, RefFromData, InputFromData } from "./base";
+import type { ProxyData } from "~~/functions/src/types/entities/index.ts";
+import type { OutputFromData, RefFromData, InputFromData } from "./base.ts";
 
-export type * from "./course";
-export type * from "./teacher";
-export type * from "./member";
-export type * from "./instance";
-export type * from "./note";
+export type * from "./course.ts";
+export type * from "./teacher.ts";
+export type * from "./member.ts";
+export type * from "./instance.ts";
+export type * from "./note.ts";
 
 /** @output Proxy data */
 export interface Proxy extends OutputFromData<ProxyData> {}

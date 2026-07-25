@@ -1,5 +1,5 @@
-import type { NoteData, NoteVoteData } from "~~/functions/src/types/entities";
-import type { InputFromData, OutputFromData, RefFromData } from "./base";
+import type { NoteData, NoteVoteData } from "~~/functions/src/types/entities/index.ts";
+import type { InputFromData, OutputFromData, RefFromData } from "./base.ts";
 
 /** @output Note data */
 export interface Note extends OutputFromData<NoteData> {}

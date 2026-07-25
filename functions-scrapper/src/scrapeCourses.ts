@@ -9,12 +9,16 @@ import {
 
 import type { tLogger } from "@open-xamu-co/ui-common-types";
 
-import { SIATypologies, type CourseLink, type iCoursesPayload } from "./types/scrapper.js";
-import { getPuppeteer, retryPuppeteerOperation } from "./utils/puppeteer.js";
-import { scrapeCoursesHandle, scrapeCoursesWithTypologyHandle } from "./utils/courses.js";
-import { Cyrb53 } from "./utils/encode.js";
-import { getFirebase } from "./utils/firebase.js";
-import { makeScrapperLogger } from "./utils/logger.js";
+import { type CourseLink, type iCoursesPayload } from "./types/scrapper.ts";
+import { getPuppeteer, retryPuppeteerOperation } from "./utils/puppeteer.ts";
+import {
+	parseCoursesTable,
+	scrapeCoursesHandle,
+	scrapeCoursesWithTypologyHandle,
+} from "./utils/courses.ts";
+import { Cyrb53 } from "./utils/encode.ts";
+import { getFirebase } from "./utils/firebase.ts";
+import { makeScrapperLogger } from "./utils/logger.ts";
 
 /**
  * Get courses from SIA
@@ -67,50 +71,15 @@ async function getCoursesLinks(
 
 	// Get courses links
 	try {
-		let coursesHandle = await scrapeCoursesHandle(snapshot, page, payload);
+		let coursesHandle = await scrapeCoursesHandle(config, page, payload);
 
 		if (payload.typology) {
 			// Search by typology if given
-			coursesHandle = await scrapeCoursesWithTypologyHandle(snapshot, page, payload);
+			coursesHandle = await scrapeCoursesWithTypologyHandle(config, page, payload);
 		}
 
 		// Get courses
-		const courseLinks: CourseLink[] = await coursesHandle.evaluate((table, typologies) => {
-			const tbody = table?.querySelector("tbody");
-
-			// No courses found
-			if (tbody?.tagName !== "TBODY") return [];
-
-			// Some courses could be duplicated (Old SIA thing)
-			return Array.from(tbody?.children).reduce<CourseLink[]>((acc, row) => {
-				const link = row.children[0].getElementsByTagName("a")[0];
-				const code = link.innerHTML;
-				const nameSpan = row.children[1].querySelector("span[title]");
-				const creditSpan = row.children[2].querySelector("span[title]");
-				const typologySpan = row.children[3].querySelector("span[title]");
-				const descriptionSpan = row.children[4].querySelector("span[title]");
-				// Map to standard typology
-				const typology = typologySpan?.innerHTML
-					? typologies[typologySpan.innerHTML]
-					: undefined;
-
-				const existingIndex = acc.findIndex((course) => course.code === code);
-
-				// Omit if already on array
-				if (existingIndex !== -1) return acc;
-
-				return [
-					...acc,
-					{
-						code,
-						name: nameSpan?.innerHTML || "",
-						credits: Number(creditSpan?.innerHTML || 0),
-						typology,
-						description: descriptionSpan?.innerHTML || "",
-					},
-				];
-			}, []);
-		}, SIATypologies);
+		const courseLinks: CourseLink[] = await parseCoursesTable(coursesHandle);
 
 		if (proxy) {
 			// Success! Get session duration in seconds

@@ -1,11 +1,11 @@
 import type { AuditData } from "./member";
 
-export * from "./course.js";
-export * from "./instance.js";
-export * from "./member.js";
-export * from "./teacher.js";
-export * from "./note.js";
-export * from "./log.js";
+export * from "./course.ts";
+export * from "./instance.ts";
+export * from "./member.ts";
+export * from "./teacher.ts";
+export * from "./note.ts";
+export * from "./log.ts";
 
 /**
  * Proxy

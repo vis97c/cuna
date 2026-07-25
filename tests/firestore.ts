@@ -12,7 +12,7 @@ let currentTest = 1;
  * @param {number} number - The test number.
  * @param {string} message - The test description.
  */
-function logTest(number, message) {
+function logTest(number: number, message: string) {
 	console.log(`\x1b[32mTEST ${String(number).padStart(2, "0")} PASSED:\x1b[0m`, message);
 	currentTest++;
 }
@@ -20,7 +20,7 @@ function logTest(number, message) {
 /**
  * Cleans up the test environment.
  */
-async function cleanup(exitCode) {
+async function cleanup(exitCode: number) {
 	await testEnv.clearFirestore();
 	await testEnv.cleanup();
 	process.exit(exitCode);
@@ -179,7 +179,7 @@ try {
 	await assertSucceeds(mainMemberRef.get());
 	logTest(16, "Member can get their enrolled courses");
 
-	const memberData = (await mainMemberRef.get()).data();
+	const memberData = (await mainMemberRef.get()).data() || {};
 
 	await assertSucceeds(memberData.enrolledRefs[0].get());
 	logTest(17, "Member can get their enrolled courses groups");

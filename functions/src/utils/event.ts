@@ -6,14 +6,14 @@ import {
 } from "firebase-functions/v2/firestore";
 import { onSchedule as onScheduleV2 } from "firebase-functions/v2/scheduler";
 import { onTaskDispatched, type Request } from "firebase-functions/tasks";
-import omit from "lodash-es/omit.js";
-import isEqual from "lodash-es/isEqual.js";
+import omit from "lodash-es/omit";
+import isEqual from "lodash-es/isEqual";
 
 import type { tLogger } from "@open-xamu-co/ui-common-types";
 
-import type { AuditData } from "../types/entities/member.js";
-import { getFirebase } from "./firebase.js";
-import { makeFunctionsLogger } from "./logger.js";
+import type { AuditData } from "../types/entities/member.ts";
+import { getFirebase } from "./firebase.ts";
+import { makeFunctionsLogger } from "./logger.ts";
 
 /**
  * Get document path

@@ -21,7 +21,7 @@ export function getServerFirebase(at = "Unknown") {
 
 export function apiLogger(event: H3Event, ...args: Parameters<tLogger>): void {
 	const { currentMember, currentInstance } = <Partial<H3Context>>(event.context || {});
-	const logger = makeLogger({ instanceId: currentInstance?.id, uid: currentMember?.uid });
+	const logger = makeLogger({ instancePath: currentInstance?.id, uid: currentMember?.uid });
 
 	// use makeLogger to add additional context
 	return logger(...args);

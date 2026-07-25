@@ -2,7 +2,7 @@ import type { iSelectOption, tFormInput } from "@open-xamu-co/ui-common-types";
 import { FormInput } from "@open-xamu-co/ui-common-helpers";
 import { eFormType } from "@open-xamu-co/ui-common-enums";
 
-import type { Note } from "~/utils/types";
+import type { Note } from "~/utils/types/index.ts";
 
 export const noteVisibilityOptions: iSelectOption[] = [
 	{ alias: "Privada", value: 1 },

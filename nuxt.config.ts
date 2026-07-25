@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-import { locale } from "./app/utils/locale";
+import { locale } from "./app/utils/locale.ts";
 
 import { type Stylesheet, getStyleSheetPreload } from "@open-xamu-co/ui-nuxt";
 
@@ -16,7 +16,7 @@ import {
 	cfScrapeCourseGroupsUrl,
 	production,
 	firebaseConfig,
-} from "./server/utils/environment";
+} from "./server/utils/environment.ts";
 import packageJson from "./package.json" with { type: "json" };
 
 const loaderCss = fs.readFileSync(path.resolve(__dirname, "app/assets/loader.css"), {
@@ -54,6 +54,9 @@ export default defineNuxtConfig({
 	experimental: {
 		asyncContext: true,
 		viewTransition: true,
+	},
+	imports: {
+		autoImport: false,
 	},
 	// Follow nuxt 4 directory structure
 	srcDir: "./app",
@@ -100,6 +103,12 @@ export default defineNuxtConfig({
 		},
 	},
 	vite: {
+		build: {
+			commonjsOptions: {
+				exclude: ["@nuxt/nitro-server/*"],
+				include: [],
+			},
+		},
 		css: {
 			postcss: require("@open-xamu-co/ui-styles/postcss")[
 				production.value() ? "production" : "development"
@@ -107,8 +116,9 @@ export default defineNuxtConfig({
 			preprocessorOptions: {
 				scss: {
 					additionalData: `
-																																																																																																																																																																																																@use "assets/overrides";
-																																																																																																																																																																																																@use "@open-xamu-co/ui-styles/src/utils/module" as xamu;`,
+						@use "assets/overrides";
+						@use "@open-xamu-co/ui-styles/src/utils/module" as xamu;
+					`,
 				},
 			},
 		},
@@ -116,7 +126,7 @@ export default defineNuxtConfig({
 	},
 	nitro: {
 		compressPublicAssets: true,
-		preset: "firebase_app_hosting",
+		preset: "deno_server",
 		routeRules: {
 			// Support firebase auth proxy for signing with redirect
 			"/__/**": {

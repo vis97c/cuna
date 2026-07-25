@@ -74,7 +74,7 @@
 <script setup lang="ts">
 	import type { iGetPage, iPage } from "@open-xamu-co/ui-common-types";
 
-	import type { Course } from "~/utils/types";
+	import type { Course } from "~/utils/types/index.ts";
 
 	/**
 	 * Developer courses page

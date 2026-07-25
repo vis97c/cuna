@@ -5,17 +5,17 @@ import {
 	type MemberData,
 	type LogData,
 	eMemberRole,
-} from "../types/entities/index.js";
-import { getFirebase } from "../utils/firebase.js";
-import { onCreated, onUpdated, onDeleted } from "../utils/event.js";
-import { offenderLogger } from "../utils/logger.js";
-import { makeGetSlug } from "../utils/slugs.js";
-import { getWeightedSearchIndexes } from "../utils/search.js";
+} from "../types/entities/index.ts";
+import { getFirebase } from "../utils/firebase.ts";
+import { onCreated, onUpdated, onDeleted } from "../utils/event.ts";
+import { offenderLogger } from "../utils/logger.ts";
+import { makeGetSlug } from "../utils/slugs.ts";
+import { getWeightedSearchIndexes } from "../utils/search.ts";
 
-export * from "./members.js";
-export * from "./teachers.js";
-export * from "./notes.js";
-export * from "./courses.js";
+export * from "./members.ts";
+export * from "./teachers.ts";
+export * from "./notes.ts";
+export * from "./courses.ts";
 
 const getInstanceSlug = makeGetSlug("instances");
 

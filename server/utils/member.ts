@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { type H3Event } from "h3";
 import { defineCachedFunction } from "nitropack/runtime";
 
-import type { Member } from "~/utils/types";
+import type { Member } from "~/utils/types/index.ts";
 
 import type { H3Context } from "../types";
 import { resolveServerRefs } from "./firestore";

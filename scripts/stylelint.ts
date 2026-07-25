@@ -1,7 +1,7 @@
-const { exec } = require("node:child_process");
-const fs = require("node:fs");
-const path = require("node:path");
-const { performance } = require("node:perf_hooks");
+import { exec } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
+import { performance } from "node:perf_hooks";
 
 function getIgnoredPaths() {
 	const ignoreFilePath = path.join(process.cwd(), ".prettierignore");
@@ -15,8 +15,8 @@ function getIgnoredPaths() {
 		.filter((line) => line && !line.startsWith("#") && !line.includes("*")); // Filter out comments and empty lines
 }
 
-function findFiles(dir, ext, ignoredPaths) {
-	let results = [];
+function findFiles(dir: string, ext: string, ignoredPaths: string[]) {
+	let results: string[] = [];
 	const list = fs.readdirSync(dir);
 
 	list.forEach((file) => {
@@ -35,12 +35,12 @@ function findFiles(dir, ext, ignoredPaths) {
 	return results;
 }
 
-function runStylelintInBatches(files, batchSize = 50) {
-	const promises = [];
+function runStylelintInBatches(files: string[], batchSize = 50) {
+	const promises: Promise<string>[] = [];
 
 	for (let i = 0; i < files.length; i += batchSize) {
 		const batch = files.slice(i, i + batchSize);
-		const promise = new Promise((resolve, reject) => {
+		const promise = new Promise<string>((resolve, reject) => {
 			const command = `stylelint --ignore-path .prettierignore --aei ${batch.join(" ")}`;
 
 			exec(command, (error, stdout, stderr) => {
@@ -74,6 +74,7 @@ try {
 			console.error(err);
 		}
 	}
-} catch (error) {
-	console.error(error.message);
+} catch (err) {
+	if (err instanceof Error) console.error(err.message);
+	else console.error("Unknown error");
 }

@@ -115,8 +115,14 @@
 	import type { iGetPage, iInvalidInput, iPage, tFormInput } from "@open-xamu-co/ui-common-types";
 	import { eSizes } from "@open-xamu-co/ui-common-enums";
 
-	import type { HydrateNodes, Note, NoteInput, NoteValues, NoteVoteRef } from "~/utils/types";
-	import type { NoteData } from "~~/functions/src/types/entities";
+	import type {
+		HydrateNodes,
+		Note,
+		NoteInput,
+		NoteValues,
+		NoteVoteRef,
+	} from "~/utils/types/index.ts";
+	import type { NoteData } from "~~/functions/src/types/entities/index.ts";
 
 	/**
 	 * Notes pagination

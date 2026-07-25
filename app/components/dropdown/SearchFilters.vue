@@ -54,7 +54,7 @@
 <script setup lang="ts">
 	import type { tProp, tThemeModifier, tThemeTuple } from "@open-xamu-co/ui-common-types";
 
-	import { eSIALevel } from "~~/functions/src/types/SIA";
+	import { eSIALevel } from "~~/functions/src/types/SIA/index.ts";
 
 	/**
 	 * Partial Search filters dropdown

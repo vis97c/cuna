@@ -1,5 +1,5 @@
-import words from "lodash-es/words.js";
-import deburr from "lodash-es/deburr.js";
+import words from "lodash-es/words";
+import deburr from "lodash-es/deburr";
 
 /**
  * Get alphanumeric words array

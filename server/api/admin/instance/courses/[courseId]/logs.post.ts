@@ -1,6 +1,10 @@
 import { DocumentReference, Query } from "firebase-admin/firestore";
 
-import { eMemberRole, type CourseData, type LogData } from "~~/functions/src/types/entities";
+import {
+	eMemberRole,
+	type CourseData,
+	type LogData,
+} from "~~/functions/src/types/entities/index.ts";
 
 /**
  * Get the edges from the logs collection by courseRef

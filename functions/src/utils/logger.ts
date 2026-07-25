@@ -8,8 +8,8 @@ import acceptLanguageParser from "accept-language-parser";
 
 import type { tLogger } from "@open-xamu-co/ui-common-types";
 
-import type { OffenderData } from "../types/entities/index.js";
-import { getLog } from "./logs.js";
+import type { OffenderData } from "../types/entities/index.ts";
+import { getLog } from "./logs.ts";
 
 export function makeFunctionsLogger(
 	at: DocumentReference | Firestore,

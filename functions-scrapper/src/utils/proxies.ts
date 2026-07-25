@@ -2,7 +2,7 @@ import { CollectionReference, Query } from "firebase-admin/firestore";
 
 import type { tLogger } from "@open-xamu-co/ui-common-types";
 
-import { getFirebase } from "./firebase.js";
+import { getFirebase } from "./firebase.ts";
 
 interface ExtendedProxyData {
 	[key: string]: any;

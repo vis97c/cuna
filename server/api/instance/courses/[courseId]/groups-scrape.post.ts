@@ -1,7 +1,7 @@
 import { type DocumentReference } from "firebase-admin/firestore";
 
-import type { CourseData } from "~~/functions/src/types/entities";
-import type { eSIATypology, uSIAFaculty, uSIAProgram } from "~~/functions/src/types/SIA";
+import type { CourseData } from "~~/functions/src/types/entities/index.ts";
+import type { eSIATypology, uSIAFaculty, uSIAProgram } from "~~/functions/src/types/SIA/index.ts";
 import type { iGroupsPayload } from "~~/functions-scrapper/src/types/scrapper";
 import type { H3Context } from "~~/server/types";
 

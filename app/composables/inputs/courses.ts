@@ -2,8 +2,8 @@ import { FormInput } from "@open-xamu-co/ui-common-helpers";
 import { eFormType } from "@open-xamu-co/ui-common-enums";
 import type { tFormInput } from "@open-xamu-co/ui-common-types";
 
-import type { Course, Group } from "~/utils/types";
-import { eSIALevel } from "~~/functions/src/types/SIA";
+import type { Course, Group } from "~/utils/types/index.ts";
+import { eSIALevel } from "~~/functions/src/types/SIA/index.ts";
 
 export function useCourseInputs(course: Course = {}): tFormInput[] {
 	const SESSION = useSessionStore();

@@ -41,13 +41,13 @@
 </template>
 
 <script setup lang="ts">
-	import { debounce } from "lodash-es";
+	import debounce from "lodash-es/debounce";
 
 	import type { iInvalidInput } from "@open-xamu-co/ui-common-types";
 
-	import type { InstanceBannerValues, InstanceValues } from "~/utils/types/values";
-	import type { Instance, InstanceRef } from "~/utils/types";
-	import type { InstanceData } from "~~/functions/src/types/entities";
+	import type { InstanceBannerValues, InstanceValues } from "~/utils/types/values.ts";
+	import type { Instance, InstanceRef } from "~/utils/types/index.ts";
+	import type { InstanceData } from "~~/functions/src/types/entities/index.ts";
 
 	/**
 	 * Admin root page

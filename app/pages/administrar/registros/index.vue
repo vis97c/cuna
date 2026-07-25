@@ -87,8 +87,9 @@
 <script setup lang="ts">
 	import type { iGetPage, iPage } from "@open-xamu-co/ui-common-types";
 	import { eColors } from "@open-xamu-co/ui-common-enums";
-	import type { Log } from "~/utils/types/entities/log";
-	import type { LogData } from "~~/functions/src/types/entities";
+
+	import type { Log } from "~/utils/types/entities/log.ts";
+	import type { LogData } from "~~/functions/src/types/entities/index.ts";
 
 	/**
 	 * Admin/Developer logs page

@@ -1,0 +1,49 @@
+{
+  "compilerOptions": {
+    "lib": [
+      "ESNext",
+      "ESNext.asynciterable",
+      "DOM",
+      "DOM.Iterable",
+      "deno.ns"
+    ]
+  },
+  "tasks": {
+    "dev:desktop": "deno run --allow-net --allow-run --allow-read --allow-env --allow-sys desktop.ts",
+    "build:windows": "deno compile --allow-net --allow-run --allow-read --allow-env --allow-sys --target x86_64-pc-windows-msvc --output dist/cuna-desktop-windows-x64.exe desktop.ts",
+    "build:linux": "deno compile --allow-net --allow-run --allow-read --allow-env --allow-sys --target x86_64-unknown-linux-gnu --output dist/cuna-desktop-linux-x64 desktop.ts",
+    "build:macos-arm": "deno compile --allow-net --allow-run --allow-read --allow-env --allow-sys --target aarch64-apple-darwin --output dist/cuna-desktop-macos-arm64 desktop.ts",
+    "build:macos-x64": "deno compile --allow-net --allow-run --allow-read --allow-env --allow-sys --target x86_64-apple-darwin --output dist/cuna-desktop-macos-x64 desktop.ts",
+    "build:desktop": "deno run --allow-run --allow-read --allow-write scripts/build-binaries.ts"
+  },
+  "lint": {
+    "rules": {
+      "tags": [
+        "recommended"
+      ],
+      "exclude": [
+        "no-explicit-any",
+        "no-unused-vars"
+      ]
+    }
+  },
+  "unstable": [
+    "fmt-component"
+  ],
+  "imports": {
+    "~/": "./app/",
+    "~~/": "./",
+    "#imports": "./imports",
+    "#components": "./components",
+    "h3": "../node_modules/.deno/h3@2.0.1-rc.26/node_modules/h3",
+    "nitropack/runtime": "../node_modules/.deno/nitropack@2.13.4/node_modules/nitropack/runtime",
+    "nitropack": "../node_modules/.deno/nitropack@2.13.4/node_modules/nitropack",
+    "ofetch": "../node_modules/.deno/ofetch@1.5.1/node_modules/ofetch"
+  },
+  "minimumDependencyAge": 0,
+  "exclude": [
+    ".nuxt",
+    "functions/lib",
+    "functions-scrapper/lib"
+  ]
+}

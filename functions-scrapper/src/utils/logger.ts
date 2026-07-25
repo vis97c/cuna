@@ -8,7 +8,7 @@ import acceptLanguageParser from "accept-language-parser";
 
 import type { tLogger } from "@open-xamu-co/ui-common-types";
 
-import { getLog } from "./logs.js";
+import { getLog } from "./logs.ts";
 
 export function makeScrapperLogger(
 	at: DocumentReference | Firestore,

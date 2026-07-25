@@ -1,14 +1,14 @@
 import { Filter, type Query } from "firebase-admin/firestore";
 import { createHash } from "node:crypto";
 
-import type { CourseData, InstanceDataConfig } from "~~/functions/src/types/entities";
+import type { CourseData, InstanceDataConfig } from "~~/functions/src/types/entities/index.ts";
 import type {
 	eSIALevel,
 	eSIAPlace,
 	uSIAFaculty,
 	uSIAProgram,
 	eSIATypology,
-} from "~~/functions/src/types/SIA";
+} from "~~/functions/src/types/SIA/index.ts";
 import type { iCoursesPayload, tCoursesSearchMode } from "~~/functions-scrapper/src/types/scrapper";
 import type { H3Context } from "~~/server/types";
 import { getQueryString } from "~~/server/utils/params";

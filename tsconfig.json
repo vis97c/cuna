@@ -2,22 +2,13 @@
   // https://nuxt.com/docs/guide/concepts/typescript
   "extends": "./.nuxt/tsconfig.json",
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
     "skipLibCheck": true,
+    "noUncheckedIndexedAccess": false,
     "lib": [
       "ESNext",
       "ESNext.asynciterable",
       "DOM",
       "DOM.Iterable"
-    ],
-    "sourceMap": true,
-    "types": [
-      "node"
-    ],
-    "typeRoots": [
-      "node_modules/@types"
-    ],
+    ]
   }
 }

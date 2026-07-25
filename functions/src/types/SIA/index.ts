@@ -1,4 +1,4 @@
-export * from "./enums/index.js";
+export * from "./enums/index.ts";
 
 export interface CoursesResponse<T> {
 	data: T[];

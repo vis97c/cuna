@@ -1,4 +1,4 @@
-import { debounce } from "lodash-es";
+import debounce from "lodash-es/debounce";
 import {
 	browserLocalPersistence,
 	setPersistence,
@@ -11,8 +11,8 @@ import { ref } from "vue";
 
 import type { iNodeFn } from "@open-xamu-co/ui-common-types";
 
-import type { Member } from "~/utils/types";
-import { eMemberRole } from "~~/functions/src/types/entities";
+import type { Member } from "~/utils/types/index.ts";
+import { eMemberRole } from "~~/functions/src/types/entities/index.ts";
 
 export function useGoogleAuth(defaultRdrPath = "/") {
 	const { $clientAuth } = useNuxtApp();

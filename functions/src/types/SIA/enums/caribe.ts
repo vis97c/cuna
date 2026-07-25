@@ -1,7 +1,7 @@
-import { eSIABogotaPrograms, eSIAEnfermeryBogotaProgram } from "./bogota.js";
-import { eSIAManizalesPrograms } from "./manizales.js";
-import { eSIAMedellinPrograms, eSIAMinesMedellinProgram } from "./medellin.js";
-import { eSIAPalmiraPrograms } from "./palmira.js";
+import { eSIABogotaPrograms, eSIAEnfermeryBogotaProgram } from "./bogota.ts";
+import { eSIAManizalesPrograms } from "./manizales.ts";
+import { eSIAMedellinPrograms, eSIAMinesMedellinProgram } from "./medellin.ts";
+import { eSIAPalmiraPrograms } from "./palmira.ts";
 
 /**
  * Caribe faculties.
@@ -44,6 +44,4 @@ export enum eSIAMiningCaribeProgram {
 }
 
 export type uSIACaribeProgram =
-	| eSIACaribeProgram
-	| eSIANursingCaribeProgram
-	| eSIAMiningCaribeProgram;
+	eSIACaribeProgram | eSIANursingCaribeProgram | eSIAMiningCaribeProgram;

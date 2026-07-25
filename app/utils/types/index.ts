@@ -1,12 +1,13 @@
 import type { iNodeFnResponse } from "@open-xamu-co/ui-common-types";
-import type { FirebaseData } from "~~/functions/src/types/entities/base";
-import type { OutputFromData } from "./entities/base";
 
-export * from "./entities";
-export * from "./values";
-export * from "./scraping";
-export * from "./firestore";
-export * from "./fetching";
+import type { FirebaseData } from "~~/functions/src/types/entities/base.ts";
+import type { OutputFromData } from "./entities/base.ts";
+
+export * from "./entities/index.ts";
+export * from "./values.ts";
+export * from "./scraping.ts";
+export * from "./firestore.ts";
+export * from "./fetching.ts";
 
 /**
  * Resolve promise with a new or updated firebase document

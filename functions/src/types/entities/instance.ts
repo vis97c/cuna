@@ -1,9 +1,9 @@
 import type { Timestamp as clientTimestamp } from "firebase/firestore";
 import type { DocumentReference, Timestamp as adminTimestamp } from "firebase-admin/firestore";
 
-import type { eSIALevel, eSIAPlace, eSIATypology } from "../SIA/index.js";
-import type { AuditData, MemberData } from "./member.js";
-import type { SearchData } from "./base.js";
+import type { eSIALevel, eSIAPlace, eSIATypology } from "../SIA/index.ts";
+import type { AuditData, MemberData } from "./member.ts";
+import type { SearchData } from "./base.ts";
 
 /**
  * Old config for migration

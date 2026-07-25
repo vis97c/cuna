@@ -85,7 +85,7 @@
 <script setup lang="ts">
 	import { eColors, eThemeColors } from "@open-xamu-co/ui-common-enums";
 
-	import type { Group } from "~/utils/types";
+	import type { Group } from "~/utils/types/index.ts";
 
 	interface ScheduledGroup {
 		groups: (Group & { duration: number; theme: eThemeColors })[];

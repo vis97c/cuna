@@ -6,11 +6,11 @@ import {
 	type InstanceData,
 	type MemberAbuseData,
 	type MemberData,
-} from "../types/entities/index.js";
-import { getFirebase } from "../utils/firebase.js";
-import { onCreated, onUpdated, onDeleted } from "../utils/event.js";
-import { makeGetSlug } from "../utils/slugs.js";
-import { getWeightedSearchIndexes } from "../utils/search.js";
+} from "../types/entities/index.ts";
+import { getFirebase } from "../utils/firebase.ts";
+import { onCreated, onUpdated, onDeleted } from "../utils/event.ts";
+import { makeGetSlug } from "../utils/slugs.ts";
+import { getWeightedSearchIndexes } from "../utils/search.ts";
 
 const getMemberSlug = makeGetSlug("members");
 

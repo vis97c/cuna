@@ -1,9 +1,9 @@
-import { eMemberRole } from "~~/functions/src/types/entities";
+import { eMemberRole } from "~~/functions/src/types/entities/index.ts";
 
 /**
  * Get a custom token for uploading files
  */
-export default defineConditionallyCachedEventHandler(async (event) => {
+export default defineConditionallyCachedEventHandler((event) => {
 	const { currentMember } = event.context;
 	const { firebaseAuth } = getServerFirebase("api:instance:auth");
 

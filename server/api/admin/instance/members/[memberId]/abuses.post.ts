@@ -1,6 +1,6 @@
 import { type CollectionReference, type Query } from "firebase-admin/firestore";
 
-import { eMemberRole, type MemberAbuseData } from "~~/functions/src/types/entities";
+import { eMemberRole, type MemberAbuseData } from "~~/functions/src/types/entities/index.ts";
 
 /**
  * Get the abuses from the "instances/{instanceId}/members/{memberId}/abuses" collection.

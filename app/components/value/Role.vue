@@ -8,7 +8,7 @@
 	import type { tThemeModifier } from "@open-xamu-co/ui-common-types";
 	import { eColors, eSizes } from "@open-xamu-co/ui-common-enums";
 
-	import { eMemberRole } from "~~/functions/src/types/entities";
+	import { eMemberRole } from "~~/functions/src/types/entities/index.ts";
 
 	/**
 	 * Value role

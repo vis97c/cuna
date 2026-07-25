@@ -8,18 +8,18 @@ import {
 	type DocumentSnapshot,
 } from "firebase-admin/firestore";
 import { region } from "firebase-functions/v1";
-import sumBy from "lodash-es/sumBy.js";
-import deburr from "lodash-es/deburr.js";
-import startCase from "lodash-es/startCase.js";
+import sumBy from "lodash-es/sumBy";
+import deburr from "lodash-es/deburr";
+import startCase from "lodash-es/startCase";
 
 import type { tLogger } from "@open-xamu-co/ui-common-types";
 
-import type { iGroupsPayload } from "./types/scrapper.js";
-import { getPuppeteer, retryPuppeteerOperation } from "./utils/puppeteer.js";
-import { Cyrb53 } from "./utils/encode.js";
-import { scrapeCourseGroupsLinks } from "./utils/groups.js";
-import { getFirebase } from "./utils/firebase.js";
-import { makeScrapperLogger } from "./utils/logger.js";
+import type { iGroupsPayload } from "./types/scrapper.ts";
+import { getPuppeteer, retryPuppeteerOperation } from "./utils/puppeteer.ts";
+import { Cyrb53 } from "./utils/encode.ts";
+import { scrapeCourseGroupsLinks } from "./utils/groups.ts";
+import { getFirebase } from "./utils/firebase.ts";
+import { makeScrapperLogger } from "./utils/logger.ts";
 
 interface CourseDataRef {
 	[x: string]: any;
@@ -82,7 +82,7 @@ async function getCourseGroupsLinks(
 
 	// Get groups data
 	try {
-		const { links, errors } = await scrapeCourseGroupsLinks(snapshot, page, payload);
+		const { links, errors } = await scrapeCourseGroupsLinks(config, page, payload);
 
 		if (proxy) {
 			// Success! Get session duration in seconds

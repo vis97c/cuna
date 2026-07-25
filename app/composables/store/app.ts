@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 
-import { TimedPromise } from "~~/functions-scrapper/src/utils/guards";
+import { TimedPromise } from "~~/functions-scrapper/src/utils/guards.ts";
 
 import type { CookieOptions } from "#app";
 

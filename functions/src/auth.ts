@@ -1,9 +1,9 @@
 import { beforeUserCreated, HttpsError } from "firebase-functions/v2/identity";
 import { region } from "firebase-functions/v1";
 
-import { getFirebase } from "./utils/firebase.js";
-import { makeFunctionsLogger } from "./utils/logger.js";
-import { getAnonymizedMember } from "./utils/auth.js";
+import { getFirebase } from "./utils/firebase.ts";
+import { makeFunctionsLogger } from "./utils/logger.ts";
+import { getAnonymizedMember } from "./utils/auth.ts";
 
 /**
  * Register aditional member data on firestore

@@ -1,7 +1,11 @@
-import type { Teacher } from "./teacher";
-import type { CourseData, CourseLogData, GroupData } from "~~/functions/src/types/entities";
-import type { eSIATypology } from "~~/functions/src/types/SIA";
-import type { OutputFromData, RefFromData, InputFromData } from "./base";
+import type { Teacher } from "./teacher.ts";
+import type {
+	CourseData,
+	CourseLogData,
+	GroupData,
+} from "~~/functions/src/types/entities/index.ts";
+import type { eSIATypology } from "~~/functions/src/types/SIA/index.ts";
+import type { OutputFromData, RefFromData, InputFromData } from "./base.ts";
 
 /** @output CourseLog data */
 export interface CourseLog extends OutputFromData<CourseLogData> {}

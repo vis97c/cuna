@@ -24,7 +24,7 @@
 <script setup lang="ts">
 	import { Week } from "#components";
 
-	import type { Group } from "~/utils/types";
+	import type { Group } from "~/utils/types/index.ts";
 
 	/**
 	 * Week group

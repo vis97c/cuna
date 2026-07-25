@@ -10,7 +10,7 @@ import { deleteUser, type Auth } from "firebase/auth";
 import { defineStore, skipHydrate } from "pinia";
 import { computed } from "vue";
 
-import type { Course, Group, Member, MemberRef } from "~/utils/types";
+import type { Course, Group, Member, MemberRef } from "~/utils/types/index.ts";
 import {
 	eSIALevel,
 	eSIAPlace,
@@ -19,8 +19,8 @@ import {
 	type uSIAProgram,
 	eSIAScienceBogotaProgram,
 	eSIATypology,
-} from "~~/functions/src/types/SIA";
-import { eMemberRole } from "~~/functions/src/types/entities";
+} from "~~/functions/src/types/SIA/index.ts";
+import { eMemberRole } from "~~/functions/src/types/entities/index.ts";
 
 import type { CookieOptions } from "#app";
 

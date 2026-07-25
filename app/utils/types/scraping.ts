@@ -1,5 +1,5 @@
-import type { ScrapedWith } from "~~/functions/src/types/entities";
-import type { Group } from "./entities";
+import type { ScrapedWith } from "~~/functions/src/types/entities/index.ts";
+import type { Group } from "./entities/index.ts";
 
 export interface ScrapedCourse {
 	groups?: Group[];

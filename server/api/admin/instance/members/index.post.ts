@@ -1,6 +1,6 @@
 import { type CollectionReference, type Query, Filter } from "firebase-admin/firestore";
 
-import { eMemberRole, type MemberData } from "~~/functions/src/types/entities";
+import { eMemberRole, type MemberData } from "~~/functions/src/types/entities/index.ts";
 import { getWords, soundexEs } from "~~/functions/src/utils/search";
 
 /**

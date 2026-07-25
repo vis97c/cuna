@@ -1,22 +1,22 @@
-import type { eSIAAmazoniaFaculty, uSIAAmazoniaProgram } from "./amazonia.js";
-import type { eSIABogotaFaculty, uSIABogotaProgram } from "./bogota.js";
-import type { eSIACaribeFaculty, uSIACaribeProgram } from "./caribe.js";
-import type { eSIALaPazFaculty, uSIALaPazProgram } from "./la-paz.js";
-import type { eSIAManizalesFaculty, uSIAManizalesProgram } from "./manizales.js";
-import type { eSIAMedellinFaculty, uSIAMedellinProgram } from "./medellin.js";
-import type { eSIAOrinoquiaFaculty, uSIAOrinoquiaProgram } from "./orinoquia.js";
-import type { eSIAPalmiraFaculty, uSIAPalmiraProgram } from "./palmira.js";
-import type { eSIATumacoFaculty, uSIATumacoProgram } from "./tumaco.js";
+import type { eSIAAmazoniaFaculty, uSIAAmazoniaProgram } from "./amazonia.ts";
+import type { eSIABogotaFaculty, uSIABogotaProgram } from "./bogota.ts";
+import type { eSIACaribeFaculty, uSIACaribeProgram } from "./caribe.ts";
+import type { eSIALaPazFaculty, uSIALaPazProgram } from "./la-paz.ts";
+import type { eSIAManizalesFaculty, uSIAManizalesProgram } from "./manizales.ts";
+import type { eSIAMedellinFaculty, uSIAMedellinProgram } from "./medellin.ts";
+import type { eSIAOrinoquiaFaculty, uSIAOrinoquiaProgram } from "./orinoquia.ts";
+import type { eSIAPalmiraFaculty, uSIAPalmiraProgram } from "./palmira.ts";
+import type { eSIATumacoFaculty, uSIATumacoProgram } from "./tumaco.ts";
 
-export * from "./bogota.js";
-export * from "./la-paz.js";
-export * from "./medellin.js";
-export * from "./manizales.js";
-export * from "./amazonia.js";
-export * from "./caribe.js";
-export * from "./orinoquia.js";
-export * from "./palmira.js";
-export * from "./tumaco.js";
+export * from "./bogota.ts";
+export * from "./la-paz.ts";
+export * from "./medellin.ts";
+export * from "./manizales.ts";
+export * from "./amazonia.ts";
+export * from "./caribe.ts";
+export * from "./orinoquia.ts";
+export * from "./palmira.ts";
+export * from "./tumaco.ts";
 
 export enum eSIALevel {
 	PREGRADO = "PREGRADO",

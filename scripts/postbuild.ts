@@ -1,4 +1,4 @@
-const fs = require("fs");
+import fs from "node:fs";
 
 /**
  * Firebase App Hosting requires the package.json to have a start script

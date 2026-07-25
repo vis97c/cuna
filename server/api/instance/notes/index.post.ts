@@ -1,7 +1,7 @@
 import type { Query } from "firebase-admin/firestore";
 
-import type { NoteData } from "~~/functions/src/types/entities";
-import type { Note } from "~/utils/types";
+import type { NoteData } from "~~/functions/src/types/entities/index.ts";
+import type { Note } from "~/utils/types/index.ts";
 import { getFirebase } from "~~/functions/src/utils/firebase";
 import { decrypt } from "~~/functions/src/utils/encrypt";
 

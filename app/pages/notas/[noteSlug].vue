@@ -31,7 +31,7 @@
 <script setup lang="ts">
 	import { getDoc, doc, type DocumentReference } from "firebase/firestore";
 
-	import type { Note, NoteVoteRef } from "~/utils/types";
+	import type { Note, NoteVoteRef } from "~/utils/types/index.ts";
 
 	/**
 	 * Note page

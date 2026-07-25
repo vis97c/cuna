@@ -35,7 +35,7 @@
 	</XamuBaseBox>
 </template>
 <script setup lang="ts">
-	import type { Course } from "~/utils/types";
+	import type { Course } from "~/utils/types/index.ts";
 
 	import { XamuBaseAction } from "#components";
 

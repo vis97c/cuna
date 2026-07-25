@@ -1,6 +1,6 @@
-import type { MemberAbuseData, MemberData } from "~~/functions/src/types/entities";
+import type { MemberAbuseData, MemberData } from "~~/functions/src/types/entities/index.ts";
 
-import type { InputFromData, OutputFromData, RefFromData } from "./base";
+import type { InputFromData, OutputFromData, RefFromData } from "./base.ts";
 
 /** @output Member data */
 export interface Member extends OutputFromData<MemberData> {}

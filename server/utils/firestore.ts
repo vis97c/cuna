@@ -10,7 +10,7 @@ import {
 import type { iPage, iPageEdge, tOrderBy } from "@open-xamu-co/ui-common-types";
 
 import { makeResolveRefs } from "~/utils/resolver";
-import type { iSnapshotConfig, PseudoDocumentSnapshot } from "~/utils/types";
+import type { iSnapshotConfig, PseudoDocumentSnapshot } from "~/utils/types/index.ts";
 
 import { getBoolean, isNumberOrString } from "../utils/guards";
 import { apiLogger, getServerFirebase } from "./firebase";
@@ -18,7 +18,7 @@ import { debugFirebase } from "./environment";
 import type { OutputFromData } from "~/utils/types/entities/base";
 import type { FirebaseData } from "~~/functions/src/types/entities/base";
 import type { H3Context } from "../types";
-import { eMemberRole } from "~~/functions/src/types/entities";
+import { eMemberRole } from "~~/functions/src/types/entities/index.ts";
 
 export const decodeServerCursor = (cursor: string) =>
 	Buffer.from(cursor, "base64").toString("utf8");

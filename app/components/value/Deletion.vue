@@ -24,7 +24,7 @@
 	import { eColors, eSizes } from "@open-xamu-co/ui-common-enums";
 	import type { iNodeFn } from "@open-xamu-co/ui-common-types";
 
-	import type { Member } from "~/utils/types";
+	import type { Member } from "~/utils/types/index.ts";
 
 	/**
 	 * Value deletion

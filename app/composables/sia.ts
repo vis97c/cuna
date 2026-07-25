@@ -40,7 +40,7 @@ import {
 	eSIAOrinoquiaProgram,
 	eSIATumacoFaculty,
 	eSIATumacoProgram,
-} from "~~/functions/src/types/SIA";
+} from "~~/functions/src/types/SIA/index.ts";
 
 interface UNALItem {
 	faculty: uSIAFaculty;

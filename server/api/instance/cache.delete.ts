@@ -1,5 +1,7 @@
-import type { H3Context } from "~~/server/types";
-import { eMemberRole } from "~~/functions/src/types/entities";
+import { defineEventHandler, HTTPError } from "h3";
+
+import type { H3Context } from "~~/server/types.ts";
+import { eMemberRole } from "~~/functions/src/types/entities/index.ts";
 
 /**
  * Clear cached instance
@@ -12,12 +14,12 @@ export default defineEventHandler(async (event) => {
 	try {
 		// Instance is required (Means we have a valid domain)
 		if (!currentInstanceHost) {
-			throw createError({ statusCode: 401, statusMessage: "Missing instance" });
+			throw new HTTPError("Missing instance", { status: 401 });
 		}
 
 		// Prevent listing if not developer
 		if (currentMember?.role === undefined || currentMember.role > eMemberRole.DEVELOPER) {
-			throw createError({ statusCode: 401, statusMessage: "Insufficient permissions" });
+			throw new HTTPError("Insufficient permissions", { status: 401 });
 		}
 
 		const storage = useStorage("cache");

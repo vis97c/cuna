@@ -1,4 +1,5 @@
 import type { NitroFetchOptions, NitroFetchRequest } from "nitropack";
+import { $fetch } from "ofetch";
 
 /**
  * Inject auth headers and refresh token

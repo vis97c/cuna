@@ -1,6 +1,6 @@
-import type { InstanceData, InstanceDataConfig } from "~~/functions/src/types/entities";
+import type { InstanceData, InstanceDataConfig } from "~~/functions/src/types/entities/index.ts";
 
-import type { InputFromData, OutputFromData, RefFromData } from "./base";
+import type { InputFromData, OutputFromData, RefFromData } from "./base.ts";
 
 /** @output App instance data */
 export interface Instance extends OutputFromData<InstanceData> {}

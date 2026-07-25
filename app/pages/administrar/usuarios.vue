@@ -122,10 +122,10 @@
 	} from "@open-xamu-co/ui-common-types";
 	import { eColors } from "@open-xamu-co/ui-common-enums";
 
-	import type { Member, Resolve } from "~/utils/types";
+	import type { Member, Resolve } from "~/utils/types/index.ts";
 
 	import { ValueCellphone, ValueID, ValueLocation } from "#components";
-	import { eMemberRole } from "~~/functions/src/types/entities";
+	import { eMemberRole } from "~~/functions/src/types/entities/index.ts";
 
 	/**
 	 * Admin members page

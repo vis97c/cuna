@@ -63,12 +63,12 @@
 </template>
 <script setup lang="ts">
 	import { FirebaseError } from "firebase/app";
-	import deburr from "lodash-es/deburr.js";
+	import deburr from "lodash-es/deburr";
 
 	import type { iInvalidInput } from "@open-xamu-co/ui-common-types";
 	import type { tFormInput } from "@open-xamu-co/ui-common-types";
 
-	import type { Teacher, TeacherRef } from "~/utils/types";
+	import type { Teacher, TeacherRef } from "~/utils/types/index.ts";
 
 	/**
 	 * Teachers list

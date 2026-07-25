@@ -1,23 +1,13 @@
 import { createHash } from "node:crypto";
 import { getStorage } from "firebase-admin/storage";
-import { defineCachedFunction, useStorage } from "nitropack/runtime";
-import {
-	createError,
-	defineEventHandler,
-	getRouterParam,
-	isError,
-	sendError,
-	sendNoContent,
-	setHeaders,
-	setResponseHeaders,
-	setResponseStatus,
-} from "h3";
+import { defineEventHandler, getRouterParam, HTTPError, noContent } from "h3";
+import { defineCachedFunction } from "nitro/cache";
 
-import type { CachedH3Event } from "~~/server/types";
-import { storageBucket } from "../../utils/environment";
-import { debugFirebaseServer } from "../../utils/firestore";
-import { apiLogger } from "../../utils/firebase";
-import { eMemberRole } from "~~/functions/src/types/entities";
+import type { CachedH3Event } from "~~/server/types.ts";
+import { storageBucket } from "../../utils/environment.ts";
+import { debugFirebaseServer } from "../../utils/firestore.ts";
+import { apiLogger } from "../../utils/firebase.ts";
+import { eMemberRole } from "~~/functions/src/types/entities/index.ts";
 
 const maxAge = 60 * 60 * 24; // seconds in a day
 const preventCache = {
@@ -37,7 +27,7 @@ async function fileHandler(event: CachedH3Event, path: string): Promise<FileHand
 	debugFirebaseServer(event, "api:media", path);
 
 	if (!path) {
-		return { error: createError({ statusCode: 400, statusMessage: "Invalid file path" }) };
+		return { error: new HTTPError("Invalid file path", { status: 400 }) };
 	}
 
 	// Setup bucket
@@ -58,7 +48,7 @@ async function fileHandler(event: CachedH3Event, path: string): Promise<FileHand
 			// Return actual file
 			if (exists) {
 				// Bypass body for HEAD requests
-				if (event.method?.toUpperCase() === "HEAD") return { headers };
+				if (event.req.method.toUpperCase() === "HEAD") return { headers };
 
 				const [buffer] = await file.download();
 
@@ -78,9 +68,8 @@ async function fileHandler(event: CachedH3Event, path: string): Promise<FileHand
 			if (files.length) {
 				return {
 					headers: { ...preventCache, "Retry-After": "120" },
-					error: createError({
-						statusCode: 503,
-						statusMessage: `File with path: "${path}" is not ready yet`,
+					error: new HTTPError(`File with path: "${path}" is not ready yet`, {
+						status: 503,
 					}),
 				};
 			}
@@ -91,10 +80,7 @@ async function fileHandler(event: CachedH3Event, path: string): Promise<FileHand
 
 	return {
 		headers: preventCache,
-		error: createError({
-			statusCode: 404,
-			statusMessage: `File with path: "${path}" does not exist`,
-		}),
+		error: new HTTPError(`File with path: "${path}" does not exist`, { status: 404 }),
 	};
 }
 
@@ -127,14 +113,15 @@ export default defineEventHandler(async (event: CachedH3Event) => {
 
 	try {
 		// Override CORS headers
-		setResponseHeaders(event, { Allow, "Access-Control-Allow-Methods": Allow });
+		event.res.headers.set("Allow", Allow);
+		event.res.headers.set("Access-Control-Allow-Methods", Allow);
 
 		// Only GET, HEAD & OPTIONS are allowed
-		if (!["GET", "HEAD", "OPTIONS"].includes(event.method?.toUpperCase())) {
-			throw createError({ statusCode: 405, statusMessage: "Unsupported method" });
-		} else if (event.method?.toUpperCase() === "OPTIONS") {
+		if (!["GET", "HEAD", "OPTIONS"].includes(event.req.method.toUpperCase())) {
+			throw new HTTPError("Unsupported method", { status: 405 });
+		} else if (event.req.method.toUpperCase() === "OPTIONS") {
 			// Options only needs allow headers
-			return sendNoContent(event);
+			return noContent();
 		}
 
 		let response: FileHandlerResponse;
@@ -144,11 +131,12 @@ export default defineEventHandler(async (event: CachedH3Event) => {
 			/* Prevent cache
 			 * @see https://stackoverflow.com/a/9886945/3304008
 			 */
-			setResponseHeaders(event, {
-				Expires: "Tue, 03 Jul 2001 06:00:00 GMT",
-				"Last-Modified": new Date().toUTCString(),
-				"Cache-Control": "max-age=0, no-cache, must-revalidate, proxy-revalidate",
-			});
+			event.res.headers.set("Expires", "Tue, 03 Jul 2001 06:00:00 GMT");
+			event.res.headers.set("Last-Modified", new Date().toUTCString());
+			event.res.headers.set(
+				"Cache-Control",
+				"max-age=0, no-cache, must-revalidate, proxy-revalidate"
+			);
 
 			response = await fileHandler(event, path);
 		} else {
@@ -157,12 +145,15 @@ export default defineEventHandler(async (event: CachedH3Event) => {
 
 		const { buffer, headers = {}, error } = response;
 
-		setHeaders(event, headers);
+		// Set headers
+		Object.entries(headers).forEach(([key, value]) => {
+			event.res.headers.set(key, value);
+		});
 
 		if (error || !buffer) {
 			// Bypass body for HEAD requests
-			if (!error && event.method?.toUpperCase() === "HEAD") {
-				setResponseStatus(event, 200);
+			if (!error && event.req.method.toUpperCase() === "HEAD") {
+				event.res.status = 200;
 
 				// Prevent no content status
 				return "Ok";
@@ -171,10 +162,10 @@ export default defineEventHandler(async (event: CachedH3Event) => {
 			// Set fallback error
 			const err =
 				error ||
-				createError({
-					statusCode: 500,
-					statusMessage: `Something went wrong while trying to get file with path: "${path}"`,
-				});
+				new HTTPError(
+					`Something went wrong while trying to get file with path: "${path}"`,
+					{ status: 500 }
+				);
 
 			throw err;
 		}
@@ -188,11 +179,11 @@ export default defineEventHandler(async (event: CachedH3Event) => {
 		await storage.removeItem(`nitro:functions:getMedia:${hash}.json`);
 
 		// Bypass nuxt errors
-		if (isError(err)) {
+		if (err instanceof HTTPError) {
 			// Do not log if file isn't ready
-			if (err.statusCode !== 503) apiLogger(event, "api:media:[...path]", err.message, err);
+			if (err.status !== 503) apiLogger(event, "api:media:[...path]", err.message, err);
 
-			return sendError(event, err);
+			throw err;
 		}
 
 		throw err;

@@ -1,7 +1,7 @@
 import { Filter, Query } from "firebase-admin/firestore";
 
-import type { CourseData } from "~~/functions/src/types/entities";
-import type { eSIALevel, eSIAPlace, eSIATypology } from "~~/functions/src/types/SIA";
+import type { CourseData } from "~~/functions/src/types/entities/index.ts";
+import type { eSIALevel, eSIAPlace, eSIATypology } from "~~/functions/src/types/SIA/index.ts";
 
 /**
  * Get the edges from the courses collection

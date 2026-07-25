@@ -1,5 +1,5 @@
-import type { TeacherData } from "~~/functions/src/types/entities";
-import type { OutputFromData, RefFromData, InputFromData } from "./base";
+import type { TeacherData } from "~~/functions/src/types/entities/index.ts";
+import type { OutputFromData, RefFromData, InputFromData } from "./base.ts";
 
 /** @output Teacher data */
 export interface Teacher extends OutputFromData<TeacherData> {}
