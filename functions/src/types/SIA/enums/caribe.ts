@@ -44,6 +44,4 @@ export enum eSIAMiningCaribeProgram {
 }
 
 export type uSIACaribeProgram =
-	| eSIACaribeProgram
-	| eSIANursingCaribeProgram
-	| eSIAMiningCaribeProgram;
+	eSIACaribeProgram | eSIANursingCaribeProgram | eSIAMiningCaribeProgram;

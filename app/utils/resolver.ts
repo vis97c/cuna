@@ -213,7 +213,7 @@ export function makeResolveRefs(resolver: Resolver) {
 
 					delete node[key];
 				} else if (!key.endsWith("At") && node[key] && typeof node[key] === "object") {
-					if (0 in node[key]) {
+					if (Array.isArray(node[key]) || 0 in node[key]) {
 						// Fix array shaped object
 						const dataArr = Object.values(node[key]).map((data) => {
 							if (typeof data !== "object" || data === null) return data;

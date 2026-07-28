@@ -91,7 +91,7 @@ function setupAuth(instance: Instance) {
 
 	let unsubMember: Unsubscribe;
 
-	const logger = makeLogger({ instanceId: instance.id, loggerFirestore: $clientFirestore });
+	const logger = makeLogger({ instancePath: instance.id, loggerFirestore: $clientFirestore });
 	const instanceRef: DocumentReference<InstanceRef> = doc($clientFirestore, instance.id);
 
 	/**
@@ -264,7 +264,7 @@ function setupAuth(instance: Instance) {
 			}
 
 			const logger = makeLogger({
-				instanceId: instance.id,
+				instancePath: instance.id,
 				loggerFirestore: $clientFirestore,
 			});
 			const instanceRef: DocumentReference<InstanceRef, Instance> = doc(
@@ -281,8 +281,8 @@ function setupAuth(instance: Instance) {
 
 						// Set instance, do not await
 						INSTANCE.setInstance(freshInstance);
-					} catch (error) {
-						logger("plugins:firebase:keepInstanceFresh", error);
+					} catch (err) {
+						logger("plugins:firebase:keepInstanceFresh", err);
 					}
 				},
 				(err) => logger("plugins:firebase:keepInstanceFresh:snapshot", err)

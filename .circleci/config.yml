@@ -20,28 +20,26 @@ jobs:
             - checkout
             - attach_workspace:
                   at: ~/repo
-            - run: yarn set version 4.12.0
             # Download and cache dependencies
             - restore_cache:
                   name: Restore Yarn Package Cache
                   key: yarn-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
             - run:
                   name: Install dependencies
-                  command: yarn
+                  command: corepack enable --install-directory="/home/circleci/bin" && yarn
             - save_cache:
                   name: Save Yarn packages cache
                   key: yarn-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
                   paths:
                       - node_modules
+                      - .yarn
             - run:
                   name: Prepare Nuxt
                   command: yarn nuxi prepare
             - persist_to_workspace:
                   root: ~/repo
                   paths:
-                      - node_modules
                       - .nuxt
-                      - .yarn
 
     check_code:
         <<: *defaults
@@ -49,9 +47,12 @@ jobs:
             - checkout
             - attach_workspace:
                   at: ~/repo
+            - restore_cache:
+                  name: Restore Yarn Package Cache
+                  key: yarn-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
             - run:
-                  name: Remove .yarnrc.yml
-                  command: rm -rf .yarnrc.yml
+                  name: Install dependencies
+                  command: corepack enable --install-directory="/home/circleci/bin" && yarn
             - run:
                   name: Run linter & code formatting check
                   command: yarn lint
@@ -62,6 +63,12 @@ jobs:
             - checkout
             - attach_workspace:
                   at: ~/repo
+            - restore_cache:
+                  name: Restore Yarn Package Cache
+                  key: yarn-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
+            - run:
+                  name: Install dependencies
+                  command: corepack enable --install-directory="/home/circleci/bin" && yarn
             - run:
                   name: Run typecheck
                   command: yarn typecheck

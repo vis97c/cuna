@@ -35,7 +35,7 @@ export async function scrapeCoursesHandle(
 				await page.waitForSelector(useHTMLElementId(eHTMLElementIds.LEVEL), {
 					visible: true,
 				});
-			} catch (error) {
+			} catch (err) {
 				throw reject("SIA is down or under maintenance");
 			}
 

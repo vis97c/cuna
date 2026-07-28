@@ -135,7 +135,7 @@ export function onImageError(event: Event) {
 
 				img.src = unchached;
 			}, 1000 * 5); // 5 seconds
-		} catch (error) {
+		} catch (err) {
 			// Unknown error, stop trying
 			break;
 		}

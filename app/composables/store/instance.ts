@@ -50,7 +50,7 @@ export const useInstanceStore = defineStore("instance", () => {
 		if (!instance) return;
 
 		const url = instance.url;
-		const logger = makeLogger({ instanceId: path.value });
+		const logger = makeLogger({ instancePath: path.value });
 		const { locationCountry, locationState, locationCity } = instance;
 
 		current.value = { ...instance, url };
