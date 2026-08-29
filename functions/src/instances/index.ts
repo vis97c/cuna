@@ -48,7 +48,7 @@ export const onCreatedInstance = onCreated<InstanceData>(
 				indexes,
 				indexesWeights,
 				slug: await getInstanceSlug(firebaseFirestore, slug || name),
-				ownedByRef: updatedByRef,
+				...(updatedByRef ? { ownedByRef: updatedByRef } : {}),
 			};
 		} catch (err) {
 			logger("functions:instances:onCreatedInstance", err);

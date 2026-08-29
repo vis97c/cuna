@@ -12,7 +12,7 @@ import isEqual from "lodash-es/isEqual.js";
 import type { tLogger } from "@open-xamu-co/ui-common-types";
 
 import type { AuditData } from "../types/entities/member.js";
-import { getFirebase } from "./firebase.js";
+import { getFirebase, getRegion } from "./firebase.js";
 import { makeFunctionsLogger } from "./logger.js";
 
 /**
@@ -61,20 +61,24 @@ export function onCreated<T extends AuditData>(
 	/** Match a document path */
 	const document = getDocumentPath(collectionPath);
 
-	return onDocumentCreated({ document, region: "us-east1" }, async ({ data, ...metadata }) => {
+	return onDocumentCreated({ document, region: getRegion() }, async ({ data, ...metadata }) => {
 		const { firebaseFirestore } = getFirebase(`onCreated: "${document}"`);
 		const newDoc = <QueryDocumentSnapshot<T> | undefined>data;
 
 		if (!newDoc) return null;
 
 		const newDocData = newDoc.data() || {};
+
+		// Prevent duplicate onCreated processing if document already has updatedAt set by onCreated
+		if (newDocData.updatedAt && newDocData.isInitialized) return null;
+
 		const { createdByRef, createdAt = Timestamp.now() } = newDocData;
 		/**
 		 * Prefer parent instance for logging
 		 *
 		 * @path instances/{instanceId}/members/{memberId}
 		 */
-		const at = createdByRef?.parent.parent || firebaseFirestore;
+		const at = createdByRef?.parent?.parent || firebaseFirestore;
 		const logger = makeFunctionsLogger(at, createdByRef, metadata);
 
 		try {
@@ -91,6 +95,7 @@ export function onCreated<T extends AuditData>(
 					...callbackData,
 					createdAt,
 					updatedAt: createdAt,
+					isInitialized: true,
 				},
 				{ merge: true }
 			);
@@ -99,13 +104,6 @@ export function onCreated<T extends AuditData>(
 			return newDoc.ref.delete();
 		}
 	});
-}
-
-interface OnUpdatedOptions<T extends AuditData> {
-	/**
-	 * Default values when not provided
-	 */
-	defaults?: Partial<T>;
 }
 
 const ignoreKeys = [
@@ -132,15 +130,14 @@ export function onUpdated<T extends AuditData>(
 		newDoc: QueryDocumentSnapshot<T>,
 		oldDoc: QueryDocumentSnapshot<T>,
 		utils: { updatedAt: Date; logger: tLogger }
-	) => Partial<T> | undefined | void | Promise<Partial<T> | undefined | void>,
-	{ defaults = {} }: OnUpdatedOptions<T> = {}
+	) => Partial<T> | undefined | void | Promise<Partial<T> | undefined | void>
 ) {
 	/** Match a document path */
 	const document = getDocumentPath(collectionPath);
 
-	return onDocumentUpdated({ document, region: "us-east1" }, async ({ data, ...metadata }) => {
+	return onDocumentUpdated({ document, region: getRegion() }, async ({ data, ...metadata }) => {
 		const { firebaseFirestore } = getFirebase(`onUpdated: "${document}"`);
-		const updatedAt = new Date();
+		const updatedAt = Timestamp.now();
 		const newDoc = <QueryDocumentSnapshot<T> | undefined>data?.after;
 		const oldDoc = <QueryDocumentSnapshot<T> | undefined>data?.before;
 
@@ -153,7 +150,7 @@ export function onUpdated<T extends AuditData>(
 		 *
 		 * @path instances/{instanceId}/members/{memberId}
 		 */
-		const at = updatedByRef?.parent.parent || firebaseFirestore;
+		const at = updatedByRef?.parent?.parent || firebaseFirestore;
 		const logger = makeFunctionsLogger(at, updatedByRef, metadata);
 
 		// Delete document. Locked documents cannot be deleted from the client
@@ -167,11 +164,17 @@ export function onUpdated<T extends AuditData>(
 		if (isEqual(oldFunctional, newFunctional)) return null;
 
 		// Additional tasks
-		const callbackData = await callback?.(newDoc, oldDoc, { updatedAt, logger });
+		const callbackData: Partial<T> =
+			(await callback?.(newDoc, oldDoc, { updatedAt: updatedAt.toDate(), logger })) || {};
 
 		// Update document, preserve createdAt
 		return newDoc.ref.set(
-			{ ...defaults, ...callbackData, updatedAt, createdAt: oldCreatedAt },
+			{
+				...callbackData,
+				updatedAt,
+				// Avoid undefined createdAt, preserve to prevent onUpdated trigger processing more than once
+				...(oldCreatedAt !== undefined ? { createdAt: oldCreatedAt } : {}),
+			},
 			{ merge: true }
 		);
 	});
@@ -193,7 +196,7 @@ export function onDeleted<T extends AuditData>(
 	/** Match a document path */
 	const document = getDocumentPath(collectionPath);
 
-	return onDocumentDeleted({ document, region: "us-east1" }, async ({ data, ...metadata }) => {
+	return onDocumentDeleted({ document, region: getRegion() }, async ({ data, ...metadata }) => {
 		const { firebaseFirestore } = getFirebase(`onDeleted: "${document}"`);
 		const deletedAt = new Date();
 		const deletedDoc = <QueryDocumentSnapshot<T> | undefined>data;
@@ -203,7 +206,7 @@ export function onDeleted<T extends AuditData>(
 		 *
 		 * @path instances/{instanceId}/members/{memberId}
 		 */
-		const at = deletedByRef?.parent.parent || firebaseFirestore;
+		const at = deletedByRef?.parent?.parent || firebaseFirestore;
 		const logger = makeFunctionsLogger(at, deletedByRef, metadata);
 
 		if (!deletedDoc) return null;
@@ -220,7 +223,7 @@ export function onDeleted<T extends AuditData>(
  * @returns firebase function
  */
 export function onSchedule(schedule: string, callback: () => Promise<void> | void) {
-	return onScheduleV2({ schedule, region: "us-east1", timeZone: "America/Bogota" }, callback);
+	return onScheduleV2({ schedule, region: getRegion(), timeZone: "America/Bogota" }, callback);
 }
 
 /**
@@ -236,7 +239,7 @@ export function onDispatch<T extends Record<string, any>>(
 		{
 			retryConfig: { maxAttempts: 2, minBackoffSeconds: 60 },
 			rateLimits: { maxConcurrentDispatches: 100 },
-			region: "us-east1",
+			region: getRegion(),
 		},
 		callback
 	);

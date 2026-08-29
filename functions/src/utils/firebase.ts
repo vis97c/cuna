@@ -24,15 +24,23 @@ export function getFirebase(at = "Unknown", appOptions?: AppOptions) {
 
 		// Do once per context
 		if (!("ignoreUndefined" in global)) {
-			// Ignore undefined values
-			firebaseFirestore.settings({ ignoreUndefinedProperties: true });
 			Object.assign(global, { ignoreUndefined: true });
+
+			try {
+				// Ignore undefined values
+				firebaseFirestore.settings({ ignoreUndefinedProperties: true });
+			} catch {
+				// Ignore if Firestore was already initialized by framework
+			}
 		}
 
 		return { firebaseApp, firebaseFirestore, firebaseAuth, firebaseStorage };
 	} catch (err: any) {
-		console.log(err);
-
 		throw new Error(`Could not initialize Firebase Admin SDK, ${err.message}, at: ${at}`);
 	}
+}
+
+/** Use US-CENTRAL1 for emulator and US-EAST1 for production */
+export function getRegion(): "us-central1" | "us-east1" {
+	return process.env["FUNCTIONS_EMULATOR"] === "true" ? "us-central1" : "us-east1";
 }

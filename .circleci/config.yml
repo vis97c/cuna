@@ -2,16 +2,15 @@
 #
 # Check https://circleci.com/docs/language-javascript/ for more details
 
-# Extras
-# Yarn 1.22.22 issue: https://github.com/yarnpkg/yarn/issues/9015#issuecomment-2141841791
-
 version: 2.1
 defaults: &defaults
     working_directory: ~/repo
     docker:
-        - image: cimg/node:20.19.3
+        - image: cimg/openjdk:21.0.11-node
     environment:
         HUSKY: 0
+        DEBUG_NITRO: true # Faster builds
+        METADATA_SERVER_DETECTION: "none" # Fixes: https://github.com/googleapis/google-cloud-node/issues/7668
 
 jobs:
     setup:
@@ -20,19 +19,26 @@ jobs:
             - checkout
             - attach_workspace:
                   at: ~/repo
+            - run:
+                  name: Enable corepack
+                  command: sudo corepack enable
             # Download and cache dependencies
             - restore_cache:
                   name: Restore Yarn Package Cache
                   key: yarn-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
             - run:
                   name: Install dependencies
-                  command: corepack enable --install-directory="/home/circleci/bin" && yarn
+                  command: yarn
+            - run:
+                  name: Install Playwright Browsers
+                  command: yarn playwright install --with-deps chromium
             - save_cache:
                   name: Save Yarn packages cache
                   key: yarn-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
                   paths:
-                      - node_modules
                       - .yarn
+                      - node_modules
+                      - ~/.cache/ms-playwright
             - run:
                   name: Prepare Nuxt
                   command: yarn nuxi prepare
@@ -41,37 +47,83 @@ jobs:
                   paths:
                       - .nuxt
 
-    check_code:
+    prepare:
         <<: *defaults
         steps:
             - checkout
             - attach_workspace:
                   at: ~/repo
+            - run:
+                  name: Enable corepack
+                  command: sudo corepack enable
             - restore_cache:
                   name: Restore Yarn Package Cache
                   key: yarn-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
             - run:
-                  name: Install dependencies
-                  command: corepack enable --install-directory="/home/circleci/bin" && yarn
+                  name: Run typecheck
+                  command: yarn typecheck
+
+    static_tests:
+        <<: *defaults
+        steps:
+            - checkout
+            - attach_workspace:
+                  at: ~/repo
+            - run:
+                  name: Enable corepack
+                  command: sudo corepack enable
+            - restore_cache:
+                  name: Restore Yarn Package Cache
+                  key: yarn-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
             - run:
                   name: Run linter & code formatting check
                   command: yarn lint
 
-    test_nuxt_build:
+    dynamic_tests:
         <<: *defaults
         steps:
             - checkout
             - attach_workspace:
                   at: ~/repo
+            - run:
+                  name: Enable corepack
+                  command: sudo corepack enable
             - restore_cache:
                   name: Restore Yarn Package Cache
                   key: yarn-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
             - run:
-                  name: Install dependencies
-                  command: corepack enable --install-directory="/home/circleci/bin" && yarn
+                  name: Run Unit and Component Tests
+                  command: yarn test:unit
             - run:
-                  name: Run typecheck
-                  command: yarn typecheck
+                  name: Build Functions
+                  command: yarn build:functions
+            - run:
+                  name: Run Firestore Rules Tests
+                  command: yarn test:firestore
+            # TODO: fix test performance and execution time
+            # - run:
+            #       name: Run Cloud Functions Tests
+            #       command: yarn test:functions
+
+    e2e_tests:
+        <<: *defaults
+        steps:
+            - checkout
+            - attach_workspace:
+                  at: ~/repo
+            - run:
+                  name: Enable corepack
+                  command: sudo corepack enable
+            - restore_cache:
+                  name: Restore Yarn Package Cache
+                  key: yarn-{{ .Environment.CACHE_VERSION }}-{{ checksum "yarn.lock" }}
+            - run:
+                  name: Build Nuxt App
+                  command: yarn build && yarn build:functions
+            # TODO: fix authentication on CI env for emulator
+            # - run:
+            #       name: Run E2E Tests
+            #       command: yarn test:e2e
 
 workflows:
     check_workflow:
@@ -84,14 +136,22 @@ workflows:
                               - dev
                               - /feature\/.*/
                               - /hotfix\/.*/
-            - check_code:
+            - prepare:
                   context: github-deploy
                   requires:
                       - setup
-            - test_nuxt_build:
+            - static_tests:
                   context: github-deploy
                   requires:
-                      - setup
+                      - prepare
+            - dynamic_tests:
+                  context: github-deploy
+                  requires:
+                      - prepare
+            - e2e_tests:
+                  context: github-deploy
+                  requires:
+                      - dynamic_tests
     release_workflow:
         jobs:
             - setup:
@@ -100,7 +160,19 @@ workflows:
                       branches:
                           only:
                               - master
-            - check_code:
+            - prepare:
                   context: github-deploy
                   requires:
                       - setup
+            - static_tests:
+                  context: github-deploy
+                  requires:
+                      - prepare
+            - dynamic_tests:
+                  context: github-deploy
+                  requires:
+                      - prepare
+            - e2e_tests:
+                  context: github-deploy
+                  requires:
+                      - dynamic_tests

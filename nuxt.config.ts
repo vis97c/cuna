@@ -10,6 +10,7 @@ import {
 	port,
 	debugCSS,
 	debugNuxt,
+	debugNitro,
 	debugScrapper,
 	debugHTTPS,
 	cfScrapeCoursesUrl,
@@ -33,6 +34,7 @@ const stylesheets: Stylesheet[] = [
 debugCSS.value() ? css.push("assets/vendor.scss") : stylesheets.push("/dist/vendor.min.css?k=1");
 
 const alias: Record<string, string> = {};
+const fastBuild = !production.value() || debugNitro.value();
 
 // Fix Vue dedupe issue when linking packages
 if ("resolutions" in packageJson) {
@@ -100,6 +102,7 @@ export default defineNuxtConfig({
 		},
 	},
 	vite: {
+		resolve: { alias, dedupe: ["@google-cloud/firestore"] },
 		css: {
 			postcss: require("@open-xamu-co/ui-styles/postcss")[
 				production.value() ? "production" : "development"
@@ -107,14 +110,16 @@ export default defineNuxtConfig({
 			preprocessorOptions: {
 				scss: {
 					additionalData: `
-																																																																																																																																																																																																@use "assets/overrides";
-																																																																																																																																																																																																@use "@open-xamu-co/ui-styles/src/utils/module" as xamu;`,
+						@use "assets/overrides";
+						@use "@open-xamu-co/ui-styles/src/utils/module" as xamu;`,
 				},
 			},
 		},
 		server: { fs: { strict: "resolutions" in packageJson } },
+		build: { minify: !fastBuild, sourcemap: !fastBuild },
 	},
 	nitro: {
+		minify: fastBuild,
 		compressPublicAssets: true,
 		preset: "firebase_app_hosting",
 		routeRules: {
@@ -129,6 +134,16 @@ export default defineNuxtConfig({
 				maxAge: 60 * 60 * 24 * 365, // 1 year
 			},
 		],
+		externals: {
+			trace: !fastBuild,
+			inline: ["protobufjs"],
+			external: [
+				"firebase",
+				"@open-xamu-co/ui-common-helpers",
+				"@open-xamu-co/ui-components-vue",
+				"@open-xamu-co/ui-nuxt",
+			],
+		},
 	},
 	/** Global CSS */
 	css,

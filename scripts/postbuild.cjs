@@ -7,18 +7,30 @@ const fs = require("fs");
  */
 
 try {
-	// Read package.json
-	const packageJson = JSON.parse(fs.readFileSync(".output/server/package.json", "utf8"));
+	// Copy .env to functions if exist
+	if (fs.existsSync(".env")) {
+		fs.copyFileSync(".env", "functions/.env");
+		fs.copyFileSync(".env", "functions-scrapper/.env");
+		console.log("copied .env to functions");
+	}
 
-	// Set startup command
-	packageJson.scripts = packageJson.scripts || {};
-	packageJson.scripts.start = "node index.mjs";
+	// Read package.json & add start command if exist
+	if (fs.existsSync(".output/server/package.json")) {
+		const packageJson = JSON.parse(fs.readFileSync(".output/server/package.json", "utf8"));
 
-	// Read a .env if exist and copy it to the server path
-	if (fs.existsSync(".env")) fs.copyFileSync(".env", ".output/server/.env");
+		// Set startup command
+		packageJson.scripts = packageJson.scripts || {};
+		packageJson.scripts.start = "node index.mjs";
 
-	// Write package.json
-	fs.writeFileSync(".output/server/package.json", JSON.stringify(packageJson, null, 2));
+		// Copy .env to server if exist
+		if (fs.existsSync(".env")) {
+			fs.copyFileSync(".env", ".output/server/.env");
+			console.log("copied .env to server");
+		}
+
+		// Write package.json
+		fs.writeFileSync(".output/server/package.json", JSON.stringify(packageJson, null, 2));
+	}
 } catch (err) {
 	console.error(err);
 	process.exit(1);
