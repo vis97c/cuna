@@ -10,6 +10,7 @@ import {
 	type UpdateData,
 } from "firebase/firestore";
 import set from "lodash-es/set";
+import isPlainObject from "lodash-es/isPlainObject";
 
 import type { iNodeFnResponse } from "@open-xamu-co/ui-common-types";
 
@@ -19,6 +20,19 @@ import type { AuditData } from "~~/functions/src/types/entities";
 
 interface iUseDocumentOptions extends iSnapshotConfig {
 	omitLoggings?: boolean;
+}
+
+/** Helper to remove undefined properties recursively */
+export function removeUndefinedProperties<T extends Record<string, any>>(obj: T): T {
+	for (const key in obj) {
+		if (obj[key] === undefined) {
+			delete obj[key];
+		} else if (isPlainObject(obj[key])) {
+			removeUndefinedProperties(obj[key]);
+		}
+	}
+
+	return obj;
 }
 
 /** Creates document with the given values */
@@ -48,6 +62,9 @@ export async function useDocumentCreate<
 
 	// Set timestamps
 	partialRef.createdAt = partialRef.updatedAt = new Date();
+
+	// Remove any undefined properties before writing to firestore
+	removeUndefinedProperties(partialRef);
 
 	let createdRef: DocumentReference<Data, V> | undefined;
 
@@ -102,16 +119,25 @@ export async function useDocumentUpdate<
 	Vgr extends InputFromData<Data> = InputFromData<Data>,
 	V extends OutputFromData<Data> = OutputFromData<Data>,
 >(
-	node: V,
+	nodeOrRef: V | DocumentReference<Data, V>,
 	middleRef: Partial<Vgr> = {},
 	{ omitLoggings, ...config }: iUseDocumentOptions = { omitLoggings: false, level: 0 }
 ): Promise<iNodeFnResponse<V>> {
 	const SESSION = useSessionStore();
 	const { $clientFirestore, $resolveClientRefs } = useNuxtApp();
+	let node: V;
+	let docRef: DocumentReference<Data, V>; // get node ref
 
-	if (!node.id || !$clientFirestore) throw new Error("Document id is required");
+	if (!nodeOrRef.id || !$clientFirestore) throw new Error("Document id is required");
 
-	const docRef = <DocumentReference<Data, V>>doc($clientFirestore, node.id || ""); // get node ref
+	if (nodeOrRef instanceof DocumentReference) {
+		node = <V>{ id: nodeOrRef.id };
+		docRef = nodeOrRef;
+	} else {
+		node = nodeOrRef;
+		docRef = <DocumentReference<Data, V>>doc($clientFirestore, nodeOrRef.id);
+	}
+
 	const partialRef = <Vgr>middleRef;
 
 	// Conditionally inject member information
@@ -127,6 +153,9 @@ export async function useDocumentUpdate<
 	// Set timestamps
 	partialRef.updatedAt = new Date();
 
+	// Remove any undefined properties before writing to firestore
+	removeUndefinedProperties(partialRef);
+
 	try {
 		// Allow updating nested properties
 		// See: https://firebase.google.com/docs/firestore/manage-data/add-data#update_fields_in_nested_objects
@@ -137,9 +166,10 @@ export async function useDocumentUpdate<
 			{
 				data: () => {
 					const newData = {
+						...(node as unknown as Data),
 						...(partialRef as unknown as Data),
 						createdAt: node.createdAt,
-						id: docRef?.path,
+						id: node.id || docRef?.path,
 					};
 
 					/**

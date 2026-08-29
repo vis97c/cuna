@@ -1,4 +1,5 @@
 import type { NitroFetchOptions, NitroFetchRequest } from "nitropack";
+import type { FetchResponse } from "ofetch";
 
 /**
  * Inject auth headers and refresh token
@@ -36,10 +37,9 @@ async function getQueryOptions<R extends NitroFetchRequest = NitroFetchRequest>(
 	if (!production) {
 		headers["Cache-Control"] = "no-store";
 		options.cache = "no-store";
-		options.credentials = "omit";
 	}
 
-	return { credentials: "same-origin", ...options, query, headers };
+	return { ...options, query, headers };
 }
 
 /**
@@ -50,9 +50,55 @@ async function getQueryOptions<R extends NitroFetchRequest = NitroFetchRequest>(
  */
 export async function customFetch<T, R extends NitroFetchRequest = NitroFetchRequest>(
 	url: Extract<R, string>,
-	baseOptions?: NitroFetchOptions<R>
-) {
+	baseOptions?: NitroFetchOptions<R>,
+	raw?: false
+): Promise<T>;
+export async function customFetch<T, R extends NitroFetchRequest = NitroFetchRequest>(
+	url: Extract<R, string>,
+	baseOptions?: NitroFetchOptions<R>,
+	raw?: true
+): Promise<FetchResponse<T>>;
+export async function customFetch<T, R extends NitroFetchRequest = NitroFetchRequest>(
+	url: Extract<R, string>,
+	baseOptions?: NitroFetchOptions<R>,
+	raw = false
+): Promise<T | FetchResponse<T>> {
 	const options = await getQueryOptions<R>(baseOptions);
 
-	return $fetch<T>(url, options);
+	if (raw) {
+		// TypeScript seems to forgot how to infer the return type of $fetch.raw
+		return $fetch.raw(url, { credentials: "omit", ...options }) as unknown as FetchResponse<T>;
+	}
+
+	return <T>$fetch(url, { credentials: "omit", ...options });
+}
+
+/**
+ * Fetch wrapper with csrf token
+ */
+export async function customCsrfFetch<T, R extends NitroFetchRequest = NitroFetchRequest>(
+	url: Extract<R, string>,
+	baseOptions?: NitroFetchOptions<R>,
+	raw?: false
+): Promise<T>;
+export async function customCsrfFetch<T, R extends NitroFetchRequest = NitroFetchRequest>(
+	url: Extract<R, string>,
+	baseOptions?: NitroFetchOptions<R>,
+	raw?: true
+): Promise<FetchResponse<T>>;
+export async function customCsrfFetch<T, R extends NitroFetchRequest = NitroFetchRequest>(
+	url: Extract<R, string>,
+	baseOptions?: NitroFetchOptions<R>,
+	raw = false
+): Promise<T | FetchResponse<T>> {
+	const { $csrfFetch } = useNuxtApp() as unknown as { $csrfFetch: any };
+	const { responseType, ...options } = await getQueryOptions(baseOptions);
+
+	if (raw)
+		return $csrfFetch.raw(url, {
+			credentials: "same-origin",
+			...options,
+		}) as unknown as FetchResponse<T>;
+
+	return $csrfFetch(url, { credentials: "same-origin", ...options }) as Promise<T>;
 }
